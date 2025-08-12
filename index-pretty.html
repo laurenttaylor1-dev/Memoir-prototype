@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Memoir — Recorder</title>
+  <meta name="color-scheme" content="light dark" />
+  <style>
+    :root{
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --fg: #0f172a;
+      --muted:#64748b;
+      --brand:#2563eb;
+      --brand-2:#7c3aed;
+      --danger:#e11d48;
+      --ring: 0 0 0 4px rgba(37, 99, 235, .15);
+      --border:#e5e7eb;
+      --shadow: 0 20px 40px rgba(2,8,23,.06), 0 2px 6px rgba(2,8,23,.04);
+      --radius: 16px;
+    }
+    @media (prefers-color-scheme: dark){
+      :root{
+        --bg: #0b1020;
+        --card: #0f162e;
+        --fg: #e5e7eb;
+        --muted:#9aa4b2;
+        --border:#1f2a44;
+        --shadow: 0 20px 40px rgba(0,0,0,.4), 0 2px 6px rgba(0,0,0,.3);
+      }
+    }
+    *,*:before,*:after{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background:
+        radial-gradient(1200px 600px at -10% -20%, rgba(124,58,237,.12), transparent 40%),
+        radial-gradient(1200px 600px at 110% -10%, rgba(37,99,235,.12), transparent 40%),
+        var(--bg);
+      color:var(--fg);
+      line-height:1.45;
+    }
+    .container{max-width: 980px; margin: 0 auto; padding: 24px}
+    .shell{
+      display:grid;
+      gap: 20px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 900px){
+      .shell{grid-template-columns: 1.15fr .85fr}
+    }
+    .card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+    header{
+      display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 18px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px;
+    }
+    .logo{
+      width:36px;height:36px;border-radius:12px;
+      background: conic-gradient(from 180deg at 50% 50%, var(--brand), var(--brand-2));
+      box-shadow: 0 6px 18px rgba(37,99,235,.35);
+    }
+    h1{margin:0;font-size: clamp(1.3rem, 1.2rem + 1.2vw, 1.8rem); letter-spacing:.2px}
+    .controls-top{display:flex; gap:10px; align-items:center}
+    select,.seg>button,.btn{
+      border:1px solid var(--border);
+      background:transparent; color:inherit;
+      padding:10px 12px; border-radius:12px; font-size:15px;
+    }
+    select:focus,.seg>button:focus,.btn:focus{outline:none; box-shadow: var(--ring)}
+    .seg{display:flex; gap: 8px; padding: 6px; border:1px solid var(--border); border-radius: 999px; background: rgba(2,8,23,.04)}
+    .seg>button{border:0; padding:10px 14px; border-radius: 999px; cursor:pointer; transition: all .18s ease}
+    .seg>button.active{background: linear-gradient(90deg, var(--brand), var(--brand-2)); color:white; box-shadow: 0 6px 14px rgba(37,99,235,.4)}
+    .label{font-weight:600; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing:.08em; margin-bottom:6px}
+    .area{
+      min-height: 180px; border:1px solid var(--border); border-radius:12px; padding:14px; font-size: 17px; background: rgba(2,8,23,.02);
+    }
+    input[type="text"]{
+      width:100%; padding:12px 14px; border:1px solid var(--border); border-radius: 12px; background: rgba(2,8,23,.02); font-size: 16px;
+    }
+    .prompt-row{display:flex; gap:8px; overflow:auto; padding-bottom: 4px}
+    .chip{padding:10px 12px; border-radius: 999px; background: rgba(37,99,235,.08); border:1px solid rgba(37,99,235,.18); white-space:nowrap; cursor:pointer}
+    .mic-wrap{display:flex; flex-direction:column; align-items:center; gap:14px; margin: 8px 0 12px}
+    .mic{
+      width: 180px; height: 180px; border-radius: 999px; border:0; color:white; font-weight:700; font-size: 20px; cursor:pointer;
+      background: linear-gradient(160deg, var(--brand), var(--brand-2));
+      box-shadow: 0 18px 40px rgba(37,99,235,.35), 0 4px 10px rgba(2,8,23,.12);
+      position:relative; overflow:hidden;
+    }
+    .mic.pulse::after{
+      content: ""; position:absolute; inset:-8px; border-radius: 999px;
+      background: radial-gradient(closest-side, rgba(124,58,237,.25), transparent 70%);
+      animation: pulse 1.6s infinite ease-in-out;
+    }
+    @keyframes pulse{
+      0%{transform:scale(1); opacity:.9}
+      70%{transform:scale(1.08); opacity:0}
+      100%{transform:scale(1.12); opacity:0}
+    }
+    .meter{display:flex; gap:8px; align-items:center; width:100%; max-width: 420px}
+    .bar{flex:1; height:10px; background: rgba(2,8,23,.08); border-radius:999px; overflow:hidden}
+    .bar>div{height:100%; width:0%; background: linear-gradient(90deg, var(--brand), var(--brand-2))}
+    .muted{color: var(--muted)}
+    .actions{display:flex; gap:10px; flex-wrap:wrap}
+    .btn{cursor:pointer; transition: all .15s ease}
+    .btn.primary{background: linear-gradient(90deg, var(--brand), var(--brand-2)); color:white; border:0}
+    .btn.ghost{background: transparent}
+    .list{display:grid; gap: 14px}
+    .story{padding:14px; border:1px solid var(--border); border-radius: 12px; background: rgba(2,8,23,.02)}
+    .story header{display:flex; justify-content:space-between; align-items:flex-start; margin:0 0 6px 0}
+    .story h3{margin:0; font-size: 16px}
+    .story .time{font-size: 12px; color: var(--muted)}
+    footer{margin: 26px 0; text-align:center; color:var(--muted); font-size: 12px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <header>
+        <div class="brand">
+          <div class="logo" aria-hidden="true"></div>
+          <h1>Memoir — Recorder</h1>
+        </div>
+        <div class="controls-top">
+          <select id="lang" aria-label="Language">
+            <option value="en">English</option>
+            <option value="fr">Français</option>
+          </select>
+          <select id="plan" aria-label="Plan">
+            <option value="free">Free (2 min)</option>
+            <option value="pro">Pro (longer)</option>
+          </select>
+        </div>
+      </header>
+
+      <div class="shell">
+        <!-- Left: Recording -->
+        <section class="left">
+          <div class="label" id="modeLabel">Mode</div>
+          <div class="seg" role="tablist" aria-label="Mode">
+            <button id="tabGuided" class="active" role="tab" aria-selected="true">Guided</button>
+            <button id="tabFree" role="tab" aria-selected="false">Free</button>
+          </div>
+
+          <div id="guidedBlock">
+            <div class="label" id="topicsLabel">Suggested topics</div>
+            <div class="prompt-row" id="prompts"></div>
+          </div>
+
+          <div class="label" id="titleLabel">Title</div>
+          <input id="title" type="text" placeholder="Story title (optional)" />
+
+          <div class="label" id="transLabel">Transcript</div>
+          <div id="transcript" class="area" aria-live="polite">Your words will appear here…</div>
+
+          <div style="margin:12px 0">
+            <div class="label" id="photosLabel">Photos</div>
+            <label class="btn ghost"><input id="photos" type="file" accept="image/*" multiple /> <span id="addPhotosText">Add photos</span></label>
+            <div id="photoNames" class="prompt-row" style="margin-top:6px"></div>
+          </div>
+
+          <div class="mic-wrap">
+            <button id="mic" class="mic" aria-pressed="false">Record</button>
+            <div class="meter" id="meter" style="display:none">
+              <div class="bar"><div id="bar"></div></div>
+              <div class="muted" id="remain">120s</div>
+            </div>
+            <div class="muted" id="asr">Transcribing…</div>
+          </div>
+
+          <div class="actions">
+            <button id="save" class="btn primary" disabled>Save story</button>
+            <button id="clear" class="btn">Clear</button>
+          </div>
+        </section>
+
+        <!-- Right: Library -->
+        <aside class="right">
+          <div class="label">Library</div>
+          <div id="library" class="list"></div>
+        </aside>
+      </div>
+
+      <footer id="foot">Prototype: memoir recorder — EN/FR, 2‑minute cap on Free.</footer>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    const $ = (id)=>document.getElementById(id);
+    const lang=$('lang'), plan=$('plan');
+    const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
+    const promptsEl=$('prompts'), titleEl=$('title'), transcriptEl=$('transcript');
+    const photosEl=$('photos'), photoNames=$('photoNames');
+    const mic=$('mic'), meter=$('meter'), bar=$('bar'), remain=$('remain'), asr=$('asr');
+    const save=$('save'), clearBtn=$('clear'), library=$('library');
+
+    let locale = navigator.language?.startsWith('fr') ? 'fr' : 'en';
+    lang.value = locale;
+    let tier = 'free'; plan.value = tier;
+    let cap = tier==='free'?120:3600;
+    let mode = 'guided';
+    let transcript = '', selectedPrompt='', elapsed=0, timer=null;
+    let recognition=null, rec=null, stream=null, chunks=[], audioBlob=null;
+
+    const promptsEN=[
+      "Describe your home growing up.",
+      "Tell me about your first job.",
+      "How did you meet your partner?",
+      "What big events did you live through?",
+      "What advice would you give your 20‑year‑old self?"
+    ];
+    const promptsFR=[
+      "Décrivez votre maison quand vous étiez enfant.",
+      "Parlez de votre premier emploi.",
+      "Comment avez‑vous rencontré votre partenaire ?",
+      "Quels grands événements avez‑vous vécus ?",
+      "Quel conseil donneriez‑vous à vos 20 ans ?"
+    ];
+
+    function t(k){
+      const fr={
+        Mode:'Mode', 'Suggested topics':'Sujets suggérés', Title:'Titre', Transcript:'Transcription', Photos:'Photos', 'Add photos':'Ajouter des photos',
+        Guided:'Guidé', Free:'Libre', 'Story title (optional)':"Titre de l'histoire (facultatif)", 'Your words will appear here…':'Votre texte apparaîtra ici…',
+        'Transcribing…':'Transcription en cours…', 'Speech recognition unavailable':'Reconnaissance vocale indisponible', 'Save story':"Enregistrer l'histoire",
+        Clear:'Réinitialiser', Library:'Bibliothèque', 'Prototype: memoir recorder — EN/FR, 2‑minute cap on Free.':"Prototype : enregistreur de mémoires — FR/EN, limite 2 min en gratuit."
+      };
+      return locale==='fr' ? (fr[k]??k) : k;
+    }
+
+    function setText(){
+      $('modeLabel').textContent=t('Mode');
+      $('topicsLabel').textContent=t('Suggested topics');
+      $('titleLabel').textContent=t('Title');
+      $('transLabel').textContent=t('Transcript');
+      $('photosLabel').textContent=t('Photos');
+      $('addPhotosText').textContent=t('Add photos');
+      tabGuided.textContent=t('Guided'); tabFree.textContent=t('Free');
+      titleEl.placeholder=t('Story title (optional)');
+      transcriptEl.textContent = transcript || t('Your words will appear here…');
+      $('foot').textContent = t('Prototype: memoir recorder — EN/FR, 2‑minute cap on Free.');
+      $('asr').textContent = t('Transcribing…');
+      $('save').textContent = t('Save story');
+      $('clear').textContent = t('Clear');
+      renderPrompts(); renderLib();
+    }
+
+    function renderPrompts(){
+      promptsEl.innerHTML='';
+      (locale==='fr'?promptsFR:promptsEN).forEach(p=>{
+        const b=document.createElement('button');
+        b.className='chip'; b.textContent=p; b.onclick=()=>selectedPrompt=p;
+        promptsEl.appendChild(b);
+      });
+    }
+
+    function renderLib(){
+      library.innerHTML='';
+      let items=[]; try{ items = JSON.parse(localStorage.getItem('memoir_stories')||'[]') }catch{}
+      if(!items.length){
+        const p=document.createElement('p'); p.className='muted'; p.textContent = locale==='fr'?'Aucune histoire pour le moment.':'No stories yet.'; library.appendChild(p); return;
+      }
+      for(const s of items){
+        const el=document.createElement('div'); el.className='story';
+        const head=document.createElement('header');
+        const h3=document.createElement('h3'); h3.textContent=s.title;
+        const time=document.createElement('div'); time.className='time'; time.textContent=new Date(s.createdAt).toLocaleString();
+        head.appendChild(h3); head.appendChild(time); el.appendChild(head);
+        const body=document.createElement('div'); body.textContent=s.transcript; el.appendChild(body);
+        if(s.audioURL){ const aud=document.createElement('audio'); aud.controls=true; aud.src=s.audioURL; el.appendChild(aud); }
+        if(s.photos?.length){ const wrap=document.createElement('div'); wrap.style.display='flex'; wrap.style.gap='8px'; wrap.style.flexWrap='wrap'; wrap.style.marginTop='6px'; s.photos.forEach(u=>{const img=new Image(); img.src=u; img.width=84; img.height=84; img.style.borderRadius='10px'; img.style.border='1px solid var(--border)'; wrap.appendChild(img)}); el.appendChild(wrap) }
+        const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px'; actions.style.marginTop='8px';
+        const exp=document.createElement('button'); exp.className='btn'; exp.textContent = locale==='fr'?'Exporter (TXT)':'Export (TXT)'; exp.onclick=()=>downloadTxt(s);
+        const del=document.createElement('button'); del.className='btn'; del.textContent = locale==='fr'?'Supprimer':'Delete'; del.onclick=()=>{ const next=items.filter(x=>x.id!==s.id); localStorage.setItem('memoir_stories', JSON.stringify(next)); renderLib(); };
+        actions.appendChild(exp); actions.appendChild(del); el.appendChild(actions);
+        library.appendChild(el);
+      }
+    }
+
+    function downloadTxt(s){
+      const txt = `Title: ${s.title}\nDate: ${new Date(s.createdAt).toLocaleString()}\nMode: ${s.mode}${s.prompt?`\\nPrompt: ${s.prompt}`:''}\nDuration: ${s.durationSec||0}s\n\n${s.transcript}`;
+      const blob = new Blob([txt], {type:'text/plain'});
+      const url = URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=url; a.download=`${s.title.replace(/[^a-z0-9]/gi,'_')}.txt`; a.click(); URL.revokeObjectURL(url);
+    }
+
+    // Events
+    lang.onchange = ()=>{ locale = lang.value; setText(); }
+    plan.onchange = ()=>{ tier=plan.value; cap = tier==='free'?120:3600; remain.textContent = cap+'s' }
+
+    tabGuided.onclick = ()=>{ mode='guided'; tabGuided.classList.add('active'); tabFree.classList.remove('active'); guidedBlock.style.display='block'; }
+    tabFree.onclick = ()=>{ mode='free'; tabFree.classList.add('active'); tabGuided.classList.remove('active'); guidedBlock.style.display='none'; }
+
+    photosEl.onchange = (e)=>{
+      const files = Array.from(e.target.files || []);
+      photoNames.innerHTML=''; files.forEach(f=>{ const span=document.createElement('span'); span.className='chip'; span.textContent=f.name; photoNames.appendChild(span) });
+      window._memo_photos = files;
+    }
+
+    clearBtn.onclick = ()=>{
+      transcript=''; transcriptEl.textContent='Your words will appear here…'; titleEl.value=''; selectedPrompt=''; window._memo_photos=[]; photoNames.innerHTML=''; save.disabled=true;
+    }
+
+    mic.onclick = async ()=>{
+      if(rec){ stopAll(); } else { await startAll(); }
+    }
+
+    async function startAll(){
+      transcript=''; transcriptEl.textContent=''; elapsed=0; remain.textContent = cap+'s'; bar.style.width='0%';
+      try{
+        stream = await navigator.mediaDevices.getUserMedia({audio:true});
+      }catch(e){ alert(locale==='fr'?'Micro refusé':'Microphone permission denied'); return; }
+      rec = new MediaRecorder(stream); chunks=[];
+      rec.ondataavailable = (e)=>{ if(e.data.size>0) chunks.push(e.data) };
+      rec.onstop = ()=>{ stream.getTracks().forEach(t=>t.stop()); audioBlob = new Blob(chunks, {type:'audio/webm'}); };
+
+      rec.start();
+      const SR = window.webkitSpeechRecognition || window.SpeechRecognition;
+      if(SR){
+        recognition = new SR(); recognition.lang = (locale==='fr')?'fr-FR':'en-US'; recognition.continuous=true; recognition.interimResults=true;
+        let full='';
+        recognition.onresult=(e)=>{ let inter=''; for(let i=e.resultIndex;i<e.results.length;i++){ const r=e.results[i]; if(r.isFinal) full += r[0].transcript+' '; else inter += r[0].transcript; } transcript=(full+inter).trim(); transcriptEl.textContent=transcript; save.disabled=!transcript; };
+        recognition.onend=()=>{ asr.textContent = t('Speech recognition unavailable') };
+        try{ recognition.start(); asr.textContent=t('Transcribing…'); }catch{}
+      } else { asr.textContent = t('Speech recognition unavailable'); }
+      mic.textContent = locale==='fr' ? 'Arrêter' : 'Stop';
+      mic.classList.add('pulse');
+      meter.style.display='flex';
+      timer = setInterval(()=>{ elapsed++; bar.style.width = (elapsed/cap*100)+'%'; remain.textContent = Math.max(0, cap-elapsed)+'s'; if(elapsed>=cap) stopAll(); }, 1000);
+    }
+
+    function stopAll(){
+      if(rec && rec.state!=='inactive'){ rec.stop(); }
+      if(recognition){ try{ recognition.stop(); }catch{} }
+      if(timer){ clearInterval(timer); timer=null }
+      mic.textContent = locale==='fr' ? 'Enregistrer' : 'Record';
+      mic.classList.remove('pulse');
+    }
+
+    save.onclick = ()=>{
+      let audioURL = audioBlob ? URL.createObjectURL(audioBlob) : undefined;
+      const photoURLs = (window._memo_photos||[]).map(f=>URL.createObjectURL(f));
+      const item = {
+        id: Math.random().toString(36).slice(2),
+        createdAt: Date.now(),
+        title: titleEl.value || (locale==='fr'?'Histoire':'Story'),
+        mode, prompt: mode==='guided'?selectedPrompt:undefined,
+        transcript, audioURL, photos: photoURLs, durationSec: elapsed
+      };
+      const prev = JSON.parse(localStorage.getItem('memoir_stories') || '[]');
+      prev.unshift(item);
+      localStorage.setItem('memoir_stories', JSON.stringify(prev));
+      renderLib();
+      clearBtn.onclick();
+    }
+
+    // init
+    setText();
+    remain.textContent = cap+'s';
+  })();
+  </script>
+</body>
+</html>
