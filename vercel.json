@@ -1,6 +1,7 @@
 {
   "version": 2,
   "routes": [
+    { "src": "/api/rewrite", "dest": "/api/rewrite.js" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
