@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Memoir — Recorder</title>
+<meta name="color-scheme" content="light dark" />
+<style>
+/* Simple styles for stability */
+body { font-family: Arial, sans-serif; background: #f6f7fb; color: #0f172a; margin: 0; padding: 0; }
+.container { max-width: 800px; margin: 0 auto; padding: 20px; }
+header { display: flex; justify-content: space-between; align-items: center; }
+h1 { font-size: 1.5rem; }
+button { padding: 10px 16px; margin: 5px; border-radius: 8px; border: 1px solid #ccc; cursor: pointer; }
+#transcript { background: #fff; padding: 10px; min-height: 120px; border: 1px solid #ddd; border-radius: 8px; }
+.prompt-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.chip { padding: 6px 10px; background: #eef; border-radius: 16px; cursor: pointer; }
+.story { border: 1px solid #ccc; border-radius: 8px; padding: 10px; margin-top: 10px; background: #fff; }
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <h1>Memoir — Recorder</h1>
+  <button id="toggleLib">☰ Library</button>
+</header>
+
+<div>
+  <div class="prompt-row" id="prompts"></div>
+  <input id="title" type="text" placeholder="Story title (optional)" style="width:100%;" />
+  <div id="transcript">Your words will appear here…</div>
+  <button id="mic">Record</button>
+  <button id="save" disabled>Save story</button>
+  <button id="clear">Clear</button>
+</div>
+
+<h2>Library</h2>
+<div id="library"></div>
+</div>
+
+<script>
+const prompts = [
+  "Describe your home growing up.",
+  "Tell me about your first job.",
+  "How did you meet your partner?",
+  "What big events did you live through?",
+  "What advice would you give your 20-year-old self?"
+];
+const promptsEl = document.getElementById('prompts');
+prompts.forEach(p => {
+  const chip = document.createElement('div');
+  chip.className = 'chip';
+  chip.textContent = p;
+  chip.onclick = () => document.getElementById('title').value = p;
+  promptsEl.appendChild(chip);
+});
+
+let transcript = '';
+const transcriptEl = document.getElementById('transcript');
+const micBtn = document.getElementById('mic');
+const saveBtn = document.getElementById('save');
+const clearBtn = document.getElementById('clear');
+const libraryEl = document.getElementById('library');
+
+let mediaRecorder;
+let chunks = [];
+let recognition;
+
+micBtn.onclick = async () => {
+  if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      chunks = [];
+      mediaRecorder.ondataavailable = e => chunks.push(e.data);
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        const audioURL = URL.createObjectURL(blob);
+        const audio = document.createElement('audio');
+        audio.controls = true;
+        audio.src = audioURL;
+        transcriptEl.innerHTML += "<br/><em>[Audio recorded]</em>";
+        saveBtn.disabled = false;
+      };
+      mediaRecorder.start();
+      micBtn.textContent = 'Stop Recording';
+    } catch (err) {
+      alert('Microphone access denied or unavailable.');
+    }
+  } else {
+    mediaRecorder.stop();
+    micBtn.textContent = 'Record';
+  }
+};
+
+saveBtn.onclick = () => {
+  const title = document.getElementById('title').value || 'Untitled';
+  const story = { title, transcript: transcriptEl.innerHTML, createdAt: new Date().toISOString() };
+  const stories = JSON.parse(localStorage.getItem('memoir_stories') || '[]');
+  stories.push(story);
+  localStorage.setItem('memoir_stories', JSON.stringify(stories));
+  renderLibrary();
+  clearForm();
+};
+
+clearBtn.onclick = clearForm;
+
+function clearForm(){
+  document.getElementById('title').value = '';
+  transcriptEl.innerHTML = 'Your words will appear here…';
+  saveBtn.disabled = true;
+}
+
+function renderLibrary(){
+  libraryEl.innerHTML = '';
+  const stories = JSON.parse(localStorage.getItem('memoir_stories') || '[]');
+  stories.forEach(s => {
+    const div = document.createElement('div');
+    div.className = 'story';
+    div.innerHTML = `<strong>${s.title}</strong><br/><small>${new Date(s.createdAt).toLocaleString()}</small><p>${s.transcript}</p>`;
+    const rewriteBtn = document.createElement('button');
+    rewriteBtn.textContent = 'Rewrite (AI)';
+    rewriteBtn.onclick = async () => {
+      const res = await fetch('/api/rewrite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: s.transcript, style: 'warm, vivid, cohesive' })
+      });
+      if(res.ok){
+        const data = await res.json();
+        alert(data.rewritten);
+      } else {
+        alert('Error rewriting story.');
+      }
+    };
+    div.appendChild(rewriteBtn);
+    libraryEl.appendChild(div);
+  });
+}
+
+renderLibrary();
+</script>
+</body>
+</html>
