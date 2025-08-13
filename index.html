@@ -336,6 +336,38 @@ footer{margin:26px 0;text-align:center;color:#64748b;font-size:12px}
   setText(); remain.textContent = cap+'s';
   window.addEventListener('resize', renderLib);
 })();
+
+  <script>
+  // ... keep the rest of your script
+
+  async function rewriteAI(s){
+    const tone = "warm, vivid, cohesive";           // fixed style
+    const language = (document.getElementById('lang').value === 'fr') ? 'fr' : 'en';
+    try{
+      const res = await fetch("/api/rewrite", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ text: s.transcript, title: s.title, language, tone })
+      });
+      if(!res.ok){
+        const msg = await res.text();
+        alert("Rewrite failed: " + msg);
+        return;
+      }
+      const data = await res.json();
+      const rewritten = data.text || "(no text)";
+      const w = window.open("", "_blank");
+      w.document.write(
+        `<pre style="white-space:pre-wrap;font-family:system-ui, -apple-system; padding:16px">${rewritten
+          .replace(/[<&>]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</pre>`
+      );
+      w.document.close();
+    }catch(err){
+      alert("Rewrite error: " + (err?.message||err));
+    }
+  }
+</script>
+
 </script>
 </body>
 </html>
