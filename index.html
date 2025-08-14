@@ -7,7 +7,7 @@
 <meta name="color-scheme" content="light dark" />
 <style>
 :root{
-  --bg:#f6f7fb; --card:#ffffff; --fg:#0f172a; --muted:#667085;
+  --bg:#f6f7fb; --card:#fff; --fg:#0f172a; --muted:#667085;
   --brand:#2563eb; --brand2:#7c3aed; --border:#e6e9f0;
   --shadow:0 20px 40px rgba(2,8,23,.06), 0 2px 6px rgba(2,8,23,.04);
 }
@@ -162,7 +162,11 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
 
 <script>
 (function(){
+  // ------- DOM helpers -------
   const $ = (id)=>document.getElementById(id);
+  function escHTML(s){ return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+  // ------- Elements -------
   const lang=$('lang'), plan=$('plan');
   const promptsEl=$('prompts'), titleEl=$('title'), transcriptEl=$('transcript');
   const mic=$('mic'), meter=$('meter'), bar=$('bar'), remain=$('remain'), asr=$('asr');
@@ -171,6 +175,7 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
   const toggleLib=$('toggleLib'), closeDrawer=$('closeDrawer');
   const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
 
+  // ------- State -------
   let locale = navigator.language?.startsWith('fr') ? 'fr' : 'en';
   lang.value = locale;
   let tier = 'free'; plan.value = tier;
@@ -179,10 +184,11 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
   let transcript = '', selectedPrompt='', elapsed=0, timer=null;
   let recognition=null, rec=null, stream=null, chunks=[], audioBlob=null;
 
+  // ------- Content -------
   const promptsEN=[ "Describe your home growing up.","Tell me about your first job.","How did you meet your partner?","What big events did you live through?","What advice would you give your 20-year-old self?" ];
   const promptsFR=[ "Décrivez votre maison quand vous étiez enfant.","Parlez de votre premier emploi.","Comment avez-vous rencontré votre partenaire ?","Quels grands événements avez-vous vécus ?","Quel conseil donneriez-vous à vos 20 ans ?" ];
 
-  // Render topic chips
+  // ------- UI renderers -------
   function renderPrompts(){
     promptsEl.innerHTML='';
     (locale==='fr'?promptsFR:promptsEN).forEach(p=>{
@@ -191,8 +197,6 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
       promptsEl.appendChild(b);
     });
   }
-
-  // Library (responsive + drawer)
   function renderLib(){
     const target=(window.innerWidth>=1024)?library:libraryDrawer;
     target.innerHTML='';
@@ -214,18 +218,21 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     }
   }
 
+  // ------- Drawer & resize -------
   toggleLib.onclick=()=>{ if(window.innerWidth>=1024){ window.scrollTo({top:0,behavior:'smooth'}) } else { drawer.classList.add('show'); renderLib(); } };
   closeDrawer.onclick=()=>drawer.classList.remove('show');
   drawer.addEventListener('click',(e)=>{ if(e.target===drawer) drawer.classList.remove('show') });
+  window.addEventListener('resize',renderLib);
 
-  // Tabs
+  // ------- Tabs -------
   tabGuided.onclick=()=>{ mode='guided'; tabGuided.classList.add('active'); tabFree.classList.remove('active'); guidedBlock.style.display='block'; };
   tabFree.onclick=()=>{ mode='free'; tabFree.classList.add('active'); tabGuided.classList.remove('active'); guidedBlock.style.display='none'; };
 
-  // Clear
+  // ------- Controls -------
+  plan.onchange=()=>{ tier=plan.value; cap=tier==='free'?120:3600; remain.textContent = cap+'s'; };
   clearBtn.onclick=()=>{ transcript=''; transcriptEl.textContent='Your words will appear here…'; titleEl.value=''; save.disabled=true; };
 
-  // Record button
+  // ------- Recording -------
   mic.onclick = async ()=>{ if(rec && rec.state!=='inactive'){ stopAll(); } else { await startAll(); } };
 
   async function startAll(){
@@ -236,7 +243,7 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
       alert('Microphone permission denied. Check site settings.'); return;
     }
 
-    // MediaRecorder (cross-browser)
+    // MediaRecorder (cross‑browser)
     chunks=[]; audioBlob=null; rec=null;
     try{
       if(window.MediaRecorder){
@@ -269,7 +276,7 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     mic.textContent='Record'; mic.classList.remove('pulse');
   }
 
-  // Save
+  // ------- Save -------
   save.onclick=()=>{
     const audioURL = audioBlob ? URL.createObjectURL(audioBlob) : undefined;
     const item = { id:Math.random().toString(36).slice(2), createdAt:Date.now(), title:titleEl.value||'Story', mode, prompt:mode==='guided'?selectedPrompt:undefined, transcript, audioURL, durationSec:elapsed };
@@ -277,75 +284,43 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     renderLib(); clearBtn.onclick();
   };
 
-  // Fixed‑style Ghostwriter
-  <script>
-  // Escape helper used below
-  function escHTML(s){ return String(s).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
-
+  // ------- Rewrite (AI) with popup‑blocker fallback -------
   async function rewriteAI(s){
-    const tone = "warm, vivid, cohesive";
-    const language = (document.getElementById('lang').value === 'fr') ? 'fr' : 'en';
+    const tone="warm, vivid, cohesive"; const language=(lang.value==='fr')?'fr':'en';
 
-    // Try to open a popup **synchronously** to avoid blockers.
-    // If blocked, we'll render a modal instead.
-    let win = null;
-    try { win = window.open('', '_blank'); } catch {}
-    const usePopup = !!win;
-
-    if (usePopup) {
-      try {
-        win.document.write('<pre style="white-space:pre-wrap;font-family:system-ui;padding:16px;margin:0">Generating…</pre>');
-        win.document.close();
-      } catch {
-        // If even writing fails, fallback to modal
-        win = null;
-      }
+    let win=null; try{ win=window.open('','_blank'); }catch{}
+    let usePopup=!!win;
+    if(usePopup){
+      try{ win.document.write('<pre style="white-space:pre-wrap;font-family:system-ui;padding:16px;margin:0">Generating…</pre>'); win.document.close(); }
+      catch{ usePopup=false; try{win.close();}catch{} }
     }
 
-    try {
-      const res = await fetch("/api/rewrite", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: s.transcript, title: s.title, language, tone })
-      });
+    try{
+      const res = await fetch('/api/rewrite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:s.transcript,title:s.title,language,tone})});
+      if(!res.ok){ let msg=await res.text(); try{msg=JSON.parse(msg).error||msg;}catch{} throw new Error(msg||'Rewrite failed'); }
+      const data=await res.json(); const rewritten=data.text||'(no text)';
 
-      if (!res.ok) {
-        let msg = await res.text();
-        try { msg = JSON.parse(msg).error || msg; } catch {}
-        throw new Error(msg || "Rewrite failed");
-      }
-
-      const data = await res.json();
-      const rewritten = data.text || "(no text)";
-
-      if (usePopup && win) {
-        win.document.body.innerHTML =
-          `<pre style="white-space:pre-wrap;font-family:system-ui;padding:16px;margin:0">${escHTML(rewritten)}</pre>`;
-      } else {
-        // Inline modal fallback (no popup permission needed)
-        const dlg = document.createElement('dialog');
-        dlg.style.width = 'min(90vw, 800px)';
-        dlg.style.padding = '0';
-        dlg.innerHTML =
-          `<form method="dialog" style="padding:12px;border-bottom:1px solid #e5e7eb">
-             <button autofocus style="padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;background:#fff">Close</button>
-           </form>
-           <div style="padding:16px;white-space:pre-wrap;font-family:system-ui">${escHTML(rewritten)}</div>`;
+      if(usePopup && win){
+        win.document.body.innerHTML = `<pre style="white-space:pre-wrap;font-family:system-ui;padding:16px;margin:0">${escHTML(rewritten)}</pre>`;
+      }else{
+        const dlg=document.createElement('dialog');
+        dlg.style.width='min(90vw, 800px)'; dlg.style.padding='0';
+        dlg.innerHTML = `<form method="dialog" style="padding:12px;border-bottom:1px solid #e5e7eb">
+            <button autofocus style="padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;background:#fff">Close</button>
+          </form>
+          <div style="padding:16px;white-space:pre-wrap;font-family:system-ui">${escHTML(rewritten)}</div>`;
         document.body.appendChild(dlg);
-        dlg.addEventListener('close', ()=> dlg.remove());
+        dlg.addEventListener('close',()=>dlg.remove());
         dlg.showModal();
       }
-    } catch (err) {
-      alert("Rewrite error: " + (err?.message || err));
-      if (usePopup && win) try { win.close(); } catch {}
+    }catch(err){
+      alert('Rewrite error: ' + (err?.message||err));
+      if(usePopup && win) try{win.close();}catch{}
     }
   }
-</script>
 
-
-  // Init
+  // ------- Init -------
   renderPrompts(); renderLib();
-  window.addEventListener('resize',renderLib);
 })();
 </script>
 </body>
