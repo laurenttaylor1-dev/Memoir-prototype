@@ -278,15 +278,70 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
   };
 
   // Fixed‑style Ghostwriter
+  <script>
+  // Escape helper used below
+  function escHTML(s){ return String(s).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+
   async function rewriteAI(s){
-    const tone="warm, vivid, cohesive"; const language=(lang.value==='fr')?'fr':'en';
-    try{
-      const res = await fetch('/api/rewrite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:s.transcript,title:s.title,language,tone})});
-      if(!res.ok){ const txt=await res.text(); alert('Error rewriting story.\n\n'+txt); return; }
-      const data=await res.json(); const rewritten=data.text||'(no text)';
-      const w=window.open('','_blank'); w.document.write(`<pre style="white-space:pre-wrap;font-family:system-ui;padding:16px">${rewritten.replace(/[<&>]/g,(c)=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</pre>`); w.document.close();
-    }catch(e){ alert('Rewrite error: '+(e?.message||e)); }
+    const tone = "warm, vivid, cohesive";
+    const language = (document.getElementById('lang').value === 'fr') ? 'fr' : 'en';
+
+    // Try to open a popup **synchronously** to avoid blockers.
+    // If blocked, we'll render a modal instead.
+    let win = null;
+    try { win = window.open('', '_blank'); } catch {}
+    const usePopup = !!win;
+
+    if (usePopup) {
+      try {
+        win.document.write('<pre style="white-space:pre-wrap;font-family:system-ui;padding:16px;margin:0">Generating…</pre>');
+        win.document.close();
+      } catch {
+        // If even writing fails, fallback to modal
+        win = null;
+      }
+    }
+
+    try {
+      const res = await fetch("/api/rewrite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: s.transcript, title: s.title, language, tone })
+      });
+
+      if (!res.ok) {
+        let msg = await res.text();
+        try { msg = JSON.parse(msg).error || msg; } catch {}
+        throw new Error(msg || "Rewrite failed");
+      }
+
+      const data = await res.json();
+      const rewritten = data.text || "(no text)";
+
+      if (usePopup && win) {
+        win.document.body.innerHTML =
+          `<pre style="white-space:pre-wrap;font-family:system-ui;padding:16px;margin:0">${escHTML(rewritten)}</pre>`;
+      } else {
+        // Inline modal fallback (no popup permission needed)
+        const dlg = document.createElement('dialog');
+        dlg.style.width = 'min(90vw, 800px)';
+        dlg.style.padding = '0';
+        dlg.innerHTML =
+          `<form method="dialog" style="padding:12px;border-bottom:1px solid #e5e7eb">
+             <button autofocus style="padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;background:#fff">Close</button>
+           </form>
+           <div style="padding:16px;white-space:pre-wrap;font-family:system-ui">${escHTML(rewritten)}</div>`;
+        document.body.appendChild(dlg);
+        dlg.addEventListener('close', ()=> dlg.remove());
+        dlg.showModal();
+      }
+    } catch (err) {
+      alert("Rewrite error: " + (err?.message || err));
+      if (usePopup && win) try { win.close(); } catch {}
+    }
   }
+</script>
+
 
   // Init
   renderPrompts(); renderLib();
