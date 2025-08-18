@@ -3,13 +3,12 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Memoir — Recorder (Cloud, Families)</title>
+<title>Memoir — Recorder</title>
 <meta name="color-scheme" content="light dark" />
 <style>
 :root{
-  --bg:#f6f7fb; --card:#fff; --fg:#0f172a; --muted:#667085;
-  --brand:#2563eb; --brand2:#7c3aed; --border:#e6e9f0;
-  --shadow:0 20px 40px rgba(2,8,23,.06), 0 2px 6px rgba(2,8,23,.04);
+  --bg:#f6f7fb; --card:#fff; --fg:#0f172a; --muted:#667085; --brand:#2563eb; --brand2:#7c3aed;
+  --border:#e6e9f0; --shadow:0 20px 40px rgba(2,8,23,.06), 0 2px 6px rgba(2,8,23,.04);
 }
 @media (prefers-color-scheme:dark){
   :root{ --bg:#0b1020; --card:#0f162e; --fg:#e6edf7; --muted:#9aa4b2; --border:#1f2a44; --shadow:0 20px 40px rgba(0,0,0,.4), 0 2px 6px rgba(0,0,0,.3) }
@@ -30,7 +29,6 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;ma
 .brand{display:flex;align-items:center;gap:12px}
 .logo{width:36px;height:36px;border-radius:12px;background:conic-gradient(from 180deg at 50% 50%, var(--brand), var(--brand2)); box-shadow:0 6px 18px rgba(37,99,235,.35)}
 h1{margin:0;font-size:clamp(1.3rem,1.2rem+1.2vw,1.8rem)}
-
 .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 select,.btn,input[type="text"],input[type="email"]{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit}
 .btn{cursor:pointer}
@@ -44,7 +42,6 @@ select,.btn,input[type="text"],input[type="email"]{padding:10px 12px;border-radi
 }
 
 .label{font-size:12px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.08em;margin:10px 0 6px}
-
 .segment{display:flex;gap:8px;flex-wrap:wrap}
 .tab{padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:transparent}
 .tab.active{background:rgba(37,99,235,.1);border-color:rgba(37,99,235,.25)}
@@ -59,7 +56,6 @@ select,.btn,input[type="text"],input[type="email"]{padding:10px 12px;border-radi
 .chip:active{transform:translateY(1px)}
 
 .area{min-height:180px;border:1px solid var(--border);border-radius:12px;padding:14px;background:rgba(2,8,23,.02)}
-
 .mic-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;margin:12px 0}
 .mic{
   width:190px;height:190px;border-radius:999px;border:0;color:#fff;font-weight:700;font-size:20px;cursor:pointer;
@@ -68,7 +64,6 @@ select,.btn,input[type="text"],input[type="email"]{padding:10px 12px;border-radi
 }
 .mic.pulse::after{content:"";position:absolute;inset:-8px;border-radius:999px;background:radial-gradient(closest-side, rgba(124,58,237,.25), transparent 70%);animation:pulse 1.6s infinite ease-in-out}
 @keyframes pulse{0%{transform:scale(1);opacity:.9}70%{transform:scale(1.08);opacity:0}100%{transform:scale(1.12);opacity:0}}
-
 .meter{display:flex;gap:8px;align-items:center;width:100%;max-width:420px}
 .bar{flex:1;height:10px;background:rgba(2,8,23,.08);border-radius:999px;overflow:hidden}
 .bar>div{height:100%;width:0%;background:linear-gradient(90deg,var(--brand),var(--brand2))}
@@ -84,20 +79,16 @@ select,.btn,input[type="text"],input[type="email"]{padding:10px 12px;border-radi
 .story .time{font-size:12px;color:var(--muted)}
 .story .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 
-.tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-
 .drawer{position:fixed;inset:0;display:none;background:rgba(2,8,23,.45);backdrop-filter: blur(2px)}
 .drawer.show{display:block}
 .drawer .panel{position:absolute;right:0;top:0;bottom:0;width:88%;max-width:420px;background:var(--card);border-left:1px solid var(--border);padding:16px;overflow:auto}
 
 dialog::backdrop{background:rgba(0,0,0,.35)}
 dialog{border:none;border-radius:12px;box-shadow:var(--shadow);max-width:min(800px,92vw)}
-
 footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
 </style>
 </head>
 <body>
-  <!-- App (hidden until login) -->
   <div class="container" id="app" style="display:none">
     <div class="card">
       <header>
@@ -106,7 +97,6 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
           <h1>Memoir — Recorder</h1>
         </div>
         <div class="controls">
-          <!-- NEW: Family switcher -->
           <select id="family" aria-label="Family/Space">
             <option value="__personal">Personal</option>
           </select>
@@ -143,7 +133,6 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
           <div class="label">Title</div>
           <input id="title" type="text" placeholder="Story title (optional)" />
 
-          <!-- NEW: When it happened -->
           <div class="label">When did this happen?</div>
           <input id="when" type="text" placeholder='e.g., "summer 1945", "early 2018", "15 Feb 1972"' />
 
@@ -164,7 +153,7 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
             <button id="clear" class="btn">Clear</button>
           </div>
 
-          <div class="tools">
+          <div class="actions">
             <button id="exportBook" class="btn">Export Book (PDF beta)</button>
             <button id="exportCsv" class="btn">Export CSV for Canva</button>
           </div>
@@ -180,7 +169,7 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     </div>
   </div>
 
-  <!-- Login card -->
+  <!-- Login card (shown only if not authed yet; guard will hide this by redirecting) -->
   <div class="container" id="auth">
     <div class="card" style="max-width:520px;margin:40px auto">
       <h2 style="margin-top:0">Sign in to Memoir</h2>
@@ -191,7 +180,6 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     </div>
   </div>
 
-  <!-- Drawer for library on mobile -->
   <div id="drawer" class="drawer" aria-hidden="true">
     <div class="panel">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -208,47 +196,29 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
 
 <script>
 (async function(){
-  // ======== ENV ========
-  const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
+  // ======== ENV & SUPABASE ========
+  const SUPABASE_URL = "https://jrjqciywljjhhcxfyxwh.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ======== AUTH GUARD (redirect to login.html if not logged in) ========
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) { window.location.replace('login.html'); return; }
 
   // ======== DOM ========
   const $ = (id)=>document.getElementById(id);
   const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-  const app = $('app'), auth = $('auth');
+  const app=$('app'), auth=$('auth'); app.style.display='block'; auth.style.display='none';
 
   const familySel=$('family'), createFamilyBtn=$('createFamily'), joinFamilyBtn=$('joinFamily');
-  const lang=$('lang'), plan=$('plan');
-  const whenEl=$('when'), promptsEl=$('prompts'), titleEl=$('title'), transcriptEl=$('transcript');
+  const lang=$('lang'), plan=$('plan'); const whenEl=$('when'), promptsEl=$('prompts');
+  const titleEl=$('title'), transcriptEl=$('transcript');
   const mic=$('mic'), meter=$('meter'), bar=$('bar'), remain=$('remain'), asr=$('asr');
   const save=$('save'), clearBtn=$('clear'), library=$('library');
   const drawer=$('drawer'), libraryDrawer=$('libraryDrawer');
   const toggleLib=$('toggleLib'), closeDrawer=$('closeDrawer');
   const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
-  const email=$('email'), sendLink=$('sendLink'), authMsg=$('authMsg');
   const exportBookBtn=$('exportBook'), exportCsvBtn=$('exportCsv');
-
-  // ======== State ========
-  let session = (await supabase.auth.getSession()).data.session || null;
-  let user = session?.user || null;
-  function showApp(){ auth.style.display='none'; app.style.display='block'; }
-  function showAuth(){ app.style.display='none'; auth.style.display='block'; }
-  if (user) showApp(); else showAuth();
-
-  // ======== Auth ========
-  sendLink.onclick = async () => {
-    if (!email.value) { authMsg.textContent = 'Enter your email.'; return; }
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.value,
-      options: { emailRedirectTo: window.location.origin }
-    });
-    authMsg.textContent = error ? ('Error: ' + error.message) : 'Check your email for the link.';
-  };
-  supabase.auth.onAuthStateChange((_ev, sess) => {
-    session = sess; user = sess?.user || null;
-    if (user) { showApp(); bootstrap(); }
-  });
 
   // ======== Guided topics & TTS ========
   const TOPICS = {
@@ -258,96 +228,72 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     nl: ["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
   };
   const BCP = { en:'en-US', fr:'fr-FR', es:'es-ES', nl:'nl-NL' };
-  let voices = [];
-  function loadVoices(){ voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : []; }
-  if ('speechSynthesis' in window) { loadVoices(); window.speechSynthesis.onvoiceschanged = loadVoices; }
-  function speak(text, langCode){
-    if (!('speechSynthesis' in window)) return;
-    const target = BCP[langCode] || 'en-US';
+
+  function speak(text, code){
+    if(!('speechSynthesis' in window)) return;
+    const target = BCP[code]||'en-US';
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = target; u.rate = 0.92; u.pitch = 0.95; u.volume = 0.9;
-    let tries = 0;
-    const trySpeak = () => {
-      const vs = window.speechSynthesis.getVoices();
-      const v = vs.find(v=>v.lang === target) || vs.find(v=>v.lang.startsWith(target.split('-')[0])) || null;
-      if (v) u.voice = v;
-      if (vs.length === 0 && tries < 8) { tries++; return setTimeout(trySpeak, 150); }
-      window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
+    u.lang = target; u.rate=0.92; u.pitch=0.95; u.volume=0.9;
+    const trySpeak=()=>{
+      const vs=speechSynthesis.getVoices();
+      const v=vs.find(v=>v.lang===target)||vs.find(v=>v.lang.startsWith(target.split('-')[0]))||null;
+      if(v) u.voice=v;
+      if(vs.length===0) return setTimeout(trySpeak,120);
+      speechSynthesis.cancel(); speechSynthesis.speak(u);
     };
     trySpeak();
   }
 
   function renderPrompts(){
     promptsEl.innerHTML='';
-    const list = TOPICS[lang.value] || TOPICS.en;
-    list.forEach(topic=>{
-      const b=document.createElement('div');
-      b.className='chip'; b.textContent=topic;
-      b.onclick=()=>{ titleEl.value = topic; speak(topic, lang.value); };
+    (TOPICS[lang.value]||TOPICS.en).forEach(topic=>{
+      const b=document.createElement('div'); b.className='chip'; b.textContent=topic;
+      b.onclick=()=>{ titleEl.value=topic; speak(topic, lang.value); };
       promptsEl.appendChild(b);
     });
   }
 
-  // ======== Family: load/create/join, selector ========
+  // ======== Families ========
+  const user = (await supabase.auth.getUser()).data.user;
   async function loadFamilies(){
-    // families you belong to
-    const { data: mems } = await supabase.from('family_members').select('family_id, role, families!inner(id, name, slug)').eq('user_id', user.id);
+    const { data: mems } = await supabase.from('family_members').select('family_id, families!inner(id, name)').eq('user_id', user.id);
     familySel.innerHTML = `<option value="__personal">Personal</option>`;
-    (mems||[]).forEach(m=>{
-      const opt = document.createElement('option');
-      opt.value = m.family_id; opt.textContent = m.families.name;
-      familySel.appendChild(opt);
-    });
+    (mems||[]).forEach(m=>{ const o=document.createElement('option'); o.value=m.family_id; o.textContent=m.families.name; familySel.appendChild(o); });
   }
   async function createFamily(){
-    const name = prompt('Family name (e.g., “Van den Berg Family”)');
-    if(!name) return;
-    const slug = prompt('Optional invite code (letters/numbers only), or leave blank') || null;
-    const { data: fam, error: e1 } = await supabase.from('families').insert([{ name, slug }]).select().single();
-    if(e1){ alert(e1.message); return; }
-    const { error: e2 } = await supabase.from('family_members').insert([{ family_id: fam.id, user_id: user.id, role: 'owner' }]);
-    if(e2){ alert(e2.message); return; }
-    await loadFamilies(); familySel.value = fam.id;
-    fetchStories();
+    const name=prompt('Family name'); if(!name) return;
+    const slug=prompt('Optional invite code (letters/numbers), or blank')||null;
+    const { data:fam, error:e1 } = await supabase.from('families').insert([{ name, slug }]).select().single();
+    if(e1){alert(e1.message);return;}
+    const { error:e2 } = await supabase.from('family_members').insert([{ family_id:fam.id, user_id:user.id, role:'owner' }]); if(e2){alert(e2.message);return;}
+    await loadFamilies(); familySel.value=fam.id; fetchStories();
   }
   async function joinFamily(){
-    const code = prompt('Enter family invite code (slug)');
-    if(!code) return;
-    const { data: fam, error: e1 } = await supabase.from('families').select('*').eq('slug', code).single();
-    if(e1 || !fam){ alert('Family not found.'); return; }
-    const { error: e2 } = await supabase.from('family_members').insert([{ family_id: fam.id, user_id: user.id, role: 'member' }]);
-    if(e2){ alert(e2.message); return; }
-    await loadFamilies(); familySel.value = fam.id;
-    fetchStories();
+    const code=prompt('Enter family invite code (slug)'); if(!code) return;
+    const { data:fam, error:e1 } = await supabase.from('families').select('*').eq('slug', code).single();
+    if(e1||!fam){alert('Family not found.');return;}
+    const { error:e2 } = await supabase.from('family_members').insert([{ family_id:fam.id, user_id:user.id, role:'member' }]); if(e2){alert(e2.message);return;}
+    await loadFamilies(); familySel.value=fam.id; fetchStories();
   }
-  createFamilyBtn.onclick=createFamily;
-  joinFamilyBtn.onclick=joinFamily;
-  familySel.onchange=()=>fetchStories();
+  createFamilyBtn.onclick=createFamily; joinFamilyBtn.onclick=joinFamily; familySel.onchange=()=>fetchStories();
 
-  // ======== Recording & ASR ========
+  // ======== Recording ========
   let tier='free', cap=120, mode='guided', transcript='', elapsed=0, timer=null, recognition=null, rec=null, stream=null, chunks=[], audioBlob=null;
-  plan.onchange=()=>{ tier=plan.value; cap=tier==='free'?120:3600; $('remain').textContent=cap+'s'; };
-  $('clear').onclick=()=>{ transcript=''; transcriptEl.textContent='Your words will appear here…'; titleEl.value=''; whenEl.value=''; $('save').disabled=true; };
-
-  $('tabGuided').onclick=()=>{ mode='guided'; tabGuided.classList.add('active'); tabFree.classList.remove('active'); guidedBlock.style.display='block'; };
-  $('tabFree').onclick=()=>{ mode='free'; tabFree.classList.add('active'); tabGuided.classList.remove('active'); guidedBlock.style.display='none'; };
+  plan.onchange=()=>{ tier=plan.value; cap=tier==='free'?120:3600; remain.textContent=cap+'s'; };
+  clearBtn.onclick=()=>{ transcript=''; transcriptEl.textContent='Your words will appear here…'; titleEl.value=''; whenEl.value=''; save.disabled=true; };
+  tabGuided.onclick=()=>{ mode='guided'; tabGuided.classList.add('active'); tabFree.classList.remove('active'); guidedBlock.style.display='block'; };
+  tabFree.onclick=()=>{ mode='free'; tabFree.classList.add('active'); tabGuided.classList.remove('active'); guidedBlock.style.display='none'; };
   lang.onchange=()=>renderPrompts();
 
-  $('toggleLib').onclick=()=>{ if(window.innerWidth>=1024){ fetchStories(); } else { drawer.classList.add('show'); fetchStories(); } };
-  $('closeDrawer').onclick=()=>drawer.classList.remove('show');
+  toggleLib.onclick=()=>{ if(window.innerWidth>=1024){ fetchStories(); } else { drawer.classList.add('show'); fetchStories(); } };
+  closeDrawer.onclick=()=>drawer.classList.remove('show');
   drawer.addEventListener('click',(e)=>{ if(e.target===drawer) drawer.classList.remove('show'); });
 
-  $('mic').onclick = async ()=>{ if(rec && rec.state!=='inactive'){ stopAll(); } else { await startAll(); } };
-
-  const BCP = { en:'en-US', fr:'fr-FR', es:'es-ES', nl:'nl-NL' };
+  mic.onclick = async ()=>{ if(rec && rec.state!=='inactive'){ stopAll(); } else { await startAll(); } };
 
   async function startAll(){
-    transcript=''; transcriptEl.textContent=''; elapsed=0; $('remain').textContent = cap+'s'; $('bar').style.width='0%';
-
-    try{
-      stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
-    }catch(e){ alert('Microphone permission denied.'); return; }
-
+    transcript=''; transcriptEl.textContent=''; elapsed=0; remain.textContent=cap+'s'; bar.style.width='0%';
+    try{ stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}}); }catch(e){ alert('Microphone permission denied.'); return; }
     chunks=[]; audioBlob=null; rec=null;
     try{
       if(window.MediaRecorder){
@@ -363,6 +309,7 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     const SR = window.webkitSpeechRecognition || window.SpeechRecognition;
     if(SR){
       recognition=new SR();
+      const BCP = { en:'en-US', fr:'fr-FR', es:'es-ES', nl:'nl-NL' };
       recognition.lang = BCP[lang.value] || 'en-US';
       recognition.continuous=true; recognition.interimResults=true;
       let full='';
@@ -370,21 +317,18 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
         let inter='';
         for(let i=e.resultIndex;i<e.results.length;i++){
           const r=e.results[i];
-          if(r.isFinal) full+=r[0].transcript+' ';
-          else inter+=r[0].transcript;
+          if(r.isFinal) full+=r[0].transcript+' '; else inter+=r[0].transcript;
         }
         transcript=(full+inter).trim();
         transcriptEl.textContent=transcript;
-        $('save').disabled=!transcript;
+        save.disabled=!transcript;
       };
-      recognition.onerror=()=>{ $('asr').textContent='Speech recognition unavailable'; };
-      try{ recognition.start(); $('asr').textContent='Transcribing…'; }catch{}
-    } else {
-      $('asr').textContent='Speech recognition is not available in this browser.';
-    }
+      recognition.onerror=()=>{ asr.textContent='Speech recognition unavailable'; };
+      try{ recognition.start(); asr.textContent='Transcribing…'; }catch{}
+    } else { asr.textContent='Speech recognition is not available in this browser.'; }
 
     mic.textContent='Stop Recording'; mic.classList.add('pulse'); meter.style.display='flex';
-    timer=setInterval(()=>{ elapsed++; $('bar').style.width=(elapsed/cap*100)+'%'; $('remain').textContent=Math.max(0,cap-elapsed)+'s'; if(elapsed>=cap) stopAll(); },1000);
+    timer=setInterval(()=>{ elapsed++; bar.style.width=(elapsed/cap*100)+'%'; remain.textContent=Math.max(0,cap-elapsed)+'s'; if(elapsed>=cap) stopAll(); },1000);
   }
   function stopAll(){
     if(rec && rec.state!=='inactive'){ rec.stop(); }
@@ -396,128 +340,70 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
   // ======== Approx date parser ========
   function parseApproxDate(input){
     if(!input) return { label:'', sort:null };
-    const s = input.trim().toLowerCase();
-
-    // explicit date DD Mon YYYY or YYYY-MM-DD
-    const iso = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-    if (iso){ const d=new Date(+iso[1], +iso[2]-1, +iso[3]); return { label:input, sort: d.toISOString().slice(0,10) }; }
-
-    const dmy = s.match(/^(\d{1,2})[\/\-\s](\d{1,2})[\/\-\s](\d{2,4})$/);
-    if (dmy){ const Y=(+dmy[3]<100?2000+ +dmy[3]:+dmy[3]); const d=new Date(Y, +dmy[2]-1, +dmy[1]); return { label:input, sort: d.toISOString().slice(0,10) }; }
-
-    const months = { jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11 };
-    const mon = s.match(/^(early|mid|late)?\s*([a-z]{3,9})\s+(\d{4})$/i);
-    if (mon){
-      const m = months[mon[2].slice(0,3).toLowerCase()]; const y=+mon[3]; if(m!=null){
-        let day=1;
-        if (mon[1]==='mid') day=10; if (mon[1]==='late') day=20;
-        const d=new Date(y,m,day); return { label:input, sort: d.toISOString().slice(0,10) };
-      }
-    }
-
-    const year = s.match(/^(early|mid|late)?\s*(\d{4})$/);
-    if (year){
-      const y=+year[2]; let m=0, day=1;
-      if (year[1]==='mid') m=4; if (year[1]==='late') m=8;
-      const d=new Date(y,m,day); return { label:input, sort: d.toISOString().slice(0,10) };
-    }
-
-    const season = s.match(/^(early|mid|late)?\s*(spring|summer|autumn|fall|winter)\s+(\d{4})$/);
-    if (season){
-      const y=+season[3]; const baseMonth = {spring:2,summer:5,autumn:8,fall:8,winter:11}[season[2]];
-      let m=baseMonth, day=1;
-      if (season[1]==='mid') day=10; if (season[1]==='late') day=20;
-      const d=new Date(y,m,day); return { label:input, sort: d.toISOString().slice(0,10) };
-    }
-
-    // fallback: just year if found
-    const yOnly = s.match(/(\d{4})/);
-    if (yOnly){ const d=new Date(+yOnly[1],0,1); return { label:input, sort: d.toISOString().slice(0,10) }; }
-
+    const s=input.trim().toLowerCase();
+    const iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); if(iso){const d=new Date(+iso[1],+iso[2]-1,+iso[3]);return{label:input,sort:d.toISOString().slice(0,10)};}
+    const dmy=s.match(/^(\d{1,2})[\/\-\s](\d{1,2})[\/\-\s](\d{2,4})$/); if(dmy){const Y=(+dmy[3]<100?2000+ +dmy[3]:+dmy[3]); const d=new Date(Y,+dmy[2]-1,+dmy[1]);return{label:input,sort:d.toISOString().slice(0,10)};}
+    const months={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+    const mon=s.match(/^(early|mid|late)?\s*([a-z]{3,9})\s+(\d{4})$/i);
+    if(mon){const m=months[mon[2].slice(0,3).toLowerCase()];const y=+mon[3];if(m!=null){let day=1;if(mon[1]==='mid')day=10;if(mon[1]==='late')day=20;const d=new Date(y,m,day);return{label:input,sort:d.toISOString().slice(0,10)};}}
+    const year=s.match(/^(early|mid|late)?\s*(\d{4})$/); if(year){const y=+year[2];let m=0,day=1;if(year[1]==='mid')m=4;if(year[1]==='late')m=8;const d=new Date(y,m,day);return{label:input,sort:d.toISOString().slice(0,10)};}
+    const season=s.match(/^(early|mid|late)?\s*(spring|summer|autumn|fall|winter)\s+(\d{4})$/);
+    if(season){const y=+season[3];const base={spring:2,summer:5,autumn:8,fall:8,winter:11}[season[2]];let m=base,day=1;if(season[1]==='mid')day=10;if(season[1]==='late')day=20;const d=new Date(y,m,day);return{label:input,sort:d.toISOString().slice(0,10)};}
+    const yOnly=s.match(/(\d{4})/); if(yOnly){const d=new Date(+yOnly[1],0,1);return{label:input,sort:d.toISOString().slice(0,10)};}
     return { label:input, sort:null };
   }
 
-  // ======== Save story (cloud) ========
-  $('save').onclick=async ()=>{
-    if(!user){ alert('Please sign in first.'); return; }
-    const family_id = (familySel.value && familySel.value!=='__personal') ? familySel.value : null;
-    const title = titleEl.value || 'Story';
-    const when = parseApproxDate(whenEl.value);
-    let audio_url = null;
+  // ======== Save story ========
+  save.onclick=async ()=>{
+    const fam = (familySel.value && familySel.value!=='__personal') ? familySel.value : null;
+    const title=titleEl.value||'Story'; const when=parseApproxDate(whenEl.value);
+    let audio_url=null;
 
-    // upload audio if any
-    if (audioBlob) {
-      const ext = (audioBlob.type.includes('mp4')) ? 'm4a' :
-                  (audioBlob.type.includes('ogg')) ? 'ogg' :
-                  (audioBlob.type.includes('webm')) ? 'webm' : 'bin';
-      const storyId = crypto.randomUUID();
-      const path = `${user.id}/${storyId}.${ext}`;
-      const { error: upErr } = await supabase.storage.from('memoir').upload(path, audioBlob, {
-        cacheControl: '3600', upsert: false, contentType: audioBlob.type || 'application/octet-stream'
-      });
-      if (upErr) { alert('Audio upload failed: ' + upErr.message); return; }
-      const { data: pub } = supabase.storage.from('memoir').getPublicUrl(path);
-      audio_url = pub?.publicUrl || null;
-
-      const { error: insErr } = await supabase.from('stories').insert([{
-        id: storyId, user_id: user.id, family_id, title,
-        happened_label: when.label || null, happened_sort: when.sort,
-        transcript, audio_url, duration_sec: elapsed
-      }]);
-      if (insErr) { alert('Save failed: ' + insErr.message); return; }
-    } else {
-      const { error: insErr } = await supabase.from('stories').insert([{
-        user_id: user.id, family_id, title,
-        happened_label: when.label || null, happened_sort: when.sort,
-        transcript, duration_sec: elapsed
-      }]);
-      if (insErr) { alert('Save failed: ' + insErr.message); return; }
+    if(audioBlob){
+      const ext=(audioBlob.type.includes('mp4'))?'m4a':(audioBlob.type.includes('ogg'))?'ogg':(audioBlob.type.includes('webm'))?'webm':'bin';
+      const id=crypto.randomUUID(); const path=`${user.id}/${id}.${ext}`;
+      const { error:upErr } = await supabase.storage.from('memoir').upload(path, audioBlob, { cacheControl:'3600', upsert:false, contentType:audioBlob.type||'application/octet-stream' });
+      if(upErr){alert('Audio upload failed: '+upErr.message);return;}
+      const { data:pub } = supabase.storage.from('memoir').getPublicUrl(path);
+      audio_url=pub?.publicUrl||null;
+      const { error:insErr } = await supabase.from('stories').insert([{ id, user_id:user.id, family_id:fam, title, happened_label:when.label||null, happened_sort:when.sort, transcript, audio_url, duration_sec:elapsed }]);
+      if(insErr){alert('Save failed: '+insErr.message);return;}
+    }else{
+      const { error:insErr } = await supabase.from('stories').insert([{ user_id:user.id, family_id:fam, title, happened_label:when.label||null, happened_sort:when.sort, transcript, duration_sec:elapsed }]);
+      if(insErr){alert('Save failed: '+insErr.message);return;}
     }
 
-    titleEl.value=''; whenEl.value=''; transcript=''; transcriptEl.textContent='Your words will appear here…'; $('save').disabled=true;
-    fetchStories();
+    titleEl.value=''; whenEl.value=''; transcript=''; transcriptEl.textContent='Your words will appear here…'; save.disabled=true; fetchStories();
   };
 
-  // ======== Library (cloud, sorted by happened_sort then created_at) ========
+  // ======== Library ========
   async function fetchStories(){
-    if (!user) return;
-    const fam = (familySel.value && familySel.value!=='__personal') ? familySel.value : null;
+    const fam=(familySel.value && familySel.value!=='__personal')?familySel.value:null;
     let q = supabase.from('stories').select('*');
-    if (fam){ q = q.eq('family_id', fam); }
-    else { q = q.eq('user_id', user.id).is('family_id', null); }
-    // order: happened_sort nulls last, then created_at
-    const { data, error } = await q.order('happened_sort', { ascending: true, nullsFirst: false })
-                                   .order('created_at', { ascending: true });
-    if (error){ console.warn(error); return; }
-    renderLib(data);
+    q = fam ? q.eq('family_id',fam) : q.eq('user_id',user.id).is('family_id',null);
+    const { data } = await q.order('happened_sort',{ascending:true,nullsFirst:false}).order('created_at',{ascending:true});
+    renderLib(data||[]);
   }
-
   function storyRow(s){
     const row=document.createElement('div'); row.className='story';
     const meta=document.createElement('div'); meta.className='meta';
-    const h=document.createElement('h3'); h.textContent=s.title || 'Story';
-    const happened = s.happened_label ? s.happened_label : (s.happened_sort ? new Date(s.happened_sort).getFullYear() : '');
-    const t=document.createElement('div'); t.className='time'; t.textContent = happened ? `${happened}` : new Date(s.created_at||Date.now()).toLocaleString();
+    const h=document.createElement('h3'); h.textContent=s.title||'Story';
+    const t=document.createElement('div'); t.className='time';
+    t.textContent = s.happened_label ? s.happened_label : (s.happened_sort?new Date(s.happened_sort).toDateString():new Date(s.created_at).toLocaleString());
     meta.appendChild(h); meta.appendChild(t);
 
     const actions=document.createElement('div'); actions.className='row';
-    const view=document.createElement('button'); view.className='btn'; view.textContent='View'; view.onclick=()=>viewStory(s);
-    const rewrite=document.createElement('button'); rewrite.className='btn'; rewrite.textContent='Rewrite (AI)'; rewrite.onclick=()=>rewriteAI(s);
-    const undo=document.createElement('button'); undo.className='btn'; undo.textContent='Undo'; if(!s.original_transcript){ undo.disabled = true; undo.title = 'No original saved'; } undo.onclick=()=>undoRewrite(s);
-    const dl=document.createElement('button'); dl.className='btn'; dl.textContent='Download .docx'; dl.onclick=()=>downloadDocx(s);
-    const del=document.createElement('button'); del.className='btn'; del.textContent='Delete'; del.onclick=()=>deleteStory(s);
+    const view=b('View',()=>viewStory(s));
+    const rewrite=b('Rewrite (AI)',()=>rewriteAI(s));
+    const undo=b('Undo',()=>undoRewrite(s)); if(!s.original_transcript){undo.disabled=true; undo.title='No original saved';}
+    const docx=b('Download .docx',()=>downloadDocx(s));
+    const del=b('Delete',()=>deleteStory(s));
+    [view,rewrite,undo,docx,del].forEach(x=>actions.appendChild(x));
 
-    actions.appendChild(view); actions.appendChild(rewrite); actions.appendChild(undo); actions.appendChild(dl); actions.appendChild(del);
-    row.appendChild(meta); row.appendChild(actions);
-    return row;
+    row.appendChild(meta); row.appendChild(actions); return row;
   }
-
-  function renderLib(items){
-    const target=(window.innerWidth>=1024)?library:libraryDrawer;
-    target.innerHTML='';
-    if(!items||!items.length){ const p=document.createElement('p'); p.className='muted'; p.textContent='No stories yet.'; target.appendChild(p); return; }
-    for(const s of items){ target.appendChild(storyRow(s)); }
-  }
+  function b(txt,fn){ const x=document.createElement('button'); x.className='btn'; x.textContent=txt; x.onclick=fn; return x; }
+  function renderLib(items){ const tgt=(window.innerWidth>=1024)?library:libraryDrawer; tgt.innerHTML=''; if(!items.length){const p=document.createElement('p');p.className='muted';p.textContent='No stories yet.';tgt.appendChild(p);return;} items.forEach(s=>tgt.appendChild(storyRow(s))); }
 
   async function deleteStory(s){
     if(!confirm('Delete this story?')) return;
@@ -527,10 +413,8 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
         await supabase.storage.from('memoir').remove([path.replace(/^memoir\//,'')]);
       }
     }catch{}
-    await supabase.from('stories').delete().eq('id', s.id);
-    fetchStories();
+    await supabase.from('stories').delete().eq('id', s.id); fetchStories();
   }
-
   function viewStory(s){
     const dlg=document.createElement('dialog');
     dlg.style.width='min(90vw, 820px)'; dlg.innerHTML =
@@ -544,103 +428,59 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
          </div>
          <div style="white-space:pre-wrap;font-family:system-ui">${esc(s.transcript||'')}</div>
          ${s.audio_url ? `<div style="margin-top:12px"><audio controls src="${s.audio_url}"></audio></div>` : ''}
-       </div>`;
-    document.body.appendChild(dlg);
-    dlg.addEventListener('close', ()=> dlg.remove());
-    dlg.showModal();
+       </div>`; document.body.appendChild(dlg); dlg.addEventListener('close', ()=>dlg.remove()); dlg.showModal();
   }
 
-  // ======== Rewrite / Undo / Download ========
+  // ======== Rewrite / Undo / DOCX ========
   async function rewriteAI(s){
-    const tone="warm, vivid, cohesive"; const language = lang.value;
+    const tone="warm, vivid, cohesive"; const language=lang.value;
     try{
-      const res = await fetch('/api/rewrite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:s.transcript,title:s.title,language,tone})});
+      const res=await fetch('/api/rewrite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:s.transcript,title:s.title,language,tone})});
       if(!res.ok){ let msg=await res.text(); try{msg=JSON.parse(msg).error||msg;}catch{} throw new Error(msg||'Rewrite failed'); }
       const data=await res.json(); const rewritten=data.text||'(no text)';
-
-      const update = { transcript: rewritten, rewritten_at: new Date().toISOString() };
-      if(!s.original_transcript) update.original_transcript = s.transcript;
-
-      const { error } = await supabase.from('stories').update(update).eq('id', s.id);
-      if (error) { alert('Update failed: ' + error.message); return; }
-
-      const dlg=document.createElement('dialog');
-      dlg.innerHTML = `<form method="dialog" style="padding:12px;border-bottom:1px solid #e5e7eb">
-          <strong>${esc(s.title)}</strong>&nbsp;—&nbsp;<span class="muted">Updated</span>
-          <button autofocus class="btn" style="float:right">Close</button>
-        </form>
-        <div style="padding:16px;white-space:pre-wrap;font-family:system-ui">${esc(rewritten)}</div>`;
-      document.body.appendChild(dlg); dlg.addEventListener('close',()=>dlg.remove()); dlg.showModal();
-
+      const update={ transcript:rewritten, rewritten_at:new Date().toISOString() }; if(!s.original_transcript) update.original_transcript=s.transcript;
+      const { error } = await supabase.from('stories').update(update).eq('id', s.id); if(error){alert('Update failed: '+error.message);return;}
+      const dlg=document.createElement('dialog'); dlg.innerHTML=`<form method="dialog" style="padding:12px;border-bottom:1px solid #e5e7eb"><strong>${esc(s.title)}</strong>&nbsp;—&nbsp;<span class="muted">Updated</span><button autofocus class="btn" style="float:right">Close</button></form><div style="padding:16px;white-space:pre-wrap;font-family:system-ui">${esc(rewritten)}</div>`; document.body.appendChild(dlg); dlg.addEventListener('close',()=>dlg.remove()); dlg.showModal();
       fetchStories();
-    }catch(err){ alert('Rewrite error: ' + (err?.message||err)); }
+    }catch(err){ alert('Rewrite error: '+(err?.message||err)); }
   }
   async function undoRewrite(s){
     if(!s.original_transcript){ alert('No original version available.'); return; }
-    const { error } = await supabase.from('stories').update({
-      transcript: s.original_transcript, original_transcript: null, rewritten_at: null
-    }).eq('id', s.id);
-    if (error){ alert('Undo failed: ' + error.message); return; }
-    fetchStories();
+    const { error } = await supabase.from('stories').update({ transcript:s.original_transcript, original_transcript:null, rewritten_at:null }).eq('id', s.id);
+    if(error){ alert('Undo failed: '+error.message); return; } fetchStories();
   }
   async function downloadDocx(s){
-    const JSZip = window.JSZip; const zip = new JSZip();
-    const paras = String(s.transcript||'').trim().split(/\n\s*\n/).map(p=>`<w:p><w:r><w:t>${escapeXml(p)}</w:t></w:r></w:p>`).join('');
-    const title = escapeXml(s.title||'Story');
+    const JSZip=window.JSZip; const zip=new JSZip();
+    const paras=String(s.transcript||'').trim().split(/\n\s*\n/).map(p=>`<w:p><w:r><w:t>${xml(p)}</w:t></w:r></w:p>`).join('');
+    const title=xml(s.title||'Story');
     zip.file('[Content_Types].xml',`<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>`);
     zip.folder('_rels').file('.rels',`<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`);
     const word=zip.folder('word'); word.folder('_rels').file('document.xml.rels', `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>`);
     word.file('document.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t xml:space="preserve">${title}</w:t></w:r></w:p>${paras}<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/></w:sectPr></w:body></w:document>`);
-    const blob = await zip.generateAsync({ type:'blob' }); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(s.title||'Story')+'.docx'; document.body.appendChild(a); a.click(); a.remove();
+    const blob=await zip.generateAsync({type:'blob'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(s.title||'Story')+'.docx'; document.body.appendChild(a); a.click(); a.remove();
   }
-  function escapeXml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function xml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-  // ======== Export (Book / CSV) in happened order ========
+  // ======== Export Book / CSV ========
   exportBookBtn.onclick = async ()=>{
-    if(!user){ alert('Sign in first.'); return; }
-    const fam = (familySel.value && familySel.value!=='__personal') ? familySel.value : null;
-    let q = supabase.from('stories').select('*');
-    if (fam){ q = q.eq('family_id', fam); }
-    else { q = q.eq('user_id', user.id).is('family_id', null); }
-    const { data } = await q.order('happened_sort', { ascending:true, nullsFirst:false })
-                            .order('created_at', { ascending:true });
-    const w = window.open('','_blank');
-    const body = (data||[]).map(ch => `
-      <section style="page-break-after:always;padding:32px 40px;font-family:Georgia,serif">
-        <h1 style="margin:0">${esc(ch.title||'Chapter')}</h1>
-        <time style="color:#666;font-size:12px">${esc(ch.happened_label || (ch.happened_sort?new Date(ch.happened_sort).toDateString():''))}</time>
-        <div style="margin-top:12px;white-space:pre-wrap;line-height:1.6">${esc(ch.transcript||'')}</div>
-      </section>`).join('');
-    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Book Export</title></head><body>${body}</body></html>`);
-    w.document.close();
+    const fam=(familySel.value && familySel.value!=='__personal')?familySel.value:null;
+    let q=supabase.from('stories').select('*'); q=fam?q.eq('family_id',fam):q.eq('user_id',user.id).is('family_id',null);
+    const { data } = await q.order('happened_sort',{ascending:true,nullsFirst:false}).order('created_at',{ascending:true});
+    const w=window.open('','_blank');
+    const body=(data||[]).map(ch=>`<section style="page-break-after:always;padding:32px 40px;font-family:Georgia,serif"><h1 style="margin:0">${esc(ch.title||'Chapter')}</h1><time style="color:#666;font-size:12px">${esc(ch.happened_label || (ch.happened_sort?new Date(ch.happened_sort).toDateString():''))}</time><div style="margin-top:12px;white-space:pre-wrap;line-height:1.6">${esc(ch.transcript||'')}</div></section>`).join('');
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Book Export</title></head><body>${body}</body></html>`); w.document.close();
   };
-
   exportCsvBtn.onclick = async ()=>{
-    if(!user){ alert('Sign in first.'); return; }
-    const fam = (familySel.value && familySel.value!=='__personal') ? familySel.value : null;
-    let q = supabase.from('stories').select('*');
-    if (fam){ q = q.eq('family_id', fam); }
-    else { q = q.eq('user_id', user.id).is('family_id', null); }
-    const { data } = await q.order('happened_sort', { ascending:true, nullsFirst:false })
-                            .order('created_at', { ascending:true });
-    const rows = [['Title','When','Body']]
-      .concat((data||[]).map(ch => [
-        ch.title||'Chapter',
-        ch.happened_label || (ch.happened_sort?new Date(ch.happened_sort).toISOString().slice(0,10):''),
-        (ch.transcript||'').replace(/\r?\n/g,'\\n')
-      ]));
-    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
-    const blob = new Blob([csv], {type:'text/csv'});
-    const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='memoir-canva.csv'; document.body.appendChild(a); a.click(); a.remove();
+    const fam=(familySel.value && familySel.value!=='__personal')?familySel.value:null;
+    let q=supabase.from('stories').select('*'); q=fam?q.eq('family_id',fam):q.eq('user_id',user.id).is('family_id',null);
+    const { data } = await q.order('happened_sort',{ascending:true,nullsFirst:false}).order('created_at',{ascending:true});
+    const rows=[['Title','When','Body']].concat((data||[]).map(ch=>[ch.title||'Chapter', ch.happened_label || (ch.happened_sort?new Date(ch.happened_sort).toISOString().slice(0,10):''), (ch.transcript||'').replace(/\r?\n/g,'\\n')]));
+    const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n'); const blob=new Blob([csv],{type:'text/csv'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='memoir-canva.csv'; document.body.appendChild(a); a.click(); a.remove();
   };
 
-  // ======== Bootstrap after login ========
-  async function bootstrap(){
-    await loadFamilies();
-    renderPrompts();
-    fetchStories();
-  }
-  if (user) bootstrap();
+  // ======== Bootstrap ========
+  await loadFamilies(); renderPrompts(); fetchStories();
 })();
 </script>
 </body>
