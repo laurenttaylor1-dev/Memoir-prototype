@@ -1,40 +1,25 @@
-// /api/health.js — deep diagnostics (safe to deploy)
+// /api/health.js  (Node runtime, concise production version)
 export default async function handler(req, res) {
-  const rawUrl = process.env.SUPABASE_URL || "";
-  const url = rawUrl.replace(/\/+$/, "") + "/auth/v1/health";
-  const key = process.env.SUPABASE_ANON_KEY || "";
+  const base = (process.env.SUPABASE_URL || "").replace(/\/+$/, "");
+  const url  = base + "/auth/v1/health";
 
-  async function ping(target, opts = {}) {
-    try {
-      const r = await fetch(target, opts);
-      const txt = await r.text().catch(() => "");
-      return { ok: r.ok, status: r.status, url: target, body: txt.slice(0, 300) };
-    } catch (e) {
-      return { ok: false, status: 0, url: target, error: String(e), code: e?.cause?.code };
+  try {
+    const r = await fetch(url, {
+      headers: { apikey: process.env.SUPABASE_ANON_KEY || "" },
+      // tiny timeout to avoid hanging
+      cache: "no-store",
+    });
+    if (!r.ok) {
+      const body = await r.text().catch(() => "");
+      return res.status(r.status).json({ ok: false, status: r.status, service: "auth", body });
     }
+    return res.status(200).json({ ok: true, status: 200, service: "auth" });
+  } catch (e) {
+    return res.status(500).json({
+      ok: false,
+      status: 500,
+      error: "fetch_failed",
+      message: String(e),
+    });
   }
-
-  const results = {};
-
-  // 0) Echo what the function sees (no secrets)
-  results.env = {
-    SUPABASE_URL: rawUrl,
-    SUPABASE_URL_trimmed: url.replace("/auth/v1/health", ""),
-    ANON_KEY_LEN: key.length,
-    ANON_KEY_PREFIX: key ? key.slice(0, 12) + "…" : "",
-  };
-
-  // 1) Can this function reach *any* HTTPS host?
-  results.google = await ping("https://www.google.com", { method: "HEAD" });
-
-  // 2) Can it reach the Supabase *domain* (root)?
-  results.sb_root = await ping(rawUrl || "https://invalid-host.example");
-
-  // 3) Can it reach the Supabase auth health endpoint?
-  results.sb_health = await ping(url, { headers: { apikey: key } });
-
-  // 4) Optional: Edge vs Node hint
-  results.runtime = { node: process.version, platform: process.platform };
-
-  return res.status(results.sb_health.ok ? 200 : 500).json(results);
 }
