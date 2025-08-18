@@ -39,7 +39,7 @@ select,.btn{padding:10px 12px;border-radius:12px;border:1px solid var(--border);
 .left,.right{min-width:0}
 .right{display:none}
 @media (min-width:1024px){
-  .shell{grid-template-columns:minmax(0,1fr) 360px}
+  .shell{grid-template-columns:minmax(0,1fr) 380px}
   .right{display:block}
 }
 
@@ -72,15 +72,19 @@ input[type="text"]{width:100%;padding:12px 14px;border-radius:12px;border:1px so
 .actions{display:flex;gap:10px;flex-wrap:wrap}
 .btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2)); color:#fff; border:0}
 
-.list{display:grid;gap:14px}
-.story{padding:14px;border:1px solid var(--border);border-radius:12px;background:rgba(2,8,23,.02)}
-.story header{display:flex;justify-content:space-between;align-items:flex-start;margin:0 0 6px 0}
-.story h3{margin:0;font-size:16px}
+.list{display:grid;gap:10px}
+.story{padding:12px;border:1px solid var(--border);border-radius:12px;background:rgba(2,8,23,.02);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.story .meta{min-width:0}
+.story h3{margin:0;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
 .story .time{font-size:12px;color:var(--muted)}
+.story .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 
 .drawer{position:fixed;inset:0;display:none;background:rgba(2,8,23,.45);backdrop-filter: blur(2px)}
 .drawer.show{display:block}
 .drawer .panel{position:absolute;right:0;top:0;bottom:0;width:88%;max-width:420px;background:var(--card);border-left:1px solid var(--border);padding:16px;overflow:auto}
+
+dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog{border:none;border-radius:12px;box-shadow:var(--shadow);max-width:min(800px,92vw)}
 
 footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
 </style>
@@ -160,11 +164,14 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     </div>
   </div>
 
+  <!-- JSZip for .docx generation -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
 <script>
 (function(){
   // ------- DOM helpers -------
   const $ = (id)=>document.getElementById(id);
-  function escHTML(s){ return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+  const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 
   // ------- Elements -------
   const lang=$('lang'), plan=$('plan');
@@ -188,6 +195,11 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
   const promptsEN=[ "Describe your home growing up.","Tell me about your first job.","How did you meet your partner?","What big events did you live through?","What advice would you give your 20-year-old self?" ];
   const promptsFR=[ "Décrivez votre maison quand vous étiez enfant.","Parlez de votre premier emploi.","Comment avez-vous rencontré votre partenaire ?","Quels grands événements avez-vous vécus ?","Quel conseil donneriez-vous à vos 20 ans ?" ];
 
+  // ------- Storage helpers -------
+  const KEY='memoir_stories';
+  const getAll = ()=>{ try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch{return[]} };
+  const setAll = (arr)=>localStorage.setItem(KEY, JSON.stringify(arr));
+
   // ------- UI renderers -------
   function renderPrompts(){
     promptsEl.innerHTML='';
@@ -197,25 +209,62 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
       promptsEl.appendChild(b);
     });
   }
+
+  function storyRow(s){
+    const row=document.createElement('div'); row.className='story';
+
+    const meta=document.createElement('div'); meta.className='meta';
+    const h=document.createElement('h3'); h.textContent=s.title || (locale==='fr'?'Histoire':'Story');
+    const t=document.createElement('div'); t.className='time'; t.textContent=new Date(s.createdAt).toLocaleString();
+    meta.appendChild(h); meta.appendChild(t);
+
+    const actions=document.createElement('div'); actions.className='row';
+    const view=document.createElement('button'); view.className='btn'; view.textContent=(locale==='fr'?'Voir':'View');
+    view.onclick=()=>viewStory(s);
+
+    const rewrite=document.createElement('button'); rewrite.className='btn'; rewrite.textContent=(locale==='fr'?'Réécrire (IA)':'Rewrite (AI)');
+    rewrite.onclick=()=>rewriteAI(s);
+
+    const undo=document.createElement('button'); undo.className='btn'; undo.textContent=(locale==='fr'?'Annuler':'Undo');
+    if(!s.originalTranscript){ undo.disabled = true; undo.title = (locale==='fr'?'Pas de version originale':'No original saved'); }
+    undo.onclick=()=>undoRewrite(s);
+
+    const dl=document.createElement('button'); dl.className='btn'; dl.textContent='Download .docx';
+    dl.onclick=()=>downloadDocx(s);
+
+    const del=document.createElement('button'); del.className='btn'; del.textContent=(locale==='fr'?'Supprimer':'Delete');
+    del.onclick=()=>{ const next=getAll().filter(x=>x.id!==s.id); setAll(next); renderLib(); };
+
+    actions.appendChild(view); actions.appendChild(rewrite); actions.appendChild(undo); actions.appendChild(dl); actions.appendChild(del);
+
+    row.appendChild(meta);
+    row.appendChild(actions);
+    return row;
+  }
+
   function renderLib(){
     const target=(window.innerWidth>=1024)?library:libraryDrawer;
     target.innerHTML='';
-    let items=[]; try{items=JSON.parse(localStorage.getItem('memoir_stories')||'[]')}catch{}
+    const items=getAll();
     if(!items.length){ const p=document.createElement('p'); p.className='muted'; p.textContent=(locale==='fr'?'Aucune histoire pour le moment.':'No stories yet.'); target.appendChild(p); return; }
-    for(const s of items){
-      const el=document.createElement('div'); el.className='story';
-      const head=document.createElement('header');
-      const h3=document.createElement('h3'); h3.textContent=s.title;
-      const time=document.createElement('div'); time.className='time'; time.textContent=new Date(s.createdAt).toLocaleString();
-      head.appendChild(h3); head.appendChild(time); el.appendChild(head);
-      const body=document.createElement('div'); body.textContent=s.transcript; el.appendChild(body);
-      if(s.audioURL){ const aud=document.createElement('audio'); aud.controls=true; aud.src=s.audioURL; el.appendChild(aud); }
-      const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px'; actions.style.marginTop='8px';
-      const rewrite=document.createElement('button'); rewrite.className='btn'; rewrite.textContent=(locale==='fr'?'Réécrire (IA)':'Rewrite (AI)'); rewrite.onclick=()=>rewriteAI(s);
-      const del=document.createElement('button'); del.className='btn'; del.textContent=(locale==='fr'?'Supprimer':'Delete'); del.onclick=()=>{ const next=(JSON.parse(localStorage.getItem('memoir_stories')||'[]')).filter(x=>x.id!==s.id); localStorage.setItem('memoir_stories', JSON.stringify(next)); renderLib(); };
-      actions.appendChild(rewrite); actions.appendChild(del); el.appendChild(actions);
-      target.appendChild(el);
-    }
+    for(const s of items){ target.appendChild(storyRow(s)); }
+  }
+
+  function viewStory(s){
+    const dlg=document.createElement('dialog');
+    dlg.style.width='min(90vw, 820px)'; dlg.innerHTML =
+      `<form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #e5e7eb">
+         <div style="font-weight:700">${esc(s.title||'Story')}</div>
+         <button autofocus class="btn">Close</button>
+       </form>
+       <div style="padding:16px">
+         <div class="muted" style="margin-bottom:6px">${new Date(s.createdAt).toLocaleString()}</div>
+         <div style="white-space:pre-wrap;font-family:system-ui">${esc(s.transcript||'')}</div>
+         ${s.audioURL ? `<div style="margin-top:12px"><audio controls src="${s.audioURL}"></audio></div>` : ''}
+       </div>`;
+    document.body.appendChild(dlg);
+    dlg.addEventListener('close', ()=> dlg.remove());
+    dlg.showModal();
   }
 
   // ------- Drawer & resize -------
@@ -280,47 +329,166 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
   save.onclick=()=>{
     const audioURL = audioBlob ? URL.createObjectURL(audioBlob) : undefined;
     const item = { id:Math.random().toString(36).slice(2), createdAt:Date.now(), title:titleEl.value||'Story', mode, prompt:mode==='guided'?selectedPrompt:undefined, transcript, audioURL, durationSec:elapsed };
-    const prev=JSON.parse(localStorage.getItem('memoir_stories')||'[]'); prev.unshift(item); localStorage.setItem('memoir_stories', JSON.stringify(prev));
+    const prev=getAll(); prev.unshift(item); setAll(prev);
     renderLib(); clearBtn.onclick();
   };
 
-  // ------- Rewrite (AI) with popup‑blocker fallback -------
+  // ------- Rewrite (AI) — updates saved story in place -------
   async function rewriteAI(s){
     const tone="warm, vivid, cohesive"; const language=(lang.value==='fr')?'fr':'en';
-
-    let win=null; try{ win=window.open('','_blank'); }catch{}
-    let usePopup=!!win;
-    if(usePopup){
-      try{ win.document.write('<pre style="white-space:pre-wrap;font-family:system-ui;padding:16px;margin:0">Generating…</pre>'); win.document.close(); }
-      catch{ usePopup=false; try{win.close();}catch{} }
-    }
-
     try{
       const res = await fetch('/api/rewrite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:s.transcript,title:s.title,language,tone})});
       if(!res.ok){ let msg=await res.text(); try{msg=JSON.parse(msg).error||msg;}catch{} throw new Error(msg||'Rewrite failed'); }
       const data=await res.json(); const rewritten=data.text||'(no text)';
 
-      if(usePopup && win){
-        win.document.body.innerHTML = `<pre style="white-space:pre-wrap;font-family:system-ui;padding:16px;margin:0">${escHTML(rewritten)}</pre>`;
-      }else{
+      const items=getAll();
+      const idx=items.findIndex(x=>x.id===s.id);
+      if(idx>=0){
+        if(!items[idx].originalTranscript) items[idx].originalTranscript = items[idx].transcript;
+        items[idx].transcript = rewritten;
+        items[idx].rewrittenAt = Date.now();
+        setAll(items);
+        renderLib();
+
+        // Confirmation modal
         const dlg=document.createElement('dialog');
-        dlg.style.width='min(90vw, 800px)'; dlg.style.padding='0';
         dlg.innerHTML = `<form method="dialog" style="padding:12px;border-bottom:1px solid #e5e7eb">
-            <button autofocus style="padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;background:#fff">Close</button>
+            <strong>${esc(items[idx].title)}</strong>&nbsp;—&nbsp;<span class="muted">Updated</span>
+            <button autofocus class="btn" style="float:right">Close</button>
           </form>
-          <div style="padding:16px;white-space:pre-wrap;font-family:system-ui">${escHTML(rewritten)}</div>`;
-        document.body.appendChild(dlg);
-        dlg.addEventListener('close',()=>dlg.remove());
-        dlg.showModal();
+          <div style="padding:16px;white-space:pre-wrap;font-family:system-ui">${esc(rewritten)}</div>`;
+        document.body.appendChild(dlg); dlg.addEventListener('close',()=>dlg.remove()); dlg.showModal();
       }
     }catch(err){
       alert('Rewrite error: ' + (err?.message||err));
-      if(usePopup && win) try{win.close();}catch{}
     }
+  }
+
+  // ------- Undo to original -------
+  function undoRewrite(s){
+    const items=getAll();
+    const idx=items.findIndex(x=>x.id===s.id);
+    if(idx<0) return;
+    if(!items[idx].originalTranscript){ alert(locale==='fr'?'Aucune version originale.':'No original version available.'); return; }
+    items[idx].transcript = items[idx].originalTranscript;
+    delete items[idx].originalTranscript;
+    items[idx].rewrittenAt = null;
+    setAll(items);
+    renderLib();
+  }
+
+  // ------- Download .docx (client-side, minimal OOXML) -------
+  async function downloadDocx(s){
+    const JSZip = window.JSZip;
+    const zip = new JSZip();
+
+    // Simple paragraph builder from text (split by blank lines)
+    const paras = String(s.transcript||'').trim().split(/\n\s*\n/).map(p=>`<w:p><w:r><w:t>${escapeXml(p)}</w:t></w:r></w:p>`).join('');
+    const title = escapeXml(s.title||'Story');
+
+    // Required files
+    zip.file('[Content_Types].xml', `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+        <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+        <Default Extension="xml" ContentType="application/xml"/>
+        <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+        <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
+        <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
+      </Types>`.trim());
+
+    zip.folder('_rels').file('.rels', `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+        <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+        <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
+        <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
+      </Relationships>`.trim());
+
+    zip.folder('docProps').file('core.xml', `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties"
+        xmlns:dc="http://purl.org/dc/elements/1.1/"
+        xmlns:dcterms="http://purl.org/dc/terms/"
+        xmlns:dcmitype="http://purl.org/dc/dcmitype/"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <dc:title>${title}</dc:title>
+        <dc:creator>Memoir Recorder</dc:creator>
+        <cp:lastModifiedBy>Memoir Recorder</cp:lastModifiedBy>
+        <dcterms:created xsi:type="dcterms:W3CDTF">${new Date().toISOString()}</dcterms:created>
+        <dcterms:modified xsi:type="dcterms:W3CDTF">${new Date().toISOString()}</dcterms:modified>
+      </cp:coreProperties>`.trim());
+
+    zip.folder('docProps').file('app.xml', `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"
+        xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
+        <Application>Memoir Recorder</Application>
+        <DocSecurity>0</DocSecurity>
+        <ScaleCrop>false</ScaleCrop>
+        <HeadingPairs>
+          <vt:vector size="2" baseType="variant">
+            <vt:variant><vt:lpstr>Title</vt:lpstr></vt:variant>
+            <vt:variant><vt:i4>1</vt:i4></vt:variant>
+          </vt:vector>
+        </HeadingPairs>
+        <TitlesOfParts>
+          <vt:vector size="1" baseType="lpstr">
+            <vt:lpstr>${title}</vt:lpstr>
+          </vt:vector>
+        </TitlesOfParts>
+      </Properties>`.trim());
+
+    const word = zip.folder('word');
+    word.folder('_rels').file('document.xml.rels', `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>`.trim());
+
+    word.file('document.xml', `
+      <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+      <w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:o="urn:schemas-microsoft-com:office:office"
+        xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+        xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math"
+        xmlns:v="urn:schemas-microsoft-com:vml"
+        xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing"
+        xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+        xmlns:w10="urn:schemas-microsoft-com:office:word"
+        xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+        xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"
+        xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup"
+        xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk"
+        xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml"
+        xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
+        mc:Ignorable="w14 wp14">
+        <w:body>
+          <w:p><w:r><w:t xml:space="preserve">${title}</w:t></w:r></w:p>
+          ${paras}
+          <w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/></w:sectPr>
+        </w:body>
+      </w:document>`.trim());
+
+    const blob = await zip.generateAsync({ type:'blob' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (s.title || 'Story') + '.docx';
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  function escapeXml(s){
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
   // ------- Init -------
   renderPrompts(); renderLib();
+
+  // ------- Public functions for buttons scope -------
+  window.viewStory = viewStory;
+  window.rewriteAI = rewriteAI;
+  window.undoRewrite = undoRewrite;
+  window.downloadDocx = downloadDocx;
+
 })();
 </script>
 </body>
