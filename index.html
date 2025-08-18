@@ -75,7 +75,7 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
             <option value="es">Español</option>
             <option value="nl">Nederlands</option>
           </select>
-          <select id="voiceSelect" title="Voice (when available)"></select>
+          <select id="voiceSelect" title="System voice (fallback)"></select>
           <button id="toggleLib" class="btn">☰ Library</button>
           <button id="logout" class="btn badge">Logout</button>
         </div>
@@ -149,16 +149,13 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
 
 <script>
 (async function(){
-  /* ===== Supabase guard (uses your project) ===== */
+  /* ===== Supabase guard ===== */
   const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
-  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}
-  });
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false} });
 
   const guard=document.getElementById('guard'), app=document.getElementById('app');
   const { data:{session} } = await supa.auth.getSession();
-  console.log('session on index', session);
   if(!session){ window.location.replace('/login.html'); return; }
   guard.style.display='none'; app.style.display='grid';
   document.getElementById('logout').onclick = async ()=>{ await supa.auth.signOut(); window.location.replace('/login.html'); };
@@ -173,7 +170,7 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
   const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
   const exportBookBtn=$('exportBook'), exportCsvBtn=$('exportCsv');
 
-  /* ===== Topics (chip word) + Spoken prompts (full sentence) ===== */
+  /* ===== Topics + spoken sentences ===== */
   const TOPIC_WORDS = {
     en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
     fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
@@ -181,66 +178,14 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
   };
   const PROMPT_SENTENCES = {
-    en:{
-      Childhood:"Tell me something about your youth.",
-      Family:"Tell me about your family and the people who raised you.",
-      School:"What was school like for you?",
-      Work:"Tell me about your first job or career.",
-      Love:"How did you meet your partner, or what did love mean to you then?",
-      War:"What big world events or conflicts did you live through?",
-      Travel:"Where did you travel that left a mark on you?",
-      Traditions:"Which family traditions mattered most to you?",
-      Holidays:"Describe a holiday you remember vividly.",
-      Lessons:"What life lesson did you learn the hard way?",
-      Advice:"What advice would you give your younger self?",
-      "Turning-points":"What was a turning point that changed your path?"
-    },
-    fr:{
-      Enfance:"Parlez-moi de votre jeunesse, d’un souvenir marquant.",
-      Famille:"Parlez-moi de votre famille et des personnes qui vous ont élevé.",
-      École:"Comment était l’école pour vous ?",
-      Travail:"Racontez-moi votre premier travail ou votre carrière.",
-      Amour:"Comment avez-vous rencontré votre partenaire, et que signifiait l’amour pour vous ?",
-      Guerre:"Quels grands événements ou conflits avez-vous vécus ?",
-      Voyages:"Quels voyages vous ont marqué(e) ?",
-      Traditions:"Quelles traditions familiales comptaient le plus ?",
-      Fêtes:"Décrivez une fête dont vous vous souvenez clairement.",
-      Leçons:"Quelle leçon de vie avez-vous apprise à la dure ?",
-      Conseils:"Quel conseil donneriez-vous à votre jeune vous ?",
-      Déclics:"Quel déclic a changé votre trajectoire ?"
-    },
-    es:{
-      Infancia:"Cuéntame algo sobre tu juventud.",
-      Familia:"Háblame de tu familia y de quienes te criaron.",
-      Escuela:"¿Cómo era la escuela para ti?",
-      Trabajo:"Cuéntame sobre tu primer trabajo o tu carrera.",
-      Amor:"¿Cómo conociste a tu pareja y qué significaba el amor entonces?",
-      Guerra:"¿Qué grandes eventos o conflictos viviste?",
-      Viajes:"¿Qué viajes te marcaron?",
-      Tradiciones:"¿Qué tradiciones familiares eran importantes para ti?",
-      Fiestas:"Describe una fiesta que recuerdes con claridad.",
-      Lecciones:"¿Qué lección de vida aprendiste con dificultad?",
-      Consejos:"¿Qué consejo le darías a tu yo joven?",
-      "Puntos-clave":"¿Cuál fue un punto de inflexión en tu vida?"
-    },
-    nl:{
-      Jeugd:"Vertel me iets over je jeugd.",
-      Familie:"Vertel over je familie en de mensen die je hebben opgevoed.",
-      School:"Hoe was school voor jou?",
-      Werk:"Vertel over je eerste baan of je loopbaan.",
-      Liefde:"Hoe heb je je partner ontmoet, en wat betekende liefde toen?",
-      Oorlog:"Welke grote gebeurtenissen of conflicten heb je meegemaakt?",
-      Reizen:"Welke reizen hebben indruk op je gemaakt?",
-      Tradities:"Welke familietradities waren belangrijk voor je?",
-      Feestdagen:"Beschrijf een feestdag die je helder herinnert.",
-      Lessen:"Welke levensles heb je op de harde manier geleerd?",
-      Advies:"Welk advies zou je je jongere zelf geven?",
-      Keerpunt:"Wat was een keerpunt in je leven?"
-    }
+    en:{Childhood:"Tell me something about your youth.",Family:"Tell me about your family and the people who raised you.",School:"What was school like for you?",Work:"Tell me about your first job or career.",Love:"How did you meet your partner, or what did love mean to you then?",War:"What big world events or conflicts did you live through?",Travel:"Where did you travel that left a mark on you?",Traditions:"Which family traditions mattered most to you?",Holidays:"Describe a holiday you remember vividly.",Lessons:"What life lesson did you learn the hard way?",Advice:"What advice would you give your younger self?","Turning-points":"What was a turning point that changed your path?"},
+    fr:{Enfance:"Parlez-moi de votre jeunesse, d’un souvenir marquant.",Famille:"Parlez-moi de votre famille et des personnes qui vous ont élevé.",École:"Comment était l’école pour vous ?",Travail:"Racontez-moi votre premier travail ou votre carrière.",Amour:"Comment avez-vous rencontré votre partenaire, et que signifiait l’amour pour vous ?",Guerre:"Quels grands événements ou conflits avez-vous vécus ?",Voyages:"Quels voyages vous ont marqué(e) ?",Traditions:"Quelles traditions familiales comptaient le plus ?",Fêtes:"Décrivez une fête dont vous vous souvenez clairement.",Leçons:"Quelle leçon de vie avez-vous apprise à la dure ?",Conseils:"Quel conseil donneriez-vous à votre jeune vous ?",Déclics:"Quel déclic a changé votre trajectoire ?"},
+    es:{Infancia:"Cuéntame algo sobre tu juventud.",Familia:"Háblame de tu familia y de quienes te criaron.",Escuela:"¿Cómo era la escuela para ti?",Trabajo:"Cuéntame sobre tu primer trabajo o tu carrera.",Amor:"¿Cómo conociste a tu pareja y qué significaba el amor entonces?",Guerra:"¿Qué grandes eventos o conflictos viviste?",Viajes:"¿Qué viajes te marcaron?",Tradiciones:"¿Qué tradiciones familiares eran importantes para ti?",Fiestas:"Describe una fiesta que recuerdes con claridad.",Lecciones:"¿Qué lección de vida aprendiste con dificultad?",Consejos:"¿Qué consejo le darías a tu yo joven?","Puntos-clave":"¿Cuál fue un punto de inflexión en tu vida?"},
+    nl:{Jeugd:"Vertel me iets over je jeugd.",Familie:"Vertel over je familie en de mensen die je hebben opgevoed.",School:"Hoe was school voor jou?",Werk:"Vertel over je eerste baan of je loopbaan.",Liefde:"Hoe heb je je partner ontmoet, en wat betekende liefde toen?",Oorlog:"Welke grote gebeurtenissen of conflicten heb je meegemaakt?",Reizen:"Welke reizen hebben indruk op je gemaakt?",Tradities:"Welke familietradities waren belangrijk voor je?",Feestdagen:"Beschrijf een feestdag die je helder herinnert.",Lessen:"Welke levensles heb je op de harde manier geleerd?",Advies:"Welk advies zou je je jongere zelf geven?",Keerpunt:"Wat was een keerpunt in je leven?"}
   };
   const BCP={en:'en-US',fr:'fr-FR',es:'es-ES',nl:'nl-NL'};
 
-  /* ===== TTS: try ElevenLabs via /api/tts, else fallback to Web Speech ===== */
+  /* ===== System voice fallback list ===== */
   let VOICES=[];
   function populateVoices(){
     VOICES = speechSynthesis.getVoices()||[];
@@ -248,13 +193,11 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     const list=VOICES.filter(v=>v.lang===target||v.lang?.startsWith(target.split('-')[0]));
     voiceSelect.innerHTML='';
     list.forEach(v=>{
-      const o=document.createElement('option');
-      o.value=v.name; o.textContent=`${v.name} (${v.lang})`;
+      const o=document.createElement('option'); o.value=v.name; o.textContent=`${v.name} (${v.lang})`;
       voiceSelect.appendChild(o);
     });
     if(!list.length){
-      const o=document.createElement('option');
-      o.textContent='No system voice available'; o.disabled=true; o.selected=true;
+      const o=document.createElement('option'); o.textContent='No system voice available'; o.disabled=true; o.selected=true;
       voiceSelect.appendChild(o);
     }
   }
@@ -263,10 +206,21 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     populateVoices();
   }
 
-  async function playElevenLabs(text, langCode){
+  async function speakViaElevenLabs(sentence, code){
+    // Optional per-language voice IDs (you can customize later)
+    const VOICE_BY_LANG = {
+      en: '21m00Tcm4TlvDq8ikWAM', // Rachel
+      fr: '21m00Tcm4TlvDq8ikWAM', // Rachel works okay in multilingual v2
+      es: '21m00Tcm4TlvDq8ikWAM',
+      nl: '21m00Tcm4TlvDq8ikWAM'
+    };
+    const voiceId = VOICE_BY_LANG[code] || VOICE_BY_LANG.en;
+
     try{
-      const r = await fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ text, lang: langCode })});
+      const r = await fetch('/api/voice', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ text: sentence, voiceId })
+      });
       if(!r.ok) throw new Error('tts_failed');
       const blob = await r.blob();
       const url = URL.createObjectURL(blob);
@@ -275,164 +229,20 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
       setTimeout(()=>URL.revokeObjectURL(url), 60000);
       return true;
     }catch(e){
-      console.warn('ElevenLabs TTS fallback → Web Speech', e);
+      console.warn('ElevenLabs TTS failed, falling back to system voice:', e);
       return false;
     }
   }
-  function speakFallback(text, langCode){
+
+  function speakSystem(sentence, code){
     if(!('speechSynthesis' in window)) return;
-    const u=new SpeechSynthesisUtterance(String(text));
-    u.lang=BCP[langCode]||'en-US'; u.rate=.95; u.pitch=1; u.volume=1;
+    const u=new SpeechSynthesisUtterance(String(sentence));
+    u.lang=BCP[code]||'en-US'; u.rate=.95; u.pitch=1; u.volume=1;
     const choice=VOICES.find(v=>v.name===voiceSelect.value)||
                  VOICES.find(v=>v.lang===u.lang)||
                  VOICES.find(v=>v.lang?.startsWith(u.lang.split('-')[0]))||null;
     if(choice) u.voice=choice;
     speechSynthesis.cancel(); speechSynthesis.speak(u);
   }
-  async function speakPrompt(oneWord, langCode){
-    const sent = (PROMPT_SENTENCES[langCode]||{})[oneWord] || oneWord;
-    const ok = await playElevenLabs(sent, langCode);
-    if(!ok) speakFallback(sent, langCode);
-  }
 
-  function renderPrompts(){
-    const code=lang.value; promptsWrap.innerHTML='';
-    (TOPIC_WORDS[code]||TOPIC_WORDS.en).forEach(word=>{
-      const chip=document.createElement('div'); chip.className='chip'; chip.textContent=word;
-      chip.onclick=()=>{ titleEl.value=word; speakPrompt(word, code); };
-      promptsWrap.appendChild(chip);
-    });
-  }
-
-  /* ===== Mode switching ===== */
-  tabGuided.onclick=()=>{tabGuided.classList.add('active');tabFree.classList.remove('active');guidedBlock.style.display='block'};
-  tabFree.onclick  =()=>{tabFree.classList.add('active');tabGuided.classList.remove('active');guidedBlock.style.display='none'};
-  lang.onchange=()=>populateVoices()||renderPrompts();
-
-  /* ===== Library drawer (mobile) ===== */
-  toggleLib.onclick=()=>{ if(innerWidth>=1024){ renderLib(); } else { drawer.classList.add('show'); renderLib(true); } };
-  closeDrawer.onclick=()=>drawer.classList.remove('show');
-  drawer.addEventListener('click',e=>{ if(e.target===drawer) drawer.classList.remove('show'); });
-
-  /* ===== Recorder (Web Speech Recognition) ===== */
-  let recognition=null, recActive=false, cap=120, elapsed=0, timer=null;
-  function startRec(){
-    const SR=window.webkitSpeechRecognition||window.SpeechRecognition;
-    if(!SR){asr.textContent='Speech recognition is not available in this browser.';return;}
-    recognition=new SR(); recognition.lang=BCP[lang.value]||'en-US'; recognition.continuous=true; recognition.interimResults=true;
-    let full='';
-    recognition.onresult=(e)=>{
-      let inter=''; for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i]; if(r.isFinal) full+=r[0].transcript+' '; else inter+=r[0].transcript;}
-      const txt=(full+inter).trim(); transcriptEl.textContent=txt||'Your words will appear here…'; save.disabled=!txt;
-    };
-    recognition.onend=()=>stopRec();
-    try{recognition.start();}catch{}
-    asr.textContent='Transcribing…'; mic.textContent='Stop Recording'; mic.classList.add('pulse');
-    elapsed=0; remain.textContent=cap+'s'; bar.style.width='0%'; meter.style.display='flex';
-    timer=setInterval(()=>{elapsed++; bar.style.width=(elapsed/cap*100)+'%'; remain.textContent=Math.max(0,cap-elapsed)+'s'; if(elapsed>=cap) stopRec();},1000);
-    recActive=true;
-  }
-  function stopRec(){ try{recognition&&recognition.stop();}catch{} if(timer){clearInterval(timer);timer=null} mic.textContent='Record'; mic.classList.remove('pulse'); asr.textContent=''; recActive=false; }
-  mic.onclick=()=>{ recActive?stopRec():startRec(); };
-
-  /* ===== Approx date parsing ===== */
-  function parseApproxDate(input){
-    if(!input) return {label:'',sort:null};
-    const s=input.trim().toLowerCase();
-    const iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); if(iso){const d=new Date(+iso[1],+iso[2]-1,+iso[3]);return{label:input,sort:d.toISOString().slice(0,10)};}
-    const yOnly=s.match(/(\d{4})/); if(yOnly){const d=new Date(+yOnly[1],0,1);return{label:input,sort:d.toISOString().slice(0,10)};}
-    const season=s.match(/^(early|mid|late)?\s*(spring|summer|autumn|fall|winter)\s+(\d{4})$/);
-    if(season){const y=+season[3];const base={spring:2,summer:5,autumn:8,fall:8,winter:11}[season[2]];let m=base,day=1;if(season[1]==='mid')day=10;if(season[1]==='late')day=20;const d=new Date(y,m,day);return{label:input,sort:d.toISOString().slice(0,10)};}
-    return {label:input,sort:null};
-  }
-
-  /* ===== Library (localStorage for now) ===== */
-  const LSKEY='memoir.stories';
-  const loadStories=()=>{try{return JSON.parse(localStorage.getItem(LSKEY)||'[]')}catch{return[]}};
-  const saveStories=(list)=>localStorage.setItem(LSKEY,JSON.stringify(list));
-  const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-
-  function storyRow(s, idx){
-    const row=document.createElement('div'); row.className='story';
-    const meta=document.createElement('div'); meta.style.minWidth='0';
-    const h=document.createElement('h3'); h.textContent=s.title||'Story';
-    const t=document.createElement('div'); t.className='muted';
-    t.textContent = s.happened_label || (s.happened_sort?new Date(s.happened_sort).toDateString():new Date(s.created).toLocaleString());
-    meta.appendChild(h); meta.appendChild(t);
-
-    const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px'; actions.style.flexWrap='wrap';
-    const make=(txt,fn,disabled)=>{const b=document.createElement('button'); b.className='btn'; b.textContent=txt; if(disabled) b.disabled=true; b.onclick=fn; return b;};
-    actions.appendChild(make('View',()=>viewStory(s)));
-    actions.appendChild(make('Rewrite (AI)',()=>rewriteAI(idx)));
-    actions.appendChild(make('Undo',()=>undoRewrite(idx),!s.prev));
-    actions.appendChild(make('Download .docx',()=>downloadDocx(s)));
-    actions.appendChild(make('Delete',()=>delStory(idx)));
-    row.appendChild(meta); row.appendChild(actions);
-    return row;
-  }
-  function renderLib(toDrawer=false){
-    const items=loadStories();
-    const tgt=toDrawer?libraryDrawer:library;
-    tgt.innerHTML=''; if(!items.length){const p=document.createElement('p');p.className='muted';p.textContent='No stories yet.';tgt.appendChild(p);return;}
-    items.forEach((s,i)=>tgt.appendChild(storyRow(s,i)));
-  }
-  function viewStory(s){
-    const dlg=document.createElement('dialog');
-    dlg.style.width='min(90vw,820px)';
-    dlg.innerHTML=`<form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #e5e7eb"><strong>${esc(s.title||'Story')}</strong><button autofocus class="btn">Close</button></form><div style="padding:16px"><div class="muted" style="margin-bottom:6px">${esc(s.happened_label || (s.happened_sort?new Date(s.happened_sort).toDateString():new Date(s.created).toLocaleString()))}</div><div style="white-space:pre-wrap;font-family:system-ui">${esc(s.text||'')}</div></div>`;
-    document.body.appendChild(dlg); dlg.addEventListener('close',()=>dlg.remove()); dlg.showModal();
-  }
-  function delStory(idx){ const list=loadStories(); list.splice(idx,1); saveStories(list); renderLib(); renderLib(true); }
-
-  async function rewriteAI(idx){
-    const list=loadStories(); const s=list[idx]; if(!s) return;
-    try{
-      const res=await fetch('/api/rewrite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:s.text,title:s.title,language:lang.value,tone:'warm, vivid, cohesive memoir tone'})});
-      const data=await res.json(); if(!res.ok) throw new Error(data.error||'rewrite_failed');
-      if(!s.prev) s.prev=s.text;
-      s.text = data.text || s.text;
-      saveStories(list); renderLib(); renderLib(true); viewStory(s);
-    }catch(e){ alert('Rewrite error: '+(e?.message||e)); }
-  }
-  function undoRewrite(idx){ const list=loadStories(); const s=list[idx]; if(!s?.prev) return; s.text=s.prev; s.prev=null; saveStories(list); renderLib(); renderLib(true); }
-
-  async function downloadDocx(s){
-    const JSZip=window.JSZip; const zip=new JSZip();
-    const paras=String(s.text||'').trim().split(/\n\s*\n/).map(p=>`<w:p><w:r><w:t>${xml(p)}</w:t></w:r></w:p>`).join('');
-    const title=xml(s.title||'Story');
-    zip.file('[Content_Types].xml',`<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>`);
-    zip.folder('_rels').file('.rels',`<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`);
-    const word=zip.folder('word'); word.folder('_rels').file('document.xml.rels', `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>`);
-    word.file('document.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t xml:space="preserve">${title}</w:t></w:r></w:p>${paras}<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/></w:sectPr></w:body></w:document>`);
-    const blob=await zip.generateAsync({type:'blob'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(s.title||'Story')+'.docx'; a.click();
-  }
-  const xml=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-
-  /* ===== Save current story ===== */
-  function currentText(){ const t=transcriptEl.textContent||''; return t==='Your words will appear here…'?'':t; }
-  $('save').onclick=()=>{
-    const list=loadStories(); const when=parseApproxDate(whenEl.value);
-    list.unshift({id:crypto.randomUUID(),title:titleEl.value||'Story',text:currentText(),created:Date.now(),happened_label:when.label||null,happened_sort:when.sort,prev:null});
-    saveStories(list); titleEl.value=''; whenEl.value=''; transcriptEl.textContent='Your words will appear here…'; save.disabled=true; renderLib(); renderLib(true);
-  };
-  clearBtn.onclick=()=>{ titleEl.value=''; whenEl.value=''; transcriptEl.textContent='Your words will appear here…'; save.disabled=true; };
-
-  /* ===== Exports ===== */
-  exportBookBtn.onclick=()=>{
-    const items=loadStories().slice().sort((a,b)=>(a.happened_sort||'')<(b.happened_sort||'')?-1:1);
-    const html=items.map(ch=>`<section style="page-break-after:always;padding:32px 40px;font-family:Georgia,serif"><h1 style="margin:0">${esc(ch.title||'Chapter')}</h1><time style="color:#666;font-size:12px">${esc(ch.happened_label||(ch.happened_sort?new Date(ch.happened_sort).toDateString():''))}</time><div style="margin-top:12px;white-space:pre-wrap;line-height:1.6">${esc(ch.text||'')}</div></section>`).join('');
-    const w=open('','_blank'); w.document.write(`<!doctype html><meta charset="utf-8"><title>Book Export</title>${html}`); w.document.close();
-  };
-  exportCsvBtn.onclick=()=>{
-    const rows=[['Title','When','Body']]; loadStories().forEach(ch=>rows.push([ch.title||'Chapter', ch.happened_label||(ch.happened_sort?new Date(ch.happened_sort).toISOString().slice(0,10):''), (ch.text||'').replace(/\r?\n/g,'\\n')]));
-    const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
-    const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='memoir.csv'; a.click();
-  };
-
-  /* ===== Init ===== */
-  renderPrompts(); renderLib();
-
-})();
-</script>
-</body>
-</html>
+  async function speakPrompt(oneWord, code){
