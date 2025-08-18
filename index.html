@@ -1,248 +1,165 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Memoir — Recorder</title>
-<meta name="color-scheme" content="light dark"/>
-<style>
-:root{--bg:#f6f7fb;--card:#fff;--fg:#0f172a;--muted:#667085;--brand:#2563eb;--brand2:#7c3aed;--border:#e6e9f0;--shadow:0 20px 40px rgba(2,8,23,.06),0 2px 6px rgba(2,8,23,.04)}
-@media(prefers-color-scheme:dark){
-  :root{--bg:#0b1020;--card:#0f162e;--fg:#e6edf7;--muted:#9aa4b2;--border:#1f2a44;--shadow:0 20px 40px rgba(0,0,0,.4),0 2px 6px rgba(0,0,0,.3)}
-}
-*,*:before,*:after{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-.container{max-width:1100px;margin:auto;padding:20px}
-.card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:16px}
-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
-.brand{display:flex;align-items:center;gap:10px}
-.logo{width:34px;height:34px;border-radius:12px;background:conic-gradient(from 180deg,var(--brand),var(--brand2))}
-h1{margin:0;font-size:1.35rem}
-.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-select,input,button{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit}
-.btn{cursor:pointer}
-.btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));border:0;color:#fff}
-.badge{border-radius:999px}
-.muted{color:var(--muted);font-size:12px}
-
-.shell{display:grid;gap:18px;grid-template-columns:1fr}
-.right{display:none}
-@media(min-width:1024px){.shell{grid-template-columns:minmax(0,1fr) 420px}.right{display:block}}
-
-.segment{display:flex;gap:8px;flex-wrap:wrap}
-.tab{padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:transparent}
-.tab.active{background:rgba(37,99,235,.12);border-color:rgba(37,99,235,.25)}
-.small{font-size:12px;color:var(--muted)}
-
-.label{font-size:12px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.08em;margin:10px 0 6px}
-.topics{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
-.chip{display:flex;align-items:center;justify-content:center;height:44px;border-radius:12px;border:1px solid rgba(37,99,235,.18);background:rgba(37,99,235,.08);font-weight:600;cursor:pointer;user-select:none}
-.chip:active{transform:translateY(1px)}
-
-.area{min-height:160px;border:1px solid var(--border);border-radius:12px;padding:12px;background:rgba(2,8,23,.02)}
-.mic-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;margin:12px 0}
-.mic{width:190px;height:190px;border-radius:999px;border:0;background:radial-gradient(70% 70% at 50% 30%,#ff5a5f,#a21caf);color:#fff;font-weight:700;font-size:18px;cursor:pointer;box-shadow:0 16px 50px rgba(162,28,175,.35)}
-.mic.pulse{animation:pulse 1.6s infinite ease-in-out}
-@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
-.meter{display:flex;gap:8px;align-items:center;width:100%;max-width:420px}
-.bar{flex:1;height:10px;background:rgba(2,8,23,.08);border-radius:999px;overflow:hidden}
-.bar>div{height:100%;width:0%;background:linear-gradient(90deg,var(--brand),var(--brand2))}
-
-.list{display:grid;gap:10px}
-.story{padding:12px;border:1px solid var(--border);border-radius:12px;background:rgba(2,8,23,.02);display:flex;align-items:center;justify-content:space-between;gap:8px}
-.story h3{margin:0;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
-
-.drawer{position:fixed;inset:0;display:none;background:rgba(2,8,23,.45);backdrop-filter:blur(2px)}
-.drawer.show{display:block}
-.drawer .panel{position:absolute;right:0;top:0;bottom:0;width:88%;max-width:420px;background:var(--card);border-left:1px solid var(--border);padding:16px;overflow:auto}
-dialog::backdrop{background:rgba(0,0,0,.35)}
-dialog{border:none;border-radius:12px;box-shadow:var(--shadow);max-width:min(820px,92vw)}
-footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
-</style>
+  <meta charset="UTF-8" />
+  <title>Memoir Prototype</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { font-family: sans-serif; margin: 20px; background:#fafafa; }
+    h1 { text-align: center; }
+    .toolbar, .guided { margin: 10px 0; text-align: center; }
+    button { margin: 5px; padding: 10px 15px; border-radius: 8px; border:none; cursor:pointer; background:#007bff; color:white; }
+    button:hover { background:#0056b3; }
+    #library { margin-top:20px; }
+    .story-item { padding:10px; border-bottom:1px solid #ddd; }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <div class="card">
-      <header>
-        <div class="brand">
-          <div class="logo" aria-hidden="true"></div>
-          <h1>Memoir — Recorder</h1>
-        </div>
-        <div class="controls">
-          <select id="lang">
-            <option value="en">English</option>
-            <option value="fr">Français</option>
-            <option value="es">Español</option>
-            <option value="nl">Nederlands</option>
-          </select>
-          <select id="voiceSelect" title="System voice (fallback)"></select>
-          <button id="toggleLib" class="btn">☰ Library</button>
-          <button id="logout" class="btn badge">Logout</button>
-        </div>
-      </header>
+  <h1>Memoir Prototype</h1>
 
-      <div id="guard" class="muted" style="margin:6px 0 14px">Checking your session…</div>
-
-      <div id="app" class="shell" style="display:none">
-        <section class="left">
-          <div class="segment">
-            <button id="tabGuided" class="tab active">Guided</button>
-            <button id="tabFree" class="tab">Free</button>
-          </div>
-
-          <div id="guidedBlock">
-            <div class="label">Suggested topics</div>
-            <div id="prompts" class="topics"></div>
-            <div class="small">Tip: tapping a topic speaks a gentle question to get you started.</div>
-          </div>
-
-          <div class="label">Title</div>
-          <input id="title" type="text" placeholder="Story title (optional)"/>
-
-          <div class="label">When did this happen?</div>
-          <input id="when" type="text" placeholder='e.g., "summer 1945", "early 2018", "15 Feb 1972"' />
-
-          <div class="label">Transcript</div>
-          <div id="transcript" class="area" aria-live="polite">Your words will appear here…</div>
-
-          <div class="mic-wrap">
-            <button id="mic" class="mic" aria-pressed="false">Record</button>
-            <div class="meter" id="meter" style="display:none">
-              <div class="bar"><div id="bar"></div></div>
-              <div id="remain" class="muted">120s</div>
-            </div>
-            <div id="asr" class="muted"></div>
-          </div>
-
-          <div class="actions" style="display:flex;gap:10px;flex-wrap:wrap">
-            <button id="save" class="btn primary" disabled>Save story</button>
-            <button id="clear" class="btn">Clear</button>
-            <button id="exportBook" class="btn">Export Book (print to PDF)</button>
-            <button id="exportCsv" class="btn">Export CSV</button>
-          </div>
-        </section>
-
-        <aside class="right">
-          <div class="label">Library</div>
-          <div id="library" class="list"></div>
-        </aside>
-      </div>
-
-      <footer>Cloud prototype — EN/FR/ES/NL guided prompts, ElevenLabs+fallback voice, recorder, library, AI rewrite.</footer>
-    </div>
+  <div class="toolbar">
+    <button id="recordBtn">🎤 Record</button>
+    <button id="rewriteBtn">✨ Rewrite</button>
+    <button id="undoBtn">↩ Undo</button>
+    <button id="downloadBtn">⬇ Download .docx</button>
+    <select id="languageSelect">
+      <option value="en">English</option>
+      <option value="fr">Français</option>
+      <option value="nl">Nederlands</option>
+      <option value="es">Español</option>
+    </select>
   </div>
 
-  <!-- Mobile drawer -->
-  <div id="drawer" class="drawer" aria-hidden="true">
-    <div class="panel">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <div class="label" style="margin:0">Library</div>
-        <button id="closeDrawer" class="btn">Close</button>
-      </div>
-      <div id="libraryDrawer" class="list"></div>
-    </div>
+  <div class="guided">
+    <h3>Guided Topics</h3>
+    <div id="topics"></div>
   </div>
 
-  <!-- libs -->
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
+  <div id="library">
+    <h3>Library</h3>
+    <div id="stories"></div>
+  </div>
 
-<script>
-(async function(){
-  /* ===== Supabase guard ===== */
-  const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
-  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false} });
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // --- Supabase setup ---
+    const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  const guard=document.getElementById('guard'), app=document.getElementById('app');
-  const { data:{session} } = await supa.auth.getSession();
-  if(!session){ window.location.replace('/login.html'); return; }
-  guard.style.display='none'; app.style.display='grid';
-  document.getElementById('logout').onclick = async ()=>{ await supa.auth.signOut(); window.location.replace('/login.html'); };
-
-  /* ===== DOM ===== */
-  const $=id=>document.getElementById(id);
-  const lang=$('lang'), voiceSelect=$('voiceSelect'), promptsWrap=$('prompts');
-  const titleEl=$('title'), whenEl=$('when'), transcriptEl=$('transcript');
-  const mic=$('mic'), meter=$('meter'), bar=$('bar'), remain=$('remain'), asr=$('asr');
-  const save=$('save'), clearBtn=$('clear'), library=$('library');
-  const drawer=$('drawer'), libraryDrawer=$('libraryDrawer'), toggleLib=$('toggleLib'), closeDrawer=$('closeDrawer');
-  const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
-  const exportBookBtn=$('exportBook'), exportCsvBtn=$('exportCsv');
-
-  /* ===== Topics + spoken sentences ===== */
-  const TOPIC_WORDS = {
-    en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
-    fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
-    es:["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"],
-    nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
-  };
-  const PROMPT_SENTENCES = {
-    en:{Childhood:"Tell me something about your youth.",Family:"Tell me about your family and the people who raised you.",School:"What was school like for you?",Work:"Tell me about your first job or career.",Love:"How did you meet your partner, or what did love mean to you then?",War:"What big world events or conflicts did you live through?",Travel:"Where did you travel that left a mark on you?",Traditions:"Which family traditions mattered most to you?",Holidays:"Describe a holiday you remember vividly.",Lessons:"What life lesson did you learn the hard way?",Advice:"What advice would you give your younger self?","Turning-points":"What was a turning point that changed your path?"},
-    fr:{Enfance:"Parlez-moi de votre jeunesse, d’un souvenir marquant.",Famille:"Parlez-moi de votre famille et des personnes qui vous ont élevé.",École:"Comment était l’école pour vous ?",Travail:"Racontez-moi votre premier travail ou votre carrière.",Amour:"Comment avez-vous rencontré votre partenaire, et que signifiait l’amour pour vous ?",Guerre:"Quels grands événements ou conflits avez-vous vécus ?",Voyages:"Quels voyages vous ont marqué(e) ?",Traditions:"Quelles traditions familiales comptaient le plus ?",Fêtes:"Décrivez une fête dont vous vous souvenez clairement.",Leçons:"Quelle leçon de vie avez-vous apprise à la dure ?",Conseils:"Quel conseil donneriez-vous à votre jeune vous ?",Déclics:"Quel déclic a changé votre trajectoire ?"},
-    es:{Infancia:"Cuéntame algo sobre tu juventud.",Familia:"Háblame de tu familia y de quienes te criaron.",Escuela:"¿Cómo era la escuela para ti?",Trabajo:"Cuéntame sobre tu primer trabajo o tu carrera.",Amor:"¿Cómo conociste a tu pareja y qué significaba el amor entonces?",Guerra:"¿Qué grandes eventos o conflictos viviste?",Viajes:"¿Qué viajes te marcaron?",Tradiciones:"¿Qué tradiciones familiares eran importantes para ti?",Fiestas:"Describe una fiesta que recuerdes con claridad.",Lecciones:"¿Qué lección de vida aprendiste con dificultad?",Consejos:"¿Qué consejo le darías a tu yo joven?","Puntos-clave":"¿Cuál fue un punto de inflexión en tu vida?"},
-    nl:{Jeugd:"Vertel me iets over je jeugd.",Familie:"Vertel over je familie en de mensen die je hebben opgevoed.",School:"Hoe was school voor jou?",Werk:"Vertel over je eerste baan of je loopbaan.",Liefde:"Hoe heb je je partner ontmoet, en wat betekende liefde toen?",Oorlog:"Welke grote gebeurtenissen of conflicten heb je meegemaakt?",Reizen:"Welke reizen hebben indruk op je gemaakt?",Tradities:"Welke familietradities waren belangrijk voor je?",Feestdagen:"Beschrijf een feestdag die je helder herinnert.",Lessen:"Welke levensles heb je op de harde manier geleerd?",Advies:"Welk advies zou je je jongere zelf geven?",Keerpunt:"Wat was een keerpunt in je leven?"}
-  };
-  const BCP={en:'en-US',fr:'fr-FR',es:'es-ES',nl:'nl-NL'};
-
-  /* ===== System voice fallback list ===== */
-  let VOICES=[];
-  function populateVoices(){
-    VOICES = speechSynthesis.getVoices()||[];
-    const code=lang.value, target=BCP[code]||'en-US';
-    const list=VOICES.filter(v=>v.lang===target||v.lang?.startsWith(target.split('-')[0]));
-    voiceSelect.innerHTML='';
-    list.forEach(v=>{
-      const o=document.createElement('option'); o.value=v.name; o.textContent=`${v.name} (${v.lang})`;
-      voiceSelect.appendChild(o);
-    });
-    if(!list.length){
-      const o=document.createElement('option'); o.textContent='No system voice available'; o.disabled=true; o.selected=true;
-      voiceSelect.appendChild(o);
-    }
-  }
-  if('speechSynthesis' in window){
-    speechSynthesis.onvoiceschanged=populateVoices;
-    populateVoices();
-  }
-
-  async function speakViaElevenLabs(sentence, code){
-    // Optional per-language voice IDs (you can customize later)
-    const VOICE_BY_LANG = {
-      en: '21m00Tcm4TlvDq8ikWAM', // Rachel
-      fr: '21m00Tcm4TlvDq8ikWAM', // Rachel works okay in multilingual v2
-      es: '21m00Tcm4TlvDq8ikWAM',
-      nl: '21m00Tcm4TlvDq8ikWAM'
+    // --- Guided topics + prompts ---
+    const TOPICS = {
+      en: { Childhood: "Tell me something about your childhood.", Youth: "Tell me something about your youth.", Family: "Tell me something about your family.", Work: "Tell me something about your work.", TurningPoints: "Tell me about turning points in your life." },
+      fr: { Enfance: "Racontez-moi quelque chose sur votre enfance.", Jeunesse: "Racontez-moi quelque chose sur votre jeunesse.", Famille: "Racontez-moi quelque chose sur votre famille.", Travail: "Racontez-moi quelque chose sur votre travail.", Tournants: "Parlez-moi des tournants de votre vie." },
+      nl: { Jeugd: "Vertel me iets over je jeugd.", Familie: "Vertel me iets over je familie.", Werk: "Vertel me iets over je werk.", Keerpunt: "Vertel me over keerpunten in je leven." },
+      es: { Infancia: "Cuéntame algo sobre tu infancia.", Juventud: "Cuéntame algo sobre tu juventud.", Familia: "Cuéntame algo sobre tu familia.", Trabajo: "Cuéntame algo sobre tu trabajo.", PuntosClave: "Háblame de momentos clave en tu vida." }
     };
-    const voiceId = VOICE_BY_LANG[code] || VOICE_BY_LANG.en;
 
-    try{
-      const r = await fetch('/api/voice', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ text: sentence, voiceId })
+    // --- ElevenLabs voices ---
+    const VOICE_BY_LANG = {
+      en: "KoVIHoyLDrQyd4pGalbs", // English
+      fr: "TfGtrgcVrXWjJkeB51T1", // French
+      nl: "yO6w2xlECAQRFP6pX7Hw", // Dutch
+      es: "ZpEtuMdTIlJXYXAhevhG"  // Spanish
+    };
+
+    // --- State ---
+    let currentLanguage = "en";
+    let stories = [];
+    let lastText = "";
+
+    const languageSelect = document.getElementById("languageSelect");
+    const topicsDiv = document.getElementById("topics");
+    const storiesDiv = document.getElementById("stories");
+
+    // --- Render guided topics ---
+    function renderTopics() {
+      topicsDiv.innerHTML = "";
+      const langTopics = TOPICS[currentLanguage];
+      Object.entries(langTopics).forEach(([key, phrase]) => {
+        const btn = document.createElement("button");
+        btn.textContent = key;
+        btn.onclick = () => speakTopic(currentLanguage, phrase);
+        topicsDiv.appendChild(btn);
       });
-      if(!r.ok) throw new Error('tts_failed');
-      const blob = await r.blob();
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      await audio.play();
-      setTimeout(()=>URL.revokeObjectURL(url), 60000);
-      return true;
-    }catch(e){
-      console.warn('ElevenLabs TTS failed, falling back to system voice:', e);
-      return false;
     }
-  }
 
-  function speakSystem(sentence, code){
-    if(!('speechSynthesis' in window)) return;
-    const u=new SpeechSynthesisUtterance(String(sentence));
-    u.lang=BCP[code]||'en-US'; u.rate=.95; u.pitch=1; u.volume=1;
-    const choice=VOICES.find(v=>v.name===voiceSelect.value)||
-                 VOICES.find(v=>v.lang===u.lang)||
-                 VOICES.find(v=>v.lang?.startsWith(u.lang.split('-')[0]))||null;
-    if(choice) u.voice=choice;
-    speechSynthesis.cancel(); speechSynthesis.speak(u);
-  }
+    // --- Speak with ElevenLabs ---
+    async function speakTopic(lang, phrase) {
+      try {
+        const res = await fetch("/api/voice", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: phrase, voiceId: VOICE_BY_LANG[lang] })
+        });
+        if (!res.ok) throw new Error("TTS failed");
+        const arrayBuffer = await res.arrayBuffer();
+        const blob = new Blob([arrayBuffer], { type: "audio/mpeg" });
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audio.play();
+      } catch (err) {
+        console.error("TTS error:", err);
+        // Fallback to system voice
+        const utterance = new SpeechSynthesisUtterance(phrase);
+        utterance.lang = lang;
+        speechSynthesis.speak(utterance);
+      }
+    }
 
-  async function speakPrompt(oneWord, code){
+    // --- Story library ---
+    function renderStories() {
+      storiesDiv.innerHTML = "";
+      stories.forEach((s, idx) => {
+        const div = document.createElement("div");
+        div.className = "story-item";
+        div.textContent = `${s.title} (${s.date})`;
+        storiesDiv.appendChild(div);
+      });
+    }
+
+    // --- Dummy record, rewrite, undo, download ---
+    document.getElementById("recordBtn").onclick = () => {
+      const title = "Story " + (stories.length+1);
+      const text = "This is a dummy recorded story.";
+      lastText = text;
+      stories.push({ title, date: new Date().toLocaleString(), text });
+      renderStories();
+    };
+
+    document.getElementById("rewriteBtn").onclick = () => {
+      if (!lastText) return alert("No story to rewrite.");
+      lastText = "[Rewritten] " + lastText;
+      stories[stories.length-1].text = lastText;
+      alert("Story rewritten.");
+    };
+
+    document.getElementById("undoBtn").onclick = () => {
+      if (stories.length > 0) {
+        stories.pop();
+        renderStories();
+      }
+    };
+
+    document.getElementById("downloadBtn").onclick = () => {
+      if (stories.length === 0) return;
+      const content = stories.map(s => s.title + "\n" + s.text).join("\n\n");
+      const blob = new Blob([content], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "memoirs.docx";
+      a.click();
+    };
+
+    languageSelect.onchange = () => {
+      currentLanguage = languageSelect.value;
+      renderTopics();
+    };
+
+    // Init
+    renderTopics();
+    renderStories();
+  </script>
+</body>
+</html>
