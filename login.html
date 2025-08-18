@@ -6,14 +6,14 @@
 <title>Sign in to Memoir</title>
 <meta name="color-scheme" content="light dark" />
 <style>
-:root{ --bg:#f6f7fb; --card:#fff; --fg:#0f172a; --muted:#667085; --brand:#2563eb; --brand2:#7c3aed; --border:#e6e9f0; --shadow:0 20px 40px rgba(2,8,23,.06), 0 2px 6px rgba(2,8,23,.04); }
+:root{ --bg:#f6f7fb; --card:#fff; --fg:#0f172a; --muted:#667085; --brand:#2563eb; --brand2:#7c3aed; --border:#e6e9f0; --shadow:0 20px 40px rgba(2,8,23,.06), 0 2px 6px rgba(2,8,23,.04) }
 @media (prefers-color-scheme:dark){
   :root{ --bg:#0b1020; --card:#0f162e; --fg:#e6edf7; --muted:#9aa4b2; --border:#1f2a44; --shadow:0 20px 40px rgba(0,0,0,.4), 0 2px 6px rgba(0,0,0,.3) }
 }
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-.card{width:min(720px,96vw);background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:28px}
-h1{display:flex;align-items:center;gap:12px;margin:0 0 16px 0}
+.card{width:min(760px,96vw);background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:28px}
+h1{display:flex;align-items:center;gap:12px;margin:0 0 16px}
 .logo{width:40px;height:40px;border-radius:14px;background:conic-gradient(from 180deg, var(--brand), var(--brand2))}
 .tabs{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
 .tab{padding:8px 14px;border-radius:999px;border:1px solid var(--border);cursor:pointer;background:transparent}
@@ -39,18 +39,21 @@ button{cursor:pointer}
       <button id="tabMagic"  class="tab">Magic link</button>
     </div>
 
+    <!-- Sign in -->
     <div id="formSign" class="row">
       <input id="signEmail" type="email" placeholder="Email" autocomplete="username" />
       <input id="signPass"  type="password" placeholder="Password" autocomplete="current-password" />
       <button id="btnSign" class="btn">Sign in</button>
     </div>
 
+    <!-- Create account -->
     <div id="formCreate" class="row hide">
       <input id="createEmail" type="email" placeholder="Email" autocomplete="username" />
       <input id="createPass"  type="password" placeholder="Password (min 6)" autocomplete="new-password" />
       <button id="btnCreate" class="btn">Create account</button>
     </div>
 
+    <!-- Magic link -->
     <div id="formMagic" class="row hide">
       <input id="magicEmail" type="email" placeholder="Email for magic link" />
       <button id="btnMagic" class="btn">Send magic link</button>
@@ -61,29 +64,28 @@ button{cursor:pointer}
     <p class="small">By continuing you agree to our terms.</p>
   </div>
 
-  <!-- UMD build (global window.supabase). Using jsDelivr; if your network blocks it, try unpkg below. -->
+  <!-- Supabase UMD -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
-  <!-- fallback CDN (uncomment if cdn.jsdelivr.net is blocked on your network) -->
-  <!-- <script src="https://unpkg.com/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script> -->
 
   <script>
-  <!-- keep your styles / markup -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
-  <script>
-  (function(){
-    const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co"; // for setSession only
-    const SUPABASE_ANON_KEY = "REDACTED_IN_CLIENT"; // not used client-side for auth calls
+  (async function(){
+    // Your Supabase project URL (corrected)
+    const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
+    // Only used client-side to set local session after server auth:
+    const supa = window.supabase.createClient(SUPABASE_URL, "anon");
 
-    const $ = (id) => document.getElementById(id);
+    const $ = id => document.getElementById(id);
     const show = (el, ok)=> el.classList.toggle('hide', !ok);
-    const setErr = (m)=> { $('error').textContent = m || ''; };
-    const diag = (t)=> { const el=$('diag'); if (el) el.textContent = t; };
+    const setErr = msg => { $('error').textContent = msg || ''; };
+    const diag = t => { $('diag').textContent = t; };
+    const friendly = e => {
+      const m = String(e?.message || e || '');
+      if (m.includes('Failed to fetch')) return 'Network error (try VPN off / different network).';
+      if (m.includes('server_error')) return 'Server error (check env vars / redirect URLs in Supabase).';
+      return m;
+    };
 
-    const supa = window.supabase.createClient(SUPABASE_URL, 'anon');
-
-    function friendly(err){ const m=String(err?.message||err||''); return m.includes('Failed to fetch')?'Network error.':m; }
-
-    // tab controls (same as before)
+    // Tabs
     function activate(which){
       ['tabSign','tabCreate','tabMagic'].forEach(id => $(id).classList.remove('active'));
       ['formSign','formCreate','formMagic'].forEach(id => show($(id), false));
@@ -96,61 +98,61 @@ button{cursor:pointer}
     $('tabCreate').onclick = ()=>activate('create');
     $('tabMagic').onclick  = ()=>activate('magic');
 
-    // Diagnostics via server
-    (async ()=>{
-      try{
-        const r = await fetch('/api/health');
-        diag(`Server health: HTTP ${r.status} ${r.ok?'OK':''}`);
-      }catch(e){ diag('Server health fetch failed: '+e); }
-    })();
+    // Server health (through your Vercel proxy)
+    try {
+      const r = await fetch('/api/health');
+      const j = await r.json();
+      diag(`Server health: HTTP ${j?.sb_health?.status ?? r.status}`);
+    } catch (e) {
+      diag('Server health check failed: ' + e);
+    }
 
-    // Sign in -> server password grant -> set session in supabase-js -> go index
+    // Helpers: POST to /api/auth
+    async function callAuth(payload){
+      const r = await fetch('/api/auth', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const data = await r.json().catch(()=> ({}));
+      if (!r.ok) throw new Error(data.error || 'server_error');
+      return data;
+    }
+
+    // Sign in
     $('btnSign').onclick = async ()=>{
       setErr('');
       try{
         const email = $('signEmail').value.trim();
         const password = $('signPass').value;
-        const r = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ action:'signin', email, password }) });
-        const data = await r.json();
-        if (!r.ok) throw new Error(data.error || JSON.stringify(data));
-
-        // data includes access_token & refresh_token
+        const data = await callAuth({ action:'signin', email, password });
         if (data.access_token && data.refresh_token) {
           await supa.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });
           window.location.replace('index.html');
         } else {
-          throw new Error('No tokens returned');
+          throw new Error('server_error');
         }
       }catch(e){ setErr('Error: '+friendly(e)); console.error(e); }
     };
 
-    // Sign up -> server call (if email confirms disabled, session may be returned)
+    // Create account
     $('btnCreate').onclick = async ()=>{
       setErr('');
       try{
         const email = $('createEmail').value.trim();
         const password = $('createPass').value;
-        const r = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ action:'signup', email, password }) });
-        const data = await r.json();
-        if (!r.ok) throw new Error(data.error || JSON.stringify(data));
-        // If your Supabase Auth has "Confirm email" disabled, you may get a session here.
-        // Otherwise, ask user to check email then sign in.
-        alert('Account created. If email confirmations are enabled, check your inbox; otherwise sign in now.');
+        await callAuth({ action:'signup', email, password });
+        alert('Account created. If confirmations are on, check your inbox; otherwise sign in now.');
         activate('sign');
       }catch(e){ setErr('Error: '+friendly(e)); console.error(e); }
     };
 
-    // Magic link -> server sends; user clicks email link and returns to index.html
+    // Magic link
     $('btnMagic').onclick = async ()=>{
       setErr('');
       try{
         const email = $('magicEmail').value.trim();
-        const r = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ action:'magiclink', email, redirectTo: 'https://memoir-prototype.vercel.app/index.html' }) });
-        const data = await r.json();
-        if (!r.ok) throw new Error(data.error || JSON.stringify(data));
+        await callAuth({ action:'magiclink', email, redirectTo: location.origin + '/index.html' });
         setErr('Magic link sent. Check your inbox.');
       }catch(e){ setErr('Error: '+friendly(e)); console.error(e); }
     };
