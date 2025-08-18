@@ -67,45 +67,23 @@ button{cursor:pointer}
   <!-- <script src="https://unpkg.com/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script> -->
 
   <script>
-  (async function(){
-    // 1) Supabase constants (the ones you shared)
-    const SUPABASE_URL = "https://jrjqciywljjhhcxfyxwh.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
+  <!-- keep your styles / markup -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
+  <script>
+  (function(){
+    const SUPABASE_URL = "https://jrjqciywljjhhcxfyxwh.supabase.co"; // for setSession only
+    const SUPABASE_ANON_KEY = "REDACTED_IN_CLIENT"; // not used client-side for auth calls
 
-    const $ = id => document.getElementById(id);
+    const $ = (id) => document.getElementById(id);
     const show = (el, ok)=> el.classList.toggle('hide', !ok);
-    const setErr = msg => { $('error').textContent = msg || ''; };
-    const log = (t)=> ($('diag').textContent = t);
+    const setErr = (m)=> { $('error').textContent = m || ''; };
+    const diag = (t)=> { const el=$('diag'); if (el) el.textContent = t; };
 
-    function friendly(err){
-      const m = String(err?.message || err || '');
-      if (m.includes('Failed to fetch') || m.includes('ERR_NAME_NOT_RESOLVED')) {
-        return 'Network / URL error. If this persists, try Incognito (no extensions) or another network.';
-      }
-      return m;
-    }
+    const supa = window.supabase.createClient(SUPABASE_URL, 'anon');
 
-    // 2) Mini diagnostics (what the page really sees/does)
-    log(`SUPABASE_URL: ${SUPABASE_URL}
-CDN loaded: ${!!window.supabase}
-Checking auth health…`);
+    function friendly(err){ const m=String(err?.message||err||''); return m.includes('Failed to fetch')?'Network error.':m; }
 
-    try{
-      const r = await fetch(SUPABASE_URL + '/auth/v1/health', { headers: { apikey: SUPABASE_ANON_KEY }});
-      log($('diag').textContent + `\nHealth: HTTP ${r.status}`);
-    }catch(e){
-      log($('diag').textContent + `\nHealth: fetch error → ${e}`);
-    }
-
-    if (!window.supabase) {
-      setErr('Supabase SDK failed to load. Your network may block cdn.jsdelivr.net. Uncomment the unpkg script tag and redeploy.');
-      return;
-    }
-
-    // 3) Client
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // 4) UI tabs
+    // tab controls (same as before)
     function activate(which){
       ['tabSign','tabCreate','tabMagic'].forEach(id => $(id).classList.remove('active'));
       ['formSign','formCreate','formMagic'].forEach(id => show($(id), false));
@@ -118,39 +96,61 @@ Checking auth health…`);
     $('tabCreate').onclick = ()=>activate('create');
     $('tabMagic').onclick  = ()=>activate('magic');
 
-    // 5) Actions
+    // Diagnostics via server
+    (async ()=>{
+      try{
+        const r = await fetch('/api/health');
+        diag(`Server health: HTTP ${r.status} ${r.ok?'OK':''}`);
+      }catch(e){ diag('Server health fetch failed: '+e); }
+    })();
+
+    // Sign in -> server password grant -> set session in supabase-js -> go index
     $('btnSign').onclick = async ()=>{
       setErr('');
       try{
-        const { error } = await supabase.auth.signInWithPassword({
-          email: $('signEmail').value.trim(),
-          password: $('signPass').value
-        });
-        if (error) throw error;
-        window.location.replace('index.html');
+        const email = $('signEmail').value.trim();
+        const password = $('signPass').value;
+        const r = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ action:'signin', email, password }) });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || JSON.stringify(data));
+
+        // data includes access_token & refresh_token
+        if (data.access_token && data.refresh_token) {
+          await supa.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });
+          window.location.replace('index.html');
+        } else {
+          throw new Error('No tokens returned');
+        }
       }catch(e){ setErr('Error: '+friendly(e)); console.error(e); }
     };
 
+    // Sign up -> server call (if email confirms disabled, session may be returned)
     $('btnCreate').onclick = async ()=>{
       setErr('');
       try{
-        const { error } = await supabase.auth.signUp({
-          email: $('createEmail').value.trim(),
-          password: $('createPass').value
-        });
-        if (error) throw error;
-        window.location.replace('index.html');
+        const email = $('createEmail').value.trim();
+        const password = $('createPass').value;
+        const r = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ action:'signup', email, password }) });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || JSON.stringify(data));
+        // If your Supabase Auth has "Confirm email" disabled, you may get a session here.
+        // Otherwise, ask user to check email then sign in.
+        alert('Account created. If email confirmations are enabled, check your inbox; otherwise sign in now.');
+        activate('sign');
       }catch(e){ setErr('Error: '+friendly(e)); console.error(e); }
     };
 
+    // Magic link -> server sends; user clicks email link and returns to index.html
     $('btnMagic').onclick = async ()=>{
       setErr('');
       try{
-        const { error } = await supabase.auth.signInWithOtp({
-          email: $('magicEmail').value.trim(),
-          options: { emailRedirectTo: 'https://memoir-prototype.vercel.app/index.html' }
-        });
-        if (error) throw error;
+        const email = $('magicEmail').value.trim();
+        const r = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ action:'magiclink', email, redirectTo: 'https://memoir-prototype.vercel.app/index.html' }) });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || JSON.stringify(data));
         setErr('Magic link sent. Check your inbox.');
       }catch(e){ setErr('Error: '+friendly(e)); console.error(e); }
     };
