@@ -130,19 +130,39 @@ button{cursor:pointer}
 
     // Sign in
     $('btnSign').onclick = async ()=>{
-      setErr('');
-      try{
-        const email = $('signEmail').value.trim();
-        const password = $('signPass').value;
-        const data = await callAuth({ action:'signin', email, password });
-        if (data.access_token && data.refresh_token) {
-          await supa.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });
-          window.location.replace('index.html');
-        } else {
-          throw new Error('server_error');
-        }
-      }catch(e){ setErr('Error: '+friendly(e)); console.error(e); }
-    };
+  setErr('');
+  try{
+    const email = $('signEmail').value.trim();
+    const password = $('signPass').value;
+
+    const data = await callAuth({ action:'signin', email, password });
+    console.log('auth response', data);
+
+    // Accept either the raw tokens or a session object
+    const access_token  = data?.access_token  || data?.session?.access_token;
+    const refresh_token = data?.refresh_token || data?.session?.refresh_token;
+
+    if (!access_token || !refresh_token) {
+      throw new Error('Server did not return tokens');
+    }
+
+    // Persist session locally
+    const { data: setRes, error: setErrRes } =
+      await supa.auth.setSession({ access_token, refresh_token });
+    if (setErrRes) throw setErrRes;
+
+    // Double-check we can read it back
+    const { data: { session } } = await supa.auth.getSession();
+    console.log('session after set', session);
+    if (!session) throw new Error('Session not persisted');
+
+    // Now go to the app
+    window.location.replace('/index.html'); // absolute path avoids relative issues
+  }catch(e){
+    setErr('Error: ' + (e?.message || e));
+    console.error(e);
+  }
+};
 
     // Create account
     $('btnCreate').onclick = async ()=>{
