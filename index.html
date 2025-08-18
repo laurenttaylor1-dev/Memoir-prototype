@@ -2,93 +2,149 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Memoir</title>
-  <link rel="stylesheet" href="styles.css"/>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.6/dist/umd/supabase.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Memoir — Home</title>
+  <meta name="color-scheme" content="light dark" />
+  <style>
+    :root{
+      --bg:#f6f7fb; --card:#fff; --fg:#0f172a; --muted:#667085; --brand:#2563eb; --brand2:#7c3aed; --border:#e6e9f0;
+      --shadow:0 20px 40px rgba(2,8,23,.06), 0 2px 6px rgba(2,8,23,.04)
+    }
+    @media (prefers-color-scheme:dark){
+      :root{ --bg:#0b1020; --card:#0f162e; --fg:#e6edf7; --muted:#9aa4b2; --border:#1f2a44; --shadow:0 20px 40px rgba(0,0,0,.4), 0 2px 6px rgba(0,0,0,.3) }
+    }
+    *{box-sizing:border-box}
+    body{margin:0; background:var(--bg); color:var(--fg); font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    .wrap{max-width:900px; margin:32px auto; padding:0 16px}
+    .card{background:var(--card); border:1px solid var(--border); border-radius:18px; box-shadow:var(--shadow); padding:20px}
+    header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px}
+    h1{display:flex; align-items:center; gap:10px; font-size:22px; margin:0}
+    .logo{width:34px; height:34px; border-radius:12px; background:conic-gradient(from 180deg, var(--brand), var(--brand2))}
+    .btn{padding:10px 14px; border-radius:12px; border:1px solid var(--border); background:linear-gradient(90deg,var(--brand),var(--brand2)); color:#fff; cursor:pointer}
+    .btn.ghost{background:transparent; color:inherit}
+    .row{display:grid; gap:10px}
+    textarea{width:100%; padding:12px; border-radius:12px; border:1px solid var(--border); background:transparent; color:inherit; min-height:120px}
+    ul{padding-left:18px}
+    .muted{color:var(--muted); font-size:12px}
+    .hide{display:none}
+  </style>
+  <!-- Supabase UMD -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
 </head>
 <body>
-  <div id="app">
-    <header class="app-header">
-      <h1>📖 Memoir</h1>
-      <button id="logoutBtn" class="btn">Logout</button>
-    </header>
+  <div class="wrap">
+    <div class="card">
+      <header>
+        <h1><span class="logo" aria-hidden="true"></span> Memoir</h1>
+        <div>
+          <button id="logoutBtn" class="btn ghost">Logout</button>
+        </div>
+      </header>
 
-    <main>
-      <section id="welcome" style="display:none;">
-        <h2>Welcome back!</h2>
-        <p id="userEmail"></p>
+      <section id="welcome" class="row hide">
+        <div id="who" class="muted"></div>
       </section>
 
-      <section id="editor" style="display:none;">
-        <h2>Your Memoir</h2>
-        <textarea id="memoInput" rows="8" placeholder="Write your story here..."></textarea>
-        <br/>
-        <button id="saveBtn" class="btn">Save</button>
+      <section id="editor" class="row hide">
+        <label for="memoInput">Write a new memory</label>
+        <textarea id="memoInput" placeholder="Start speaking or typing your story…"></textarea>
+        <div style="display:flex; gap:10px">
+          <button id="saveBtn" class="btn">Save story</button>
+          <button id="clearBtn" class="btn ghost">Clear</button>
+        </div>
+        <div class="muted">Saved stories (in-memory demo list for now):</div>
         <ul id="memoList"></ul>
       </section>
-    </main>
+
+      <section id="loading" class="row">
+        <div class="muted">Checking your session…</div>
+      </section>
+    </div>
   </div>
 
   <script>
-    // === Supabase config ===
+  (async function(){
+    // ===== Supabase config (your real project) =====
     const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak"; // this is fine, only for session ops
-    const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
 
-    const logoutBtn = document.getElementById('logoutBtn');
-    const welcome = document.getElementById('welcome');
-    const editor = document.getElementById('editor');
-    const userEmail = document.getElementById('userEmail');
-    const memoInput = document.getElementById('memoInput');
-    const saveBtn = document.getElementById('saveBtn');
-    const memoList = document.getElementById('memoList');
+    const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,       // store session in localStorage
+        autoRefreshToken: true,
+        detectSessionInUrl: false   // we handle redirects manually
+      }
+    });
 
-    // === Load session ===
+    // ===== UI refs =====
+    const $ = id => document.getElementById(id);
+    const welcome = $('welcome');
+    const editor  = $('editor');
+    const loading = $('loading');
+    const who     = $('who');
+    const memoInput = $('memoInput');
+    const memoList  = $('memoList');
+
+    // ===== Helpers =====
+    function show(el, on){ el.classList.toggle('hide', !on); }
+
+    // Demo store (in-memory). Hook up to Supabase table later.
+    const state = { memos: [] };
+
+    // ===== Session check =====
     async function loadSession() {
-      try {
-        const { data: { session } } = await supa.auth.getSession();
-        if (!session) {
-          window.location.href = "/login.html";
-          return;
-        }
-        const email = session.user.email;
-        userEmail.textContent = "Signed in as " + email;
-        welcome.style.display = "block";
-        editor.style.display = "block";
-        loadMemos();
-      } catch (err) {
-        console.error("Session error:", err);
+      const { data: { session }, error } = await supa.auth.getSession();
+      console.log('session on index', session, 'error:', error);
+
+      if (!session) {
+        // No session → go to login
         window.location.href = "/login.html";
+        return;
+      }
+
+      // We have a session → show app
+      who.textContent = `Signed in as ${session.user.email}`;
+      show(loading, false);
+      show(welcome, true);
+      show(editor, true);
+
+      // (Optional) listen for token refresh/changes
+      supa.auth.onAuthStateChange((event, sess) => {
+        console.log('auth event', event, sess?.user?.email);
+        if (!sess) window.location.href = "/login.html";
+      });
+    }
+
+    // ===== Events =====
+    $('logoutBtn').onclick = async () => {
+      await supa.auth.signOut();
+      window.location.href = "/login.html";
+    };
+
+    $('saveBtn').onclick = () => {
+      const text = memoInput.value.trim();
+      if (!text) return;
+      state.memos.unshift({ text, ts: new Date().toISOString() });
+      memoInput.value = "";
+      renderMemos();
+      // TODO: insert into Supabase (memos table) when schema is ready
+    };
+
+    $('clearBtn').onclick = () => { memoInput.value = ""; };
+
+    function renderMemos(){
+      memoList.innerHTML = "";
+      for (const m of state.memos) {
+        const li = document.createElement('li');
+        const when = new Date(m.ts).toLocaleString();
+        li.textContent = `${when}: ${m.text}`;
+        memoList.appendChild(li);
       }
     }
 
-    // === Logout ===
-    logoutBtn.addEventListener("click", async () => {
-      await supa.auth.signOut();
-      window.location.href = "/login.html";
-    });
-
-    // === Save Memo ===
-    saveBtn.addEventListener("click", async () => {
-      const text = memoInput.value.trim();
-      if (!text) return;
-
-      const li = document.createElement("li");
-      li.textContent = text;
-      memoList.appendChild(li);
-
-      memoInput.value = "";
-      // TODO: Save to Supabase DB (memos table) once schema is ready
-    });
-
-    function loadMemos() {
-      // TODO: Load memos from Supabase DB
-      memoList.innerHTML = "";
-    }
-
-    // Kickstart
+    // Kick off
     loadSession();
+  })();
   </script>
 </body>
 </html>
