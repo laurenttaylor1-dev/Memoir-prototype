@@ -71,7 +71,8 @@ button{cursor:pointer}
   (async function(){
     // Your Supabase project URL (corrected)
     const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
-    // Only used client-side to set local session after server auth:
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
+    
     const supa = window.supabase.createClient(SUPABASE_URL, "anon");
 
     const $ = id => document.getElementById(id);
