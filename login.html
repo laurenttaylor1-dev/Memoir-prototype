@@ -1,189 +1,119 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Sign in to Memoir</title>
-<meta name="color-scheme" content="light dark" />
-<style>
-:root{ --bg:#f6f7fb; --card:#fff; --fg:#0f172a; --muted:#667085; --brand:#2563eb; --brand2:#7c3aed; --border:#e6e9f0; --shadow:0 20px 40px rgba(2,8,23,.06), 0 2px 6px rgba(2,8,23,.04) }
-@media (prefers-color-scheme:dark){
-  :root{ --bg:#0b1020; --card:#0f162e; --fg:#e6edf7; --muted:#9aa4b2; --border:#1f2a44; --shadow:0 20px 40px rgba(0,0,0,.4), 0 2px 6px rgba(0,0,0,.3) }
-}
-*{box-sizing:border-box}
-body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-.card{width:min(760px,96vw);background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:28px}
-h1{display:flex;align-items:center;gap:12px;margin:0 0 16px}
-.logo{width:40px;height:40px;border-radius:14px;background:conic-gradient(from 180deg, var(--brand), var(--brand2))}
-.tabs{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
-.tab{padding:8px 14px;border-radius:999px;border:1px solid var(--border);cursor:pointer;background:transparent}
-.tab.active{background:rgba(37,99,235,.1);border-color:rgba(37,99,235,.25)}
-.row{display:grid;gap:10px}
-input,button{padding:12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit}
-button{cursor:pointer}
-.btn{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;border:0}
-.small{color:var(--muted);font-size:12px}
-#error{color:#c02;min-height:1.2em;margin-top:8px}
-.hide{display:none}
-.diag{margin-top:12px;padding:10px;border-radius:10px;background:#f3f5ff;border:1px solid #dfe3ff;color:#3949ab;font-size:12px;white-space:pre-wrap}
-@media (prefers-color-scheme:dark){ .diag{background:#0d1333;border-color:#232b73;color:#a7b3ff} }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign in to Memoir</title>
+  <meta name="color-scheme" content="light dark" />
+  <style>
+    :root{
+      --bg:#f6f7fb; --card:#fff; --fg:#0f172a; --muted:#667085; --brand:#2563eb; --brand2:#7c3aed; --border:#e6e9f0;
+      --shadow:0 20px 40px rgba(2,8,23,.06),0 2px 6px rgba(2,8,23,.04)
+    }
+    @media(prefers-color-scheme:dark){
+      :root{--bg:#0b1020;--card:#0f162e;--fg:#e6edf7;--muted:#9aa4b2;--border:#1f2a44;--shadow:0 20px 40px rgba(0,0,0,.4),0 2px 6px rgba(0,0,0,.3)}
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    .wrap{max-width:420px;margin:32px auto;padding:0 16px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:28px}
+    h1{display:flex;align-items:center;gap:10px;font-size:22px;margin:0 0 20px}
+    .logo{width:34px;height:34px;border-radius:12px;background:conic-gradient(from 180deg,var(--brand),var(--brand2))}
+    .tabs{display:flex;gap:8px;margin-bottom:18px}
+    .tab{flex:1;padding:8px 12px;border-radius:9999px;border:1px solid var(--border);cursor:pointer;text-align:center}
+    .tab.active{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff}
+    input{width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit;margin-bottom:10px}
+    .btn{width:100%;padding:12px;border-radius:12px;border:0;background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;cursor:pointer}
+    .muted{color:var(--muted);font-size:12px;text-align:center;margin-top:12px}
+    #error{color:red;margin:8px 0;font-size:14px}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
 </head>
 <body>
-  <div class="card">
-    <h1><span class="logo" aria-hidden="true"></span> Sign in to Memoir</h1>
+  <div class="wrap">
+    <div class="card">
+      <h1><span class="logo"></span> Sign in to Memoir</h1>
 
-    <div class="tabs">
-      <button id="tabSign"   class="tab active">Sign in</button>
-      <button id="tabCreate" class="tab">Create account</button>
-      <button id="tabMagic"  class="tab">Magic link</button>
+      <div class="tabs">
+        <div id="tab-signin" class="tab active">Sign in</div>
+        <div id="tab-signup" class="tab">Create account</div>
+        <div id="tab-magic" class="tab">Magic link</div>
+      </div>
+
+      <form id="form">
+        <input type="email" id="email" placeholder="Email" required />
+        <input type="password" id="password" placeholder="Password" />
+        <button type="submit" class="btn" id="submitBtn">Sign in</button>
+      </form>
+
+      <div id="error"></div>
+      <div class="muted">By continuing you agree to our terms.</div>
     </div>
-
-    <!-- Sign in -->
-    <div id="formSign" class="row">
-      <input id="signEmail" type="email" placeholder="Email" autocomplete="username" />
-      <input id="signPass"  type="password" placeholder="Password" autocomplete="current-password" />
-      <button id="btnSign" class="btn">Sign in</button>
-    </div>
-
-    <!-- Create account -->
-    <div id="formCreate" class="row hide">
-      <input id="createEmail" type="email" placeholder="Email" autocomplete="username" />
-      <input id="createPass"  type="password" placeholder="Password (min 6)" autocomplete="new-password" />
-      <button id="btnCreate" class="btn">Create account</button>
-    </div>
-
-    <!-- Magic link -->
-    <div id="formMagic" class="row hide">
-      <input id="magicEmail" type="email" placeholder="Email for magic link" />
-      <button id="btnMagic" class="btn">Send magic link</button>
-    </div>
-
-    <div id="error"></div>
-    <div id="diag" class="diag"></div>
-    <p class="small">By continuing you agree to our terms.</p>
   </div>
 
-  <!-- Supabase UMD -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
-
   <script>
-  (async function(){
-    // Your Supabase project URL (corrected)
+  (function(){
     const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
-    
-    const supa = window.supabase.createClient(SUPABASE_URL, "anon");
 
-    const $ = id => document.getElementById(id);
-    const show = (el, ok)=> el.classList.toggle('hide', !ok);
-    const setErr = msg => { $('error').textContent = msg || ''; };
-    const diag = t => { $('diag').textContent = t; };
-    const friendly = e => {
-      const m = String(e?.message || e || '');
-      if (m.includes('Failed to fetch')) return 'Network error (try VPN off / different network).';
-      if (m.includes('server_error')) return 'Server error (check env vars / redirect URLs in Supabase).';
-      return m;
-    };
-
-    // Tabs
-    function activate(which){
-      ['tabSign','tabCreate','tabMagic'].forEach(id => $(id).classList.remove('active'));
-      ['formSign','formCreate','formMagic'].forEach(id => show($(id), false));
-      if(which==='sign'){ $('tabSign').classList.add('active'); show($('formSign'), true); }
-      if(which==='create'){ $('tabCreate').classList.add('active'); show($('formCreate'), true); }
-      if(which==='magic'){ $('tabMagic').classList.add('active'); show($('formMagic'), true); }
-      setErr('');
-    }
-    $('tabSign').onclick   = ()=>activate('sign');
-    $('tabCreate').onclick = ()=>activate('create');
-    $('tabMagic').onclick  = ()=>activate('magic');
-
-    // Server health (through your Vercel proxy)
-    try {
-      const r = await fetch('/api/health');
-      const j = await r.json();
-      diag(`Server health: HTTP ${j?.sb_health?.status ?? r.status}`);
-    } catch (e) {
-      diag('Server health check failed: ' + e);
-    }
-
-    // Helpers: POST to /api/auth
-    async function callAuth(payload){
-    const r = await fetch('/api/auth', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(payload)
+    const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
     });
 
-    const text = await r.text().catch(()=> '');
-    let data = {};
-    try { data = JSON.parse(text); } catch {}
+    // UI
+    const $ = id => document.getElementById(id);
+    const form = $("form");
+    const email = $("email");
+    const password = $("password");
+    const submitBtn = $("submitBtn");
+    const errorBox = $("error");
 
-    if (!r.ok) {
-      // surface whatever Supabase sent back
-      const raw = data?.error || data?.msg || data?.message || data?.raw || text || 'server_error';
-      throw new Error(raw);
+    let mode = "signin"; // "signin" | "signup" | "magic"
+
+    // Tab switching
+    function setMode(m){
+      mode = m;
+      document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+      $("tab-"+m).classList.add("active");
+      if(m==="magic"){
+        password.style.display="none";
+        submitBtn.textContent="Send magic link";
+      }else if(m==="signup"){
+        password.style.display="block";
+        submitBtn.textContent="Create account";
+      }else{
+        password.style.display="block";
+        submitBtn.textContent="Sign in";
+      }
+      errorBox.textContent="";
     }
-    return data;
-    }
+    $("tab-signin").onclick=()=>setMode("signin");
+    $("tab-signup").onclick=()=>setMode("signup");
+    $("tab-magic").onclick=()=>setMode("magic");
 
-    // Sign in
-    $('btnSign').onclick = async ()=>{
-  setErr('');
-  try{
-    const email = $('signEmail').value.trim();
-    const password = $('signPass').value;
-
-    const data = await callAuth({ action:'signin', email, password });
-    console.log('auth response', data);
-
-    // Accept either the raw tokens or a session object
-    const access_token  = data?.access_token  || data?.session?.access_token;
-    const refresh_token = data?.refresh_token || data?.session?.refresh_token;
-
-    if (!access_token || !refresh_token) {
-      throw new Error('Server did not return tokens');
-    }
-
-    // Persist session locally
-    const { data: setRes, error: setErrRes } =
-      await supa.auth.setSession({ access_token, refresh_token });
-    if (setErrRes) throw setErrRes;
-
-    // Double-check we can read it back
-    const { data: { session } } = await supa.auth.getSession();
-    console.log('session after set', session);
-    if (!session) throw new Error('Session not persisted');
-
-    // Now go to the app
-    window.location.replace('/index.html'); // absolute path avoids relative issues
-  }catch(e){
-    setErr('Error: ' + (e?.message || e));
-    console.error(e);
-  }
-};
-
-    // Create account
-    $('btnCreate').onclick = async ()=>{
-      setErr('');
+    // Form submit
+    form.onsubmit = async (e)=>{
+      e.preventDefault();
+      errorBox.textContent="";
+      const em = email.value.trim();
+      const pw = password.value.trim();
       try{
-        const email = $('createEmail').value.trim();
-        const password = $('createPass').value;
-        await callAuth({ action:'signup', email, password });
-        alert('Account created. If confirmations are on, check your inbox; otherwise sign in now.');
-        activate('sign');
-      }catch(e){ setErr('Error: '+friendly(e)); console.error(e); }
-    };
+        let result;
+        if(mode==="signin"){
+          result = await supa.auth.signInWithPassword({ email: em, password: pw });
+        }else if(mode==="signup"){
+          result = await supa.auth.signUp({ email: em, password: pw });
+        }else if(mode==="magic"){
+          result = await supa.auth.signInWithOtp({ email: em });
+        }
+        if(result.error) throw result.error;
 
-    // Magic link
-    $('btnMagic').onclick = async ()=>{
-      setErr('');
-      try{
-        const email = $('magicEmail').value.trim();
-        await callAuth({ action:'magiclink', email, redirectTo: location.origin + '/index.html' });
-        setErr('Magic link sent. Check your inbox.');
-      }catch(e){ setErr('Error: '+friendly(e)); console.error(e); }
+        // On success → redirect
+        window.location.href = "/index.html";
+      }catch(err){
+        console.error("Auth error", err);
+        errorBox.textContent = "Error: " + err.message;
+      }
     };
   })();
   </script>
