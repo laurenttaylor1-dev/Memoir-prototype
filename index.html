@@ -1,21 +1,18 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Memoir — Recorder</title>
-<meta name="color-scheme" content="light dark" />
+<meta name="color-scheme" content="light dark"/>
 <style>
-:root{
-  --bg:#f6f7fb; --card:#fff; --fg:#0f172a; --muted:#667085; --brand:#2563eb; --brand2:#7c3aed;
-  --border:#e6e9f0; --shadow:0 20px 40px rgba(2,8,23,.06), 0 2px 6px rgba(2,8,23,.04);
-}
-@media (prefers-color-scheme:dark){
+:root{--bg:#f6f7fb;--card:#fff;--fg:#0f172a;--muted:#667085;--brand:#2563eb;--brand2:#7c3aed;--border:#e6e9f0;--shadow:0 20px 40px rgba(2,8,23,.06),0 2px 6px rgba(2,8,23,.04)}
+@media(prefers-color-scheme:dark){
   :root{--bg:#0b1020;--card:#0f162e;--fg:#e6edf7;--muted:#9aa4b2;--border:#1f2a44;--shadow:0 20px 40px rgba(0,0,0,.4),0 2px 6px rgba(0,0,0,.3)}
 }
 *,*:before,*:after{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-.container{max-width:1100px;margin:0 auto;padding:20px}
+.container{max-width:1100px;margin:auto;padding:20px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:16px}
 header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
 .brand{display:flex;align-items:center;gap:10px}
@@ -30,11 +27,12 @@ select,input,button{padding:10px 12px;border-radius:12px;border:1px solid var(--
 
 .shell{display:grid;gap:18px;grid-template-columns:1fr}
 .right{display:none}
-@media (min-width:1024px){ .shell{grid-template-columns:minmax(0,1fr) 420px}.right{display:block} }
+@media(min-width:1024px){.shell{grid-template-columns:minmax(0,1fr) 420px}.right{display:block}}
 
 .segment{display:flex;gap:8px;flex-wrap:wrap}
 .tab{padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:transparent}
 .tab.active{background:rgba(37,99,235,.12);border-color:rgba(37,99,235,.25)}
+.small{font-size:12px;color:var(--muted)}
 
 .label{font-size:12px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.08em;margin:10px 0 6px}
 .topics{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
@@ -43,19 +41,18 @@ select,input,button{padding:10px 12px;border-radius:12px;border:1px solid var(--
 
 .area{min-height:160px;border:1px solid var(--border);border-radius:12px;padding:12px;background:rgba(2,8,23,.02)}
 .mic-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;margin:12px 0}
-.mic{width:190px;height:190px;border-radius:999px;border:0;background:radial-gradient(70% 70% at 50% 30%, #ff5a5f, #a21caf);color:#fff;font-weight:700;font-size:18px;cursor:pointer;box-shadow:0 16px 50px rgba(162,28,175,.35)}
+.mic{width:190px;height:190px;border-radius:999px;border:0;background:radial-gradient(70% 70% at 50% 30%,#ff5a5f,#a21caf);color:#fff;font-weight:700;font-size:18px;cursor:pointer;box-shadow:0 16px 50px rgba(162,28,175,.35)}
 .mic.pulse{animation:pulse 1.6s infinite ease-in-out}
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
 .meter{display:flex;gap:8px;align-items:center;width:100%;max-width:420px}
 .bar{flex:1;height:10px;background:rgba(2,8,23,.08);border-radius:999px;overflow:hidden}
 .bar>div{height:100%;width:0%;background:linear-gradient(90deg,var(--brand),var(--brand2))}
-.actions{display:flex;gap:10px;flex-wrap:wrap}
 
 .list{display:grid;gap:10px}
 .story{padding:12px;border:1px solid var(--border);border-radius:12px;background:rgba(2,8,23,.02);display:flex;align-items:center;justify-content:space-between;gap:8px}
 .story h3{margin:0;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
 
-.drawer{position:fixed;inset:0;display:none;background:rgba(2,8,23,.45);backdrop-filter: blur(2px)}
+.drawer{position:fixed;inset:0;display:none;background:rgba(2,8,23,.45);backdrop-filter:blur(2px)}
 .drawer.show{display:block}
 .drawer .panel{position:absolute;right:0;top:0;bottom:0;width:88%;max-width:420px;background:var(--card);border-left:1px solid var(--border);padding:16px;overflow:auto}
 dialog::backdrop{background:rgba(0,0,0,.35)}
@@ -78,6 +75,7 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
             <option value="es">Español</option>
             <option value="nl">Nederlands</option>
           </select>
+          <select id="voiceSelect" title="Voice (when available)"></select>
           <button id="toggleLib" class="btn">☰ Library</button>
           <button id="logout" class="btn badge">Logout</button>
         </div>
@@ -95,10 +93,11 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
           <div id="guidedBlock">
             <div class="label">Suggested topics</div>
             <div id="prompts" class="topics"></div>
+            <div class="small">Tip: tapping a topic speaks a gentle question to get you started.</div>
           </div>
 
           <div class="label">Title</div>
-          <input id="title" type="text" placeholder="Story title (optional)" />
+          <input id="title" type="text" placeholder="Story title (optional)"/>
 
           <div class="label">When did this happen?</div>
           <input id="when" type="text" placeholder='e.g., "summer 1945", "early 2018", "15 Feb 1972"' />
@@ -115,13 +114,10 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
             <div id="asr" class="muted"></div>
           </div>
 
-          <div class="actions">
+          <div class="actions" style="display:flex;gap:10px;flex-wrap:wrap">
             <button id="save" class="btn primary" disabled>Save story</button>
             <button id="clear" class="btn">Clear</button>
-          </div>
-
-          <div class="actions">
-            <button id="exportBook" class="btn">Export Book (PDF)</button>
+            <button id="exportBook" class="btn">Export Book (print to PDF)</button>
             <button id="exportCsv" class="btn">Export CSV</button>
           </div>
         </section>
@@ -132,7 +128,7 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
         </aside>
       </div>
 
-      <footer>Cloud prototype — EN/FR/ES/NL guided prompts, speech, library, AI rewrite.</footer>
+      <footer>Cloud prototype — EN/FR/ES/NL guided prompts, ElevenLabs+fallback voice, recorder, library, AI rewrite.</footer>
     </div>
   </div>
 
@@ -153,259 +149,239 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
 
 <script>
 (async function(){
-  /* ========= Supabase session guard ========= */
+  /* ===== Supabase guard (uses your project) ===== */
   const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
-  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false} });
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}
+  });
 
-  const guardEl=document.getElementById('guard'), appEl=document.getElementById('app');
+  const guard=document.getElementById('guard'), app=document.getElementById('app');
   const { data:{session} } = await supa.auth.getSession();
   console.log('session on index', session);
   if(!session){ window.location.replace('/login.html'); return; }
-  guardEl.style.display='none'; appEl.style.display='grid';
-
+  guard.style.display='none'; app.style.display='grid';
   document.getElementById('logout').onclick = async ()=>{ await supa.auth.signOut(); window.location.replace('/login.html'); };
 
-  /* ========= DOM ========= */
-  const $ = (id)=>document.getElementById(id);
-  const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-  const lang=$('lang'), titleEl=$('title'), whenEl=$('when'), transcriptEl=$('transcript');
+  /* ===== DOM ===== */
+  const $=id=>document.getElementById(id);
+  const lang=$('lang'), voiceSelect=$('voiceSelect'), promptsWrap=$('prompts');
+  const titleEl=$('title'), whenEl=$('when'), transcriptEl=$('transcript');
   const mic=$('mic'), meter=$('meter'), bar=$('bar'), remain=$('remain'), asr=$('asr');
   const save=$('save'), clearBtn=$('clear'), library=$('library');
-  const drawer=$('drawer'), libraryDrawer=$('libraryDrawer');
-  const toggleLib=$('toggleLib'), closeDrawer=$('closeDrawer');
+  const drawer=$('drawer'), libraryDrawer=$('libraryDrawer'), toggleLib=$('toggleLib'), closeDrawer=$('closeDrawer');
   const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
   const exportBookBtn=$('exportBook'), exportCsvBtn=$('exportCsv');
 
-  /* ========= Topics & TTS ========= */
-  const TOPICS = {
-    en: ["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
-    fr: ["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
-    es: ["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"],
-    nl: ["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
+  /* ===== Topics (chip word) + Spoken prompts (full sentence) ===== */
+  const TOPIC_WORDS = {
+    en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
+    fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
+    es:["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"],
+    nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
   };
-  <script>
-  // --- Language → BCP code
-  const BCP = { en:'en-US', fr:'fr-FR', es:'es-ES', nl:'nl-NL' };
-
-  // --- Preferred voice names per language (best first). We try in this order:
-  const PREFERRED_VOICES = {
-    fr: ["Thomas", "Amélie", "Aurelia", "Google français", "Google Français", "Virginie"],
-    en: ["Samantha", "Alex", "Google US English", "Google English", "Daniel"],
-    es: ["Monica", "Google español", "Jorge", "Paulina"],
-    nl: ["Xander", "Ellen", "Claire", "Google Nederlands"]
+  const PROMPT_SENTENCES = {
+    en:{
+      Childhood:"Tell me something about your youth.",
+      Family:"Tell me about your family and the people who raised you.",
+      School:"What was school like for you?",
+      Work:"Tell me about your first job or career.",
+      Love:"How did you meet your partner, or what did love mean to you then?",
+      War:"What big world events or conflicts did you live through?",
+      Travel:"Where did you travel that left a mark on you?",
+      Traditions:"Which family traditions mattered most to you?",
+      Holidays:"Describe a holiday you remember vividly.",
+      Lessons:"What life lesson did you learn the hard way?",
+      Advice:"What advice would you give your younger self?",
+      "Turning-points":"What was a turning point that changed your path?"
+    },
+    fr:{
+      Enfance:"Parlez-moi de votre jeunesse, d’un souvenir marquant.",
+      Famille:"Parlez-moi de votre famille et des personnes qui vous ont élevé.",
+      École:"Comment était l’école pour vous ?",
+      Travail:"Racontez-moi votre premier travail ou votre carrière.",
+      Amour:"Comment avez-vous rencontré votre partenaire, et que signifiait l’amour pour vous ?",
+      Guerre:"Quels grands événements ou conflits avez-vous vécus ?",
+      Voyages:"Quels voyages vous ont marqué(e) ?",
+      Traditions:"Quelles traditions familiales comptaient le plus ?",
+      Fêtes:"Décrivez une fête dont vous vous souvenez clairement.",
+      Leçons:"Quelle leçon de vie avez-vous apprise à la dure ?",
+      Conseils:"Quel conseil donneriez-vous à votre jeune vous ?",
+      Déclics:"Quel déclic a changé votre trajectoire ?"
+    },
+    es:{
+      Infancia:"Cuéntame algo sobre tu juventud.",
+      Familia:"Háblame de tu familia y de quienes te criaron.",
+      Escuela:"¿Cómo era la escuela para ti?",
+      Trabajo:"Cuéntame sobre tu primer trabajo o tu carrera.",
+      Amor:"¿Cómo conociste a tu pareja y qué significaba el amor entonces?",
+      Guerra:"¿Qué grandes eventos o conflictos viviste?",
+      Viajes:"¿Qué viajes te marcaron?",
+      Tradiciones:"¿Qué tradiciones familiares eran importantes para ti?",
+      Fiestas:"Describe una fiesta que recuerdes con claridad.",
+      Lecciones:"¿Qué lección de vida aprendiste con dificultad?",
+      Consejos:"¿Qué consejo le darías a tu yo joven?",
+      "Puntos-clave":"¿Cuál fue un punto de inflexión en tu vida?"
+    },
+    nl:{
+      Jeugd:"Vertel me iets over je jeugd.",
+      Familie:"Vertel over je familie en de mensen die je hebben opgevoed.",
+      School:"Hoe was school voor jou?",
+      Werk:"Vertel over je eerste baan of je loopbaan.",
+      Liefde:"Hoe heb je je partner ontmoet, en wat betekende liefde toen?",
+      Oorlog:"Welke grote gebeurtenissen of conflicten heb je meegemaakt?",
+      Reizen:"Welke reizen hebben indruk op je gemaakt?",
+      Tradities:"Welke familietradities waren belangrijk voor je?",
+      Feestdagen:"Beschrijf een feestdag die je helder herinnert.",
+      Lessen:"Welke levensles heb je op de harde manier geleerd?",
+      Advies:"Welk advies zou je je jongere zelf geven?",
+      Keerpunt:"Wat was een keerpunt in je leven?"
+    }
   };
+  const BCP={en:'en-US',fr:'fr-FR',es:'es-ES',nl:'nl-NL'};
 
-  let VOICES = [];
-  const voiceSelect = document.createElement('select');
-  voiceSelect.id = 'voiceSelect';
-  voiceSelect.style.padding = '6px 10px';
-  voiceSelect.style.borderRadius = '10px';
-  voiceSelect.style.border = '1px solid var(--border)';
-  voiceSelect.title = 'Voice';
-  // insert the select next to the language dropdown
-  document.getElementById('lang').insertAdjacentElement('afterend', voiceSelect);
-
-  function loadVoicesAndPopulate() {
-    VOICES = window.speechSynthesis.getVoices() || [];
-
-    const langCode = document.getElementById('lang').value;
-    const target = BCP[langCode] || 'en-US';
-
-    // Filter voices for current language
-    const langVoices = VOICES.filter(v => v.lang === target || v.lang?.startsWith(target.split('-')[0]));
-
-    // Sort: preferred names first, then exact lang matches
-    const prefs = PREFERRED_VOICES[langCode] || [];
-    langVoices.sort((a,b)=>{
-      const ai = prefs.indexOf(a.name), bi = prefs.indexOf(b.name);
-      if (ai !== -1 || bi !== -1) return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
-      if (a.lang === target && b.lang !== target) return -1;
-      if (b.lang === target && a.lang !== target) return 1;
-      return a.name.localeCompare(b.name);
+  /* ===== TTS: try ElevenLabs via /api/tts, else fallback to Web Speech ===== */
+  let VOICES=[];
+  function populateVoices(){
+    VOICES = speechSynthesis.getVoices()||[];
+    const code=lang.value, target=BCP[code]||'en-US';
+    const list=VOICES.filter(v=>v.lang===target||v.lang?.startsWith(target.split('-')[0]));
+    voiceSelect.innerHTML='';
+    list.forEach(v=>{
+      const o=document.createElement('option');
+      o.value=v.name; o.textContent=`${v.name} (${v.lang})`;
+      voiceSelect.appendChild(o);
     });
-
-    // Populate dropdown
-    voiceSelect.innerHTML = '';
-    langVoices.forEach(v=>{
-      const opt = document.createElement('option');
-      opt.value = v.name;
-      opt.textContent = `${v.name} (${v.lang})`;
-      voiceSelect.appendChild(opt);
-    });
-
-    // If nothing, show a disabled option
-    if (!langVoices.length) {
-      const opt = document.createElement('option');
-      opt.textContent = 'No voice found for this language';
-      opt.disabled = true; opt.selected = true;
-      voiceSelect.appendChild(opt);
-    } else {
-      // Preselect the first preferred
-      voiceSelect.selectedIndex = 0;
+    if(!list.length){
+      const o=document.createElement('option');
+      o.textContent='No system voice available'; o.disabled=true; o.selected=true;
+      voiceSelect.appendChild(o);
     }
   }
-
-  // Ensure voices are ready before first use
-  if ('speechSynthesis' in window) {
-    // Chrome loads voices async; this fires once ready
-    window.speechSynthesis.onvoiceschanged = () => {
-      loadVoicesAndPopulate();
-    };
-    // Some browsers have voices immediately:
-    loadVoicesAndPopulate();
+  if('speechSynthesis' in window){
+    speechSynthesis.onvoiceschanged=populateVoices;
+    populateVoices();
   }
 
-  function pickVoice(langCode) {
-    const target = BCP[langCode] || 'en-US';
-    const wantName = voiceSelect && voiceSelect.value;
-    if (wantName) {
-      const v = VOICES.find(v => v.name === wantName);
-      if (v) return v;
+  async function playElevenLabs(text, langCode){
+    try{
+      const r = await fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ text, lang: langCode })});
+      if(!r.ok) throw new Error('tts_failed');
+      const blob = await r.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      await audio.play();
+      setTimeout(()=>URL.revokeObjectURL(url), 60000);
+      return true;
+    }catch(e){
+      console.warn('ElevenLabs TTS fallback → Web Speech', e);
+      return false;
     }
-    // Fallbacks: preferred list, then exact lang, then same language
-    const prefs = PREFERRED_VOICES[langCode] || [];
-    const byPref = VOICES.find(v => prefs.includes(v.name));
-    if (byPref) return byPref;
-    const exact = VOICES.find(v => v.lang === target);
-    if (exact) return exact;
-    return VOICES.find(v => v.lang?.startsWith(target.split('-')[0])) || null;
   }
-
-  function speak(text, code){
-    if (!('speechSynthesis' in window)) return;
-    const u = new SpeechSynthesisUtterance(String(text));
-    u.lang  = BCP[code] || 'en-US';
-    u.rate  = 0.95;
-    u.pitch = 1.0;
-    u.volume= 1.0;
-
-    const v = pickVoice(code);
-    if (v) u.voice = v;
-
-    // Cancel any ongoing utterance and speak
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(u);
+  function speakFallback(text, langCode){
+    if(!('speechSynthesis' in window)) return;
+    const u=new SpeechSynthesisUtterance(String(text));
+    u.lang=BCP[langCode]||'en-US'; u.rate=.95; u.pitch=1; u.volume=1;
+    const choice=VOICES.find(v=>v.name===voiceSelect.value)||
+                 VOICES.find(v=>v.lang===u.lang)||
+                 VOICES.find(v=>v.lang?.startsWith(u.lang.split('-')[0]))||null;
+    if(choice) u.voice=choice;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
   }
-
-  // Rebuild voices list when the language changes
-  document.getElementById('lang').addEventListener('change', loadVoicesAndPopulate);
-
-  // Your existing topics map (keep as-is) and renderPrompts:
-  const TOPICS = {
-    en: ["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
-    fr: ["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
-    es: ["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"],
-    nl: ["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
-  };
+  async function speakPrompt(oneWord, langCode){
+    const sent = (PROMPT_SENTENCES[langCode]||{})[oneWord] || oneWord;
+    const ok = await playElevenLabs(sent, langCode);
+    if(!ok) speakFallback(sent, langCode);
+  }
 
   function renderPrompts(){
-    const lang = document.getElementById('lang').value;
-    const wrap = document.getElementById('prompts');
-    wrap.innerHTML = '';
-    (TOPICS[lang]||TOPICS.en).forEach(topic=>{
-      const chip = document.createElement('div');
-      chip.className = 'chip';
-      chip.textContent = topic;
-      chip.onclick = () => { document.getElementById('title').value = topic; speak(topic, lang); };
-      wrap.appendChild(chip);
+    const code=lang.value; promptsWrap.innerHTML='';
+    (TOPIC_WORDS[code]||TOPIC_WORDS.en).forEach(word=>{
+      const chip=document.createElement('div'); chip.className='chip'; chip.textContent=word;
+      chip.onclick=()=>{ titleEl.value=word; speakPrompt(word, code); };
+      promptsWrap.appendChild(chip);
     });
   }
-</script>
 
+  /* ===== Mode switching ===== */
+  tabGuided.onclick=()=>{tabGuided.classList.add('active');tabFree.classList.remove('active');guidedBlock.style.display='block'};
+  tabFree.onclick  =()=>{tabFree.classList.add('active');tabGuided.classList.remove('active');guidedBlock.style.display='none'};
+  lang.onchange=()=>populateVoices()||renderPrompts();
 
-  /* ========= Modes ========= */
-  tabGuided.onclick=()=>{ tabGuided.classList.add('active'); tabFree.classList.remove('active'); guidedBlock.style.display='block'; };
-  tabFree.onclick=()=>{ tabFree.classList.add('active'); tabGuided.classList.remove('active'); guidedBlock.style.display='none'; };
-  lang.onchange=()=>renderPrompts();
-
-  toggleLib.onclick=()=>{ if(window.innerWidth>=1024){ renderLib(); } else { drawer.classList.add('show'); renderLib(true); } };
+  /* ===== Library drawer (mobile) ===== */
+  toggleLib.onclick=()=>{ if(innerWidth>=1024){ renderLib(); } else { drawer.classList.add('show'); renderLib(true); } };
   closeDrawer.onclick=()=>drawer.classList.remove('show');
-  drawer.addEventListener('click',(e)=>{ if(e.target===drawer) drawer.classList.remove('show'); });
+  drawer.addEventListener('click',e=>{ if(e.target===drawer) drawer.classList.remove('show'); });
 
-  /* ========= Recording (Web Speech Recognition) ========= */
+  /* ===== Recorder (Web Speech Recognition) ===== */
   let recognition=null, recActive=false, cap=120, elapsed=0, timer=null;
   function startRec(){
-    const SR = window.webkitSpeechRecognition || window.SpeechRecognition;
-    if(!SR){ asr.textContent='Speech recognition is not available in this browser.'; return; }
-    recognition=new SR();
-    recognition.lang = BCP[lang.value] || 'en-US';
-    recognition.continuous=true; recognition.interimResults=true;
+    const SR=window.webkitSpeechRecognition||window.SpeechRecognition;
+    if(!SR){asr.textContent='Speech recognition is not available in this browser.';return;}
+    recognition=new SR(); recognition.lang=BCP[lang.value]||'en-US'; recognition.continuous=true; recognition.interimResults=true;
     let full='';
     recognition.onresult=(e)=>{
-      let inter='';
-      for(let i=e.resultIndex;i<e.results.length;i++){
-        const r=e.results[i];
-        if(r.isFinal) full+=r[0].transcript+' '; else inter+=r[0].transcript;
-      }
-      const txt=(full+inter).trim();
-      transcriptEl.textContent = txt || 'Your words will appear here…';
-      save.disabled = !txt;
+      let inter=''; for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i]; if(r.isFinal) full+=r[0].transcript+' '; else inter+=r[0].transcript;}
+      const txt=(full+inter).trim(); transcriptEl.textContent=txt||'Your words will appear here…'; save.disabled=!txt;
     };
-    recognition.onend=()=>{ stopRec(); };
-    try{ recognition.start(); }catch{}
-    asr.textContent='Transcribing…';
-    mic.textContent='Stop Recording'; mic.classList.add('pulse');
+    recognition.onend=()=>stopRec();
+    try{recognition.start();}catch{}
+    asr.textContent='Transcribing…'; mic.textContent='Stop Recording'; mic.classList.add('pulse');
     elapsed=0; remain.textContent=cap+'s'; bar.style.width='0%'; meter.style.display='flex';
-    timer=setInterval(()=>{ elapsed++; bar.style.width=(elapsed/cap*100)+'%'; remain.textContent=Math.max(0,cap-elapsed)+'s'; if(elapsed>=cap) stopRec(); },1000);
+    timer=setInterval(()=>{elapsed++; bar.style.width=(elapsed/cap*100)+'%'; remain.textContent=Math.max(0,cap-elapsed)+'s'; if(elapsed>=cap) stopRec();},1000);
     recActive=true;
   }
-  function stopRec(){
-    try{ recognition && recognition.stop(); }catch{}
-    if(timer){ clearInterval(timer); timer=null; }
-    mic.textContent='Record'; mic.classList.remove('pulse'); asr.textContent='';
-    recActive=false;
-  }
+  function stopRec(){ try{recognition&&recognition.stop();}catch{} if(timer){clearInterval(timer);timer=null} mic.textContent='Record'; mic.classList.remove('pulse'); asr.textContent=''; recActive=false; }
   mic.onclick=()=>{ recActive?stopRec():startRec(); };
 
-  /* ========= Approx date parser ========= */
+  /* ===== Approx date parsing ===== */
   function parseApproxDate(input){
-    if(!input) return { label:'', sort:null };
+    if(!input) return {label:'',sort:null};
     const s=input.trim().toLowerCase();
     const iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); if(iso){const d=new Date(+iso[1],+iso[2]-1,+iso[3]);return{label:input,sort:d.toISOString().slice(0,10)};}
     const yOnly=s.match(/(\d{4})/); if(yOnly){const d=new Date(+yOnly[1],0,1);return{label:input,sort:d.toISOString().slice(0,10)};}
     const season=s.match(/^(early|mid|late)?\s*(spring|summer|autumn|fall|winter)\s+(\d{4})$/);
     if(season){const y=+season[3];const base={spring:2,summer:5,autumn:8,fall:8,winter:11}[season[2]];let m=base,day=1;if(season[1]==='mid')day=10;if(season[1]==='late')day=20;const d=new Date(y,m,day);return{label:input,sort:d.toISOString().slice(0,10)};}
-    return { label:input, sort:null };
+    return {label:input,sort:null};
   }
 
-  /* ========= Library (localStorage for now) ========= */
-  function loadStories(){ try{return JSON.parse(localStorage.getItem('memoir.stories')||'[]')}catch{return[]} }
-  function saveStories(list){ localStorage.setItem('memoir.stories', JSON.stringify(list)); }
+  /* ===== Library (localStorage for now) ===== */
+  const LSKEY='memoir.stories';
+  const loadStories=()=>{try{return JSON.parse(localStorage.getItem(LSKEY)||'[]')}catch{return[]}};
+  const saveStories=(list)=>localStorage.setItem(LSKEY,JSON.stringify(list));
+  const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 
   function storyRow(s, idx){
     const row=document.createElement('div'); row.className='story';
     const meta=document.createElement('div'); meta.style.minWidth='0';
     const h=document.createElement('h3'); h.textContent=s.title||'Story';
     const t=document.createElement('div'); t.className='muted';
-    t.textContent= s.happened_label || (s.happened_sort?new Date(s.happened_sort).toDateString():new Date(s.created).toLocaleString());
+    t.textContent = s.happened_label || (s.happened_sort?new Date(s.happened_sort).toDateString():new Date(s.created).toLocaleString());
     meta.appendChild(h); meta.appendChild(t);
 
     const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px'; actions.style.flexWrap='wrap';
-    const make = (txt,fn,disabled)=>{ const b=document.createElement('button'); b.className='btn'; b.textContent=txt; if(disabled) b.disabled=true; b.onclick=fn; return b; };
+    const make=(txt,fn,disabled)=>{const b=document.createElement('button'); b.className='btn'; b.textContent=txt; if(disabled) b.disabled=true; b.onclick=fn; return b;};
     actions.appendChild(make('View',()=>viewStory(s)));
     actions.appendChild(make('Rewrite (AI)',()=>rewriteAI(idx)));
-    actions.appendChild(make('Undo',()=>undoRewrite(idx), !s.prev));
+    actions.appendChild(make('Undo',()=>undoRewrite(idx),!s.prev));
     actions.appendChild(make('Download .docx',()=>downloadDocx(s)));
     actions.appendChild(make('Delete',()=>delStory(idx)));
     row.appendChild(meta); row.appendChild(actions);
     return row;
   }
-
   function renderLib(toDrawer=false){
     const items=loadStories();
-    const tgt = toDrawer?libraryDrawer:library;
-    tgt.innerHTML=''; if(!items.length){ const p=document.createElement('p'); p.className='muted'; p.textContent='No stories yet.'; tgt.appendChild(p); return; }
+    const tgt=toDrawer?libraryDrawer:library;
+    tgt.innerHTML=''; if(!items.length){const p=document.createElement('p');p.className='muted';p.textContent='No stories yet.';tgt.appendChild(p);return;}
     items.forEach((s,i)=>tgt.appendChild(storyRow(s,i)));
   }
-
   function viewStory(s){
     const dlg=document.createElement('dialog');
     dlg.style.width='min(90vw,820px)';
     dlg.innerHTML=`<form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #e5e7eb"><strong>${esc(s.title||'Story')}</strong><button autofocus class="btn">Close</button></form><div style="padding:16px"><div class="muted" style="margin-bottom:6px">${esc(s.happened_label || (s.happened_sort?new Date(s.happened_sort).toDateString():new Date(s.created).toLocaleString()))}</div><div style="white-space:pre-wrap;font-family:system-ui">${esc(s.text||'')}</div></div>`;
     document.body.appendChild(dlg); dlg.addEventListener('close',()=>dlg.remove()); dlg.showModal();
   }
-
   function delStory(idx){ const list=loadStories(); list.splice(idx,1); saveStories(list); renderLib(); renderLib(true); }
 
   async function rewriteAI(idx){
@@ -413,14 +389,12 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     try{
       const res=await fetch('/api/rewrite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:s.text,title:s.title,language:lang.value,tone:'warm, vivid, cohesive memoir tone'})});
       const data=await res.json(); if(!res.ok) throw new Error(data.error||'rewrite_failed');
-      // keep original once for undo
-      if(!s.prev) s.prev = s.text;
+      if(!s.prev) s.prev=s.text;
       s.text = data.text || s.text;
-      saveStories(list); renderLib(); renderLib(true);
-      viewStory(s);
+      saveStories(list); renderLib(); renderLib(true); viewStory(s);
     }catch(e){ alert('Rewrite error: '+(e?.message||e)); }
   }
-  function undoRewrite(idx){ const list=loadStories(); const s=list[idx]; if(!s?.prev) return; s.text = s.prev; s.prev=null; saveStories(list); renderLib(); renderLib(true); }
+  function undoRewrite(idx){ const list=loadStories(); const s=list[idx]; if(!s?.prev) return; s.text=s.prev; s.prev=null; saveStories(list); renderLib(); renderLib(true); }
 
   async function downloadDocx(s){
     const JSZip=window.JSZip; const zip=new JSZip();
@@ -430,35 +404,32 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     zip.folder('_rels').file('.rels',`<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`);
     const word=zip.folder('word'); word.folder('_rels').file('document.xml.rels', `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>`);
     word.file('document.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t xml:space="preserve">${title}</w:t></w:r></w:p>${paras}<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/></w:sectPr></w:body></w:document>`);
-    const blob=await zip.generateAsync({type:'blob'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(s.title||'Story')+'.docx'; document.body.appendChild(a); a.click(); a.remove();
+    const blob=await zip.generateAsync({type:'blob'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(s.title||'Story')+'.docx'; a.click();
   }
-  function xml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  const xml=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-  /* ========= Save current story ========= */
-  function currentText(){ const t=transcriptEl.textContent||''; return t==='Your words will appear here…' ? '' : t; }
-  save.onclick=()=>{
-    const list=loadStories();
-    const when=parseApproxDate(whenEl.value);
-    list.unshift({ id:crypto.randomUUID(), title:titleEl.value||'Story', text:currentText(), created:Date.now(), happened_label:when.label||null, happened_sort:when.sort, prev:null });
-    saveStories(list);
-    titleEl.value=''; whenEl.value=''; transcriptEl.textContent='Your words will appear here…'; save.disabled=true;
-    renderLib(); renderLib(true);
+  /* ===== Save current story ===== */
+  function currentText(){ const t=transcriptEl.textContent||''; return t==='Your words will appear here…'?'':t; }
+  $('save').onclick=()=>{
+    const list=loadStories(); const when=parseApproxDate(whenEl.value);
+    list.unshift({id:crypto.randomUUID(),title:titleEl.value||'Story',text:currentText(),created:Date.now(),happened_label:when.label||null,happened_sort:when.sort,prev:null});
+    saveStories(list); titleEl.value=''; whenEl.value=''; transcriptEl.textContent='Your words will appear here…'; save.disabled=true; renderLib(); renderLib(true);
   };
   clearBtn.onclick=()=>{ titleEl.value=''; whenEl.value=''; transcriptEl.textContent='Your words will appear here…'; save.disabled=true; };
 
-  /* ========= Exports ========= */
-  exportBookBtn.onclick = ()=>{
-    const items=loadStories().slice().sort((a,b)=>(a.happened_sort||'')< (b.happened_sort||'') ? -1 : 1);
-    const html = items.map(ch=>`<section style="page-break-after:always;padding:32px 40px;font-family:Georgia,serif"><h1 style="margin:0">${esc(ch.title||'Chapter')}</h1><time style="color:#666;font-size:12px">${esc(ch.happened_label || (ch.happened_sort?new Date(ch.happened_sort).toDateString():''))}</time><div style="margin-top:12px;white-space:pre-wrap;line-height:1.6">${esc(ch.text||'')}</div></section>`).join('');
-    const w=window.open('','_blank'); w.document.write(`<!doctype html><meta charset="utf-8"><title>Book Export</title>${html}`); w.document.close();
+  /* ===== Exports ===== */
+  exportBookBtn.onclick=()=>{
+    const items=loadStories().slice().sort((a,b)=>(a.happened_sort||'')<(b.happened_sort||'')?-1:1);
+    const html=items.map(ch=>`<section style="page-break-after:always;padding:32px 40px;font-family:Georgia,serif"><h1 style="margin:0">${esc(ch.title||'Chapter')}</h1><time style="color:#666;font-size:12px">${esc(ch.happened_label||(ch.happened_sort?new Date(ch.happened_sort).toDateString():''))}</time><div style="margin-top:12px;white-space:pre-wrap;line-height:1.6">${esc(ch.text||'')}</div></section>`).join('');
+    const w=open('','_blank'); w.document.write(`<!doctype html><meta charset="utf-8"><title>Book Export</title>${html}`); w.document.close();
   };
-  exportCsvBtn.onclick = ()=>{
-    const rows=[['Title','When','Body']]; loadStories().forEach(ch=>rows.push([ch.title||'Chapter', ch.happened_label || (ch.happened_sort?new Date(ch.happened_sort).toISOString().slice(0,10):''), (ch.text||'').replace(/\r?\n/g,'\\n')]));
+  exportCsvBtn.onclick=()=>{
+    const rows=[['Title','When','Body']]; loadStories().forEach(ch=>rows.push([ch.title||'Chapter', ch.happened_label||(ch.happened_sort?new Date(ch.happened_sort).toISOString().slice(0,10):''), (ch.text||'').replace(/\r?\n/g,'\\n')]));
     const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
     const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='memoir.csv'; a.click();
   };
 
-  /* ========= Init ========= */
+  /* ===== Init ===== */
   renderPrompts(); renderLib();
 
 })();
