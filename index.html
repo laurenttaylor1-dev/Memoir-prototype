@@ -169,14 +169,11 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     </div>
   </div>
 
-  <!-- Login card (shown only if not authed yet; guard will hide this by redirecting) -->
+  <!-- Fallback card (only visible for a split-second before guard runs) -->
   <div class="container" id="auth">
     <div class="card" style="max-width:520px;margin:40px auto">
-      <h2 style="margin-top:0">Sign in to Memoir</h2>
-      <p class="muted" style="margin-top:-6px">We’ll email you a magic link to continue.</p>
-      <input id="email" type="email" placeholder="your@email.com" style="width:100%;margin:10px 0 12px">
-      <button id="sendLink" class="btn primary">Send magic link</button>
-      <p id="authMsg" class="muted" style="margin-top:10px"></p>
+      <h2 style="margin-top:0">Checking your session…</h2>
+      <p class="muted">If you aren’t signed in, you’ll be redirected to login.</p>
     </div>
   </div>
 
@@ -197,11 +194,11 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
 <script>
 (async function(){
   // ======== ENV & SUPABASE ========
-  const SUPABASE_URL = "https://jrjqciywljjhhcxfyxwh.supabase.co";
+  const SUPABASE_URL = "https://jrjqciywljjhhcxfyxwh.supabase.co"; // <- working URL
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // ======== AUTH GUARD (redirect to login.html if not logged in) ========
+  // ======== AUTH GUARD ========
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) { window.location.replace('login.html'); return; }
 
@@ -234,14 +231,14 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     const target = BCP[code]||'en-US';
     const u = new SpeechSynthesisUtterance(text);
     u.lang = target; u.rate=0.92; u.pitch=0.95; u.volume=0.9;
-    const trySpeak=()=>{
+    const ensure=()=>{
       const vs=speechSynthesis.getVoices();
       const v=vs.find(v=>v.lang===target)||vs.find(v=>v.lang.startsWith(target.split('-')[0]))||null;
       if(v) u.voice=v;
-      if(vs.length===0) return setTimeout(trySpeak,120);
+      if(vs.length===0) return setTimeout(ensure,120);
       speechSynthesis.cancel(); speechSynthesis.speak(u);
     };
-    trySpeak();
+    ensure();
   }
 
   function renderPrompts(){
@@ -285,9 +282,9 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
   tabFree.onclick=()=>{ mode='free'; tabFree.classList.add('active'); tabGuided.classList.remove('active'); guidedBlock.style.display='none'; };
   lang.onchange=()=>renderPrompts();
 
+  const drawer=$('drawer'); const toggleLib=$('toggleLib'); const closeDrawer=$('closeDrawer');
   toggleLib.onclick=()=>{ if(window.innerWidth>=1024){ fetchStories(); } else { drawer.classList.add('show'); fetchStories(); } };
-  closeDrawer.onclick=()=>drawer.classList.remove('show');
-  drawer.addEventListener('click',(e)=>{ if(e.target===drawer) drawer.classList.remove('show'); });
+  closeDrawer.onclick=()=>drawer.classList.remove('show'); drawer.addEventListener('click',(e)=>{ if(e.target===drawer) drawer.classList.remove('show'); });
 
   mic.onclick = async ()=>{ if(rec && rec.state!=='inactive'){ stopAll(); } else { await startAll(); } };
 
@@ -309,8 +306,8 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     const SR = window.webkitSpeechRecognition || window.SpeechRecognition;
     if(SR){
       recognition=new SR();
-      const BCP = { en:'en-US', fr:'fr-FR', es:'es-ES', nl:'nl-NL' };
-      recognition.lang = BCP[lang.value] || 'en-US';
+      const B = { en:'en-US', fr:'fr-FR', es:'es-ES', nl:'nl-NL' };
+      recognition.lang = B[lang.value] || 'en-US';
       recognition.continuous=true; recognition.interimResults=true;
       let full='';
       recognition.onresult=(e)=>{
