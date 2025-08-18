@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Memoir — Sign in</title>
+<meta name="color-scheme" content="light dark" />
+<style>
+:root{
+  --bg:#f6f7fb; --card:#fff; --fg:#0f172a; --muted:#667085; --border:#e6e9f0;
+  --brand:#2563eb; --brand2:#7c3aed; --shadow:0 16px 36px rgba(2,8,23,.08), 0 2px 6px rgba(2,8,23,.05);
+}
+@media (prefers-color-scheme:dark){
+  :root{ --bg:#0b1020; --card:#0f162e; --fg:#e6edf7; --muted:#9aa4b2; --border:#1f2a44; --shadow:0 16px 36px rgba(0,0,0,.45), 0 2px 6px rgba(0,0,0,.35) }
+}
+*,*:before,*:after{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; display:grid; place-items:center; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  background:
+    radial-gradient(1200px 600px at -10% -20%, rgba(124,58,237,.12), transparent 40%),
+    radial-gradient(1200px 600px at 110% -10%, rgba(37,99,235,.12), transparent 40%),
+    var(--bg);
+  color:var(--fg);
+}
+.card{width:min(520px,92vw); background:var(--card); border:1px solid var(--border); border-radius:18px; box-shadow:var(--shadow); padding:22px}
+.header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.logo{width:36px;height:36px;border-radius:12px;background:conic-gradient(from 180deg at 50% 50%, var(--brand), var(--brand2))}
+h1{font-size:20px;margin:0}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px}
+.tab{padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:transparent;cursor:pointer}
+.tab.active{background:rgba(37,99,235,.10);border-color:rgba(37,99,235,.3)}
+label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:10px 0 6px}
+input{width:100%;padding:12px;border:1px solid var(--border);border-radius:12px;background:transparent;color:inherit}
+button{padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit;cursor:pointer}
+button.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;border:0}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.muted{color:var(--muted);font-size:12px}
+.hidden{display:none}
+.notice{background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.2);padding:10px;border-radius:12px;margin:10px 0}
+.err{color:#b91c1c}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="header">
+    <div class="logo" aria-hidden="true"></div>
+    <h1>Sign in to Memoir</h1>
+  </div>
+
+  <div class="tabs">
+    <button id="tab-signin" class="tab active">Sign in</button>
+    <button id="tab-signup" class="tab">Create account</button>
+    <button id="tab-magic" class="tab">Magic link</button>
+  </div>
+
+  <!-- Sign in -->
+  <section id="pane-signin">
+    <label>Email</label>
+    <input id="in-email" type="email" placeholder="you@example.com" autocomplete="username" />
+    <label>Password</label>
+    <input id="in-pass" type="password" placeholder="••••••••" autocomplete="current-password" />
+    <div class="row" style="margin-top:12px">
+      <button id="btn-signin" class="primary">Sign in</button>
+      <button id="btn-forgot" type="button">Forgot password</button>
+    </div>
+    <p id="msg-in" class="muted" style="margin-top:10px"></p>
+  </section>
+
+  <!-- Sign up -->
+  <section id="pane-signup" class="hidden">
+    <label>Email</label>
+    <input id="up-email" type="email" placeholder="you@example.com" autocomplete="username" />
+    <label>Password</label>
+    <input id="up-pass" type="password" placeholder="At least 6 characters" autocomplete="new-password" />
+    <div class="row" style="margin-top:12px">
+      <button id="btn-signup" class="primary">Create account</button>
+    </div>
+    <p class="muted" style="margin-top:10px">By continuing you agree to our terms.</p>
+    <p id="msg-up" class="muted" style="margin-top:6px"></p>
+  </section>
+
+  <!-- Magic link -->
+  <section id="pane-magic" class="hidden">
+    <div class="notice">We’ll email you a one-time sign-in link. No password needed.</div>
+    <label>Email</label>
+    <input id="ml-email" type="email" placeholder="you@example.com" />
+    <div class="row" style="margin-top:12px">
+      <button id="btn-magic" class="primary">Send magic link</button>
+    </div>
+    <p id="msg-ml" class="muted" style="margin-top:10px"></p>
+  </section>
+
+  <!-- Reset password (after clicking email link) -->
+  <section id="pane-reset" class="hidden">
+    <div class="notice">Enter a new password for your account.</div>
+    <label>New password</label>
+    <input id="new-pass" type="password" placeholder="New password" />
+    <div class="row" style="margin-top:12px">
+      <button id="btn-reset" class="primary">Set new password</button>
+    </div>
+    <p id="msg-reset" class="muted" style="margin-top:10px"></p>
+  </section>
+
+</div>
+
+<!-- Supabase JS (v2) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
+<script>
+  // === Your Supabase project (public client) ===
+  const SUPABASE_URL = "https://jrjqciywljjhhcxfyxwh.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // === UI helpers ===
+  const $ = (id)=>document.getElementById(id);
+  const panes = {
+    signin: $('pane-signin'),
+    signup: $('pane-signup'),
+    magic: $('pane-magic'),
+    reset: $('pane-reset')
+  };
+  function show(name){
+    Object.values(panes).forEach(p => p.classList.add('hidden'));
+    panes[name].classList.remove('hidden');
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    if (name==='signin') $('tab-signin').classList.add('active');
+    if (name==='signup') $('tab-signup').classList.add('active');
+    if (name==='magic') $('tab-magic').classList.add('active');
+  }
+
+  // Switch tabs
+  $('tab-signin').onclick = ()=>show('signin');
+  $('tab-signup').onclick = ()=>show('signup');
+  $('tab-magic').onclick  = ()=>show('magic');
+
+  // If user returns from a password reset link, Supabase appends access_token in URL.
+  const url = new URL(window.location.href);
+  const hasRecovery = url.searchParams.get('type') === 'recovery' || url.hash.includes('type=recovery') || url.searchParams.get('access_token');
+  if (hasRecovery) show('reset');
+
+  // Already logged in? redirect to app.
+  supa.auth.getSession().then(({ data })=>{
+    if (data.session) window.location.replace('index.html');
+  });
+
+  // Sign in (email+pass)
+  $('btn-signin').onclick = async ()=>{
+    $('msg-in').textContent = '';
+    const email = $('in-email').value.trim();
+    const password = $('in-pass').value;
+    if (!email || !password) { $('msg-in').textContent = 'Enter email and password.'; return; }
+    const { error } = await supa.auth.signInWithPassword({ email, password });
+    if (error) { $('msg-in').innerHTML = '<span class="err">Error: '+ error.message +'</span>'; return; }
+    window.location.replace('index.html');
+  };
+
+  // Sign up
+  $('btn-signup').onclick = async ()=>{
+    $('msg-up').textContent = '';
+    const email = $('up-email').value.trim();
+    const password = $('up-pass').value;
+    if (!email || !password) { $('msg-up').textContent = 'Enter email and password.'; return; }
+    const { error } = await supa.auth.signUp({ email, password,
+      options: { emailRedirectTo: window.location.origin + '/login.html' }
+    });
+    if (error) { $('msg-up').innerHTML = '<span class="err">Error: '+ error.message +'</span>'; return; }
+    $('msg-up').textContent = 'Check your inbox to confirm your email.';
+  };
+
+  // Magic link
+  $('btn-magic').onclick = async ()=>{
+    $('msg-ml').textContent = '';
+    const email = $('ml-email').value.trim();
+    if (!email) { $('msg-ml').textContent = 'Enter your email.'; return; }
+    const { error } = await supa.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: window.location.origin + '/login.html' }
+    });
+    if (error) { $('msg-ml').innerHTML = '<span class="err">Error: '+ error.message +'</span>'; return; }
+    $('msg-ml').textContent = 'Magic link sent! Check your inbox.';
+  };
+
+  // Forgot password → send reset email
+  $('btn-forgot').onclick = async ()=>{
+    const email = $('in-email').value.trim();
+    if (!email) { $('msg-in').textContent = 'Enter your email first, then click Forgot password.'; return; }
+    const { error } = await supa.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/login.html'
+    });
+    if (error) { $('msg-in').innerHTML = '<span class="err">Error: '+ error.message +'</span>'; return; }
+    $('msg-in').textContent = 'Reset email sent. Check your inbox.';
+  };
+
+  // Handle setting a new password after recovery link
+  $('btn-reset').onclick = async ()=>{
+    const newPass = $('new-pass').value;
+    if (!newPass) { $('msg-reset').textContent = 'Enter a new password.'; return; }
+    const { data, error } = await supa.auth.updateUser({ password: newPass });
+    if (error) { $('msg-reset').innerHTML = '<span class="err">Error: '+ error.message +'</span>'; return; }
+    $('msg-reset').textContent = 'Password updated. Redirecting…';
+    setTimeout(()=> window.location.replace('index.html'), 800);
+  };
+</script>
+</body>
+</html>
