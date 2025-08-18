@@ -30,7 +30,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;ma
 .logo{width:36px;height:36px;border-radius:12px;background:conic-gradient(from 180deg at 50% 50%, var(--brand), var(--brand2)); box-shadow:0 6px 18px rgba(37,99,235,.35)}
 h1{margin:0;font-size:clamp(1.3rem,1.2rem+1.2vw,1.8rem)}
 .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-select,.btn,input[type="text"],input[type="email"]{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit}
+select,.btn,input[type="text"]{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit}
 .btn{cursor:pointer}
 
 .shell{display:grid;gap:20px;grid-template-columns:1fr}
@@ -169,7 +169,7 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     </div>
   </div>
 
-  <!-- Fallback card (only visible for a split-second before guard runs) -->
+  <!-- Pre-auth card -->
   <div class="container" id="auth">
     <div class="card" style="max-width:520px;margin:40px auto">
       <h2 style="margin-top:0">Checking your session…</h2>
@@ -177,6 +177,7 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     </div>
   </div>
 
+  <!-- Drawer for mobile -->
   <div id="drawer" class="drawer" aria-hidden="true">
     <div class="panel">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -193,20 +194,30 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
 
 <script>
 (async function(){
-  // ======== ENV & SUPABASE ========
-  const SUPABASE_URL = "https://jrjqciywljjhhcxfyxwh.supabase.co"; // <- working URL
+  /* ========= ENV & SUPABASE ========= */
+  const SUPABASE_URL = "https://jrjqciywljjhhcxfyxwh.supabase.co";   // <- working URL
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // ======== AUTH GUARD ========
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) { window.location.replace('login.html'); return; }
+  /* ========= ROBUST AUTH GUARD ========= */
+  const authCard = document.getElementById('auth');
+  const appCard  = document.getElementById('app');
 
-  // ======== DOM ========
+  function goLogin(){ try{ appCard.style.display='none'; authCard.style.display='block'; }catch{} window.location.replace('login.html'); }
+
+  try {
+    const result = await Promise.race([
+      supabase.auth.getSession(),
+      new Promise((_r, rej)=>setTimeout(()=>rej(new Error('auth-timeout')), 3000))
+    ]);
+    const session = result?.data?.session ?? null;
+    if(!session) return goLogin();
+    appCard.style.display='block'; authCard.style.display='none';
+  } catch(e){ console.warn('Auth guard error:', e); return goLogin(); }
+
+  /* ========= DOM ========= */
   const $ = (id)=>document.getElementById(id);
   const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-  const app=$('app'), auth=$('auth'); app.style.display='block'; auth.style.display='none';
-
   const familySel=$('family'), createFamilyBtn=$('createFamily'), joinFamilyBtn=$('joinFamily');
   const lang=$('lang'), plan=$('plan'); const whenEl=$('when'), promptsEl=$('prompts');
   const titleEl=$('title'), transcriptEl=$('transcript');
@@ -217,7 +228,7 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
   const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
   const exportBookBtn=$('exportBook'), exportCsvBtn=$('exportCsv');
 
-  // ======== Guided topics & TTS ========
+  /* ========= Guided topics & TTS ========= */
   const TOPICS = {
     en: ["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
     fr: ["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
@@ -250,31 +261,45 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     });
   }
 
-  // ======== Families ========
+  /* ========= Families ========= */
   const user = (await supabase.auth.getUser()).data.user;
+
   async function loadFamilies(){
-    const { data: mems } = await supabase.from('family_members').select('family_id, families!inner(id, name)').eq('user_id', user.id);
+    const { data: mems } = await supabase
+      .from('family_members')
+      .select('family_id, families!inner(id, name)')
+      .eq('user_id', user.id);
     familySel.innerHTML = `<option value="__personal">Personal</option>`;
-    (mems||[]).forEach(m=>{ const o=document.createElement('option'); o.value=m.family_id; o.textContent=m.families.name; familySel.appendChild(o); });
+    (mems||[]).forEach(m=>{
+      const o=document.createElement('option');
+      o.value=m.family_id; o.textContent=m.families.name; familySel.appendChild(o);
+    });
   }
+
   async function createFamily(){
     const name=prompt('Family name'); if(!name) return;
     const slug=prompt('Optional invite code (letters/numbers), or blank')||null;
     const { data:fam, error:e1 } = await supabase.from('families').insert([{ name, slug }]).select().single();
     if(e1){alert(e1.message);return;}
-    const { error:e2 } = await supabase.from('family_members').insert([{ family_id:fam.id, user_id:user.id, role:'owner' }]); if(e2){alert(e2.message);return;}
+    const { error:e2 } = await supabase.from('family_members').insert([{ family_id:fam.id, user_id:user.id, role:'owner' }]);
+    if(e2){alert(e2.message);return;}
     await loadFamilies(); familySel.value=fam.id; fetchStories();
   }
+
   async function joinFamily(){
     const code=prompt('Enter family invite code (slug)'); if(!code) return;
     const { data:fam, error:e1 } = await supabase.from('families').select('*').eq('slug', code).single();
     if(e1||!fam){alert('Family not found.');return;}
-    const { error:e2 } = await supabase.from('family_members').insert([{ family_id:fam.id, user_id:user.id, role:'member' }]); if(e2){alert(e2.message);return;}
+    const { error:e2 } = await supabase.from('family_members').insert([{ family_id:fam.id, user_id:user.id, role:'member' }]);
+    if(e2){alert(e2.message);return;}
     await loadFamilies(); familySel.value=fam.id; fetchStories();
   }
-  createFamilyBtn.onclick=createFamily; joinFamilyBtn.onclick=joinFamily; familySel.onchange=()=>fetchStories();
 
-  // ======== Recording ========
+  createFamilyBtn.onclick=createFamily;
+  joinFamilyBtn.onclick=joinFamily;
+  familySel.onchange=()=>fetchStories();
+
+  /* ========= Recording ========= */
   let tier='free', cap=120, mode='guided', transcript='', elapsed=0, timer=null, recognition=null, rec=null, stream=null, chunks=[], audioBlob=null;
   plan.onchange=()=>{ tier=plan.value; cap=tier==='free'?120:3600; remain.textContent=cap+'s'; };
   clearBtn.onclick=()=>{ transcript=''; transcriptEl.textContent='Your words will appear here…'; titleEl.value=''; whenEl.value=''; save.disabled=true; };
@@ -282,9 +307,9 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
   tabFree.onclick=()=>{ mode='free'; tabFree.classList.add('active'); tabGuided.classList.remove('active'); guidedBlock.style.display='none'; };
   lang.onchange=()=>renderPrompts();
 
-  const drawer=$('drawer'); const toggleLib=$('toggleLib'); const closeDrawer=$('closeDrawer');
   toggleLib.onclick=()=>{ if(window.innerWidth>=1024){ fetchStories(); } else { drawer.classList.add('show'); fetchStories(); } };
-  closeDrawer.onclick=()=>drawer.classList.remove('show'); drawer.addEventListener('click',(e)=>{ if(e.target===drawer) drawer.classList.remove('show'); });
+  closeDrawer.onclick=()=>drawer.classList.remove('show');
+  drawer.addEventListener('click',(e)=>{ if(e.target===drawer) drawer.classList.remove('show'); });
 
   mic.onclick = async ()=>{ if(rec && rec.state!=='inactive'){ stopAll(); } else { await startAll(); } };
 
@@ -327,6 +352,7 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     mic.textContent='Stop Recording'; mic.classList.add('pulse'); meter.style.display='flex';
     timer=setInterval(()=>{ elapsed++; bar.style.width=(elapsed/cap*100)+'%'; remain.textContent=Math.max(0,cap-elapsed)+'s'; if(elapsed>=cap) stopAll(); },1000);
   }
+
   function stopAll(){
     if(rec && rec.state!=='inactive'){ rec.stop(); }
     if(recognition){ try{ recognition.stop(); }catch{} }
@@ -334,7 +360,7 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     mic.textContent='Record'; mic.classList.remove('pulse');
   }
 
-  // ======== Approx date parser ========
+  /* ========= Approx date parser ========= */
   function parseApproxDate(input){
     if(!input) return { label:'', sort:null };
     const s=input.trim().toLowerCase();
@@ -350,7 +376,7 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     return { label:input, sort:null };
   }
 
-  // ======== Save story ========
+  /* ========= Save story ========= */
   save.onclick=async ()=>{
     const fam = (familySel.value && familySel.value!=='__personal') ? familySel.value : null;
     const title=titleEl.value||'Story'; const when=parseApproxDate(whenEl.value);
@@ -373,7 +399,7 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     titleEl.value=''; whenEl.value=''; transcript=''; transcriptEl.textContent='Your words will appear here…'; save.disabled=true; fetchStories();
   };
 
-  // ======== Library ========
+  /* ========= Library ========= */
   async function fetchStories(){
     const fam=(familySel.value && familySel.value!=='__personal')?familySel.value:null;
     let q = supabase.from('stories').select('*');
@@ -381,6 +407,8 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     const { data } = await q.order('happened_sort',{ascending:true,nullsFirst:false}).order('created_at',{ascending:true});
     renderLib(data||[]);
   }
+
+  function b(txt,fn){ const x=document.createElement('button'); x.className='btn'; x.textContent=txt; x.onclick=fn; return x; }
   function storyRow(s){
     const row=document.createElement('div'); row.className='story';
     const meta=document.createElement('div'); meta.className='meta';
@@ -399,7 +427,6 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
 
     row.appendChild(meta); row.appendChild(actions); return row;
   }
-  function b(txt,fn){ const x=document.createElement('button'); x.className='btn'; x.textContent=txt; x.onclick=fn; return x; }
   function renderLib(items){ const tgt=(window.innerWidth>=1024)?library:libraryDrawer; tgt.innerHTML=''; if(!items.length){const p=document.createElement('p');p.className='muted';p.textContent='No stories yet.';tgt.appendChild(p);return;} items.forEach(s=>tgt.appendChild(storyRow(s))); }
 
   async function deleteStory(s){
@@ -412,12 +439,14 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     }catch{}
     await supabase.from('stories').delete().eq('id', s.id); fetchStories();
   }
+
   function viewStory(s){
     const dlg=document.createElement('dialog');
-    dlg.style.width='min(90vw, 820px)'; dlg.innerHTML =
+    dlg.style.width='min(90vw, 820px)';
+    dlg.innerHTML =
       `<form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #e5e7eb">
          <div style="font-weight:700">${esc(s.title||'Story')}</div>
-         <button autofocus class="btn">Close</button>
+         <button autofocus class="btn" style="float:right">Close</button>
        </form>
        <div style="padding:16px">
          <div class="muted" style="margin-bottom:6px">
@@ -425,27 +454,35 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
          </div>
          <div style="white-space:pre-wrap;font-family:system-ui">${esc(s.transcript||'')}</div>
          ${s.audio_url ? `<div style="margin-top:12px"><audio controls src="${s.audio_url}"></audio></div>` : ''}
-       </div>`; document.body.appendChild(dlg); dlg.addEventListener('close', ()=>dlg.remove()); dlg.showModal();
+       </div>`;
+    document.body.appendChild(dlg);
+    dlg.addEventListener('close', ()=>dlg.remove());
+    dlg.showModal();
   }
 
-  // ======== Rewrite / Undo / DOCX ========
+  /* ========= Rewrite / Undo / DOCX ========= */
   async function rewriteAI(s){
     const tone="warm, vivid, cohesive"; const language=lang.value;
     try{
       const res=await fetch('/api/rewrite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:s.transcript,title:s.title,language,tone})});
       if(!res.ok){ let msg=await res.text(); try{msg=JSON.parse(msg).error||msg;}catch{} throw new Error(msg||'Rewrite failed'); }
       const data=await res.json(); const rewritten=data.text||'(no text)';
-      const update={ transcript:rewritten, rewritten_at:new Date().toISOString() }; if(!s.original_transcript) update.original_transcript=s.transcript;
-      const { error } = await supabase.from('stories').update(update).eq('id', s.id); if(error){alert('Update failed: '+error.message);return;}
+      const update={ transcript:rewritten, rewritten_at:new Date().toISOString() };
+      if(!s.original_transcript) update.original_transcript=s.transcript;
+      const { error } = await supabase.from('stories').update(update).eq('id', s.id);
+      if(error){alert('Update failed: '+error.message);return;}
       const dlg=document.createElement('dialog'); dlg.innerHTML=`<form method="dialog" style="padding:12px;border-bottom:1px solid #e5e7eb"><strong>${esc(s.title)}</strong>&nbsp;—&nbsp;<span class="muted">Updated</span><button autofocus class="btn" style="float:right">Close</button></form><div style="padding:16px;white-space:pre-wrap;font-family:system-ui">${esc(rewritten)}</div>`; document.body.appendChild(dlg); dlg.addEventListener('close',()=>dlg.remove()); dlg.showModal();
       fetchStories();
     }catch(err){ alert('Rewrite error: '+(err?.message||err)); }
   }
+
   async function undoRewrite(s){
     if(!s.original_transcript){ alert('No original version available.'); return; }
     const { error } = await supabase.from('stories').update({ transcript:s.original_transcript, original_transcript:null, rewritten_at:null }).eq('id', s.id);
-    if(error){ alert('Undo failed: '+error.message); return; } fetchStories();
+    if(error){ alert('Undo failed: '+error.message); return; }
+    fetchStories();
   }
+
   async function downloadDocx(s){
     const JSZip=window.JSZip; const zip=new JSZip();
     const paras=String(s.transcript||'').trim().split(/\n\s*\n/).map(p=>`<w:p><w:r><w:t>${xml(p)}</w:t></w:r></w:p>`).join('');
@@ -458,7 +495,7 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
   }
   function xml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-  // ======== Export Book / CSV ========
+  /* ========= Export Book / CSV ========= */
   exportBookBtn.onclick = async ()=>{
     const fam=(familySel.value && familySel.value!=='__personal')?familySel.value:null;
     let q=supabase.from('stories').select('*'); q=fam?q.eq('family_id',fam):q.eq('user_id',user.id).is('family_id',null);
@@ -467,16 +504,17 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     const body=(data||[]).map(ch=>`<section style="page-break-after:always;padding:32px 40px;font-family:Georgia,serif"><h1 style="margin:0">${esc(ch.title||'Chapter')}</h1><time style="color:#666;font-size:12px">${esc(ch.happened_label || (ch.happened_sort?new Date(ch.happened_sort).toDateString():''))}</time><div style="margin-top:12px;white-space:pre-wrap;line-height:1.6">${esc(ch.transcript||'')}</div></section>`).join('');
     w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Book Export</title></head><body>${body}</body></html>`); w.document.close();
   };
+
   exportCsvBtn.onclick = async ()=>{
     const fam=(familySel.value && familySel.value!=='__personal')?familySel.value:null;
     let q=supabase.from('stories').select('*'); q=fam?q.eq('family_id',fam):q.eq('user_id',user.id).is('family_id',null);
     const { data } = await q.order('happened_sort',{ascending:true,nullsFirst:false}).order('created_at',{ascending:true});
     const rows=[['Title','When','Body']].concat((data||[]).map(ch=>[ch.title||'Chapter', ch.happened_label || (ch.happened_sort?new Date(ch.happened_sort).toISOString().slice(0,10):''), (ch.transcript||'').replace(/\r?\n/g,'\\n')]));
-    const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n'); const blob=new Blob([csv],{type:'text/csv'});
-    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='memoir-canva.csv'; document.body.appendChild(a); a.click(); a.remove();
+    const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='memoir-canva.csv'; document.body.appendChild(a); a.click(); a.remove();
   };
 
-  // ======== Bootstrap ========
+  /* ========= Bootstrap ========= */
   await loadFamilies(); renderPrompts(); fetchStories();
 })();
 </script>
