@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Memoir — Recorder</title>
+<title>Memoir — Recorder (Cloud, Families)</title>
 <meta name="color-scheme" content="light dark" />
 <style>
 :root{
@@ -32,14 +32,14 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;ma
 h1{margin:0;font-size:clamp(1.3rem,1.2rem+1.2vw,1.8rem)}
 
 .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-select,.btn{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit}
+select,.btn,input[type="text"],input[type="email"]{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit}
 .btn{cursor:pointer}
 
 .shell{display:grid;gap:20px;grid-template-columns:1fr}
 .left,.right{min-width:0}
 .right{display:none}
 @media (min-width:1024px){
-  .shell{grid-template-columns:minmax(0,1fr) 380px}
+  .shell{grid-template-columns:minmax(0,1fr) 420px}
   .right{display:block}
 }
 
@@ -51,14 +51,13 @@ select,.btn{padding:10px 12px;border-radius:12px;border:1px solid var(--border);
 
 .topics{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
 .chip{
-  display:flex;align-items:center;justify-content:center;
+  display:flex;align-items:center;justify-content:center;text-align:center;
   height:44px;border-radius:12px;cursor:pointer;
   background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.18);
-  font-weight:600; letter-spacing:.2px; user-select:none;
+  font-weight:600; letter-spacing:.2px; user-select:none; white-space:nowrap;
 }
 .chip:active{transform:translateY(1px)}
 
-input[type="text"]{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:rgba(2,8,23,.02)}
 .area{min-height:180px;border:1px solid var(--border);border-radius:12px;padding:14px;background:rgba(2,8,23,.02)}
 
 .mic-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;margin:12px 0}
@@ -85,6 +84,8 @@ input[type="text"]{width:100%;padding:12px 14px;border-radius:12px;border:1px so
 .story .time{font-size:12px;color:var(--muted)}
 .story .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+
 .drawer{position:fixed;inset:0;display:none;background:rgba(2,8,23,.45);backdrop-filter: blur(2px)}
 .drawer.show{display:block}
 .drawer .panel{position:absolute;right:0;top:0;bottom:0;width:88%;max-width:420px;background:var(--card);border-left:1px solid var(--border);padding:16px;overflow:auto}
@@ -96,7 +97,8 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
 </style>
 </head>
 <body>
-  <div class="container">
+  <!-- App (hidden until login) -->
+  <div class="container" id="app" style="display:none">
     <div class="card">
       <header>
         <div class="brand">
@@ -104,6 +106,13 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
           <h1>Memoir — Recorder</h1>
         </div>
         <div class="controls">
+          <!-- NEW: Family switcher -->
+          <select id="family" aria-label="Family/Space">
+            <option value="__personal">Personal</option>
+          </select>
+          <button id="createFamily" class="btn">Create</button>
+          <button id="joinFamily" class="btn">Join</button>
+
           <select id="lang" aria-label="Language">
             <option value="en">English</option>
             <option value="fr">Français</option>
@@ -134,6 +143,10 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
           <div class="label">Title</div>
           <input id="title" type="text" placeholder="Story title (optional)" />
 
+          <!-- NEW: When it happened -->
+          <div class="label">When did this happen?</div>
+          <input id="when" type="text" placeholder='e.g., "summer 1945", "early 2018", "15 Feb 1972"' />
+
           <div class="label">Transcript</div>
           <div id="transcript" class="area" aria-live="polite">Your words will appear here…</div>
 
@@ -150,6 +163,11 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
             <button id="save" class="btn primary" disabled>Save story</button>
             <button id="clear" class="btn">Clear</button>
           </div>
+
+          <div class="tools">
+            <button id="exportBook" class="btn">Export Book (PDF beta)</button>
+            <button id="exportCsv" class="btn">Export CSV for Canva</button>
+          </div>
         </section>
 
         <aside class="right">
@@ -158,10 +176,22 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
         </aside>
       </div>
 
-      <footer>Prototype: memoir recorder — EN/FR/ES/NL, 2-minute cap on Free.</footer>
+      <footer>Cloud prototype — Families, “When it happened”, EN/FR/ES/NL.</footer>
     </div>
   </div>
 
+  <!-- Login card -->
+  <div class="container" id="auth">
+    <div class="card" style="max-width:520px;margin:40px auto">
+      <h2 style="margin-top:0">Sign in to Memoir</h2>
+      <p class="muted" style="margin-top:-6px">We’ll email you a magic link to continue.</p>
+      <input id="email" type="email" placeholder="your@email.com" style="width:100%;margin:10px 0 12px">
+      <button id="sendLink" class="btn primary">Send magic link</button>
+      <p id="authMsg" class="muted" style="margin-top:10px"></p>
+    </div>
+  </div>
+
+  <!-- Drawer for library on mobile -->
   <div id="drawer" class="drawer" aria-hidden="true">
     <div class="panel">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -172,37 +202,55 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     </div>
   </div>
 
-  <!-- JSZip for .docx generation -->
+  <!-- JS libs -->
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
 
 <script>
-(function(){
-  // ------- DOM helpers -------
+(async function(){
+  // ======== ENV ========
+  const SUPABASE_URL = "{{SUPABASE_URL}}";
+  const SUPABASE_ANON_KEY = "{{SUPABASE_ANON_KEY}}";
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ======== DOM ========
   const $ = (id)=>document.getElementById(id);
   const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  const app = $('app'), auth = $('auth');
 
-  // ------- Elements -------
+  const familySel=$('family'), createFamilyBtn=$('createFamily'), joinFamilyBtn=$('joinFamily');
   const lang=$('lang'), plan=$('plan');
-  const promptsEl=$('prompts'), titleEl=$('title'), transcriptEl=$('transcript');
+  const whenEl=$('when'), promptsEl=$('prompts'), titleEl=$('title'), transcriptEl=$('transcript');
   const mic=$('mic'), meter=$('meter'), bar=$('bar'), remain=$('remain'), asr=$('asr');
   const save=$('save'), clearBtn=$('clear'), library=$('library');
   const drawer=$('drawer'), libraryDrawer=$('libraryDrawer');
   const toggleLib=$('toggleLib'), closeDrawer=$('closeDrawer');
   const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
+  const email=$('email'), sendLink=$('sendLink'), authMsg=$('authMsg');
+  const exportBookBtn=$('exportBook'), exportCsvBtn=$('exportCsv');
 
-  // ------- State -------
-  let locale = 'en';
-  try { locale = (navigator.language||'en').slice(0,2); } catch {}
-  if (!['en','fr','es','nl'].includes(locale)) locale = 'en';
-  lang.value = locale;
+  // ======== State ========
+  let session = (await supabase.auth.getSession()).data.session || null;
+  let user = session?.user || null;
+  function showApp(){ auth.style.display='none'; app.style.display='block'; }
+  function showAuth(){ app.style.display='none'; auth.style.display='block'; }
+  if (user) showApp(); else showAuth();
 
-  let tier = 'free'; plan.value = tier;
-  let cap = tier==='free'?120:3600;
-  let mode = 'guided';
-  let transcript = '', selectedPrompt='', elapsed=0, timer=null;
-  let recognition=null, rec=null, stream=null, chunks=[], audioBlob=null;
+  // ======== Auth ========
+  sendLink.onclick = async () => {
+    if (!email.value) { authMsg.textContent = 'Enter your email.'; return; }
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.value,
+      options: { emailRedirectTo: window.location.origin }
+    });
+    authMsg.textContent = error ? ('Error: ' + error.message) : 'Check your email for the link.';
+  };
+  supabase.auth.onAuthStateChange((_ev, sess) => {
+    session = sess; user = sess?.user || null;
+    if (user) { showApp(); bootstrap(); }
+  });
 
-  // ------- Topics & language helpers -------
+  // ======== Guided topics & TTS ========
   const TOPICS = {
     en: ["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
     fr: ["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
@@ -210,124 +258,96 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     nl: ["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
   };
   const BCP = { en:'en-US', fr:'fr-FR', es:'es-ES', nl:'nl-NL' };
-
-  // ---- TTS helpers ----
   let voices = [];
   function loadVoices(){ voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : []; }
-  if ('speechSynthesis' in window) {
-    loadVoices();
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-  }
+  if ('speechSynthesis' in window) { loadVoices(); window.speechSynthesis.onvoiceschanged = loadVoices; }
   function speak(text, langCode){
     if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
     const target = BCP[langCode] || 'en-US';
-    u.lang = target;
-    const v = voices.find(v=>v.lang === target) || voices.find(v=>v.lang.startsWith(target.split('-')[0])) || null;
-    if (v) u.voice = v;
-    u.rate = 0.92; u.pitch = 0.95; u.volume = 0.9; // gentle
-    window.speechSynthesis.speak(u);
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = target; u.rate = 0.92; u.pitch = 0.95; u.volume = 0.9;
+    let tries = 0;
+    const trySpeak = () => {
+      const vs = window.speechSynthesis.getVoices();
+      const v = vs.find(v=>v.lang === target) || vs.find(v=>v.lang.startsWith(target.split('-')[0])) || null;
+      if (v) u.voice = v;
+      if (vs.length === 0 && tries < 8) { tries++; return setTimeout(trySpeak, 150); }
+      window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
+    };
+    trySpeak();
   }
 
-  // ------- Storage helpers -------
-  const KEY='memoir_stories';
-  const getAll = ()=>{ try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch{return[]} };
-  const setAll = (arr)=>localStorage.setItem(KEY, JSON.stringify(arr));
-
-  // ------- UI renderers -------
   function renderPrompts(){
     promptsEl.innerHTML='';
     const list = TOPICS[lang.value] || TOPICS.en;
     list.forEach(topic=>{
       const b=document.createElement('div');
       b.className='chip'; b.textContent=topic;
-      b.onclick=()=>{
-        selectedPrompt = topic;
-        speak(topic, lang.value);
-        if (!titleEl.value) titleEl.value = topic;
-      };
+      b.onclick=()=>{ titleEl.value = topic; speak(topic, lang.value); };
       promptsEl.appendChild(b);
     });
   }
 
-  function storyRow(s){
-    const row=document.createElement('div'); row.className='story';
-
-    const meta=document.createElement('div'); meta.className='meta';
-    const h=document.createElement('h3'); h.textContent=s.title || 'Story';
-    const t=document.createElement('div'); t.className='time'; t.textContent=new Date(s.createdAt).toLocaleString();
-    meta.appendChild(h); meta.appendChild(t);
-
-    const actions=document.createElement('div'); actions.className='row';
-    const view=document.createElement('button'); view.className='btn'; view.textContent='View';
-    view.onclick=()=>viewStory(s);
-    const rewrite=document.createElement('button'); rewrite.className='btn'; rewrite.textContent='Rewrite (AI)';
-    rewrite.onclick=()=>rewriteAI(s);
-    const undo=document.createElement('button'); undo.className='btn'; undo.textContent='Undo';
-    if(!s.originalTranscript){ undo.disabled = true; undo.title = 'No original saved'; }
-    undo.onclick=()=>undoRewrite(s);
-    const dl=document.createElement('button'); dl.className='btn'; dl.textContent='Download .docx';
-    dl.onclick=()=>downloadDocx(s);
-    const del=document.createElement('button'); del.className='btn'; del.textContent='Delete';
-    del.onclick=()=>{ const next=getAll().filter(x=>x.id!==s.id); setAll(next); renderLib(); };
-
-    actions.appendChild(view); actions.appendChild(rewrite); actions.appendChild(undo); actions.appendChild(dl); actions.appendChild(del);
-    row.appendChild(meta); row.appendChild(actions);
-    return row;
+  // ======== Family: load/create/join, selector ========
+  async function loadFamilies(){
+    // families you belong to
+    const { data: mems } = await supabase.from('family_members').select('family_id, role, families!inner(id, name, slug)').eq('user_id', user.id);
+    familySel.innerHTML = `<option value="__personal">Personal</option>`;
+    (mems||[]).forEach(m=>{
+      const opt = document.createElement('option');
+      opt.value = m.family_id; opt.textContent = m.families.name;
+      familySel.appendChild(opt);
+    });
   }
-
-  function renderLib(){
-    const target=(window.innerWidth>=1024)?library:libraryDrawer;
-    target.innerHTML='';
-    const items=getAll();
-    if(!items.length){ const p=document.createElement('p'); p.className='muted'; p.textContent='No stories yet.'; target.appendChild(p); return; }
-    for(const s of items){ target.appendChild(storyRow(s)); }
+  async function createFamily(){
+    const name = prompt('Family name (e.g., “Van den Berg Family”)');
+    if(!name) return;
+    const slug = prompt('Optional invite code (letters/numbers only), or leave blank') || null;
+    const { data: fam, error: e1 } = await supabase.from('families').insert([{ name, slug }]).select().single();
+    if(e1){ alert(e1.message); return; }
+    const { error: e2 } = await supabase.from('family_members').insert([{ family_id: fam.id, user_id: user.id, role: 'owner' }]);
+    if(e2){ alert(e2.message); return; }
+    await loadFamilies(); familySel.value = fam.id;
+    fetchStories();
   }
-
-  function viewStory(s){
-    const dlg=document.createElement('dialog');
-    dlg.style.width='min(90vw, 820px)'; dlg.innerHTML =
-      `<form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #e5e7eb">
-         <div style="font-weight:700">${esc(s.title||'Story')}</div>
-         <button autofocus class="btn">Close</button>
-       </form>
-       <div style="padding:16px">
-         <div class="muted" style="margin-bottom:6px">${new Date(s.createdAt).toLocaleString()}</div>
-         <div style="white-space:pre-wrap;font-family:system-ui">${esc(s.transcript||'')}</div>
-         ${s.audioURL ? `<div style="margin-top:12px"><audio controls src="${s.audioURL}"></audio></div>` : ''}
-       </div>`;
-    document.body.appendChild(dlg);
-    dlg.addEventListener('close', ()=> dlg.remove());
-    dlg.showModal();
+  async function joinFamily(){
+    const code = prompt('Enter family invite code (slug)');
+    if(!code) return;
+    const { data: fam, error: e1 } = await supabase.from('families').select('*').eq('slug', code).single();
+    if(e1 || !fam){ alert('Family not found.'); return; }
+    const { error: e2 } = await supabase.from('family_members').insert([{ family_id: fam.id, user_id: user.id, role: 'member' }]);
+    if(e2){ alert(e2.message); return; }
+    await loadFamilies(); familySel.value = fam.id;
+    fetchStories();
   }
+  createFamilyBtn.onclick=createFamily;
+  joinFamilyBtn.onclick=joinFamily;
+  familySel.onchange=()=>fetchStories();
 
-  // ------- Drawer & resize -------
-  toggleLib.onclick=()=>{ if(window.innerWidth>=1024){ window.scrollTo({top:0,behavior:'smooth'}) } else { drawer.classList.add('show'); renderLib(); } };
-  closeDrawer.onclick=()=>drawer.classList.remove('show');
-  drawer.addEventListener('click',(e)=>{ if(e.target===drawer) drawer.classList.remove('show') });
-  window.addEventListener('resize',renderLib);
+  // ======== Recording & ASR ========
+  let tier='free', cap=120, mode='guided', transcript='', elapsed=0, timer=null, recognition=null, rec=null, stream=null, chunks=[], audioBlob=null;
+  plan.onchange=()=>{ tier=plan.value; cap=tier==='free'?120:3600; $('remain').textContent=cap+'s'; };
+  $('clear').onclick=()=>{ transcript=''; transcriptEl.textContent='Your words will appear here…'; titleEl.value=''; whenEl.value=''; $('save').disabled=true; };
 
-  // ------- Tabs -------
-  tabGuided.onclick=()=>{ mode='guided'; tabGuided.classList.add('active'); tabFree.classList.remove('active'); guidedBlock.style.display='block'; };
-  tabFree.onclick=()=>{ mode='free'; tabFree.classList.add('active'); tabGuided.classList.remove('active'); guidedBlock.style.display='none'; };
+  $('tabGuided').onclick=()=>{ mode='guided'; tabGuided.classList.add('active'); tabFree.classList.remove('active'); guidedBlock.style.display='block'; };
+  $('tabFree').onclick=()=>{ mode='free'; tabFree.classList.add('active'); tabGuided.classList.remove('active'); guidedBlock.style.display='none'; };
+  lang.onchange=()=>renderPrompts();
 
-  // ------- Controls -------
-  plan.onchange=()=>{ tier=plan.value; cap=tier==='free'?120:3600; remain.textContent = cap+'s'; };
-  lang.onchange=()=>{ renderPrompts(); };  // refresh guided topics on language change
-  clearBtn.onclick=()=>{ transcript=''; transcriptEl.textContent='Your words will appear here…'; titleEl.value=''; save.disabled=true; };
+  $('toggleLib').onclick=()=>{ if(window.innerWidth>=1024){ fetchStories(); } else { drawer.classList.add('show'); fetchStories(); } };
+  $('closeDrawer').onclick=()=>drawer.classList.remove('show');
+  drawer.addEventListener('click',(e)=>{ if(e.target===drawer) drawer.classList.remove('show'); });
 
-  // ------- Recording -------
-  mic.onclick = async ()=>{ if(rec && rec.state!=='inactive'){ stopAll(); } else { await startAll(); } };
+  $('mic').onclick = async ()=>{ if(rec && rec.state!=='inactive'){ stopAll(); } else { await startAll(); } };
+
+  const BCP = { en:'en-US', fr:'fr-FR', es:'es-ES', nl:'nl-NL' };
 
   async function startAll(){
-    transcript=''; transcriptEl.textContent=''; elapsed=0; remain.textContent = cap+'s'; bar.style.width='0%';
+    transcript=''; transcriptEl.textContent=''; elapsed=0; $('remain').textContent = cap+'s'; $('bar').style.width='0%';
 
     try{
       stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
-    }catch(e){ alert('Microphone permission denied. Check site settings.'); return; }
+    }catch(e){ alert('Microphone permission denied.'); return; }
 
-    // MediaRecorder
     chunks=[]; audioBlob=null; rec=null;
     try{
       if(window.MediaRecorder){
@@ -335,12 +355,11 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
         let mime=''; for(const t of prefs){ if(MediaRecorder.isTypeSupported?.(t)){ mime=t; break; } }
         rec=new MediaRecorder(stream, mime?{mimeType:mime}:{});
         rec.ondataavailable=(e)=>{ if(e.data?.size) chunks.push(e.data); };
-        rec.onstop=()=>{ try{stream.getTracks().forEach(t=>t.stop());}catch{} const type=mime||(chunks[0]?.type||'audio/mp4'); audioBlob=chunks.length?new Blob(chunks,{type}):null; };
+        rec.onstop=()=>{ try{stream.getTracks().forEach(t=>t.stop());}catch{} const type=mime||(chunks[0]?.type||'audio/webm'); audioBlob=chunks.length?new Blob(chunks,{type}):null; };
         rec.start();
       }
     }catch{ rec=null; }
 
-    // Speech recognition in selected language
     const SR = window.webkitSpeechRecognition || window.SpeechRecognition;
     if(SR){
       recognition=new SR();
@@ -356,18 +375,17 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
         }
         transcript=(full+inter).trim();
         transcriptEl.textContent=transcript;
-        save.disabled=!transcript;
+        $('save').disabled=!transcript;
       };
-      recognition.onerror=()=>{ asr.textContent='Speech recognition unavailable'; };
-      try{ recognition.start(); asr.textContent='Transcribing…'; }catch{}
+      recognition.onerror=()=>{ $('asr').textContent='Speech recognition unavailable'; };
+      try{ recognition.start(); $('asr').textContent='Transcribing…'; }catch{}
     } else {
-      asr.textContent='Speech recognition is not available in this browser.';
+      $('asr').textContent='Speech recognition is not available in this browser.';
     }
 
     mic.textContent='Stop Recording'; mic.classList.add('pulse'); meter.style.display='flex';
-    timer=setInterval(()=>{ elapsed++; bar.style.width=(elapsed/cap*100)+'%'; remain.textContent=Math.max(0,cap-elapsed)+'s'; if(elapsed>=cap) stopAll(); },1000);
+    timer=setInterval(()=>{ elapsed++; $('bar').style.width=(elapsed/cap*100)+'%'; $('remain').textContent=Math.max(0,cap-elapsed)+'s'; if(elapsed>=cap) stopAll(); },1000);
   }
-
   function stopAll(){
     if(rec && rec.state!=='inactive'){ rec.stop(); }
     if(recognition){ try{ recognition.stop(); }catch{} }
@@ -375,174 +393,254 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     mic.textContent='Record'; mic.classList.remove('pulse');
   }
 
-  // ------- Save -------
-  save.onclick=()=>{
-    const audioURL = audioBlob ? URL.createObjectURL(audioBlob) : undefined;
-    const item = { id:Math.random().toString(36).slice(2), createdAt:Date.now(), title:titleEl.value||'Story', mode, prompt:mode==='guided'?selectedPrompt:undefined, transcript, audioURL, durationSec:elapsed };
-    const prev=getAll(); prev.unshift(item); setAll(prev);
-    renderLib(); clearBtn.onclick();
+  // ======== Approx date parser ========
+  function parseApproxDate(input){
+    if(!input) return { label:'', sort:null };
+    const s = input.trim().toLowerCase();
+
+    // explicit date DD Mon YYYY or YYYY-MM-DD
+    const iso = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (iso){ const d=new Date(+iso[1], +iso[2]-1, +iso[3]); return { label:input, sort: d.toISOString().slice(0,10) }; }
+
+    const dmy = s.match(/^(\d{1,2})[\/\-\s](\d{1,2})[\/\-\s](\d{2,4})$/);
+    if (dmy){ const Y=(+dmy[3]<100?2000+ +dmy[3]:+dmy[3]); const d=new Date(Y, +dmy[2]-1, +dmy[1]); return { label:input, sort: d.toISOString().slice(0,10) }; }
+
+    const months = { jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11 };
+    const mon = s.match(/^(early|mid|late)?\s*([a-z]{3,9})\s+(\d{4})$/i);
+    if (mon){
+      const m = months[mon[2].slice(0,3).toLowerCase()]; const y=+mon[3]; if(m!=null){
+        let day=1;
+        if (mon[1]==='mid') day=10; if (mon[1]==='late') day=20;
+        const d=new Date(y,m,day); return { label:input, sort: d.toISOString().slice(0,10) };
+      }
+    }
+
+    const year = s.match(/^(early|mid|late)?\s*(\d{4})$/);
+    if (year){
+      const y=+year[2]; let m=0, day=1;
+      if (year[1]==='mid') m=4; if (year[1]==='late') m=8;
+      const d=new Date(y,m,day); return { label:input, sort: d.toISOString().slice(0,10) };
+    }
+
+    const season = s.match(/^(early|mid|late)?\s*(spring|summer|autumn|fall|winter)\s+(\d{4})$/);
+    if (season){
+      const y=+season[3]; const baseMonth = {spring:2,summer:5,autumn:8,fall:8,winter:11}[season[2]];
+      let m=baseMonth, day=1;
+      if (season[1]==='mid') day=10; if (season[1]==='late') day=20;
+      const d=new Date(y,m,day); return { label:input, sort: d.toISOString().slice(0,10) };
+    }
+
+    // fallback: just year if found
+    const yOnly = s.match(/(\d{4})/);
+    if (yOnly){ const d=new Date(+yOnly[1],0,1); return { label:input, sort: d.toISOString().slice(0,10) }; }
+
+    return { label:input, sort:null };
+  }
+
+  // ======== Save story (cloud) ========
+  $('save').onclick=async ()=>{
+    if(!user){ alert('Please sign in first.'); return; }
+    const family_id = (familySel.value && familySel.value!=='__personal') ? familySel.value : null;
+    const title = titleEl.value || 'Story';
+    const when = parseApproxDate(whenEl.value);
+    let audio_url = null;
+
+    // upload audio if any
+    if (audioBlob) {
+      const ext = (audioBlob.type.includes('mp4')) ? 'm4a' :
+                  (audioBlob.type.includes('ogg')) ? 'ogg' :
+                  (audioBlob.type.includes('webm')) ? 'webm' : 'bin';
+      const storyId = crypto.randomUUID();
+      const path = `${user.id}/${storyId}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('memoir').upload(path, audioBlob, {
+        cacheControl: '3600', upsert: false, contentType: audioBlob.type || 'application/octet-stream'
+      });
+      if (upErr) { alert('Audio upload failed: ' + upErr.message); return; }
+      const { data: pub } = supabase.storage.from('memoir').getPublicUrl(path);
+      audio_url = pub?.publicUrl || null;
+
+      const { error: insErr } = await supabase.from('stories').insert([{
+        id: storyId, user_id: user.id, family_id, title,
+        happened_label: when.label || null, happened_sort: when.sort,
+        transcript, audio_url, duration_sec: elapsed
+      }]);
+      if (insErr) { alert('Save failed: ' + insErr.message); return; }
+    } else {
+      const { error: insErr } = await supabase.from('stories').insert([{
+        user_id: user.id, family_id, title,
+        happened_label: when.label || null, happened_sort: when.sort,
+        transcript, duration_sec: elapsed
+      }]);
+      if (insErr) { alert('Save failed: ' + insErr.message); return; }
+    }
+
+    titleEl.value=''; whenEl.value=''; transcript=''; transcriptEl.textContent='Your words will appear here…'; $('save').disabled=true;
+    fetchStories();
   };
 
-  // ------- Rewrite (AI) — updates saved story in place -------
+  // ======== Library (cloud, sorted by happened_sort then created_at) ========
+  async function fetchStories(){
+    if (!user) return;
+    const fam = (familySel.value && familySel.value!=='__personal') ? familySel.value : null;
+    let q = supabase.from('stories').select('*');
+    if (fam){ q = q.eq('family_id', fam); }
+    else { q = q.eq('user_id', user.id).is('family_id', null); }
+    // order: happened_sort nulls last, then created_at
+    const { data, error } = await q.order('happened_sort', { ascending: true, nullsFirst: false })
+                                   .order('created_at', { ascending: true });
+    if (error){ console.warn(error); return; }
+    renderLib(data);
+  }
+
+  function storyRow(s){
+    const row=document.createElement('div'); row.className='story';
+    const meta=document.createElement('div'); meta.className='meta';
+    const h=document.createElement('h3'); h.textContent=s.title || 'Story';
+    const happened = s.happened_label ? s.happened_label : (s.happened_sort ? new Date(s.happened_sort).getFullYear() : '');
+    const t=document.createElement('div'); t.className='time'; t.textContent = happened ? `${happened}` : new Date(s.created_at||Date.now()).toLocaleString();
+    meta.appendChild(h); meta.appendChild(t);
+
+    const actions=document.createElement('div'); actions.className='row';
+    const view=document.createElement('button'); view.className='btn'; view.textContent='View'; view.onclick=()=>viewStory(s);
+    const rewrite=document.createElement('button'); rewrite.className='btn'; rewrite.textContent='Rewrite (AI)'; rewrite.onclick=()=>rewriteAI(s);
+    const undo=document.createElement('button'); undo.className='btn'; undo.textContent='Undo'; if(!s.original_transcript){ undo.disabled = true; undo.title = 'No original saved'; } undo.onclick=()=>undoRewrite(s);
+    const dl=document.createElement('button'); dl.className='btn'; dl.textContent='Download .docx'; dl.onclick=()=>downloadDocx(s);
+    const del=document.createElement('button'); del.className='btn'; del.textContent='Delete'; del.onclick=()=>deleteStory(s);
+
+    actions.appendChild(view); actions.appendChild(rewrite); actions.appendChild(undo); actions.appendChild(dl); actions.appendChild(del);
+    row.appendChild(meta); row.appendChild(actions);
+    return row;
+  }
+
+  function renderLib(items){
+    const target=(window.innerWidth>=1024)?library:libraryDrawer;
+    target.innerHTML='';
+    if(!items||!items.length){ const p=document.createElement('p'); p.className='muted'; p.textContent='No stories yet.'; target.appendChild(p); return; }
+    for(const s of items){ target.appendChild(storyRow(s)); }
+  }
+
+  async function deleteStory(s){
+    if(!confirm('Delete this story?')) return;
+    try{
+      if (s.audio_url && s.audio_url.includes('/storage/v1/object/public/')) {
+        const path = s.audio_url.split('/storage/v1/object/public/')[1].replace(/^memoir\//,'memoir/');
+        await supabase.storage.from('memoir').remove([path.replace(/^memoir\//,'')]);
+      }
+    }catch{}
+    await supabase.from('stories').delete().eq('id', s.id);
+    fetchStories();
+  }
+
+  function viewStory(s){
+    const dlg=document.createElement('dialog');
+    dlg.style.width='min(90vw, 820px)'; dlg.innerHTML =
+      `<form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #e5e7eb">
+         <div style="font-weight:700">${esc(s.title||'Story')}</div>
+         <button autofocus class="btn">Close</button>
+       </form>
+       <div style="padding:16px">
+         <div class="muted" style="margin-bottom:6px">
+           ${s.happened_label ? esc(s.happened_label) : (s.happened_sort ? new Date(s.happened_sort).toDateString() : new Date(s.created_at).toLocaleString())}
+         </div>
+         <div style="white-space:pre-wrap;font-family:system-ui">${esc(s.transcript||'')}</div>
+         ${s.audio_url ? `<div style="margin-top:12px"><audio controls src="${s.audio_url}"></audio></div>` : ''}
+       </div>`;
+    document.body.appendChild(dlg);
+    dlg.addEventListener('close', ()=> dlg.remove());
+    dlg.showModal();
+  }
+
+  // ======== Rewrite / Undo / Download ========
   async function rewriteAI(s){
-    const tone="warm, vivid, cohesive";
-    const language = lang.value; // send chosen language downstream
+    const tone="warm, vivid, cohesive"; const language = lang.value;
     try{
       const res = await fetch('/api/rewrite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:s.transcript,title:s.title,language,tone})});
       if(!res.ok){ let msg=await res.text(); try{msg=JSON.parse(msg).error||msg;}catch{} throw new Error(msg||'Rewrite failed'); }
       const data=await res.json(); const rewritten=data.text||'(no text)';
 
-      const items=getAll();
-      const idx=items.findIndex(x=>x.id===s.id);
-      if(idx>=0){
-        if(!items[idx].originalTranscript) items[idx].originalTranscript = items[idx].transcript;
-        items[idx].transcript = rewritten;
-        items[idx].rewrittenAt = Date.now();
-        setAll(items);
-        renderLib();
+      const update = { transcript: rewritten, rewritten_at: new Date().toISOString() };
+      if(!s.original_transcript) update.original_transcript = s.transcript;
 
-        // Confirmation modal
-        const dlg=document.createElement('dialog');
-        dlg.innerHTML = `<form method="dialog" style="padding:12px;border-bottom:1px solid #e5e7eb">
-            <strong>${esc(items[idx].title)}</strong>&nbsp;—&nbsp;<span class="muted">Updated</span>
-            <button autofocus class="btn" style="float:right">Close</button>
-          </form>
-          <div style="padding:16px;white-space:pre-wrap;font-family:system-ui">${esc(rewritten)}</div>`;
-        document.body.appendChild(dlg); dlg.addEventListener('close',()=>dlg.remove()); dlg.showModal();
-      }
-    }catch(err){
-      alert('Rewrite error: ' + (err?.message||err));
-    }
+      const { error } = await supabase.from('stories').update(update).eq('id', s.id);
+      if (error) { alert('Update failed: ' + error.message); return; }
+
+      const dlg=document.createElement('dialog');
+      dlg.innerHTML = `<form method="dialog" style="padding:12px;border-bottom:1px solid #e5e7eb">
+          <strong>${esc(s.title)}</strong>&nbsp;—&nbsp;<span class="muted">Updated</span>
+          <button autofocus class="btn" style="float:right">Close</button>
+        </form>
+        <div style="padding:16px;white-space:pre-wrap;font-family:system-ui">${esc(rewritten)}</div>`;
+      document.body.appendChild(dlg); dlg.addEventListener('close',()=>dlg.remove()); dlg.showModal();
+
+      fetchStories();
+    }catch(err){ alert('Rewrite error: ' + (err?.message||err)); }
   }
-
-  // ------- Undo to original -------
-  function undoRewrite(s){
-    const items=getAll();
-    const idx=items.findIndex(x=>x.id===s.id);
-    if(idx<0) return;
-    if(!items[idx].originalTranscript){ alert('No original version available.'); return; }
-    items[idx].transcript = items[idx].originalTranscript;
-    delete items[idx].originalTranscript;
-    items[idx].rewrittenAt = null;
-    setAll(items);
-    renderLib();
+  async function undoRewrite(s){
+    if(!s.original_transcript){ alert('No original version available.'); return; }
+    const { error } = await supabase.from('stories').update({
+      transcript: s.original_transcript, original_transcript: null, rewritten_at: null
+    }).eq('id', s.id);
+    if (error){ alert('Undo failed: ' + error.message); return; }
+    fetchStories();
   }
-
-  // ------- Download .docx (client-side, minimal OOXML) -------
   async function downloadDocx(s){
-    const JSZip = window.JSZip;
-    const zip = new JSZip();
-
+    const JSZip = window.JSZip; const zip = new JSZip();
     const paras = String(s.transcript||'').trim().split(/\n\s*\n/).map(p=>`<w:p><w:r><w:t>${escapeXml(p)}</w:t></w:r></w:p>`).join('');
     const title = escapeXml(s.title||'Story');
-
-    zip.file('[Content_Types].xml', `
-      <?xml version="1.0" encoding="UTF-8"?>
-      <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-        <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-        <Default Extension="xml" ContentType="application/xml"/>
-        <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
-        <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
-        <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
-      </Types>`.trim());
-
-    zip.folder('_rels').file('.rels', `
-      <?xml version="1.0" encoding="UTF-8"?>
-      <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-        <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
-        <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
-        <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
-      </Relationships>`.trim());
-
-    zip.folder('docProps').file('core.xml', `
-      <?xml version="1.0" encoding="UTF-8"?>
-      <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties"
-        xmlns:dc="http://purl.org/dc/elements/1.1/"
-        xmlns:dcterms="http://purl.org/dc/terms/"
-        xmlns:dcmitype="http://purl.org/dc/dcmitype/"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-        <dc:title>${title}</dc:title>
-        <dc:creator>Memoir Recorder</dc:creator>
-        <cp:lastModifiedBy>Memoir Recorder</cp:lastModifiedBy>
-        <dcterms:created xsi:type="dcterms:W3CDTF">${new Date().toISOString()}</dcterms:created>
-        <dcterms:modified xsi:type="dcterms:W3CDTF">${new Date().toISOString()}</dcterms:modified>
-      </cp:coreProperties>`.trim());
-
-    zip.folder('docProps').file('app.xml', `
-      <?xml version="1.0" encoding="UTF-8"?>
-      <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"
-        xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
-        <Application>Memoir Recorder</Application>
-        <DocSecurity>0</DocSecurity>
-        <ScaleCrop>false</ScaleCrop>
-        <HeadingPairs>
-          <vt:vector size="2" baseType="variant">
-            <vt:variant><vt:lpstr>Title</vt:lpstr></vt:variant>
-            <vt:variant><vt:i4>1</vt:i4></vt:variant>
-          </vt:vector>
-        </HeadingPairs>
-        <TitlesOfParts>
-          <vt:vector size="1" baseType="lpstr">
-            <vt:lpstr>${title}</vt:lpstr>
-          </vt:vector>
-        </TitlesOfParts>
-      </Properties>`.trim());
-
-    const word = zip.folder('word');
-    word.folder('_rels').file('document.xml.rels', `
-      <?xml version="1.0" encoding="UTF-8"?>
-      <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>`.trim());
-
-    word.file('document.xml', `
-      <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-      <w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:o="urn:schemas-microsoft-com:office:office"
-        xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
-        xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math"
-        xmlns:v="urn:schemas-microsoft-com:vml"
-        xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing"
-        xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
-        xmlns:w10="urn:schemas-microsoft-com:office:word"
-        xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
-        xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"
-        xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup"
-        xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk"
-        xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml"
-        xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
-        mc:Ignorable="w14 wp14">
-        <w:body>
-          <w:p><w:r><w:t xml:space="preserve">${title}</w:t></w:r></w:p>
-          ${paras}
-          <w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/></w:sectPr>
-        </w:body>
-      </w:document>`.trim());
-
-    const blob = await zip.generateAsync({ type:'blob' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = (s.title || 'Story') + '.docx';
-    document.body.appendChild(a); a.click(); a.remove();
+    zip.file('[Content_Types].xml',`<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>`);
+    zip.folder('_rels').file('.rels',`<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`);
+    const word=zip.folder('word'); word.folder('_rels').file('document.xml.rels', `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>`);
+    word.file('document.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t xml:space="preserve">${title}</w:t></w:r></w:p>${paras}<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/></w:sectPr></w:body></w:document>`);
+    const blob = await zip.generateAsync({ type:'blob' }); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(s.title||'Story')+'.docx'; document.body.appendChild(a); a.click(); a.remove();
   }
   function escapeXml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-  // ------- Init -------
-  renderPrompts(); renderLib();
+  // ======== Export (Book / CSV) in happened order ========
+  exportBookBtn.onclick = async ()=>{
+    if(!user){ alert('Sign in first.'); return; }
+    const fam = (familySel.value && familySel.value!=='__personal') ? familySel.value : null;
+    let q = supabase.from('stories').select('*');
+    if (fam){ q = q.eq('family_id', fam); }
+    else { q = q.eq('user_id', user.id).is('family_id', null); }
+    const { data } = await q.order('happened_sort', { ascending:true, nullsFirst:false })
+                            .order('created_at', { ascending:true });
+    const w = window.open('','_blank');
+    const body = (data||[]).map(ch => `
+      <section style="page-break-after:always;padding:32px 40px;font-family:Georgia,serif">
+        <h1 style="margin:0">${esc(ch.title||'Chapter')}</h1>
+        <time style="color:#666;font-size:12px">${esc(ch.happened_label || (ch.happened_sort?new Date(ch.happened_sort).toDateString():''))}</time>
+        <div style="margin-top:12px;white-space:pre-wrap;line-height:1.6">${esc(ch.transcript||'')}</div>
+      </section>`).join('');
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Book Export</title></head><body>${body}</body></html>`);
+    w.document.close();
+  };
 
-  // expose for safety if needed
-  window.viewStory = viewStory;
-  window.rewriteAI = rewriteAI;
-  window.undoRewrite = undoRewrite;
-  window.downloadDocx = downloadDocx;
+  exportCsvBtn.onclick = async ()=>{
+    if(!user){ alert('Sign in first.'); return; }
+    const fam = (familySel.value && familySel.value!=='__personal') ? familySel.value : null;
+    let q = supabase.from('stories').select('*');
+    if (fam){ q = q.eq('family_id', fam); }
+    else { q = q.eq('user_id', user.id).is('family_id', null); }
+    const { data } = await q.order('happened_sort', { ascending:true, nullsFirst:false })
+                            .order('created_at', { ascending:true });
+    const rows = [['Title','When','Body']]
+      .concat((data||[]).map(ch => [
+        ch.title||'Chapter',
+        ch.happened_label || (ch.happened_sort?new Date(ch.happened_sort).toISOString().slice(0,10):''),
+        (ch.transcript||'').replace(/\r?\n/g,'\\n')
+      ]));
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], {type:'text/csv'});
+    const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='memoir-canva.csv'; document.body.appendChild(a); a.click(); a.remove();
+  };
 
-  // ------- Recording helpers at end to avoid hoisting surprises -------
-  function stopAll(){
-    if(rec && rec.state!=='inactive'){ rec.stop(); }
-    if(recognition){ try{ recognition.stop(); }catch{} }
-    if(timer){ clearInterval(timer); timer=null; }
-    mic.textContent='Record'; mic.classList.remove('pulse');
+  // ======== Bootstrap after login ========
+  async function bootstrap(){
+    await loadFamilies();
+    renderPrompts();
+    fetchStories();
   }
-
+  if (user) bootstrap();
 })();
 </script>
 </body>
