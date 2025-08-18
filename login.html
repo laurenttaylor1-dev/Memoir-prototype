@@ -91,7 +91,7 @@ button.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));colo
     <p id="msg-ml" class="muted" style="margin-top:10px"></p>
   </section>
 
-  <!-- Reset password (after clicking email link) -->
+  <!-- Reset password -->
   <section id="pane-reset" class="hidden">
     <div class="notice">Enter a new password for your account.</div>
     <label>New password</label>
@@ -101,105 +101,96 @@ button.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));colo
     </div>
     <p id="msg-reset" class="muted" style="margin-top:10px"></p>
   </section>
-
 </div>
 
-<!-- Supabase JS (v2) -->
+<!-- Supabase JS -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
 <script>
-  // === Your Supabase project (public client) ===
+  // Your Supabase project (public client)
   const SUPABASE_URL = "https://jrjqciywljjhhcxfyxwh.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
   const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // === UI helpers ===
   const $ = (id)=>document.getElementById(id);
-  const panes = {
-    signin: $('pane-signin'),
-    signup: $('pane-signup'),
-    magic: $('pane-magic'),
-    reset: $('pane-reset')
-  };
+  const panes = { signin:$('pane-signin'), signup:$('pane-signup'), magic:$('pane-magic'), reset:$('pane-reset') };
   function show(name){
-    Object.values(panes).forEach(p => p.classList.add('hidden'));
+    Object.values(panes).forEach(p=>p.classList.add('hidden'));
     panes[name].classList.remove('hidden');
     document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-    if (name==='signin') $('tab-signin').classList.add('active');
-    if (name==='signup') $('tab-signup').classList.add('active');
-    if (name==='magic') $('tab-magic').classList.add('active');
+    if(name==='signin')$('tab-signin').classList.add('active');
+    if(name==='signup')$('tab-signup').classList.add('active');
+    if(name==='magic')$('tab-magic').classList.add('active');
   }
 
-  // Switch tabs
-  $('tab-signin').onclick = ()=>show('signin');
-  $('tab-signup').onclick = ()=>show('signup');
-  $('tab-magic').onclick  = ()=>show('magic');
+  $('tab-signin').onclick=()=>show('signin');
+  $('tab-signup').onclick=()=>show('signup');
+  $('tab-magic').onclick=()=>show('magic');
 
-  // If user returns from a password reset link, Supabase appends access_token in URL.
+  // If returning from recovery link
   const url = new URL(window.location.href);
   const hasRecovery = url.searchParams.get('type') === 'recovery' || url.hash.includes('type=recovery') || url.searchParams.get('access_token');
   if (hasRecovery) show('reset');
 
-  // Already logged in? redirect to app.
+  // Already logged in? go to app
   supa.auth.getSession().then(({ data })=>{
     if (data.session) window.location.replace('index.html');
   });
 
-  // Sign in (email+pass)
+  // Sign in
   $('btn-signin').onclick = async ()=>{
-    $('msg-in').textContent = '';
-    const email = $('in-email').value.trim();
-    const password = $('in-pass').value;
-    if (!email || !password) { $('msg-in').textContent = 'Enter email and password.'; return; }
-    const { error } = await supa.auth.signInWithPassword({ email, password });
-    if (error) { $('msg-in').innerHTML = '<span class="err">Error: '+ error.message +'</span>'; return; }
+    $('msg-in').textContent='';
+    const email=$('in-email').value.trim(), pass=$('in-pass').value;
+    if(!email||!pass){$('msg-in').textContent='Enter email and password.';return;}
+    const { error } = await supa.auth.signInWithPassword({ email, password:pass });
+    if (error){ $('msg-in').innerHTML='<span class="err">Error: '+error.message+'</span>'; return; }
     window.location.replace('index.html');
   };
 
   // Sign up
   $('btn-signup').onclick = async ()=>{
-    $('msg-up').textContent = '';
-    const email = $('up-email').value.trim();
-    const password = $('up-pass').value;
-    if (!email || !password) { $('msg-up').textContent = 'Enter email and password.'; return; }
-    const { error } = await supa.auth.signUp({ email, password,
-      options: { emailRedirectTo: window.location.origin + '/login.html' }
+    $('msg-up').textContent='';
+    const email=$('up-email').value.trim(), pass=$('up-pass').value;
+    if(!email||!pass){$('msg-up').textContent='Enter email and password.';return;}
+    const { error } = await supa.auth.signUp({
+      email, password:pass,
+      options:{ emailRedirectTo: window.location.origin + '/login.html' }
     });
-    if (error) { $('msg-up').innerHTML = '<span class="err">Error: '+ error.message +'</span>'; return; }
-    $('msg-up').textContent = 'Check your inbox to confirm your email.';
+    if (error){ $('msg-up').innerHTML='<span class="err">Error: '+error.message+'</span>'; return; }
+    $('msg-up').textContent='Check your inbox to confirm your email.';
   };
 
   // Magic link
   $('btn-magic').onclick = async ()=>{
-    $('msg-ml').textContent = '';
-    const email = $('ml-email').value.trim();
-    if (!email) { $('msg-ml').textContent = 'Enter your email.'; return; }
+    $('msg-ml').textContent='';
+    const email=$('ml-email').value.trim();
+    if(!email){$('msg-ml').textContent='Enter your email.';return;}
     const { error } = await supa.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: window.location.origin + '/login.html' }
+      options:{ emailRedirectTo: window.location.origin + '/login.html' }
     });
-    if (error) { $('msg-ml').innerHTML = '<span class="err">Error: '+ error.message +'</span>'; return; }
-    $('msg-ml').textContent = 'Magic link sent! Check your inbox.';
+    if (error){ $('msg-ml').innerHTML='<span class="err">Error: '+error.message+'</span>'; return; }
+    $('msg-ml').textContent='Magic link sent! Check your inbox.';
   };
 
-  // Forgot password → send reset email
+  // Forgot password
   $('btn-forgot').onclick = async ()=>{
-    const email = $('in-email').value.trim();
-    if (!email) { $('msg-in').textContent = 'Enter your email first, then click Forgot password.'; return; }
+    const email=$('in-email').value.trim();
+    if(!email){$('msg-in').textContent='Enter your email first, then click Forgot password.';return;}
     const { error } = await supa.auth.resetPasswordForEmail(email, {
       redirectTo: window.location.origin + '/login.html'
     });
-    if (error) { $('msg-in').innerHTML = '<span class="err">Error: '+ error.message +'</span>'; return; }
-    $('msg-in').textContent = 'Reset email sent. Check your inbox.';
+    if (error){ $('msg-in').innerHTML='<span class="err">Error: '+error.message+'</span>'; return; }
+    $('msg-in').textContent='Reset email sent. Check your inbox.';
   };
 
-  // Handle setting a new password after recovery link
+  // Set new password (after recovery link)
   $('btn-reset').onclick = async ()=>{
-    const newPass = $('new-pass').value;
-    if (!newPass) { $('msg-reset').textContent = 'Enter a new password.'; return; }
-    const { data, error } = await supa.auth.updateUser({ password: newPass });
-    if (error) { $('msg-reset').innerHTML = '<span class="err">Error: '+ error.message +'</span>'; return; }
-    $('msg-reset').textContent = 'Password updated. Redirecting…';
-    setTimeout(()=> window.location.replace('index.html'), 800);
+    const np=$('new-pass').value;
+    if(!np){$('msg-reset').textContent='Enter a new password.';return;}
+    const { error } = await supa.auth.updateUser({ password: np });
+    if (error){ $('msg-reset').innerHTML='<span class="err">Error: '+error.message+'</span>'; return; }
+    $('msg-reset').textContent='Password updated. Redirecting…';
+    setTimeout(()=>window.location.replace('index.html'), 900);
   };
 </script>
 </body>
