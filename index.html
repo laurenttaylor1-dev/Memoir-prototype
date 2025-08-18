@@ -49,8 +49,14 @@ select,.btn{padding:10px 12px;border-radius:12px;border:1px solid var(--border);
 .tab{padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:transparent}
 .tab.active{background:rgba(37,99,235,.1);border-color:rgba(37,99,235,.25)}
 
-.prompt-row{display:flex;gap:8px;flex-wrap:wrap}
-.chip{padding:10px 12px;border-radius:999px;background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.18);white-space:nowrap;cursor:pointer}
+.topics{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
+.chip{
+  display:flex;align-items:center;justify-content:center;
+  height:44px;border-radius:12px;cursor:pointer;
+  background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.18);
+  font-weight:600; letter-spacing:.2px; user-select:none;
+}
+.chip:active{transform:translateY(1px)}
 
 input[type="text"]{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:rgba(2,8,23,.02)}
 .area{min-height:180px;border:1px solid var(--border);border-radius:12px;padding:14px;background:rgba(2,8,23,.02)}
@@ -101,6 +107,8 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
           <select id="lang" aria-label="Language">
             <option value="en">English</option>
             <option value="fr">Français</option>
+            <option value="es">Español</option>
+            <option value="nl">Nederlands</option>
           </select>
           <select id="plan" aria-label="Plan">
             <option value="free">Free (2 min)</option>
@@ -120,7 +128,7 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
 
           <div id="guidedBlock">
             <div class="label">Suggested topics</div>
-            <div id="prompts" class="prompt-row"></div>
+            <div id="prompts" class="topics"></div>
           </div>
 
           <div class="label">Title</div>
@@ -150,7 +158,7 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
         </aside>
       </div>
 
-      <footer>Prototype: memoir recorder — EN/FR, 2‑minute cap on Free.</footer>
+      <footer>Prototype: memoir recorder — EN/FR/ES/NL, 2-minute cap on Free.</footer>
     </div>
   </div>
 
@@ -183,17 +191,44 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
   const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
 
   // ------- State -------
-  let locale = navigator.language?.startsWith('fr') ? 'fr' : 'en';
+  let locale = 'en';
+  try { locale = (navigator.language||'en').slice(0,2); } catch {}
+  if (!['en','fr','es','nl'].includes(locale)) locale = 'en';
   lang.value = locale;
+
   let tier = 'free'; plan.value = tier;
   let cap = tier==='free'?120:3600;
   let mode = 'guided';
   let transcript = '', selectedPrompt='', elapsed=0, timer=null;
   let recognition=null, rec=null, stream=null, chunks=[], audioBlob=null;
 
-  // ------- Content -------
-  const promptsEN=[ "Describe your home growing up.","Tell me about your first job.","How did you meet your partner?","What big events did you live through?","What advice would you give your 20-year-old self?" ];
-  const promptsFR=[ "Décrivez votre maison quand vous étiez enfant.","Parlez de votre premier emploi.","Comment avez-vous rencontré votre partenaire ?","Quels grands événements avez-vous vécus ?","Quel conseil donneriez-vous à vos 20 ans ?" ];
+  // ------- Topics & language helpers -------
+  const TOPICS = {
+    en: ["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
+    fr: ["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
+    es: ["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"],
+    nl: ["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
+  };
+  const BCP = { en:'en-US', fr:'fr-FR', es:'es-ES', nl:'nl-NL' };
+
+  // ---- TTS helpers ----
+  let voices = [];
+  function loadVoices(){ voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : []; }
+  if ('speechSynthesis' in window) {
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+  }
+  function speak(text, langCode){
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    const target = BCP[langCode] || 'en-US';
+    u.lang = target;
+    const v = voices.find(v=>v.lang === target) || voices.find(v=>v.lang.startsWith(target.split('-')[0])) || null;
+    if (v) u.voice = v;
+    u.rate = 0.92; u.pitch = 0.95; u.volume = 0.9; // gentle
+    window.speechSynthesis.speak(u);
+  }
 
   // ------- Storage helpers -------
   const KEY='memoir_stories';
@@ -203,9 +238,15 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
   // ------- UI renderers -------
   function renderPrompts(){
     promptsEl.innerHTML='';
-    (locale==='fr'?promptsFR:promptsEN).forEach(p=>{
-      const b=document.createElement('button');
-      b.className='chip'; b.textContent=p; b.onclick=()=>selectedPrompt=p;
+    const list = TOPICS[lang.value] || TOPICS.en;
+    list.forEach(topic=>{
+      const b=document.createElement('div');
+      b.className='chip'; b.textContent=topic;
+      b.onclick=()=>{
+        selectedPrompt = topic;
+        speak(topic, lang.value);
+        if (!titleEl.value) titleEl.value = topic;
+      };
       promptsEl.appendChild(b);
     });
   }
@@ -214,31 +255,25 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     const row=document.createElement('div'); row.className='story';
 
     const meta=document.createElement('div'); meta.className='meta';
-    const h=document.createElement('h3'); h.textContent=s.title || (locale==='fr'?'Histoire':'Story');
+    const h=document.createElement('h3'); h.textContent=s.title || 'Story';
     const t=document.createElement('div'); t.className='time'; t.textContent=new Date(s.createdAt).toLocaleString();
     meta.appendChild(h); meta.appendChild(t);
 
     const actions=document.createElement('div'); actions.className='row';
-    const view=document.createElement('button'); view.className='btn'; view.textContent=(locale==='fr'?'Voir':'View');
+    const view=document.createElement('button'); view.className='btn'; view.textContent='View';
     view.onclick=()=>viewStory(s);
-
-    const rewrite=document.createElement('button'); rewrite.className='btn'; rewrite.textContent=(locale==='fr'?'Réécrire (IA)':'Rewrite (AI)');
+    const rewrite=document.createElement('button'); rewrite.className='btn'; rewrite.textContent='Rewrite (AI)';
     rewrite.onclick=()=>rewriteAI(s);
-
-    const undo=document.createElement('button'); undo.className='btn'; undo.textContent=(locale==='fr'?'Annuler':'Undo');
-    if(!s.originalTranscript){ undo.disabled = true; undo.title = (locale==='fr'?'Pas de version originale':'No original saved'); }
+    const undo=document.createElement('button'); undo.className='btn'; undo.textContent='Undo';
+    if(!s.originalTranscript){ undo.disabled = true; undo.title = 'No original saved'; }
     undo.onclick=()=>undoRewrite(s);
-
     const dl=document.createElement('button'); dl.className='btn'; dl.textContent='Download .docx';
     dl.onclick=()=>downloadDocx(s);
-
-    const del=document.createElement('button'); del.className='btn'; del.textContent=(locale==='fr'?'Supprimer':'Delete');
+    const del=document.createElement('button'); del.className='btn'; del.textContent='Delete';
     del.onclick=()=>{ const next=getAll().filter(x=>x.id!==s.id); setAll(next); renderLib(); };
 
     actions.appendChild(view); actions.appendChild(rewrite); actions.appendChild(undo); actions.appendChild(dl); actions.appendChild(del);
-
-    row.appendChild(meta);
-    row.appendChild(actions);
+    row.appendChild(meta); row.appendChild(actions);
     return row;
   }
 
@@ -246,7 +281,7 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     const target=(window.innerWidth>=1024)?library:libraryDrawer;
     target.innerHTML='';
     const items=getAll();
-    if(!items.length){ const p=document.createElement('p'); p.className='muted'; p.textContent=(locale==='fr'?'Aucune histoire pour le moment.':'No stories yet.'); target.appendChild(p); return; }
+    if(!items.length){ const p=document.createElement('p'); p.className='muted'; p.textContent='No stories yet.'; target.appendChild(p); return; }
     for(const s of items){ target.appendChild(storyRow(s)); }
   }
 
@@ -279,6 +314,7 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
 
   // ------- Controls -------
   plan.onchange=()=>{ tier=plan.value; cap=tier==='free'?120:3600; remain.textContent = cap+'s'; };
+  lang.onchange=()=>{ renderPrompts(); };  // refresh guided topics on language change
   clearBtn.onclick=()=>{ transcript=''; transcriptEl.textContent='Your words will appear here…'; titleEl.value=''; save.disabled=true; };
 
   // ------- Recording -------
@@ -286,13 +322,12 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
 
   async function startAll(){
     transcript=''; transcriptEl.textContent=''; elapsed=0; remain.textContent = cap+'s'; bar.style.width='0%';
+
     try{
       stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
-    }catch(e){
-      alert('Microphone permission denied. Check site settings.'); return;
-    }
+    }catch(e){ alert('Microphone permission denied. Check site settings.'); return; }
 
-    // MediaRecorder (cross‑browser)
+    // MediaRecorder
     chunks=[]; audioBlob=null; rec=null;
     try{
       if(window.MediaRecorder){
@@ -305,14 +340,29 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
       }
     }catch{ rec=null; }
 
-    // Speech recognition
+    // Speech recognition in selected language
     const SR = window.webkitSpeechRecognition || window.SpeechRecognition;
     if(SR){
-      recognition=new SR(); recognition.lang=(locale==='fr')?'fr-FR':'en-US'; recognition.continuous=true; recognition.interimResults=true;
-      let full=''; recognition.onresult=(e)=>{ let inter=''; for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i]; if(r.isFinal) full+=r[0].transcript+' '; else inter+=r[0].transcript;} transcript=(full+inter).trim(); transcriptEl.textContent=transcript; save.disabled=!transcript; };
+      recognition=new SR();
+      recognition.lang = BCP[lang.value] || 'en-US';
+      recognition.continuous=true; recognition.interimResults=true;
+      let full='';
+      recognition.onresult=(e)=>{
+        let inter='';
+        for(let i=e.resultIndex;i<e.results.length;i++){
+          const r=e.results[i];
+          if(r.isFinal) full+=r[0].transcript+' ';
+          else inter+=r[0].transcript;
+        }
+        transcript=(full+inter).trim();
+        transcriptEl.textContent=transcript;
+        save.disabled=!transcript;
+      };
       recognition.onerror=()=>{ asr.textContent='Speech recognition unavailable'; };
       try{ recognition.start(); asr.textContent='Transcribing…'; }catch{}
-    } else { asr.textContent='Speech recognition is not available in this browser.'; }
+    } else {
+      asr.textContent='Speech recognition is not available in this browser.';
+    }
 
     mic.textContent='Stop Recording'; mic.classList.add('pulse'); meter.style.display='flex';
     timer=setInterval(()=>{ elapsed++; bar.style.width=(elapsed/cap*100)+'%'; remain.textContent=Math.max(0,cap-elapsed)+'s'; if(elapsed>=cap) stopAll(); },1000);
@@ -335,7 +385,8 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
 
   // ------- Rewrite (AI) — updates saved story in place -------
   async function rewriteAI(s){
-    const tone="warm, vivid, cohesive"; const language=(lang.value==='fr')?'fr':'en';
+    const tone="warm, vivid, cohesive";
+    const language = lang.value; // send chosen language downstream
     try{
       const res = await fetch('/api/rewrite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:s.transcript,title:s.title,language,tone})});
       if(!res.ok){ let msg=await res.text(); try{msg=JSON.parse(msg).error||msg;}catch{} throw new Error(msg||'Rewrite failed'); }
@@ -369,7 +420,7 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     const items=getAll();
     const idx=items.findIndex(x=>x.id===s.id);
     if(idx<0) return;
-    if(!items[idx].originalTranscript){ alert(locale==='fr'?'Aucune version originale.':'No original version available.'); return; }
+    if(!items[idx].originalTranscript){ alert('No original version available.'); return; }
     items[idx].transcript = items[idx].originalTranscript;
     delete items[idx].originalTranscript;
     items[idx].rewrittenAt = null;
@@ -382,11 +433,9 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     const JSZip = window.JSZip;
     const zip = new JSZip();
 
-    // Simple paragraph builder from text (split by blank lines)
     const paras = String(s.transcript||'').trim().split(/\n\s*\n/).map(p=>`<w:p><w:r><w:t>${escapeXml(p)}</w:t></w:r></w:p>`).join('');
     const title = escapeXml(s.title||'Story');
 
-    // Required files
     zip.file('[Content_Types].xml', `
       <?xml version="1.0" encoding="UTF-8"?>
       <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
@@ -475,19 +524,24 @@ footer{margin:22px 0;text-align:center;color:var(--muted);font-size:12px}
     a.download = (s.title || 'Story') + '.docx';
     document.body.appendChild(a); a.click(); a.remove();
   }
-
-  function escapeXml(s){
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
+  function escapeXml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
   // ------- Init -------
   renderPrompts(); renderLib();
 
-  // ------- Public functions for buttons scope -------
+  // expose for safety if needed
   window.viewStory = viewStory;
   window.rewriteAI = rewriteAI;
   window.undoRewrite = undoRewrite;
   window.downloadDocx = downloadDocx;
+
+  // ------- Recording helpers at end to avoid hoisting surprises -------
+  function stopAll(){
+    if(rec && rec.state!=='inactive'){ rec.stop(); }
+    if(recognition){ try{ recognition.stop(); }catch{} }
+    if(timer){ clearInterval(timer); timer=null; }
+    mic.textContent='Record'; mic.classList.remove('pulse');
+  }
 
 })();
 </script>
