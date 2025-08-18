@@ -1,154 +1,94 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Sign in to Memoir</title>
-<meta name="color-scheme" content="light dark" />
-<style>
-:root{ --bg:#f6f7fb; --card:#fff; --fg:#0f172a; --muted:#667085; --brand:#2563eb; --brand2:#7c3aed; --border:#e6e9f0; --shadow:0 20px 40px rgba(2,8,23,.06), 0 2px 6px rgba(2,8,23,.04); }
-@media (prefers-color-scheme:dark){
-  :root{ --bg:#0b1020; --card:#0f162e; --fg:#e6edf7; --muted:#9aa4b2; --border:#1f2a44; --shadow:0 20px 40px rgba(0,0,0,.4), 0 2px 6px rgba(0,0,0,.3) }
-}
-*{box-sizing:border-box}
-body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-.card{width:min(720px,96vw);background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:28px}
-h1{display:flex;align-items:center;gap:12px;margin:0 0 16px 0}
-.logo{width:40px;height:40px;border-radius:14px;background:conic-gradient(from 180deg, var(--brand), var(--brand2))}
-.tabs{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
-.tab{padding:8px 14px;border-radius:999px;border:1px solid var(--border);cursor:pointer;background:transparent}
-.tab.active{background:rgba(37,99,235,.1);border-color:rgba(37,99,235,.25)}
-.row{display:grid;gap:10px}
-input,button{padding:12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit}
-button{cursor:pointer}
-.btn{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;border:0}
-.small{color:var(--muted);font-size:12px}
-#error{color:#c02;min-height:1.2em;margin-top:8px}
-.hide{display:none}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Memoir</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.6/dist/umd/supabase.min.js"></script>
 </head>
 <body>
-  <div class="card">
-    <h1><span class="logo" aria-hidden="true"></span> Sign in to Memoir</h1>
+  <div id="app">
+    <header class="app-header">
+      <h1>📖 Memoir</h1>
+      <button id="logoutBtn" class="btn">Logout</button>
+    </header>
 
-    <div class="tabs">
-      <button id="tabSign"   class="tab active">Sign in</button>
-      <button id="tabCreate" class="tab">Create account</button>
-      <button id="tabMagic"  class="tab">Magic link</button>
-    </div>
+    <main>
+      <section id="welcome" style="display:none;">
+        <h2>Welcome back!</h2>
+        <p id="userEmail"></p>
+      </section>
 
-    <div id="formSign" class="row">
-      <input id="signEmail" type="email" placeholder="Email" autocomplete="username" />
-      <input id="signPass"  type="password" placeholder="Password" autocomplete="current-password" />
-      <button id="btnSign" class="btn">Sign in</button>
-    </div>
-
-    <div id="formCreate" class="row hide">
-      <input id="createEmail" type="email" placeholder="Email" autocomplete="username" />
-      <input id="createPass"  type="password" placeholder="Password (min 6)" autocomplete="new-password" />
-      <button id="btnCreate" class="btn">Create account</button>
-    </div>
-
-    <div id="formMagic" class="row hide">
-      <input id="magicEmail" type="email" placeholder="Email for magic link" />
-      <button id="btnMagic" class="btn">Send magic link</button>
-    </div>
-
-    <div id="error"></div>
-    <p class="small">By continuing you agree to our terms.</p>
+      <section id="editor" style="display:none;">
+        <h2>Your Memoir</h2>
+        <textarea id="memoInput" rows="8" placeholder="Write your story here..."></textarea>
+        <br/>
+        <button id="saveBtn" class="btn">Save</button>
+        <ul id="memoList"></ul>
+      </section>
+    </main>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
   <script>
-  (function(){
-    // ===== Supabase config — CORRECT URL =====
-    const SUPABASE_URL = "https://jrjqciywljjhhcxfxywh.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // === Supabase config ===
+    const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
+    const SUPABASE_ANON_KEY = "anon"; // this is fine, only for session ops
+    const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ===== UI helpers
-    const $ = id => document.getElementById(id);
-    const show = (el, ok)=> el.classList.toggle('hide', !ok);
-    const setErr = (msg)=> { $('error').textContent = msg || ''; };
+    const logoutBtn = document.getElementById('logoutBtn');
+    const welcome = document.getElementById('welcome');
+    const editor = document.getElementById('editor');
+    const userEmail = document.getElementById('userEmail');
+    const memoInput = document.getElementById('memoInput');
+    const saveBtn = document.getElementById('saveBtn');
+    const memoList = document.getElementById('memoList');
 
-    // Tabs
-    function activate(which){
-      ['tabSign','tabCreate','tabMagic'].forEach(id => $(id).classList.remove('active'));
-      ['formSign','formCreate','formMagic'].forEach(id => show($(id), false));
-      if(which==='sign'){ $('tabSign').classList.add('active'); show($('formSign'), true); }
-      if(which==='create'){ $('tabCreate').classList.add('active'); show($('formCreate'), true); }
-      if(which==='magic'){ $('tabMagic').classList.add('active'); show($('formMagic'), true); }
-      setErr('');
+    // === Load session ===
+    async function loadSession() {
+      try {
+        const { data: { session } } = await supa.auth.getSession();
+        if (!session) {
+          window.location.href = "/login.html";
+          return;
+        }
+        const email = session.user.email;
+        userEmail.textContent = "Signed in as " + email;
+        welcome.style.display = "block";
+        editor.style.display = "block";
+        loadMemos();
+      } catch (err) {
+        console.error("Session error:", err);
+        window.location.href = "/login.html";
+      }
     }
-    $('tabSign').onclick   = ()=>activate('sign');
-    $('tabCreate').onclick = ()=>activate('create');
-    $('tabMagic').onclick  = ()=>activate('magic');
 
-    // Better error explainer for DNS/URL issues
-    function friendly(err){
-      const m = String(err?.message || err || '');
-      if (m.includes('Failed to fetch') || m.includes('ERR_NAME_NOT_RESOLVED')) {
-        return 'Network / URL error. Double-check the Supabase URL in login.html and your internet / extensions.';
-      }
-      return m;
+    // === Logout ===
+    logoutBtn.addEventListener("click", async () => {
+      await supa.auth.signOut();
+      window.location.href = "/login.html";
+    });
+
+    // === Save Memo ===
+    saveBtn.addEventListener("click", async () => {
+      const text = memoInput.value.trim();
+      if (!text) return;
+
+      const li = document.createElement("li");
+      li.textContent = text;
+      memoList.appendChild(li);
+
+      memoInput.value = "";
+      // TODO: Save to Supabase DB (memos table) once schema is ready
+    });
+
+    function loadMemos() {
+      // TODO: Load memos from Supabase DB
+      memoList.innerHTML = "";
     }
 
-    // Actions
-    $('btnSign').onclick = async ()=>{
-      setErr(''); 
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: $('signEmail').value.trim(),
-          password: $('signPass').value
-        });
-        if (error) throw error;
-        window.location.replace('index.html');
-      } catch (e) {
-        setErr('Error: ' + friendly(e));
-        console.error(e);
-      }
-    };
-
-    $('btnCreate').onclick = async ()=>{
-      setErr('');
-      try {
-        const { data, error } = await supabase.auth.signUp({
-          email: $('createEmail').value.trim(),
-          password: $('createPass').value
-        });
-        if (error) throw error;
-        // If email confirmations are off, you'll be signed in immediately.
-        window.location.replace('index.html');
-      } catch (e) {
-        setErr('Error: ' + friendly(e));
-        console.error(e);
-      }
-    };
-
-    $('btnMagic').onclick = async ()=>{
-      setErr('');
-      try {
-        const { error } = await supabase.auth.signInWithOtp({
-          email: $('magicEmail').value.trim(),
-          options: { emailRedirectTo: 'https://memoir-prototype.vercel.app/index.html' }
-        });
-        if (error) throw error;
-        setErr('Magic link sent. Check your inbox.');
-      } catch (e) {
-        setErr('Error: ' + friendly(e));
-        console.error(e);
-      }
-    };
-
-    // Quick reachability check to surface URL typos fast
-    fetch(SUPABASE_URL + '/auth/v1/health')
-      .then(r => r.text())
-      .then(() => {/* ok */})
-      .catch(e => {
-        setErr('Cannot reach Supabase (URL/Network). Check the project URL.');
-        console.warn('Health check failed:', e);
-      });
-  })();
+    // Kickstart
+    loadSession();
   </script>
 </body>
 </html>
