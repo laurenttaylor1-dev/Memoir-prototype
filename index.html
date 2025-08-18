@@ -184,32 +184,135 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     es: ["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"],
     nl: ["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
   };
+  <script>
+  // --- Language → BCP code
   const BCP = { en:'en-US', fr:'fr-FR', es:'es-ES', nl:'nl-NL' };
 
-  function speak(text, code){
-    if(!('speechSynthesis' in window)) return;
-    const target = BCP[code]||'en-US';
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = target; u.rate=0.92; u.pitch=0.95; u.volume=0.9;
-    const ensure=()=>{
-      const vs=speechSynthesis.getVoices();
-      const v=vs.find(v=>v.lang===target)||vs.find(v=>v.lang.startsWith(target.split('-')[0]))||null;
-      if(v) u.voice=v;
-      if(vs.length===0) return setTimeout(ensure,120);
-      speechSynthesis.cancel(); speechSynthesis.speak(u);
-    };
-    ensure();
+  // --- Preferred voice names per language (best first). We try in this order:
+  const PREFERRED_VOICES = {
+    fr: ["Thomas", "Amélie", "Aurelia", "Google français", "Google Français", "Virginie"],
+    en: ["Samantha", "Alex", "Google US English", "Google English", "Daniel"],
+    es: ["Monica", "Google español", "Jorge", "Paulina"],
+    nl: ["Xander", "Ellen", "Claire", "Google Nederlands"]
+  };
+
+  let VOICES = [];
+  const voiceSelect = document.createElement('select');
+  voiceSelect.id = 'voiceSelect';
+  voiceSelect.style.padding = '6px 10px';
+  voiceSelect.style.borderRadius = '10px';
+  voiceSelect.style.border = '1px solid var(--border)';
+  voiceSelect.title = 'Voice';
+  // insert the select next to the language dropdown
+  document.getElementById('lang').insertAdjacentElement('afterend', voiceSelect);
+
+  function loadVoicesAndPopulate() {
+    VOICES = window.speechSynthesis.getVoices() || [];
+
+    const langCode = document.getElementById('lang').value;
+    const target = BCP[langCode] || 'en-US';
+
+    // Filter voices for current language
+    const langVoices = VOICES.filter(v => v.lang === target || v.lang?.startsWith(target.split('-')[0]));
+
+    // Sort: preferred names first, then exact lang matches
+    const prefs = PREFERRED_VOICES[langCode] || [];
+    langVoices.sort((a,b)=>{
+      const ai = prefs.indexOf(a.name), bi = prefs.indexOf(b.name);
+      if (ai !== -1 || bi !== -1) return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+      if (a.lang === target && b.lang !== target) return -1;
+      if (b.lang === target && a.lang !== target) return 1;
+      return a.name.localeCompare(b.name);
+    });
+
+    // Populate dropdown
+    voiceSelect.innerHTML = '';
+    langVoices.forEach(v=>{
+      const opt = document.createElement('option');
+      opt.value = v.name;
+      opt.textContent = `${v.name} (${v.lang})`;
+      voiceSelect.appendChild(opt);
+    });
+
+    // If nothing, show a disabled option
+    if (!langVoices.length) {
+      const opt = document.createElement('option');
+      opt.textContent = 'No voice found for this language';
+      opt.disabled = true; opt.selected = true;
+      voiceSelect.appendChild(opt);
+    } else {
+      // Preselect the first preferred
+      voiceSelect.selectedIndex = 0;
+    }
   }
 
+  // Ensure voices are ready before first use
+  if ('speechSynthesis' in window) {
+    // Chrome loads voices async; this fires once ready
+    window.speechSynthesis.onvoiceschanged = () => {
+      loadVoicesAndPopulate();
+    };
+    // Some browsers have voices immediately:
+    loadVoicesAndPopulate();
+  }
+
+  function pickVoice(langCode) {
+    const target = BCP[langCode] || 'en-US';
+    const wantName = voiceSelect && voiceSelect.value;
+    if (wantName) {
+      const v = VOICES.find(v => v.name === wantName);
+      if (v) return v;
+    }
+    // Fallbacks: preferred list, then exact lang, then same language
+    const prefs = PREFERRED_VOICES[langCode] || [];
+    const byPref = VOICES.find(v => prefs.includes(v.name));
+    if (byPref) return byPref;
+    const exact = VOICES.find(v => v.lang === target);
+    if (exact) return exact;
+    return VOICES.find(v => v.lang?.startsWith(target.split('-')[0])) || null;
+  }
+
+  function speak(text, code){
+    if (!('speechSynthesis' in window)) return;
+    const u = new SpeechSynthesisUtterance(String(text));
+    u.lang  = BCP[code] || 'en-US';
+    u.rate  = 0.95;
+    u.pitch = 1.0;
+    u.volume= 1.0;
+
+    const v = pickVoice(code);
+    if (v) u.voice = v;
+
+    // Cancel any ongoing utterance and speak
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  }
+
+  // Rebuild voices list when the language changes
+  document.getElementById('lang').addEventListener('change', loadVoicesAndPopulate);
+
+  // Your existing topics map (keep as-is) and renderPrompts:
+  const TOPICS = {
+    en: ["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
+    fr: ["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
+    es: ["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"],
+    nl: ["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
+  };
+
   function renderPrompts(){
-    const list = TOPICS[lang.value] || TOPICS.en;
-    const wrap = $('prompts'); wrap.innerHTML='';
-    list.forEach(topic=>{
-      const b=document.createElement('div'); b.className='chip'; b.textContent=topic;
-      b.onclick=()=>{ titleEl.value=topic; speak(topic, lang.value); };
-      wrap.appendChild(b);
+    const lang = document.getElementById('lang').value;
+    const wrap = document.getElementById('prompts');
+    wrap.innerHTML = '';
+    (TOPICS[lang]||TOPICS.en).forEach(topic=>{
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.textContent = topic;
+      chip.onclick = () => { document.getElementById('title').value = topic; speak(topic, lang); };
+      wrap.appendChild(chip);
     });
   }
+</script>
+
 
   /* ========= Modes ========= */
   tabGuided.onclick=()=>{ tabGuided.classList.add('active'); tabFree.classList.remove('active'); guidedBlock.style.display='block'; };
