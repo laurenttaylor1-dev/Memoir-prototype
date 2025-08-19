@@ -162,22 +162,35 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
   if(!session){ window.location.replace('/login.html'); return; }
 
   // Load profile (plan & trial)
-  const { data: profile, error: pErr } = await supa.from('profiles').select('plan, trial_end').single();
-  // if pErr, we still show the app but assume free
+  const { data: profile, error: pErr } = await supa
+    .from('profiles')
+    .select('plan, trial_end, role')
+    .single();
+
   const trialUntil = profile?.trial_end ? new Date(profile.trial_end) : null;
   const trialActive = trialUntil && Date.now() < trialUntil.getTime();
-  let isPremium = profile?.plan === 'premium' || trialActive;
+  const isAdmin = profile?.role === 'admin';
+  let isPremium = isAdmin || profile?.plan === 'premium' || trialActive;
 
   guard.style.display='none'; app.style.display='grid';
   document.getElementById('logout').onclick = async ()=>{ await supa.auth.signOut(); window.location.replace('/login.html'); };
 
   // Plan badge + gating
   const planBadge = document.getElementById('planBadge');
-  if (isPremium) {
-    planBadge.textContent = trialActive ? `Plan: Premium (trial until ${trialUntil.toLocaleDateString()})` : 'Plan: Premium';
+  if (isAdmin) {
+    planBadge.textContent = 'Plan: Admin';
+  } else if (isPremium) {
+    planBadge.textContent = trialActive
+      ? `Plan: Premium (trial until ${trialUntil.toLocaleDateString()})`
+      : 'Plan: Premium';
   } else {
     planBadge.textContent = 'Plan: Free';
   }
+
+// Hide the Redeem button for admins (they already have full access)
+if (isAdmin) {
+  document.getElementById('redeem').style.display = 'none';
+}
 
   // Redeem code flow
   document.getElementById('redeem').onclick = async () => {
