@@ -1,121 +1,71 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sign in to Memoir</title>
-  <meta name="color-scheme" content="light dark" />
-  <style>
-    :root{
-      --bg:#f6f7fb; --card:#fff; --fg:#0f172a; --muted:#667085; --brand:#2563eb; --brand2:#7c3aed; --border:#e6e9f0;
-      --shadow:0 20px 40px rgba(2,8,23,.06),0 2px 6px rgba(2,8,23,.04)
-    }
-    @media(prefers-color-scheme:dark){
-      :root{--bg:#0b1020;--card:#0f162e;--fg:#e6edf7;--muted:#9aa4b2;--border:#1f2a44;--shadow:0 20px 40px rgba(0,0,0,.4),0 2px 6px rgba(0,0,0,.3)}
-    }
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-    .wrap{max-width:420px;margin:32px auto;padding:0 16px}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:28px}
-    h1{display:flex;align-items:center;gap:10px;font-size:22px;margin:0 0 20px}
-    .logo{width:34px;height:34px;border-radius:12px;background:conic-gradient(from 180deg,var(--brand),var(--brand2))}
-    .tabs{display:flex;gap:8px;margin-bottom:18px}
-    .tab{flex:1;padding:8px 12px;border-radius:9999px;border:1px solid var(--border);cursor:pointer;text-align:center}
-    .tab.active{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff}
-    input{width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit;margin-bottom:10px}
-    .btn{width:100%;padding:12px;border-radius:12px;border:0;background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;cursor:pointer}
-    .muted{color:var(--muted);font-size:12px;text-align:center;margin-top:12px}
-    #error{color:red;margin:8px 0;font-size:14px}
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Memoir — Login</title>
+<meta name="color-scheme" content="light dark"/>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--fg:#0f172a;--muted:#667085;--border:#e6e9f0}
+@media(prefers-color-scheme:dark){:root{--bg:#0b1020;--card:#0f162e;--fg:#e6edf7;--muted:#9aa4b2;--border:#1f2a44}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+.container{max-width:420px;margin:8vh auto;padding:20px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:0 10px 30px rgba(2,8,23,.06);padding:20px}
+h1{margin:0 0 16px}
+label{display:block;margin:10px 0 6px;font-size:13px;color:var(--muted)}
+input,button{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit}
+button{cursor:pointer}
+.row{display:flex;gap:10px;margin-top:10px}
+a{color:inherit}
+small{color:var(--muted)}
+.err{color:#b00020;margin:8px 0 0}
+</style>
 </head>
 <body>
-  <div class="wrap">
+  <div class="container">
     <div class="card">
-      <h1><span class="logo"></span> Sign in to Memoir</h1>
+      <h1>Sign in to Memoir</h1>
 
-      <div class="tabs">
-        <div id="tab-signin" class="tab active">Sign in</div>
-        <div id="tab-signup" class="tab">Create account</div>
-        <div id="tab-magic" class="tab">Magic link</div>
+      <label>Email</label>
+      <input id="email" type="email" placeholder="you@example.com" autocomplete="email"/>
+
+      <label>Password</label>
+      <input id="password" type="password" placeholder="••••••••" autocomplete="current-password"/>
+
+      <div class="row">
+        <button id="signin">Sign In</button>
+        <button id="signup" title="Create account">Sign Up</button>
       </div>
 
-      <form id="form">
-        <input type="email" id="email" placeholder="Email" required />
-        <input type="password" id="password" placeholder="Password" />
-        <button type="submit" class="btn" id="submitBtn">Sign in</button>
-      </form>
-
-      <div id="error"></div>
-      <div class="muted">By continuing you agree to our terms.</div>
+      <p class="err" id="err"></p>
+      <p style="margin-top:14px"><small>Have a trial code? You can redeem it after signing in.</small></p>
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
   <script>
-  (function(){
+    // Supabase
     const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
+    const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{ persistSession:true, autoRefreshToken:true } });
 
-    const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
-    });
-
-    // UI
     const $ = id => document.getElementById(id);
-    const form = $("form");
-    const email = $("email");
-    const password = $("password");
-    const submitBtn = $("submitBtn");
-    const errorBox = $("error");
+    const email = $('email'), password=$('password'), err=$('err');
 
-    let mode = "signin"; // "signin" | "signup" | "magic"
-
-    // Tab switching
-    function setMode(m){
-      mode = m;
-      document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-      $("tab-"+m).classList.add("active");
-      if(m==="magic"){
-        password.style.display="none";
-        submitBtn.textContent="Send magic link";
-      }else if(m==="signup"){
-        password.style.display="block";
-        submitBtn.textContent="Create account";
-      }else{
-        password.style.display="block";
-        submitBtn.textContent="Sign in";
-      }
-      errorBox.textContent="";
-    }
-    $("tab-signin").onclick=()=>setMode("signin");
-    $("tab-signup").onclick=()=>setMode("signup");
-    $("tab-magic").onclick=()=>setMode("magic");
-
-    // Form submit
-    form.onsubmit = async (e)=>{
-      e.preventDefault();
-      errorBox.textContent="";
-      const em = email.value.trim();
-      const pw = password.value.trim();
-      try{
-        let result;
-        if(mode==="signin"){
-          result = await supa.auth.signInWithPassword({ email: em, password: pw });
-        }else if(mode==="signup"){
-          result = await supa.auth.signUp({ email: em, password: pw });
-        }else if(mode==="magic"){
-          result = await supa.auth.signInWithOtp({ email: em });
-        }
-        if(result.error) throw result.error;
-
-        // On success → redirect
-        window.location.href = "/index.html";
-      }catch(err){
-        console.error("Auth error", err);
-        errorBox.textContent = "Error: " + err.message;
-      }
+    $('signin').onclick = async () => {
+      err.textContent = '';
+      const { data, error } = await supa.auth.signInWithPassword({ email: email.value.trim(), password: password.value });
+      if (error) { err.textContent = error.message; return; }
+      location.replace('/');
     };
-  })();
+
+    $('signup').onclick = async () => {
+      err.textContent = '';
+      const { data, error } = await supa.auth.signUp({ email: email.value.trim(), password: password.value });
+      if (error) { err.textContent = error.message; return; }
+      alert('Check your email to confirm your account, then sign in.');
+    };
   </script>
 </body>
 </html>
