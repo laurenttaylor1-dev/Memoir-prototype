@@ -24,6 +24,7 @@ select,input,button{padding:10px 12px;border-radius:12px;border:1px solid var(--
 .btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));border:0;color:#fff}
 .badge{border-radius:999px}
 .muted{color:var(--muted);font-size:12px}
+.lock{opacity:.6; cursor:not-allowed}
 
 .shell{display:grid;gap:18px;grid-template-columns:1fr}
 .right{display:none}
@@ -58,6 +59,7 @@ select,input,button{padding:10px 12px;border-radius:12px;border:1px solid var(--
 dialog::backdrop{background:rgba(0,0,0,.35)}
 dialog{border:none;border-radius:12px;box-shadow:var(--shadow);max-width:min(820px,92vw)}
 footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
+.badgePlan{padding:6px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px}
 </style>
 </head>
 <body>
@@ -75,7 +77,8 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
             <option value="es">Español</option>
             <option value="nl">Nederlands</option>
           </select>
-          <select id="voiceSelect" title="System voice (fallback)"></select>
+          <span id="planBadge" class="badgePlan">Plan: …</span>
+          <button id="redeem" class="btn">Redeem code</button>
           <button id="toggleLib" class="btn">☰ Library</button>
           <button id="logout" class="btn badge">Logout</button>
         </div>
@@ -117,7 +120,7 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
           <div class="actions" style="display:flex;gap:10px;flex-wrap:wrap">
             <button id="save" class="btn primary" disabled>Save story</button>
             <button id="clear" class="btn">Clear</button>
-            <button id="exportBook" class="btn">Export Book (print to PDF)</button>
+            <button id="exportBook" class="btn lock" title="Premium only" disabled>Export Book (PDF)</button>
             <button id="exportCsv" class="btn">Export CSV</button>
           </div>
         </section>
@@ -128,7 +131,7 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
         </aside>
       </div>
 
-      <footer>Cloud prototype — EN/FR/ES/NL guided prompts, ElevenLabs+fallback voice, recorder, library, AI rewrite.</footer>
+      <footer>Cloud prototype — EN/FR/ES/NL guided prompts, ElevenLabs+fallback voice, recorder, library, Premium: AI rewrite + PDF export.</footer>
     </div>
   </div>
 
@@ -156,20 +159,63 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
 
   const guard=document.getElementById('guard'), app=document.getElementById('app');
   const { data:{session} } = await supa.auth.getSession();
-  console.log('session on index', session);
   if(!session){ window.location.replace('/login.html'); return; }
+
+  // Load profile (plan & trial)
+  const { data: profile, error: pErr } = await supa.from('profiles').select('plan, trial_end').single();
+  // if pErr, we still show the app but assume free
+  const trialUntil = profile?.trial_end ? new Date(profile.trial_end) : null;
+  const trialActive = trialUntil && Date.now() < trialUntil.getTime();
+  let isPremium = profile?.plan === 'premium' || trialActive;
+
   guard.style.display='none'; app.style.display='grid';
   document.getElementById('logout').onclick = async ()=>{ await supa.auth.signOut(); window.location.replace('/login.html'); };
 
+  // Plan badge + gating
+  const planBadge = document.getElementById('planBadge');
+  if (isPremium) {
+    planBadge.textContent = trialActive ? `Plan: Premium (trial until ${trialUntil.toLocaleDateString()})` : 'Plan: Premium';
+  } else {
+    planBadge.textContent = 'Plan: Free';
+  }
+
+  // Redeem code flow
+  document.getElementById('redeem').onclick = async () => {
+    const code = prompt('Enter your trial/upgrade code:');
+    if (!code) return;
+    const { data, error } = await supa.rpc('redeem_code', { p_code: code.trim() });
+    if (error) return alert('Redeem failed: ' + error.message);
+    if (!data?.ok) return alert('Redeem failed: ' + (data?.error || 'unknown'));
+    alert('Premium activated until ' + new Date(data.trial_end).toLocaleString());
+    location.reload();
+  };
+
   /* ===== DOM ===== */
   const $=id=>document.getElementById(id);
-  const lang=$('lang'), voiceSelect=$('voiceSelect'), promptsWrap=$('prompts');
+  const lang=$('lang'), promptsWrap=$('prompts');
   const titleEl=$('title'), whenEl=$('when'), transcriptEl=$('transcript');
   const mic=$('mic'), meter=$('meter'), bar=$('bar'), remain=$('remain'), asr=$('asr');
   const save=$('save'), clearBtn=$('clear'), library=$('library');
   const drawer=$('drawer'), libraryDrawer=$('libraryDrawer'), toggleLib=$('toggleLib'), closeDrawer=$('closeDrawer');
   const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
   const exportBookBtn=$('exportBook'), exportCsvBtn=$('exportCsv');
+
+  /* ===== Gating: controls ===== */
+  function setPremiumUI(enabled){
+    const lockBtn = (btn, on, title) => {
+      btn.toggleAttribute('disabled', !on);
+      btn.classList.toggle('lock', !on);
+      if (!on && title) btn.title = title; else btn.removeAttribute('title');
+    };
+    lockBtn(exportBookBtn, enabled, 'Premium only');
+    // Rewrite buttons are created per row (in library); we guard on click below, too.
+  }
+  setPremiumUI(isPremium);
+
+  // Recording cap by plan
+  let capFree = 120;     // 2 min
+  let capPremium = 900;  // 15 min
+  let cap = isPremium ? capPremium : capFree;
 
   /* ===== Topics (chip word) + Spoken prompts (full sentence) ===== */
   const TOPIC_WORDS = {
@@ -194,17 +240,6 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     es: 'ZpEtuMdTIlJXYXAhevhG'  // Spanish
   };
 
-  let VOICES=[];
-  function populateVoices(){
-    VOICES = speechSynthesis.getVoices()||[];
-    const code=lang.value, target=BCP[code]||'en-US';
-    const list=VOICES.filter(v=>v.lang===target||v.lang?.startsWith(target.split('-')[0]));
-    voiceSelect.innerHTML='';
-    list.forEach(v=>{ const o=document.createElement('option'); o.value=v.name; o.textContent=`${v.name} (${v.lang})`; voiceSelect.appendChild(o); });
-    if(!list.length){ const o=document.createElement('option'); o.textContent='No system voice available'; o.disabled=true; o.selected=true; voiceSelect.appendChild(o); }
-  }
-  if('speechSynthesis' in window){ speechSynthesis.onvoiceschanged=populateVoices; populateVoices(); }
-
   async function speakViaElevenLabs(sentence, code){
     try{
       const r = await fetch('/api/voice', {
@@ -227,10 +262,6 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     if(!('speechSynthesis' in window)) return;
     const u=new SpeechSynthesisUtterance(String(sentence));
     u.lang=BCP[code]||'en-US'; u.rate=.95; u.pitch=1; u.volume=1;
-    const choice=VOICES.find(v=>v.name===voiceSelect.value)||
-                 VOICES.find(v=>v.lang===u.lang)||
-                 VOICES.find(v=>v.lang?.startsWith(u.lang.split('-')[0]))||null;
-    if(choice) u.voice=choice;
     speechSynthesis.cancel(); speechSynthesis.speak(u);
   }
   async function speakPrompt(oneWord, code){
@@ -251,7 +282,7 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
   /* ===== Modes ===== */
   tabGuided.onclick=()=>{ tabGuided.classList.add('active'); tabFree.classList.remove('active'); guidedBlock.style.display='block'; };
   tabFree.onclick=()=>{ tabFree.classList.add('active'); tabGuided.classList.remove('active'); guidedBlock.style.display='none'; };
-  lang.onchange=()=>{ populateVoices(); renderPrompts(); };
+  lang.onchange=()=>{ renderPrompts(); };
 
   /* ===== Library drawer (mobile) ===== */
   toggleLib.onclick=()=>{ if(innerWidth>=1024){ renderLib(); } else { drawer.classList.add('show'); renderLib(true); } };
@@ -259,7 +290,7 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
   drawer.addEventListener('click',(e)=>{ if(e.target===drawer) drawer.classList.remove('show'); });
 
   /* ===== Recording (Web Speech Recognition) ===== */
-  let recognition=null, recActive=false, cap=120, elapsed=0, timer=null;
+  let recognition=null, recActive=false, elapsed=0, timer=null;
   function startRec(){
     const SR = window.webkitSpeechRecognition || window.SpeechRecognition;
     if(!SR){ asr.textContent='Speech recognition is not available in this browser.'; return; }
@@ -280,8 +311,8 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     try{ recognition.start(); }catch{}
     asr.textContent='Transcribing…';
     mic.textContent='Stop Recording'; mic.classList.add('pulse');
-    elapsed=0; remain.textContent=cap+'s'; bar.style.width='0%'; meter.style.display='flex';
-    timer=setInterval(()=>{ elapsed++; bar.style.width=(elapsed/cap*100)+'%'; remain.textContent=Math.max(0,cap-elapsed)+'s'; if(elapsed>=cap) stopRec(); },1000);
+    elapsed=0; remain.textContent=(isPremium?900:120)+'s'; bar.style.width='0%'; meter.style.display='flex';
+    timer=setInterval(()=>{ elapsed++; const cap = isPremium?900:120; bar.style.width=(elapsed/cap*100)+'%'; remain.textContent=Math.max(0,cap-elapsed)+'s'; if(elapsed>=cap) stopRec(); },1000);
     recActive=true;
   }
   function stopRec(){
@@ -318,9 +349,9 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     meta.appendChild(h); meta.appendChild(t);
 
     const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px'; actions.style.flexWrap='wrap';
-    const make=(txt,fn,disabled)=>{const b=document.createElement('button'); b.className='btn'; b.textContent=txt; if(disabled) b.disabled=true; b.onclick=fn; return b;};
+    const make=(txt,fn,disabled)=>{const b=document.createElement('button'); b.className='btn'; b.textContent=txt; if(disabled) b.disabled=true; if(disabled) b.classList.add('lock'); b.onclick=fn; return b;};
     actions.appendChild(make('View',()=>viewStory(s)));
-    actions.appendChild(make('Rewrite (AI)',()=>rewriteAI(idx)));
+    actions.appendChild(make('Rewrite (AI)',()=>requirePremium() && rewriteAI(idx), !isPremium));
     actions.appendChild(make('Undo',()=>undoRewrite(idx), !s.prev));
     actions.appendChild(make('Download .docx',()=>downloadDocx(s)));
     actions.appendChild(make('Delete',()=>delStory(idx)));
@@ -333,6 +364,14 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     const tgt = toDrawer?libraryDrawer:library;
     tgt.innerHTML=''; if(!items.length){ const p=document.createElement('p'); p.className='muted'; p.textContent='No stories yet.'; tgt.appendChild(p); return; }
     items.forEach((s,i)=>tgt.appendChild(storyRow(s,i)));
+  }
+
+  function requirePremium(){
+    if (!isPremium) {
+      alert('This is a Premium feature. Click "Redeem code" above to start your 14‑day trial.');
+      return false;
+    }
+    return true;
   }
 
   function viewStory(s){
@@ -383,9 +422,10 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
 
   /* ===== Exports ===== */
   exportBookBtn.onclick = ()=>{
+    if (!requirePremium()) return;
     const items=loadStories().slice().sort((a,b)=>(a.happened_sort||'')< (b.happened_sort||'') ? -1 : 1);
-    const html = items.map(ch=>`<section style="page-break-after:always;padding:32px 40px;font-family:Georgia,serif"><h1 style="margin:0">${esc(ch.title||'Chapter')}</h1><time style="color:#666;font-size:12px">${esc(ch.happened_label || (ch.happened_sort?new Date(ch.happened_sort).toDateString():''))}</time><div style="margin-top:12px;white-space:pre-wrap;line-height:1.6">${esc(ch.text||'')}</div></section>`).join('');
-    const w=window.open('','_blank'); w.document.write(`<!doctype html><meta charset="utf-8"><title>Book Export</title>${html}`); w.document.close();
+    const html = items.map(ch=>`<section style="page-break-after:always;padding:42px 48px;font-family:Georgia,serif"><h1 style="margin:0">${esc(ch.title||'Chapter')}</h1><time style="color:#666;font-size:12px">${esc(ch.happened_label || (ch.happened_sort?new Date(ch.happened_sort).toDateString():''))}</time><div style="margin-top:16px;white-space:pre-wrap;line-height:1.6">${esc(ch.text||'')}</div></section>`).join('');
+    const w=open('','_blank'); w.document.write(`<!doctype html><meta charset="utf-8"><title>Book Export</title>${html}`); w.document.close();
   };
   exportCsvBtn.onclick = ()=>{
     const rows=[['Title','When','Body']]; loadStories().forEach(ch=>rows.push([ch.title||'Chapter', ch.happened_label || (ch.happened_sort?new Date(ch.happened_sort).toISOString().slice(0,10):''), (ch.text||'').replace(/\r?\n/g,'\\n')]));
