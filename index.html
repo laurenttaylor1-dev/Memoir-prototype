@@ -62,12 +62,6 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
 .badgePlan{padding:6px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px}
 
 .input{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit;width:100%}
-
-.faq{margin-top:20px;padding-top:10px;border-top:1px solid var(--border)}
-.faq h2{margin:8px 0 12px;font-size:1.1rem}
-.faq details{background:rgba(2,8,23,.02);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin:8px 0}
-.faq summary{cursor:pointer;font-weight:600}
-.faq p{margin:8px 0 0;line-height:1.45}
 </style>
 </head>
 <body>
@@ -84,7 +78,6 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
             <option value="fr">Français</option>
             <option value="es">Español</option>
             <option value="nl">Nederlands</option>
-            <option value="de">Deutsch</option>
           </select>
           <span id="planBadge" class="badgePlan">Plan: …</span>
           <div id="redeemBox" style="display:flex; gap:8px; align-items:center;">
@@ -136,52 +129,6 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
             <button id="exportBook" class="btn lock" title="Premium only" disabled>Export Book (PDF)</button>
             <button id="exportCsv" class="btn">Export CSV</button>
           </div>
-
-          <!-- FAQ / How-To -->
-          <section id="faq" class="faq">
-            <h2 id="faqTitle">📖 FAQ / How to Use</h2>
-
-            <details>
-              <summary id="q1">1. How do I use this app?</summary>
-              <p id="a1">Sign up with your email, record a story by pressing the microphone, then save. You can view, edit, or export your stories anytime.</p>
-            </details>
-
-            <details>
-              <summary id="q2">2. How do I use AI Rewrite?</summary>
-              <p id="a2">After saving a story, click “Rewrite (AI)” in the Library. The AI refines clarity, grammar, and flow. Use “Undo” to restore the original at any time.</p>
-            </details>
-
-            <details>
-              <summary id="q3">3. How can I export my stories?</summary>
-              <p id="a3">Use “Download .docx” per story or the “Export Book (PDF)” button (Premium). A simple white PDF is provided now; Canva templates will come later.</p>
-            </details>
-
-            <details>
-              <summary id="q4">4. How do I register / log in?</summary>
-              <p id="a4">Enter your email on the login page. Click the magic link we send. Your profile is created automatically.</p>
-            </details>
-
-            <details>
-              <summary id="q5">5. How do Premium codes work?</summary>
-              <p id="a5">Enter a code in the top bar. Valid codes unlock Premium for 14 days (AI rewrite & book export). After 14 days, you return to Free automatically.</p>
-            </details>
-
-            <details>
-              <summary id="q6">6. Can my family see or add stories?</summary>
-              <p id="a6">Yes (coming soon). You’ll be able to create a Family, invite members, and optionally allow them to add stories. Export groups stories by date.</p>
-            </details>
-
-            <details>
-              <summary id="q7">7. Is my data private?</summary>
-              <p id="a7">Yes. Only you (and invited family, when enabled) can access your stories. We use Supabase Row‑Level Security to restrict access per account.</p>
-            </details>
-
-            <details>
-              <summary id="q8">8. Need help?</summary>
-              <p id="a8">If something doesn’t work, try refreshing the page or logging out/in. For support, contact the app admin.</p>
-            </details>
-          </section>
-          <!-- END FAQ -->
         </section>
 
         <aside class="right">
@@ -190,7 +137,7 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
         </aside>
       </div>
 
-      <footer>Cloud prototype — EN/FR/ES/NL/DE prompts with voice, recorder, library. Premium/Admin: AI rewrite + PDF export. Single‑use trial codes supported.</footer>
+      <footer>Cloud prototype — EN/FR/ES/NL prompts with voice, recorder, library. Premium/Admin: AI rewrite + PDF export. Single‑use trial codes supported.</footer>
     </div>
   </div>
 
@@ -211,468 +158,360 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
 
 <script>
 (async function(){
-  /* ===== Supabase session guard (your project) ===== */
+
+  /* ===== Supabase session guard (resilient) ===== */
   const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false} });
 
-  const guard=document.getElementById('guard'), app=document.getElementById('app');
-  const { data:{session} } = await supabase.auth.getSession();
-  if(!session){ window.location.replace('/login.html'); return; }
+  const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY,
+    { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } }
+  );
 
-  // Load profile: plan, trial, role
-  const { data: profile } = await supabase.from('profiles').select('plan, trial_end, role').single();
-  const trialUntil = profile?.trial_end ? new Date(profile.trial_end) : null;
-  const trialActive = trialUntil && Date.now() < trialUntil.getTime();
-  const isAdmin = profile?.role === 'admin';
-  let isPremium = isAdmin || profile?.plan === 'premium' || trialActive;
+  const guard = document.getElementById('guard');
+  const app   = document.getElementById('app');
 
-  guard.style.display='none'; app.style.display='grid';
-  document.getElementById('logout').onclick = async ()=>{ await supabase.auth.signOut(); window.location.replace('/login.html'); };
-
-  // Plan badge
-  const planBadge = document.getElementById('planBadge');
-  if (isAdmin) {
-    planBadge.textContent = 'Plan: Admin';
-  } else if (isPremium) {
-    planBadge.textContent = trialActive
-      ? `Plan: Premium (trial until ${trialUntil.toLocaleDateString()})`
-      : 'Plan: Premium';
-  } else {
-    planBadge.textContent = 'Plan: Free';
-  }
-
-  /* ===== Redeem code UI ===== */
-  const codeInput = document.getElementById('codeInput');
-  const redeemBtn = document.getElementById('redeemBtn');
-  const redeemMsg = document.getElementById('redeemMsg');
-  function setRedeemMsg(t){ if(redeemMsg) redeemMsg.textContent = t || ''; }
-
-  redeemBtn?.addEventListener('click', async () => {
-    setRedeemMsg('');
-    const code = codeInput.value.trim();
-    if(!code) { setRedeemMsg('Enter a code.'); return; }
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if(!user){ setRedeemMsg('Please sign in first.'); return; }
-
-    try{
-      const { data, error } = await supabase.rpc('redeem_code', { p_code: code });
-      if (error) throw error;
-
-      if (data?.ok) {
-        setRedeemMsg(`✅ Premium until ${new Date(data.trial_end).toLocaleDateString()}`);
-        location.reload();
-      } else {
-        const map={not_authenticated:'Please sign in first.',not_found:'Code not found.',expired:'Code expired.',exhausted:'Code already used.',already_premium:'You already have Premium.'};
-        setRedeemMsg('❌ ' + (map[data?.error] || 'Redeem failed.'));
-      }
-    }catch(e){
-      setRedeemMsg('❌ ' + (e.message || String(e)));
+  supabase.auth.onAuthStateChange((_event, session) => {
+    if (!session) {
+      window.location.replace('/login.html');
+    } else {
+      startApp(session).catch(err => showGuardError(err));
     }
   });
 
-  /* ===== DOM ===== */
-  const $=id=>document.getElementById(id);
-  const lang=$('lang'), promptsWrap=$('prompts');
-  const titleEl=$('title'), whenEl=$('when'), transcriptEl=$('transcript');
-  const mic=$('mic'), meter=$('meter'), bar=$('bar'), remain=$('remain'), asr=$('asr');
-  const save=$('save'), clearBtn=$('clear'), library=$('library');
-  const drawer=$('drawer'), libraryDrawer=$('libraryDrawer'), toggleLib=$('toggleLib'), closeDrawer=$('closeDrawer');
-  const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
-  const exportBookBtn=$('exportBook'), exportCsvBtn=$('exportCsv');
+  try {
+    const sessionResult = await Promise.race([
+      supabase.auth.getSession(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
+    ]);
 
-  /* ===== Gating: controls ===== */
-  function setPremiumUI(enabled){
-    const lockBtn = (btn, on, title) => {
-      btn.toggleAttribute('disabled', !on);
-      btn.classList.toggle('lock', !on);
-      if (!on && title) btn.title = title; else btn.removeAttribute('title');
-    };
-    lockBtn(exportBookBtn, enabled, 'Premium only');
-  }
-  setPremiumUI(isPremium);
+    const session = sessionResult?.data?.session ?? null;
 
-  // Recording cap by plan
-  const CAP_FREE = 120;     // 2 min
-  const CAP_PREM = 900;     // 15 min
-  const getCap = () => (isPremium ? CAP_PREM : CAP_FREE);
-
-  /* ===== Topics (chip word) + Spoken prompts (full sentence) ===== */
-  const TOPIC_WORDS = {
-    en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
-    fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
-    es:["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"],
-    nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"],
-    de:["Kindheit","Familie","Schule","Arbeit","Liebe","Krieg","Reisen","Traditionen","Feiertage","Lektionen","Ratschläge","Wendepunkte"]
-  };
-  const PROMPT_SENTENCES = {
-    en:{Childhood:"Tell me something about your youth.",Family:"Tell me about your family and the people who raised you.",School:"What was school like for you?",Work:"Tell me about your first job or career.",Love:"How did you meet your partner, or what did love mean to you then?",War:"What big world events or conflicts did you live through?",Travel:"Where did you travel that left a mark on you?",Traditions:"Which family traditions mattered most to you?",Holidays:"Describe a holiday you remember vividly.",Lessons:"What life lesson did you learn the hard way?",Advice:"What advice would you give your younger self?","Turning-points":"What was a turning point that changed your path?"},
-    fr:{Enfance:"Parlez-moi de votre jeunesse, d’un souvenir marquant.",Famille:"Parlez-moi de votre famille et des personnes qui vous ont élevé.",École:"Comment était l’école pour vous ?",Travail:"Racontez-moi votre premier travail ou votre carrière.",Amour:"Comment avez-vous rencontré votre partenaire, et que signifiait l’amour pour vous ?",Guerre:"Quels grands événements ou conflits avez-vous vécus ?",Voyages:"Quels voyages vous ont marqué(e) ?",Traditions:"Quelles traditions familiales comptaient le plus ?",Fêtes:"Décrivez une fête dont vous vous souvenez clairement.",Leçons:"Quelle leçon de vie avez-vous apprise à la dure ?",Conseils:"Quel conseil donneriez-vous à votre jeune vous ?",Déclics:"Quel déclic a changé votre trajectoire ?"},
-    es:{Infancia:"Cuéntame algo sobre tu juventud.",Familia:"Háblame de tu familia y de quienes te criaron.",Escuela:"¿Cómo era la escuela para ti?",Trabajo:"Cuéntame sobre tu primer trabajo o tu carrera.",Amor:"¿Cómo conociste a tu pareja y qué significaba el amor entonces?",Guerra:"¿Qué grandes eventos o conflictos viviste?",Viajes:"¿Qué viajes te marcaron?",Tradiciones:"¿Qué tradiciones familiares eran importantes para ti?",Fiestas:"Describe una fiesta que recuerdes con claridad.",Lecciones:"¿Qué lección de vida aprendiste con dificultad?",Consejos:"¿Qué consejo le darías a tu yo joven?","Puntos-clave":"¿Cuál fue un punto de inflexión en tu vida?"},
-    nl:{Jeugd:"Vertel me iets over je jeugd.",Familie:"Vertel over je familie en de mensen die je hebben opgevoed.",School:"Hoe was school voor jou?",Werk:"Vertel over je eerste baan of je loopbaan.",Liefde:"Hoe heb je je partner ontmoet, en wat betekende liefde toen?",Oorlog:"Welke grote gebeurtenissen of conflicten heb je meegemaakt?",Reizen:"Welke reizen hebben indruk op je gemaakt?",Tradities:"Welke familietradities waren belangrijk voor je?",Feestdagen:"Beschrijf een feestdag die je helder herinnert.",Lessen:"Welke levensles heb je op de harde manier geleerd?",Advies:"Welk advies zou je je jongere zelf geven?",Keerpunt:"Wat was een keerpunt in je leven?"},
-    de:{Kindheit:"Erzählen Sie mir etwas aus Ihrer Jugend.",Familie:"Erzählen Sie von Ihrer Familie und den Menschen, die Sie großgezogen haben.",Schule:"Wie war die Schule für Sie?",Arbeit:"Erzählen Sie von Ihrem ersten Job oder Ihrer Laufbahn.",Liebe:"Wie haben Sie Ihren Partner kennengelernt, und was bedeutete Liebe damals?",Krieg:"Welche großen Ereignisse oder Konflikte haben Sie erlebt?",Reisen:"Welche Reisen haben Sie besonders geprägt?",Traditionen:"Welche Familientraditionen waren Ihnen wichtig?",Feiertage:"Beschreiben Sie einen Feiertag, den Sie lebhaft in Erinnerung haben.",Lektionen:"Welche Lebenslektion haben Sie auf die harte Tour gelernt?",Ratschläge:"Welchen Rat würden Sie Ihrem jüngeren Ich geben?","Wendepunkte":"Was war ein Wendepunkt in Ihrem Leben?"}
-  };
-  const BCP={en:'en-US',fr:'fr-FR',es:'es-ES',nl:'nl-NL',de:'de-DE'};
-
-  /* ===== ElevenLabs TTS (server endpoint) + system fallback ===== */
-  const VOICE_BY_LANG = {
-    en: 'KoVIHoyLDrQyd4pGalbs',
-    fr: 'TfGtrgcVrXWjJkeB51T1',
-    nl: 'yO6w2xlECAQRFP6pX7Hw',
-    es: 'ZpEtuMdTIlJXYXAhevhG',
-    de: null  // fallback to system voice for German (no ElevenLabs ID provided)
-  };
-
-  async function speakViaElevenLabs(sentence, code){
-    const vid = VOICE_BY_LANG[code];
-    if(!vid) return false;
-    try{
-      const r = await fetch('/api/voice', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ text: sentence, voiceId: vid })
-      });
-      if(!r.ok) throw new Error('tts_failed');
-      const blob = await r.blob();
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      await audio.play();
-      setTimeout(()=>URL.revokeObjectURL(url), 60000);
-      return true;
-    }catch(e){
-      console.warn('ElevenLabs TTS failed → system fallback', e);
-      return false;
+    if (!session) {
+      window.location.replace('/login.html');
+      return;
     }
-  }
-  function speakSystem(sentence, code){
-    if(!('speechSynthesis' in window)) return;
-    const u=new SpeechSynthesisUtterance(String(sentence));
-    u.lang=BCP[code]||'en-US'; u.rate=.95; u.pitch=1; u.volume=1;
-    speechSynthesis.cancel(); speechSynthesis.speak(u);
-  }
-  async function speakPrompt(oneWord, code){
-    const sentence=(PROMPT_SENTENCES[code]||{})[oneWord] || oneWord;
-    const ok = await speakViaElevenLabs(sentence, code);
-    if(!ok) speakSystem(sentence, code);
+    await startApp(session);
+  } catch (err) {
+    showGuardError(err);
   }
 
-  function renderPrompts(){
-    const code=lang.value; promptsWrap.innerHTML='';
-    (TOPIC_WORDS[code]||TOPIC_WORDS.en).forEach(word=>{
-      const chip=document.createElement('div'); chip.className='chip'; chip.textContent=word;
-      chip.onclick=()=>{ titleEl.value=word; speakPrompt(word, code); };
-      promptsWrap.appendChild(chip);
-    });
-    renderFAQ(); // update FAQ to the selected language too
+  function showGuardError(err) {
+    console.error('Session check failed:', err);
+    guard.textContent = 'Could not confirm your session. Reloading to sign in…';
+    setTimeout(() => { window.location.replace('/login.html'); }, 1200);
   }
 
-  /* ===== FAQ translations ===== */
-  const FAQ = {
-    en:{
-      title:"📖 FAQ / How to Use",
-      q1:"1. How do I use this app?",
-      a1:"Sign up with your email, press the microphone to record, then save. View, edit, or export your stories in the Library.",
-      q2:"2. How do I use AI Rewrite?",
-      a2:"After saving a story, click “Rewrite (AI)” in the Library. The AI refines clarity and flow. Use “Undo” to restore the original.",
-      q3:"3. How can I export my stories?",
-      a3:"Click “Download .docx” on a story or “Export Book (PDF)” (Premium). A simple white PDF is provided for now.",
-      q4:"4. How do I register / log in?",
-      a4:"Enter your email on the login page and click the magic link we send. Your profile is created automatically.",
-      q5:"5. How do Premium codes work?",
-      a5:"Enter a code in the top bar. Valid codes unlock Premium for 14 days (AI rewrite & book export). Then it returns to Free automatically.",
-      q6:"6. Can my family see or add stories?",
-      a6:"Family spaces are coming soon: invite relatives to view or add stories. Exports will be organized by event dates.",
-      q7:"7. Is my data private?",
-      a7:"Yes. Only you (and invited family, when enabled) can access stories. We use Supabase Row‑Level Security to protect your data.",
-      q8:"8. Need help?",
-      a8:"Try refreshing the page or logging out/in. For further support, contact the app admin."
-    },
-    fr:{
-      title:"📖 FAQ / Guide d’utilisation",
-      q1:"1. Comment utiliser l’application ?",
-      a1:"Inscrivez-vous avec votre e‑mail, appuyez sur le micro pour enregistrer puis enregistrez l’histoire. Consultez, modifiez ou exportez vos récits dans la Bibliothèque.",
-      q2:"2. Comment utiliser la Réécriture IA ?",
-      a2:"Après avoir sauvegardé une histoire, cliquez sur « Réécrire (IA) » dans la Bibliothèque. L’IA améliore clarté et fluidité. Utilisez « Annuler » pour revenir à l’original.",
-      q3:"3. Comment exporter mes histoires ?",
-      a3:"Cliquez sur « Télécharger .docx » sur une histoire ou « Exporter le livre (PDF) » (Premium). Un PDF simple (fond blanc) est disponible pour l’instant.",
-      q4:"4. Comment m’inscrire / me connecter ?",
-      a4:"Saisissez votre e‑mail sur la page de connexion puis cliquez sur le lien magique reçu. Votre profil est créé automatiquement.",
-      q5:"5. Comment fonctionnent les codes Premium ?",
-      a5:"Saisissez le code dans la barre supérieure. Un code valide débloque 14 jours de Premium (réécriture IA & export de livre). Ensuite, retour au mode Gratuit.",
-      q6:"6. Ma famille peut‑elle voir ou ajouter des histoires ?",
-      a6:"Des espaces Famille arrivent bientôt : invitez des proches pour consulter ou ajouter des récits. Les exports seront triés par dates d’événements.",
-      q7:"7. Mes données sont‑elles privées ?",
-      a7:"Oui. Seuls vous (et la famille invitée, si activée) accédez à vos récits. Nous utilisons la Row‑Level Security de Supabase pour les protéger.",
-      q8:"8. Besoin d’aide ?",
-      a8:"Essayez d’actualiser la page ou de vous reconnecter. Pour toute aide supplémentaire, contactez l’administrateur."
-    },
-    es:{
-      title:"📖 Preguntas frecuentes / Cómo usar",
-      q1:"1. ¿Cómo uso la aplicación?",
-      a1:"Regístrate con tu correo, pulsa el micrófono para grabar y guarda. Consulta, edita o exporta tus historias en la Biblioteca.",
-      q2:"2. ¿Cómo uso la Reescritura IA?",
-      a2:"Tras guardar una historia, pulsa “Reescribir (IA)” en la Biblioteca. La IA mejora claridad y fluidez. Usa “Deshacer” para volver al original.",
-      q3:"3. ¿Cómo exporto mis historias?",
-      a3:"Pulsa “Descargar .docx” en una historia o “Exportar libro (PDF)” (Premium). Por ahora ofrecemos un PDF básico en blanco.",
-      q4:"4. ¿Cómo me registro / inicio sesión?",
-      a4:"Introduce tu correo en la página de acceso y haz clic en el enlace mágico que enviamos. Tu perfil se crea automáticamente.",
-      q5:"5. ¿Cómo funcionan los códigos Premium?",
-      a5:"Introduce un código en la barra superior. Los códigos válidos desbloquean 14 días de Premium (reescritura IA y exportación de libro). Luego vuelve a Gratis automáticamente.",
-      q6:"6. ¿Puede mi familia ver o añadir historias?",
-      a6:"Pronto habrá espacios Familia: invita a tus familiares para ver o añadir relatos. Las exportaciones se ordenarán por fechas de los eventos.",
-      q7:"7. ¿Mis datos son privados?",
-      a7:"Sí. Solo tú (y la familia invitada cuando esté activa) podéis acceder a las historias. Usamos Row‑Level Security de Supabase.",
-      q8:"8. ¿Necesitas ayuda?",
-      a8:"Prueba a actualizar la página o cerrar sesión/entrar de nuevo. Para más soporte, contacta con el administrador."
-    },
-    nl:{
-      title:"📖 FAQ / Handleiding",
-      q1:"1. Hoe gebruik ik de app?",
-      a1:"Meld je aan met je e‑mail, druk op de microfoon om te spreken en sla op. Bekijk, bewerk of exporteer je verhalen in de Bibliotheek.",
-      q2:"2. Hoe werkt AI‑Herschrijven?",
-      a2:"Na het opslaan, klik in de Bibliotheek op “Rewrite (AI)”. De AI verbetert helderheid en flow. Met “Undo” zet je terug naar het origineel.",
-      q3:"3. Hoe exporteer ik verhalen?",
-      a3:"Klik bij een verhaal op “Download .docx” of op “Export Book (PDF)” (Premium). Voor nu is er een eenvoudige witte PDF.",
-      q4:"4. Hoe registreer / log ik in?",
-      a4:"Vul je e‑mail in op de loginpagina en klik op de magic link. Je profiel wordt automatisch aangemaakt.",
-      q5:"5. Hoe werken Premium codes?",
-      a5:"Voer de code in de bovenbalk in. Geldige codes geven 14 dagen Premium (AI‑herschrijven & boekexport). Daarna ga je automatisch terug naar Gratis.",
-      q6:"6. Kan mijn familie meekijken of toevoegen?",
-      a6:"Binnenkort: Familie‑ruimtes om familie uit te nodigen om mee te kijken of verhalen toe te voegen. Export ordent op gebeurtenisdatum.",
-      q7:"7. Zijn mijn gegevens privé?",
-      a7:"Ja. Alleen jij (en uitgenodigde familie, indien actief) hebben toegang. We gebruiken Supabase Row‑Level Security.",
-      q8:"8. Hulp nodig?",
-      a8:"Ververs de pagina of log uit/in. Voor extra hulp: neem contact op met de beheerder."
-    },
-    de:{
-      title:"📖 FAQ / Anleitung",
-      q1:"1. Wie benutze ich die App?",
-      a1:"Melden Sie sich mit Ihrer E‑Mail an, drücken Sie auf das Mikrofon und speichern Sie. In der Bibliothek können Sie Geschichten ansehen, bearbeiten oder exportieren.",
-      q2:"2. Wie nutze ich die KI‑Umschreibung?",
-      a2:"Nach dem Speichern klicken Sie in der Bibliothek auf „Rewrite (AI)“. Die KI verbessert Klarheit und Stil. Mit „Undo“ kehren Sie zum Original zurück.",
-      q3:"3. Wie exportiere ich meine Geschichten?",
-      a3:"Klicken Sie bei einer Geschichte auf „Download .docx“ oder auf „Export Book (PDF)“ (Premium). Momentan ist es ein einfaches Weiß‑PDF.",
-      q4:"4. Wie registriere ich mich / logge mich ein?",
-      a4:"Geben Sie Ihre E‑Mail auf der Login‑Seite ein und klicken Sie auf den Magic‑Link. Ihr Profil wird automatisch erstellt.",
-      q5:"5. Wie funktionieren Premium‑Codes?",
-      a5:"Geben Sie den Code oben ein. Gültige Codes schalten 14 Tage Premium frei (KI‑Umschreiben & Buch‑Export). Danach geht es automatisch zurück zu Frei.",
-      q6:"6. Kann meine Familie ansehen oder hinzufügen?",
-      a6:"Bald verfügbar: Familienbereiche, um Angehörige einzuladen. Exporte werden nach Ereignisdatum sortiert.",
-      q7:"7. Sind meine Daten privat?",
-      a7:"Ja. Nur Sie (und eingeladene Familie, wenn aktiviert) haben Zugriff. Wir verwenden Supabase Row‑Level Security.",
-      q8:"8. Brauchen Sie Hilfe?",
-      a8:"Aktualisieren Sie die Seite oder melden Sie sich ab/an. Für weiteren Support wenden Sie sich an den Administrator."
+  /* ===== Main App once session is ready ===== */
+  async function startApp(session) {
+    // Load profile: plan, trial, role
+    const { data: profile, error: pErr } = await supabase.from('profiles').select('plan, trial_end, role').single();
+    if (pErr) console.warn('Profile read issue:', pErr);
+
+    const trialUntil = profile?.trial_end ? new Date(profile.trial_end) : null;
+    const trialActive = trialUntil && Date.now() < trialUntil.getTime();
+    const isAdmin = profile?.role === 'admin';
+    let isPremium = isAdmin || profile?.plan === 'premium' || trialActive;
+
+    guard.style.display='none'; app.style.display='grid';
+    document.getElementById('logout').onclick = async ()=>{ await supabase.auth.signOut(); window.location.replace('/login.html'); };
+
+    // Plan badge
+    const planBadge = document.getElementById('planBadge');
+    if (isAdmin) {
+      planBadge.textContent = 'Plan: Admin';
+    } else if (isPremium) {
+      planBadge.textContent = trialActive
+        ? `Plan: Premium (trial until ${trialUntil.toLocaleDateString()})`
+        : 'Plan: Premium';
+    } else {
+      planBadge.textContent = 'Plan: Free';
     }
-  };
 
-  function renderFAQ(){
-    const L = FAQ[lang.value] || FAQ.en;
-    const set = (id, t) => { const el=document.getElementById(id); if(el) el.textContent=t; };
-    set('faqTitle', L.title);
-    set('q1', L.q1); set('a1', L.a1);
-    set('q2', L.q2); set('a2', L.a2);
-    set('q3', L.q3); set('a3', L.a3);
-    set('q4', L.q4); set('a4', L.a4);
-    set('q5', L.q5); set('a5', L.a5);
-    set('q6', L.q6); set('a6', L.a6);
-    set('q7', L.q7); set('a7', L.a7);
-    set('q8', L.q8); set('a8', L.a8);
-  }
+    /* ===== Redeem code UI ===== */
+    const codeInput = document.getElementById('codeInput');
+    const redeemBtn = document.getElementById('redeemBtn');
+    const redeemMsg = document.getElementById('redeemMsg');
+    const setRedeemMsg = (t)=>{ if(redeemMsg) redeemMsg.textContent = t || ''; };
 
-  /* ===== Modes ===== */
-  const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
-  tabGuided.onclick=()=>{ tabGuided.classList.add('active'); tabFree.classList.remove('active'); guidedBlock.style.display='block'; };
-  tabFree.onclick=()=>{ tabFree.classList.add('active'); tabGuided.classList.remove('active'); guidedBlock.style.display='none'; };
-  lang.onchange=()=>{ renderPrompts(); };
+    redeemBtn?.addEventListener('click', async () => {
+      setRedeemMsg('');
+      const code = codeInput.value.trim();
+      if(!code) { setRedeemMsg('Enter a code.'); return; }
 
-  /* ===== Library drawer (mobile) ===== */
-  const toggleLib=$('toggleLib'), drawer=$('drawer'), libraryDrawer=$('libraryDrawer'), closeDrawer=$('closeDrawer'), library=$('library');
-  toggleLib.onclick=()=>{ if(innerWidth>=1024){ renderLib(); } else { drawer.classList.add('show'); renderLib(true); } };
-  closeDrawer.onclick=()=>drawer.classList.remove('show');
-  drawer.addEventListener('click',(e)=>{ if(e.target===drawer) drawer.classList.remove('show'); });
+      const { data: { user } } = await supabase.auth.getUser();
+      if(!user){ setRedeemMsg('Please sign in first.'); return; }
 
-  /* ===== Recording (Web Speech Recognition) ===== */
-  const transcriptEl=$('transcript'), mic=$('mic'), meter=$('meter'), bar=$('bar'), remain=$('remain'), asr=$('asr');
-  const titleEl=$('title'), whenEl=$('when'), save=$('save'), clearBtn=$('clear'), exportBookBtn=$('exportBook'), exportCsvBtn=$('exportCsv');
-  let recognition=null, recActive=false, elapsed=0, timer=null;
+      try{
+        const { data, error } = await supabase.rpc('redeem_code', { p_code: code });
+        if (error) throw error;
 
-  function startRec(){
-    const SR = window.webkitSpeechRecognition || window.SpeechRecognition;
-    if(!SR){ asr.textContent='Speech recognition is not available in this browser.'; return; }
-    recognition=new SR();
-    recognition.lang = BCP[lang.value] || 'en-US';
-    recognition.continuous=true; recognition.interimResults=true;
-    let full='';
-    recognition.onresult=(e)=>{
-      let inter='';
-      for(let i=e.resultIndex;i<e.results.length;i++){
-        const r=e.results[i]; if(r.isFinal) full+=r[0].transcript+' '; else inter+=r[0].transcript;
+        if (data?.ok) {
+          setRedeemMsg(`✅ Premium until ${new Date(data.trial_end).toLocaleDateString()}`);
+          location.reload();
+        } else {
+          const map={not_authenticated:'Please sign in first.',not_found:'Code not found.',expired:'Code expired.',exhausted:'Code already used.',already_premium:'You already have Premium.'};
+          setRedeemMsg('❌ ' + (map[data?.error] || 'Redeem failed.'));
+        }
+      }catch(e){
+        setRedeemMsg('❌ ' + (e.message || String(e)));
       }
-      const txt=(full+inter).trim();
-      transcriptEl.textContent = txt || 'Your words will appear here…';
-      save.disabled = !txt;
-    };
-    recognition.onend=()=>{ stopRec(); };
-    try{ recognition.start(); }catch{}
-    asr.textContent='Transcribing…';
-    mic.textContent='Stop Recording'; mic.classList.add('pulse');
-    elapsed=0; remain.textContent=getCap()+'s'; bar.style.width='0%'; meter.style.display='flex';
-    timer=setInterval(()=>{ elapsed++; const cap=getCap(); bar.style.width=(elapsed/cap*100)+'%'; remain.textContent=Math.max(0,cap-elapsed)+'s'; if(elapsed>=cap) stopRec(); },1000);
-    recActive=true;
-  }
-  function stopRec(){
-    try{ recognition && recognition.stop(); }catch{}
-    if(timer){ clearInterval(timer); timer=null; }
-    mic.textContent='Record'; mic.classList.remove('pulse'); asr.textContent='';
-    recActive=false;
-  }
-  mic.onclick=()=>{ recActive?stopRec():startRec(); };
-
-  /* ===== Recording caps ===== */
-  function setPremiumUI(enabled){
-    const lockBtn = (btn, on, title) => {
-      btn.toggleAttribute('disabled', !on);
-      btn.classList.toggle('lock', !on);
-      if (!on && title) btn.title = title; else btn.removeAttribute('title');
-    };
-    lockBtn(exportBookBtn, enabled, 'Premium only');
-  }
-  setPremiumUI(isPremium);
-  const CAP_FREE = 120, CAP_PREM = 900; // seconds
-  const getCap = () => (isPremium ? CAP_PREM : CAP_FREE);
-
-  /* ===== Approx date parser ===== */
-  function parseApproxDate(input){
-    if(!input) return { label:'', sort:null };
-    const s=input.trim().toLowerCase();
-    const iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); if(iso){const d=new Date(+iso[1],+iso[2]-1,+iso[3]);return{label:input,sort:d.toISOString().slice(0,10)};}
-    const yOnly=s.match(/(\d{4})/); if(yOnly){const d=new Date(+yOnly[1],0,1);return{label:input,sort:d.toISOString().slice(0,10)};}
-    const season=s.match(/^(early|mid|late)?\s*(spring|summer|autumn|fall|winter)\s+(\d{4})$/);
-    if(season){const y=+season[3];const base={spring:2,summer:5,autumn:8,fall:8,winter:11}[season[2]];let m=base,day=1;if(season[1]==='mid')day=10;if(season[1]==='late')day=20;const d=new Date(y,m,day);return{label:input,sort:d.toISOString().slice(0,10)};}
-    return { label:input, sort:null };
-  }
-
-  /* ===== Library (localStorage for now) ===== */
-  const LSKEY='memoir.stories';
-  const loadStories=()=>{try{return JSON.parse(localStorage.getItem(LSKEY)||'[]')}catch{return[]}};
-  const saveStories=(list)=>localStorage.setItem(LSKEY,JSON.stringify(list));
-  const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-
-  function storyRow(s, idx){
-    const row=document.createElement('div'); row.className='story';
-    const meta=document.createElement('div'); meta.style.minWidth='0';
-    const h=document.createElement('h3'); h.textContent=s.title||'Story';
-    const t=document.createElement('div'); t.className='muted';
-    t.textContent= s.happened_label || (s.happened_sort?new Date(s.happened_sort).toDateString():new Date(s.created).toLocaleString());
-    meta.appendChild(h); meta.appendChild(t);
-
-    const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px'; actions.style.flexWrap='wrap';
-    const make=(txt,fn,disabled)=>{const b=document.createElement('button'); b.className='btn'; b.textContent=txt; if(disabled){ b.disabled=true; b.classList.add('lock'); } b.onclick=fn; return b;};
-    actions.appendChild(make('View',()=>viewStory(s)));
-    actions.appendChild(make('Rewrite (AI)',()=>requirePremium() && rewriteAI(idx), !isPremium));
-    actions.appendChild(make('Undo',()=>undoRewrite(idx), !s.prev));
-    actions.appendChild(make('Download .docx',()=>downloadDocx(s)));
-    actions.appendChild(make('Delete',()=>delStory(idx)));
-    row.appendChild(meta); row.appendChild(actions);
-    return row;
-  }
-
-  function renderLib(toDrawer=false){
-    const items=loadStories();
-    const tgt = toDrawer?libraryDrawer:library;
-    tgt.innerHTML=''; if(!items.length){ const p=document.createElement('p'); p.className='muted'; p.textContent='No stories yet.'; tgt.appendChild(p); return; }
-    items.forEach((s,i)=>tgt.appendChild(storyRow(s,i)));
-  }
-
-  function requirePremium(){
-    if (!isPremium) {
-      alert('This is a Premium feature. Enter a valid code to unlock a 14‑day trial.');
-      return false;
-    }
-    return true;
-  }
-
-  function viewStory(s){
-    const dlg=document.createElement('dialog');
-    dlg.style.width='min(90vw,820px)';
-    dlg.innerHTML=`<form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #e5e7eb"><strong>${esc(s.title||'Story')}</strong><button autofocus class="btn">Close</button></form><div style="padding:16px"><div class="muted" style="margin-bottom:6px">${esc(s.happened_label || (s.happened_sort?new Date(s.happened_sort).toDateString():new Date(s.created).toLocaleString()))}</div><div style="white-space:pre-wrap;font-family:system-ui">${esc(s.text||'')}</div></div>`;
-    document.body.appendChild(dlg); dlg.addEventListener('close',()=>dlg.remove()); dlg.showModal();
-  }
-
-  function delStory(idx){
-    if(!confirm('Delete this story?')) return;
-    const items=loadStories(); items.splice(idx,1); saveStories(items); renderLib(innerWidth<1024);
-  }
-
-  function undoRewrite(idx){
-    const items=loadStories(); const s=items[idx]; if(!s?.prev) return alert('No previous version stored.');
-    s.text=s.prev; delete s.prev; saveStories(items); renderLib(innerWidth<1024);
-  }
-
-  async function rewriteAI(idx){
-    const items=loadStories(); const s=items[idx]; if(!s) return;
-    const payload = {
-      text: s.text,
-      style: "warm, vivid, cohesive autobiography with gentle pacing and sensory details",
-      lang: lang.value || 'en'
-    };
-    const r = await fetch('/api/rewrite', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-    if(!r.ok){ alert('Rewrite failed.'); return; }
-    const data = await r.json();
-    s.prev = s.text; s.text = data.text || s.text;
-    s.rewritten_at = new Date().toISOString();
-    saveStories(items); renderLib(innerWidth<1024);
-  }
-
-  function downloadDocx(s){
-    const zip = new JSZip();
-    const meta = `Title: ${s.title||'Story'}\nWhen: ${s.happened_label || s.happened_sort || ''}\nCreated: ${new Date(s.created).toLocaleString()}\n\n`;
-    zip.file('story.txt', meta + (s.text||''));
-    zip.generateAsync({type:'blob'}).then(blob=>{
-      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(s.title||'story')+'.zip'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
     });
-  }
 
-  exportCsvBtn.onclick=()=>{
-    const items=loadStories();
-    const rows=[['title','happened_label','happened_sort','created','text']];
-    items.forEach(s=>rows.push([s.title||'',s.happened_label||'',s.happened_sort||'',s.created||'',(s.text||'').replace(/\n/g,'\\n')]));
-    const csv=rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n');
-    const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='memoir_stories.csv'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-  };
+    /* ===== DOM ===== */
+    const $=id=>document.getElementById(id);
+    const lang=$('lang'), promptsWrap=$('prompts');
+    const titleEl=$('title'), whenEl=$('when'), transcriptEl=$('transcript');
+    const mic=$('mic'), meter=$('meter'), bar=$('bar'), remain=$('remain'), asr=$('asr');
+    const save=$('save'), clearBtn=$('clear'), library=$('library');
+    const drawer=$('drawer'), libraryDrawer=$('libraryDrawer'), toggleLib=$('toggleLib'), closeDrawer=$('closeDrawer');
+    const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
+    const exportBookBtn=$('exportBook'), exportCsvBtn=$('exportCsv');
 
-  exportBookBtn.onclick=()=>{
-    if(!requirePremium()) return;
-    alert('PDF export placeholder — we will swap this for a Canva/real PDF pipeline next.');
-  };
+    /* ===== Gating: controls ===== */
+    function setPremiumUI(enabled){
+      const lockBtn = (btn, on, title) => {
+        btn.toggleAttribute('disabled', !on);
+        btn.classList.toggle('lock', !on);
+        if (!on && title) btn.title = title; else btn.removeAttribute('title');
+      };
+      lockBtn(exportBookBtn, enabled, 'Premium only');
+    }
+    setPremiumUI(isPremium);
 
-  /* ===== Save story ===== */
-  function parseApproxDate(input){
-    if(!input) return { label:'', sort:null };
-    const s=input.trim().toLowerCase();
-    const iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); if(iso){const d=new Date(+iso[1],+iso[2]-1,+iso[3]);return{label:input,sort:d.toISOString().slice(0,10)};}
-    const yOnly=s.match(/(\d{4})/); if(yOnly){const d=new Date(+yOnly[1],0,1);return{label:input,sort:d.toISOString().slice(0,10)};}
-    const season=s.match(/^(early|mid|late)?\s*(spring|summer|autumn|fall|winter)\s+(\d{4})$/);
-    if(season){const y=+season[3];const base={spring:2,summer:5,autumn:8,fall:8,winter:11}[season[2]];let m=base,day=1;if(season[1]==='mid')day=10;if(season[1]==='late')day=20;const d=new Date(y,m,day);return{label:input,sort:d.toISOString().slice(0,10)};}
-    return { label:input, sort:null };
-  }
+    // Recording cap by plan
+    const CAP_FREE = 120;     // 2 min
+    const CAP_PREM = 900;     // 15 min
+    const getCap = () => (isPremium ? CAP_PREM : CAP_FREE);
 
-  save.onclick=()=>{
-    const txt=transcriptEl.textContent.trim(); if(!txt) return;
-    const when=parseApproxDate(whenEl.value);
-    const story={ title:titleEl.value||'Story', text:txt, created:new Date().toISOString(), happened_label:when.label, happened_sort:when.sort };
-    const items=loadStories(); items.unshift(story); saveStories(items); renderLib(innerWidth<1024);
-    transcriptEl.textContent='Your words will appear here…'; save.disabled=true; titleEl.value=''; whenEl.value='';
-  };
-  clearBtn.onclick=()=>{ transcriptEl.textContent='Your words will appear here…'; save.disabled=true; };
+    /* ===== Topics (chip word) + Spoken prompts (full sentence) ===== */
+    const TOPIC_WORDS = {
+      en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
+      fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
+      es:["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"],
+      nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
+    };
+    const PROMPT_SENTENCES = {
+      en:{Childhood:"Tell me something about your youth.",Family:"Tell me about your family and the people who raised you.",School:"What was school like for you?",Work:"Tell me about your first job or career.",Love:"How did you meet your partner, or what did love mean to you then?",War:"What big world events or conflicts did you live through?",Travel:"Where did you travel that left a mark on you?",Traditions:"Which family traditions mattered most to you?",Holidays:"Describe a holiday you remember vividly.",Lessons:"What life lesson did you learn the hard way?",Advice:"What advice would you give your younger self?","Turning-points":"What was a turning point that changed your path?"},
+      fr:{Enfance:"Parlez-moi de votre jeunesse, d’un souvenir marquant.",Famille:"Parlez-moi de votre famille et des personnes qui vous ont élevé.",École:"Comment était l’école pour vous ?",Travail:"Racontez-moi votre premier travail ou votre carrière.",Amour:"Comment avez-vous rencontré votre partenaire, et que signifiait l’amour pour vous ?",Guerre:"Quels grands événements ou conflits avez-vous vécus ?",Voyages:"Quels voyages vous ont marqué(e) ?",Traditions:"Quelles traditions familiales comptaient le plus ?",Fêtes:"Décrivez une fête dont vous vous souvenez clairement.",Leçons:"Quelle leçon de vie avez-vous apprise à la dure ?",Conseils:"Quel conseil donneriez-vous à votre jeune vous ?",Déclics:"Quel déclic a changé votre trajectoire ?"},
+      es:{Infancia:"Cuéntame algo sobre tu juventud.",Familia:"Háblame de tu familia y de quienes te criaron.",Escuela:"¿Cómo era la escuela para ti?",Trabajo:"Cuéntame sobre tu primer trabajo o tu carrera.",Amor:"¿Cómo conociste a tu pareja y qué significaba el amor entonces?",Guerra:"¿Qué grandes eventos o conflictos viviste?",Viajes:"¿Qué viajes te marcaron?",Tradiciones:"¿Qué tradiciones familiares eran importantes para ti?",Fiestas:"Describe una fiesta que recuerdes con claridad.",Lecciones:"¿Qué lección de vida aprendiste con dificultad?",Consejos:"¿Qué consejo le darías a tu yo joven?","Puntos-clave":"¿Cuál fue un punto de inflexión en tu vida?"},
+      nl:{Jeugd:"Vertel me iets over je jeugd.",Familie:"Vertel over je familie en de mensen die je hebben opgevoed.",School:"Hoe was school voor jou?",Werk:"Vertel over je eerste baan of je loopbaan.",Liefde:"Hoe heb je je partner ontmoet, en wat betekende liefde toen?",Oorlog:"Welke grote gebeurtenissen of conflicten heb je meegemaakt?",Reizen:"Welke reizen hebben indruk op je gemaakt?",Tradities:"Welke familietradities waren belangrijk voor je?",Feestdagen:"Beschrijf een feestdag die je helder herinnert.",Lessen:"Welke levensles heb je op de harde manier geleerd?",Advies:"Welk advies zou je je jongere zelf geven?",Keerpunt:"Wat was een keerpunt in je leven?"}
+    };
+    const BCP={en:'en-US',fr:'fr-FR',es:'es-ES',nl:'nl-NL'};
 
-  // initial render
-  function initLangFromBrowser(){
-    const nav = (navigator.language||'en').slice(0,2);
-    if (['en','fr','es','nl','de'].includes(nav)) lang.value = nav;
-  }
-  initLangFromBrowser();
-  renderPrompts(); renderLib(); renderFAQ();
+    /* ===== ElevenLabs TTS (server endpoint) + system fallback ===== */
+    const VOICE_BY_LANG = {
+      en: 'KoVIHoyLDrQyd4pGalbs',
+      fr: 'TfGtrgcVrXWjJkeB51T1',
+      nl: 'yO6w2xlECAQRFP6pX7Hw',
+      es: 'ZpEtuMdTIlJXYXAhevhG'
+    };
+
+    async function speakViaElevenLabs(sentence, code){
+      try{
+        const r = await fetch('/api/voice', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ text: sentence, voiceId: VOICE_BY_LANG[code] || VOICE_BY_LANG.en })
+        });
+        if(!r.ok) throw new Error('tts_failed');
+        const blob = await r.blob();
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        await audio.play();
+        setTimeout(()=>URL.revokeObjectURL(url), 60000);
+        return true;
+      }catch(e){
+        console.warn('ElevenLabs TTS failed → system fallback', e);
+        return false;
+      }
+    }
+    function speakSystem(sentence, code){
+      if(!('speechSynthesis' in window)) return;
+      const u=new SpeechSynthesisUtterance(String(sentence));
+      u.lang=BCP[code]||'en-US'; u.rate=.95; u.pitch=1; u.volume=1;
+      speechSynthesis.cancel(); speechSynthesis.speak(u);
+    }
+    async function speakPrompt(oneWord, code){
+      const sentence=(PROMPT_SENTENCES[code]||{})[oneWord] || oneWord;
+      const ok = await speakViaElevenLabs(sentence, code);
+      if(!ok) speakSystem(sentence, code);
+    }
+
+    function renderPrompts(){
+      const code=lang.value; promptsWrap.innerHTML='';
+      (TOPIC_WORDS[code]||TOPIC_WORDS.en).forEach(word=>{
+        const chip=document.createElement('div'); chip.className='chip'; chip.textContent=word;
+        chip.onclick=()=>{ titleEl.value=word; speakPrompt(word, code); };
+        promptsWrap.appendChild(chip);
+      });
+    }
+
+    /* ===== Modes ===== */
+    tabGuided.onclick=()=>{ tabGuided.classList.add('active'); tabFree.classList.remove('active'); guidedBlock.style.display='block'; };
+    tabFree.onclick=()=>{ tabFree.classList.add('active'); tabGuided.classList.remove('active'); guidedBlock.style.display='none'; };
+    lang.onchange=()=>{ renderPrompts(); };
+
+    /* ===== Library drawer (mobile) ===== */
+    toggleLib.onclick=()=>{ if(innerWidth>=1024){ renderLib(); } else { drawer.classList.add('show'); renderLib(true); } };
+    closeDrawer.onclick=()=>drawer.classList.remove('show');
+    drawer.addEventListener('click',(e)=>{ if(e.target===drawer) drawer.classList.remove('show'); });
+
+    /* ===== Recording (Web Speech Recognition) ===== */
+    let recognition=null, recActive=false, elapsed=0, timer=null;
+    function startRec(){
+      const SR = window.webkitSpeechRecognition || window.SpeechRecognition;
+      if(!SR){ asr.textContent='Speech recognition is not available in this browser.'; return; }
+      recognition=new SR();
+      recognition.lang = BCP[lang.value] || 'en-US';
+      recognition.continuous=true; recognition.interimResults=true;
+      let full='';
+      recognition.onresult=(e)=>{
+        let inter='';
+        for(let i=e.resultIndex;i<e.results.length;i++){
+          const r=e.results[i]; if(r.isFinal) full+=r[0].transcript+' '; else inter+=r[0].transcript;
+        }
+        const txt=(full+inter).trim();
+        transcriptEl.textContent = txt || 'Your words will appear here…';
+        save.disabled = !txt;
+      };
+      recognition.onend=()=>{ stopRec(); };
+      try{ recognition.start(); }catch{}
+      asr.textContent='Transcribing…';
+      mic.textContent='Stop Recording'; mic.classList.add('pulse');
+      elapsed=0; remain.textContent=getCap()+'s'; bar.style.width='0%'; meter.style.display='flex';
+      timer=setInterval(()=>{ elapsed++; const cap=getCap(); bar.style.width=(elapsed/cap*100)+'%'; remain.textContent=Math.max(0,cap-elapsed)+'s'; if(elapsed>=cap) stopRec(); },1000);
+      recActive=true;
+    }
+    function stopRec(){
+      try{ recognition && recognition.stop(); }catch{}
+      if(timer){ clearInterval(timer); timer=null; }
+      mic.textContent='Record'; mic.classList.remove('pulse'); asr.textContent='';
+      recActive=false;
+    }
+    mic.onclick=()=>{ recActive?stopRec():startRec(); };
+
+    /* ===== Approx date parser ===== */
+    function parseApproxDate(input){
+      if(!input) return { label:'', sort:null };
+      const s=input.trim().toLowerCase();
+      const iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); if(iso){const d=new Date(+iso[1],+iso[2]-1,+iso[3]);return{label:input,sort:d.toISOString().slice(0,10)};}
+      const yOnly=s.match(/(\d{4})/); if(yOnly){const d=new Date(+yOnly[1],0,1);return{label:input,sort:d.toISOString().slice(0,10)};}
+      const season=s.match(/^(early|mid|late)?\s*(spring|summer|autumn|fall|winter)\s+(\d{4})$/);
+      if(season){const y=+season[3];const base={spring:2,summer:5,autumn:8,fall:8,winter:11}[season[2]];let m=base,day=1;if(season[1]==='mid')day=10;if(season[1]==='late')day=20;const d=new Date(y,m,day);return{label:input,sort:d.toISOString().slice(0,10)};}
+      return { label:input, sort:null };
+    }
+
+    /* ===== Library (localStorage for now) ===== */
+    const LSKEY='memoir.stories';
+    const loadStories=()=>{try{return JSON.parse(localStorage.getItem(LSKEY)||'[]')}catch{return[]}};
+    const saveStories=(list)=>localStorage.setItem(LSKEY,JSON.stringify(list));
+    const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+    function storyRow(s, idx){
+      const row=document.createElement('div'); row.className='story';
+      const meta=document.createElement('div'); meta.style.minWidth='0';
+      const h=document.createElement('h3'); h.textContent=s.title||'Story';
+      const t=document.createElement('div'); t.className='muted';
+      t.textContent= s.happened_label || (s.happened_sort?new Date(s.happened_sort).toDateString():new Date(s.created).toLocaleString());
+      meta.appendChild(h); meta.appendChild(t);
+
+      const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px'; actions.style.flexWrap='wrap';
+      const make=(txt,fn,disabled)=>{const b=document.createElement('button'); b.className='btn'; b.textContent=txt; if(disabled){ b.disabled=true; b.classList.add('lock'); } b.onclick=fn; return b;};
+      actions.appendChild(make('View',()=>viewStory(s)));
+      actions.appendChild(make('Rewrite (AI)',()=>requirePremium() && rewriteAI(idx), !isPremium));
+      actions.appendChild(make('Undo',()=>undoRewrite(idx), !s.prev));
+      actions.appendChild(make('Download .docx',()=>downloadDocx(s)));
+      actions.appendChild(make('Delete',()=>delStory(idx)));
+      row.appendChild(meta); row.appendChild(actions);
+      return row;
+    }
+
+    function renderLib(toDrawer=false){
+      const items=loadStories();
+      const tgt = toDrawer?libraryDrawer:library;
+      tgt.innerHTML=''; if(!items.length){ const p=document.createElement('p'); p.className='muted'; p.textContent='No stories yet.'; tgt.appendChild(p); return; }
+      items.forEach((s,i)=>tgt.appendChild(storyRow(s,i)));
+    }
+
+    function requirePremium(){
+      if (!isPremium) {
+        alert('This is a Premium feature. Enter a valid code to unlock a 14‑day trial.');
+        return false;
+      }
+      return true;
+    }
+
+    function viewStory(s){
+      const dlg=document.createElement('dialog');
+      dlg.style.width='min(90vw,820px)';
+      dlg.innerHTML=`<form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #e5e7eb"><strong>${esc(s.title||'Story')}</strong><button autofocus class="btn">Close</button></form><div style="padding:16px"><div class="muted" style="margin-bottom:6px">${esc(s.happened_label || (s.happened_sort?new Date(s.happened_sort).toDateString():new Date(s.created).toLocaleString()))}</div><div style="white-space:pre-wrap;font-family:system-ui">${esc(s.text||'')}</div></div>`;
+      document.body.appendChild(dlg); dlg.addEventListener('close',()=>dlg.remove()); dlg.showModal();
+    }
+
+    function delStory(idx){
+      if(!confirm('Delete this story?')) return;
+      const items=loadStories(); items.splice(idx,1); saveStories(items); renderLib(innerWidth<1024);
+    }
+
+    function undoRewrite(idx){
+      const items=loadStories(); const s=items[idx]; if(!s?.prev) return alert('No previous version stored.');
+      s.text=s.prev; delete s.prev; saveStories(items); renderLib(innerWidth<1024);
+    }
+
+    async function rewriteAI(idx){
+      const items=loadStories(); const s=items[idx]; if(!s) return;
+      const payload = {
+        text: s.text,
+        style: "warm, vivid, cohesive autobiography with gentle pacing and sensory details",
+        lang: lang.value || 'en'
+      };
+      const r = await fetch('/api/rewrite', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      if(!r.ok){ alert('Rewrite failed.'); return; }
+      const data = await r.json();
+      s.prev = s.text; s.text = data.text || s.text;
+      s.rewritten_at = new Date().toISOString();
+      saveStories(items); renderLib(innerWidth<1024);
+    }
+
+    function downloadDocx(s){
+      // simple .docx-like container via zip with a .txt (keeps it basic)
+      const zip = new JSZip();
+      const meta = `Title: ${s.title||'Story'}\nWhen: ${s.happened_label || s.happened_sort || ''}\nCreated: ${new Date(s.created).toLocaleString()}\n\n`;
+      zip.file('story.txt', meta + (s.text||''));
+      zip.generateAsync({type:'blob'}).then(blob=>{
+        const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(s.title||'story')+'.zip'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+      });
+    }
+
+    exportCsvBtn.onclick=()=>{
+      const items=loadStories();
+      const rows=[['title','happened_label','happened_sort','created','text']];
+      items.forEach(s=>rows.push([s.title||'',s.happened_label||'',s.happened_sort||'',s.created||'',(s.text||'').replace(/\n/g,'\\n')]));
+      const csv=rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n');
+      const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='memoir_stories.csv'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+    };
+
+    exportBookBtn.onclick=()=>{
+      if(!requirePremium()) return;
+      alert('PDF export placeholder — we will swap this for a Canva/real PDF pipeline next.');
+    };
+
+    /* ===== Save story ===== */
+    save.onclick=()=>{
+      const txt=transcriptEl.textContent.trim(); if(!txt) return;
+      const when=parseApproxDate(whenEl.value);
+      const story={ title:titleEl.value||'Story', text:txt, created:new Date().toISOString(), happened_label:when.label, happened_sort:when.sort };
+      const items=loadStories(); items.unshift(story); saveStories(items); renderLib(innerWidth<1024);
+      // reset
+      transcriptEl.textContent='Your words will appear here…'; save.disabled=true; titleEl.value=''; whenEl.value='';
+    };
+    clearBtn.onclick=()=>{ transcriptEl.textContent='Your words will appear here…'; save.disabled=true; };
+
+    // initial render
+    renderPrompts(); renderLib();
+  } // end startApp
+
 })();
 </script>
 </body>
