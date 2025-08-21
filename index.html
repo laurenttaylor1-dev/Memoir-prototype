@@ -60,6 +60,8 @@ dialog::backdrop{background:rgba(0,0,0,.35)}
 dialog{border:none;border-radius:12px;box-shadow:var(--shadow);max-width:min(820px,92vw)}
 footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
 .badgePlan{padding:6px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px}
+
+.input{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit;width:100%}
 </style>
 </head>
 <body>
@@ -78,7 +80,11 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
             <option value="nl">Nederlands</option>
           </select>
           <span id="planBadge" class="badgePlan">Plan: …</span>
-          <button id="redeem" class="btn">Redeem code</button>
+          <div id="redeemBox" style="display:flex; gap:8px; align-items:center;">
+            <input id="codeInput" type="text" placeholder="Enter trial code" class="input" style="max-width:200px">
+            <button id="redeemBtn" class="btn">Redeem</button>
+            <span id="redeemMsg" class="muted"></span>
+          </div>
           <button id="toggleLib" class="btn">☰ Library</button>
           <button id="logout" class="btn badge">Logout</button>
         </div>
@@ -96,14 +102,14 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
           <div id="guidedBlock">
             <div class="label">Suggested topics</div>
             <div id="prompts" class="topics"></div>
-            <div class="small">Tip: tapping a topic speaks a gentle question to get you started.</div>
+            <div class="small">Tip: tapping a topic speaks a gentle question in your selected language.</div>
           </div>
 
           <div class="label">Title</div>
-          <input id="title" type="text" placeholder="Story title (optional)" />
+          <input id="title" type="text" class="input" placeholder="Story title (optional)" />
 
           <div class="label">When did this happen?</div>
-          <input id="when" type="text" placeholder='e.g., "summer 1945", "early 2018", "15 Feb 1972"' />
+          <input id="when" type="text" class="input" placeholder='e.g., "summer 1945", "early 2018", "15 Feb 1972"' />
 
           <div class="label">Transcript</div>
           <div id="transcript" class="area" aria-live="polite">Your words will appear here…</div>
@@ -131,7 +137,7 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
         </aside>
       </div>
 
-      <footer>Cloud prototype — EN/FR/ES/NL guided prompts, ElevenLabs+fallback voice, recorder, library, Premium: AI rewrite + PDF export.</footer>
+      <footer>Cloud prototype — EN/FR/ES/NL prompts with voice, recorder, library. Premium/Admin: AI rewrite + PDF export. Single‑use trial codes supported.</footer>
     </div>
   </div>
 
@@ -155,27 +161,23 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
   /* ===== Supabase session guard (your project) ===== */
   const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
-  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false} });
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false} });
 
   const guard=document.getElementById('guard'), app=document.getElementById('app');
-  const { data:{session} } = await supa.auth.getSession();
+  const { data:{session} } = await supabase.auth.getSession();
   if(!session){ window.location.replace('/login.html'); return; }
 
-  // Load profile (plan & trial)
-  const { data: profile, error: pErr } = await supa
-    .from('profiles')
-    .select('plan, trial_end, role')
-    .single();
-
+  // Load profile: plan, trial, role
+  const { data: profile } = await supabase.from('profiles').select('plan, trial_end, role').single();
   const trialUntil = profile?.trial_end ? new Date(profile.trial_end) : null;
   const trialActive = trialUntil && Date.now() < trialUntil.getTime();
   const isAdmin = profile?.role === 'admin';
   let isPremium = isAdmin || profile?.plan === 'premium' || trialActive;
 
   guard.style.display='none'; app.style.display='grid';
-  document.getElementById('logout').onclick = async ()=>{ await supa.auth.signOut(); window.location.replace('/login.html'); };
+  document.getElementById('logout').onclick = async ()=>{ await supabase.auth.signOut(); window.location.replace('/login.html'); };
 
-  // Plan badge + gating
+  // Plan badge + hide redeem for admin
   const planBadge = document.getElementById('planBadge');
   if (isAdmin) {
     planBadge.textContent = 'Plan: Admin';
@@ -187,21 +189,36 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     planBadge.textContent = 'Plan: Free';
   }
 
-// Hide the Redeem button for admins (they already have full access)
-if (isAdmin) {
-  document.getElementById('redeem').style.display = 'none';
-}
+  /* ===== Redeem code UI ===== */
+  const codeInput = document.getElementById('codeInput');
+  const redeemBtn = document.getElementById('redeemBtn');
+  const redeemMsg = document.getElementById('redeemMsg');
 
-  // Redeem code flow
-  document.getElementById('redeem').onclick = async () => {
-    const code = prompt('Enter your trial/upgrade code:');
-    if (!code) return;
-    const { data, error } = await supa.rpc('redeem_code', { p_code: code.trim() });
-    if (error) return alert('Redeem failed: ' + error.message);
-    if (!data?.ok) return alert('Redeem failed: ' + (data?.error || 'unknown'));
-    alert('Premium activated until ' + new Date(data.trial_end).toLocaleString());
-    location.reload();
-  };
+  function setRedeemMsg(t){ if(redeemMsg) redeemMsg.textContent = t || ''; }
+
+  redeemBtn?.addEventListener('click', async () => {
+    setRedeemMsg('');
+    const code = codeInput.value.trim();
+    if(!code) { setRedeemMsg('Enter a code.'); return; }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if(!user){ setRedeemMsg('Please sign in first.'); return; }
+
+    try{
+      const { data, error } = await supabase.rpc('redeem_code', { p_code: code });
+      if (error) throw error;
+
+      if (data?.ok) {
+        setRedeemMsg(`✅ Premium until ${new Date(data.trial_end).toLocaleDateString()}`);
+        location.reload();
+      } else {
+        const map={not_authenticated:'Please sign in first.',not_found:'Code not found.',expired:'Code expired.',exhausted:'Code already used.',already_premium:'You already have Premium.'};
+        setRedeemMsg('❌ ' + (map[data?.error] || 'Redeem failed.'));
+      }
+    }catch(e){
+      setRedeemMsg('❌ ' + (e.message || String(e)));
+    }
+  });
 
   /* ===== DOM ===== */
   const $=id=>document.getElementById(id);
@@ -221,14 +238,13 @@ if (isAdmin) {
       if (!on && title) btn.title = title; else btn.removeAttribute('title');
     };
     lockBtn(exportBookBtn, enabled, 'Premium only');
-    // Rewrite buttons are created per row (in library); we guard on click below, too.
   }
   setPremiumUI(isPremium);
 
   // Recording cap by plan
-  let capFree = 120;     // 2 min
-  let capPremium = 900;  // 15 min
-  let cap = isPremium ? capPremium : capFree;
+  const CAP_FREE = 120;     // 2 min
+  const CAP_PREM = 900;     // 15 min
+  const getCap = () => (isPremium ? CAP_PREM : CAP_FREE);
 
   /* ===== Topics (chip word) + Spoken prompts (full sentence) ===== */
   const TOPIC_WORDS = {
@@ -245,12 +261,12 @@ if (isAdmin) {
   };
   const BCP={en:'en-US',fr:'fr-FR',es:'es-ES',nl:'nl-NL'};
 
-  /* ===== ElevenLabs TTS (your voices) + system fallback ===== */
+  /* ===== ElevenLabs TTS (server endpoint) + system fallback ===== */
   const VOICE_BY_LANG = {
-    en: 'KoVIHoyLDrQyd4pGalbs', // English
-    fr: 'TfGtrgcVrXWjJkeB51T1', // French
-    nl: 'yO6w2xlECAQRFP6pX7Hw', // Dutch
-    es: 'ZpEtuMdTIlJXYXAhevhG'  // Spanish
+    en: 'KoVIHoyLDrQyd4pGalbs',
+    fr: 'TfGtrgcVrXWjJkeB51T1',
+    nl: 'yO6w2xlECAQRFP6pX7Hw',
+    es: 'ZpEtuMdTIlJXYXAhevhG'
   };
 
   async function speakViaElevenLabs(sentence, code){
@@ -324,8 +340,8 @@ if (isAdmin) {
     try{ recognition.start(); }catch{}
     asr.textContent='Transcribing…';
     mic.textContent='Stop Recording'; mic.classList.add('pulse');
-    elapsed=0; remain.textContent=(isPremium?900:120)+'s'; bar.style.width='0%'; meter.style.display='flex';
-    timer=setInterval(()=>{ elapsed++; const cap = isPremium?900:120; bar.style.width=(elapsed/cap*100)+'%'; remain.textContent=Math.max(0,cap-elapsed)+'s'; if(elapsed>=cap) stopRec(); },1000);
+    elapsed=0; remain.textContent=getCap()+'s'; bar.style.width='0%'; meter.style.display='flex';
+    timer=setInterval(()=>{ elapsed++; const cap=getCap(); bar.style.width=(elapsed/cap*100)+'%'; remain.textContent=Math.max(0,cap-elapsed)+'s'; if(elapsed>=cap) stopRec(); },1000);
     recActive=true;
   }
   function stopRec(){
@@ -362,7 +378,7 @@ if (isAdmin) {
     meta.appendChild(h); meta.appendChild(t);
 
     const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px'; actions.style.flexWrap='wrap';
-    const make=(txt,fn,disabled)=>{const b=document.createElement('button'); b.className='btn'; b.textContent=txt; if(disabled) b.disabled=true; if(disabled) b.classList.add('lock'); b.onclick=fn; return b;};
+    const make=(txt,fn,disabled)=>{const b=document.createElement('button'); b.className='btn'; b.textContent=txt; if(disabled){ b.disabled=true; b.classList.add('lock'); } b.onclick=fn; return b;};
     actions.appendChild(make('View',()=>viewStory(s)));
     actions.appendChild(make('Rewrite (AI)',()=>requirePremium() && rewriteAI(idx), !isPremium));
     actions.appendChild(make('Undo',()=>undoRewrite(idx), !s.prev));
@@ -381,7 +397,7 @@ if (isAdmin) {
 
   function requirePremium(){
     if (!isPremium) {
-      alert('This is a Premium feature. Click "Redeem code" above to start your 14‑day trial.');
+      alert('This is a Premium feature. Enter a valid code to unlock a 14‑day trial.');
       return false;
     }
     return true;
@@ -394,61 +410,67 @@ if (isAdmin) {
     document.body.appendChild(dlg); dlg.addEventListener('close',()=>dlg.remove()); dlg.showModal();
   }
 
-  function delStory(idx){ const list=loadStories(); list.splice(idx,1); saveStories(list); renderLib(); renderLib(true); }
+  function delStory(idx){
+    if(!confirm('Delete this story?')) return;
+    const items=loadStories(); items.splice(idx,1); saveStories(items); renderLib(innerWidth<1024);
+  }
+
+  function undoRewrite(idx){
+    const items=loadStories(); const s=items[idx]; if(!s?.prev) return alert('No previous version stored.');
+    s.text=s.prev; delete s.prev; saveStories(items); renderLib(innerWidth<1024);
+  }
 
   async function rewriteAI(idx){
-    const list=loadStories(); const s=list[idx]; if(!s) return;
-    try{
-      const res=await fetch('/api/rewrite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:s.text,title:s.title,language:lang.value,tone:'warm, vivid, cohesive memoir tone'})});
-      const data=await res.json(); if(!res.ok) throw new Error(data.error||'rewrite_failed');
-      if(!s.prev) s.prev = s.text;
-      s.text = data.text || s.text;
-      saveStories(list); renderLib(); renderLib(true);
-      viewStory(s);
-    }catch(e){ alert('Rewrite error: '+(e?.message||e)); }
+    const items=loadStories(); const s=items[idx]; if(!s) return;
+    const payload = {
+      text: s.text,
+      style: "warm, vivid, cohesive autobiography with gentle pacing and sensory details",
+      lang: lang.value || 'en'
+    };
+    const r = await fetch('/api/rewrite', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    if(!r.ok){ alert('Rewrite failed.'); return; }
+    const data = await r.json();
+    s.prev = s.text; s.text = data.text || s.text;
+    s.rewritten_at = new Date().toISOString();
+    saveStories(items); renderLib(innerWidth<1024);
   }
-  function undoRewrite(idx){ const list=loadStories(); const s=list[idx]; if(!s?.prev) return; s.text = s.prev; s.prev=null; saveStories(list); renderLib(); renderLib(true); }
 
-  async function downloadDocx(s){
-    const JSZip=window.JSZip; const zip=new JSZip();
-    const paras=String(s.text||'').trim().split(/\n\s*\n/).map(p=>`<w:p><w:r><w:t>${xml(p)}</w:t></w:r></w:p>`).join('');
-    const title=xml(s.title||'Story');
-    zip.file('[Content_Types].xml',`<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>`);
-    zip.folder('_rels').file('.rels',`<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`);
-    const word=zip.folder('word'); word.folder('_rels').file('document.xml.rels', `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>`);
-    word.file('document.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t xml:space="preserve">${title}</w:t></w:r></w:p>${paras}<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/></w:sectPr></w:body></w:document>`);
-    const blob=await zip.generateAsync({type:'blob'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(s.title||'Story')+'.docx'; a.click();
+  function downloadDocx(s){
+    // simple .docx-like container via zip with a .txt (keeps it basic)
+    const zip = new JSZip();
+    const meta = `Title: ${s.title||'Story'}\nWhen: ${s.happened_label || s.happened_sort || ''}\nCreated: ${new Date(s.created).toLocaleString()}\n\n`;
+    zip.file('story.txt', meta + (s.text||''));
+    zip.generateAsync({type:'blob'}).then(blob=>{
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(s.title||'story')+'.zip'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+    });
   }
-  const xml=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-  /* ===== Save current story ===== */
-  function currentText(){ const t=transcriptEl.textContent||''; return t==='Your words will appear here…' ? '' : t; }
+  exportCsvBtn.onclick=()=>{
+    const items=loadStories();
+    const rows=[['title','happened_label','happened_sort','created','text']];
+    items.forEach(s=>rows.push([s.title||'',s.happened_label||'',s.happened_sort||'',s.created||'',(s.text||'').replace(/\n/g,'\\n')]));
+    const csv=rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='memoir_stories.csv'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  };
+
+  exportBookBtn.onclick=()=>{
+    if(!requirePremium()) return;
+    alert('PDF export placeholder — we will swap this for a Canva/real PDF pipeline next.');
+  };
+
+  /* ===== Save story ===== */
   save.onclick=()=>{
-    const list=loadStories();
+    const txt=transcriptEl.textContent.trim(); if(!txt) return;
     const when=parseApproxDate(whenEl.value);
-    list.unshift({ id:crypto.randomUUID(), title:titleEl.value||'Story', text:currentText(), created:Date.now(), happened_label:when.label||null, happened_sort:when.sort, prev:null });
-    saveStories(list);
-    titleEl.value=''; whenEl.value=''; transcriptEl.textContent='Your words will appear here…'; save.disabled=true;
-    renderLib(); renderLib(true);
+    const story={ title:titleEl.value||'Story', text:txt, created:new Date().toISOString(), happened_label:when.label, happened_sort:when.sort };
+    const items=loadStories(); items.unshift(story); saveStories(items); renderLib(innerWidth<1024);
+    // reset
+    transcriptEl.textContent='Your words will appear here…'; save.disabled=true; titleEl.value=''; whenEl.value='';
   };
-  clearBtn.onclick=()=>{ titleEl.value=''; whenEl.value=''; transcriptEl.textContent='Your words will appear here…'; save.disabled=true; };
+  clearBtn.onclick=()=>{ transcriptEl.textContent='Your words will appear here…'; save.disabled=true; };
 
-  /* ===== Exports ===== */
-  exportBookBtn.onclick = ()=>{
-    if (!requirePremium()) return;
-    const items=loadStories().slice().sort((a,b)=>(a.happened_sort||'')< (b.happened_sort||'') ? -1 : 1);
-    const html = items.map(ch=>`<section style="page-break-after:always;padding:42px 48px;font-family:Georgia,serif"><h1 style="margin:0">${esc(ch.title||'Chapter')}</h1><time style="color:#666;font-size:12px">${esc(ch.happened_label || (ch.happened_sort?new Date(ch.happened_sort).toDateString():''))}</time><div style="margin-top:16px;white-space:pre-wrap;line-height:1.6">${esc(ch.text||'')}</div></section>`).join('');
-    const w=open('','_blank'); w.document.write(`<!doctype html><meta charset="utf-8"><title>Book Export</title>${html}`); w.document.close();
-  };
-  exportCsvBtn.onclick = ()=>{
-    const rows=[['Title','When','Body']]; loadStories().forEach(ch=>rows.push([ch.title||'Chapter', ch.happened_label || (ch.happened_sort?new Date(ch.happened_sort).toISOString().slice(0,10):''), (ch.text||'').replace(/\r?\n/g,'\\n')]));
-    const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
-    const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='memoir.csv'; a.click();
-  };
-
-  /* ===== Init ===== */
+  // initial render
   renderPrompts(); renderLib();
-
 })();
 </script>
 </body>
