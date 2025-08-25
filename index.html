@@ -14,7 +14,7 @@
 body{margin:0;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
 .container{max-width:1100px;margin:0 auto;padding:20px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:16px}
-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:10px}
 .logo{width:34px;height:34px;border-radius:12px;background:conic-gradient(from 180deg,var(--brand),var(--brand2))}
 h1{margin:0;font-size:1.35rem}
@@ -60,7 +60,6 @@ dialog::backdrop{background:rgba(0,0,0,.35)}
 dialog{border:none;border-radius:12px;box-shadow:var(--shadow);max-width:min(820px,92vw)}
 footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
 .badgePlan{padding:6px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px}
-
 .input{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit;width:100%}
 </style>
 </head>
@@ -73,7 +72,7 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
           <h1>Memoir — Recorder</h1>
         </div>
         <div class="controls">
-          <select id="lang">
+          <select id="lang" aria-label="Language">
             <option value="en">English</option>
             <option value="fr">Français</option>
             <option value="es">Español</option>
@@ -86,6 +85,7 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
             <span id="redeemMsg" class="muted"></span>
           </div>
           <button id="toggleLib" class="btn">☰ Library</button>
+          <button id="helpBtn" class="btn">❓ Help</button>
           <button id="logout" class="btn badge">Logout</button>
         </div>
       </header>
@@ -137,7 +137,7 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
         </aside>
       </div>
 
-      <footer>Cloud prototype — EN/FR/ES/NL prompts with voice, recorder, library. Premium/Admin: AI rewrite + PDF export. Single‑use trial codes supported.</footer>
+      <footer>Cloud prototype — Whisper transcription default. EN/FR/ES/NL prompts + voice, library, AI rewrite, CSV, trials.</footer>
     </div>
   </div>
 
@@ -152,365 +152,338 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     </div>
   </div>
 
+  <!-- Help / FAQ dialog -->
+  <dialog id="faqDialog">
+    <form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #e5e7eb">
+      <strong id="faqTitle">Help / FAQ</strong>
+      <button class="btn" autofocus>Close</button>
+    </form>
+    <div id="faqBody" style="padding:16px;max-width:min(820px,92vw)"></div>
+  </dialog>
+
   <!-- libs -->
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
 
 <script>
 (async function(){
-
-  /* ===== Supabase session guard (resilient) ===== */
+  /* ===== Supabase session guard ===== */
   const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false} });
 
-  const supabase = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY,
-    { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } }
-  );
+  const guard=document.getElementById('guard'), app=document.getElementById('app');
+  const { data:{session} } = await supabase.auth.getSession();
+  if(!session){ window.location.replace('/login.html'); return; }
 
-  const guard = document.getElementById('guard');
-  const app   = document.getElementById('app');
+  // Load plan / role
+  const { data: profile } = await supabase.from('profiles').select('plan, trial_end, role').single();
+  const trialUntil = profile?.trial_end ? new Date(profile.trial_end) : null;
+  const trialActive = trialUntil && Date.now() < trialUntil.getTime();
+  const isAdmin = profile?.role === 'admin';
+  let isPremium = isAdmin || profile?.plan === 'premium' || trialActive;
 
-  supabase.auth.onAuthStateChange((_event, session) => {
-    if (!session) {
-      window.location.replace('/login.html');
-    } else {
-      startApp(session).catch(err => showGuardError(err));
-    }
+  guard.style.display='none'; app.style.display='grid';
+  document.getElementById('logout').onclick = async ()=>{ await supabase.auth.signOut(); window.location.replace('/login.html'); };
+
+  // Plan badge
+  const planBadge = document.getElementById('planBadge');
+  if (isAdmin) {
+    planBadge.textContent = 'Plan: Admin';
+  } else if (isPremium) {
+    planBadge.textContent = trialActive
+      ? `Plan: Premium (trial until ${trialUntil.toLocaleDateString()})`
+      : 'Plan: Premium';
+  } else {
+    planBadge.textContent = 'Plan: Free';
+  }
+
+  /* ===== Redeem code UI ===== */
+  const codeInput = document.getElementById('codeInput');
+  const redeemBtn = document.getElementById('redeemBtn');
+  const redeemMsg = document.getElementById('redeemMsg');
+  const setRedeemMsg = (t)=>{ if(redeemMsg) redeemMsg.textContent = t || ''; };
+  redeemBtn?.addEventListener('click', async () => {
+    setRedeemMsg('');
+    const code = codeInput.value.trim();
+    if(!code) { setRedeemMsg('Enter a code.'); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    if(!user){ setRedeemMsg('Please sign in first.'); return; }
+    try{
+      const { data, error } = await supabase.rpc('redeem_code', { p_code: code });
+      if (error) throw error;
+      if (data?.ok) { setRedeemMsg(`✅ Premium until ${new Date(data.trial_end).toLocaleDateString()}`); location.reload(); }
+      else {
+        const map={not_authenticated:'Please sign in first.',not_found:'Code not found.',expired:'Code expired.',exhausted:'Code already used.',already_premium:'You already have Premium.'};
+        setRedeemMsg('❌ ' + (map[data?.error] || 'Redeem failed.'));
+      }
+    }catch(e){ setRedeemMsg('❌ ' + (e.message || String(e))); }
   });
 
-  try {
-    const sessionResult = await Promise.race([
-      supabase.auth.getSession(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
-    ]);
+  /* ===== DOM ===== */
+  const $=id=>document.getElementById(id);
+  const lang=$('lang'), promptsWrap=$('prompts');
+  const titleEl=$('title'), whenEl=$('when'), transcriptEl=$('transcript');
+  const mic=$('mic'), meter=$('meter'), bar=$('bar'), remain=$('remain'), asr=$('asr');
+  const save=$('save'), clearBtn=$('clear'), library=$('library');
+  const drawer=$('drawer'), libraryDrawer=$('libraryDrawer'), toggleLib=$('toggleLib'), closeDrawer=$('closeDrawer');
+  const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
+  const exportBookBtn=$('exportBook'), exportCsvBtn=$('exportCsv');
 
-    const session = sessionResult?.data?.session ?? null;
+  // Gating
+  function setPremiumUI(enabled){
+    const lockBtn = (btn, on, title) => {
+      btn.toggleAttribute('disabled', !on);
+      btn.classList.toggle('lock', !on);
+      if (!on && title) btn.title = title; else btn.removeAttribute('title');
+    };
+    lockBtn(exportBookBtn, enabled, 'Premium only');
+  }
+  setPremiumUI(isPremium);
 
-    if (!session) {
-      window.location.replace('/login.html');
+  const CAP_FREE = 120;      // seconds
+  const CAP_PREM = 900;
+  const getCap = () => (isPremium ? CAP_PREM : CAP_FREE);
+  const BCP={en:'en',fr:'fr',es:'es',nl:'nl'}; // we pass ISO hint to backend
+
+  /* ===== Topics + Spoken prompts (same) ===== */
+  const TOPIC_WORDS = {
+    en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
+    fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
+    es:["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"],
+    nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
+  };
+  const PROMPT_SENTENCES = {
+    en:{Childhood:"Tell me something about your youth.",Family:"Tell me about your family and the people who raised you.",School:"What was school like for you?",Work:"Tell me about your first job or career.",Love:"How did you meet your partner, or what did love mean to you then?",War:"What big world events or conflicts did you live through?",Travel:"Where did you travel that left a mark on you?",Traditions:"Which family traditions mattered most to you?",Holidays:"Describe a holiday you remember vividly.",Lessons:"What life lesson did you learn the hard way?",Advice:"What advice would you give your younger self?","Turning-points":"What was a turning point that changed your path?"},
+    fr:{Enfance:"Parlez-moi de votre jeunesse, d’un souvenir marquant.",Famille:"Parlez-moi de votre famille et des personnes qui vous ont élevé.",École:"Comment était l’école pour vous ?",Travail:"Racontez-moi votre premier travail ou votre carrière.",Amour:"Comment avez-vous rencontré votre partenaire, et que signifiait l’amour pour vous ?",Guerre:"Quels grands événements ou conflits avez-vous vécus ?",Voyages:"Quels voyages vous ont marqué(e) ?",Traditions:"Quelles traditions familiales comptaient le plus ?",Fêtes:"Décrivez une fête dont vous vous souvenez clairement.",Leçons:"Quelle leçon de vie avez-vous apprise à la dure ?",Conseils:"Quel conseil donneriez-vous à votre jeune vous ?",Déclics:"Quel déclic a changé votre trajectoire ?"},
+    es:{Infancia:"Cuéntame algo sobre tu juventud.",Familia:"Háblame de tu familia y de quienes te criaron.",Escuela:"¿Cómo era la escuela para ti?",Trabajo:"Cuéntame sobre tu primer trabajo o tu carrera.",Amor:"¿Cómo conociste a tu pareja y qué significaba el amor entonces?",Guerra:"¿Qué grandes eventos o conflictos viviste?",Viajes:"¿Qué viajes te marcaron?",Tradiciones:"¿Qué tradiciones familiares eran importantes para ti?",Fiestas:"Describe una fiesta que recuerdes con claridad.",Lecciones:"¿Qué lección de vida aprendiste con dificultad?",Consejos:"¿Qué consejo le darías a tu yo joven?","Puntos-clave":"¿Cuál fue un punto de inflexión en tu vida?"},
+    nl:{Jeugd:"Vertel me iets over je jeugd.",Familie:"Vertel over je familie en de mensen die je hebben opgevoed.",School:"Hoe was school voor jou?",Werk:"Vertel over je eerste baan of je loopbaan.",Liefde:"Hoe heb je je partner ontmoet, en wat betekende liefde toen?",Oorlog:"Welke grote gebeurtenissen of conflicten heb je meegemaakt?",Reizen:"Welke reizen hebben indruk op je gemaakt?",Tradities:"Welke familietradities waren belangrijk voor je?",Feestdagen:"Beschrijf een feestdag die je helder herinnert.",Lessen:"Welke levensles heb je op de harde manier geleerd?",Advies:"Welk advies zou je je jongere zelf geven?",Keerpunt:"Wat was een keerpunt in je leven?"}
+  };
+
+  /* ===== ElevenLabs TTS for prompts (unchanged) ===== */
+  const VOICE_BY_LANG = { en:'KoVIHoyLDrQyd4pGalbs', fr:'TfGtrgcVrXWjJkeB51T1', nl:'yO6w2xlECAQRFP6pX7Hw', es:'ZpEtuMdTIlJXYXAhevhG' };
+  async function speakViaElevenLabs(sentence, code){
+    try{
+      const r = await fetch('/api/voice', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ text: sentence, voiceId: VOICE_BY_LANG[code] || VOICE_BY_LANG.en }) });
+      if(!r.ok) throw new Error('tts_failed');
+      const blob = await r.blob(); const url = URL.createObjectURL(blob); const audio = new Audio(url); await audio.play(); setTimeout(()=>URL.revokeObjectURL(url), 60000);
+      return true;
+    }catch(e){ console.warn('ElevenLabs TTS failed → fallback', e); return false; }
+  }
+  function speakSystem(sentence, code){
+    if(!('speechSynthesis' in window)) return;
+    const u=new SpeechSynthesisUtterance(String(sentence)); u.lang=(code||'en'); u.rate=.95; u.pitch=1; u.volume=1; speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }
+  async function speakPrompt(oneWord, code){
+    const sentence=(PROMPT_SENTENCES[code]||{})[oneWord] || oneWord;
+    const ok = await speakViaElevenLabs(sentence, code);
+    if(!ok) speakSystem(sentence, code);
+  }
+  function renderPrompts(){
+    const code=lang.value; promptsWrap.innerHTML='';
+    (TOPIC_WORDS[code]||TOPIC_WORDS.en).forEach(word=>{
+      const chip=document.createElement('div'); chip.className='chip'; chip.textContent=word;
+      chip.onclick=()=>{ titleEl.value=word; speakPrompt(word, code); };
+      promptsWrap.appendChild(chip);
+    });
+  }
+
+  /* ===== Library / helpers (unchanged) ===== */
+  const LSKEY='memoir.stories';
+  const loadStories=()=>{try{return JSON.parse(localStorage.getItem(LSKEY)||'[]')}catch{return[]}};
+  const saveStories=(list)=>localStorage.setItem(LSKEY,JSON.stringify(list));
+  const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  function storyRow(s, idx){
+    const row=document.createElement('div'); row.className='story';
+    const meta=document.createElement('div'); meta.style.minWidth='0';
+    const h=document.createElement('h3'); h.textContent=s.title||'Story';
+    const t=document.createElement('div'); t.className='muted';
+    t.textContent= s.happened_label || (s.happened_sort?new Date(s.happened_sort).toDateString():new Date(s.created).toLocaleString());
+    meta.appendChild(h); meta.appendChild(t);
+    const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px'; actions.style.flexWrap='wrap';
+    const make=(txt,fn,disabled)=>{const b=document.createElement('button'); b.className='btn'; b.textContent=txt; if(disabled){ b.disabled=true; b.classList.add('lock'); } b.onclick=fn; return b;};
+    actions.appendChild(make('View',()=>viewStory(s)));
+    actions.appendChild(make('Rewrite (AI)',()=>requirePremium() && rewriteAI(idx), !(isPremium)));
+    actions.appendChild(make('Undo',()=>undoRewrite(idx), !s.prev));
+    actions.appendChild(make('Download .docx',()=>downloadDocx(s)));
+    actions.appendChild(make('Delete',()=>delStory(idx)));
+    row.appendChild(meta); row.appendChild(actions);
+    return row;
+  }
+  function renderLib(toDrawer=false){
+    const items=loadStories(); const tgt = toDrawer?libraryDrawer:library;
+    tgt.innerHTML=''; if(!items.length){ const p=document.createElement('p'); p.className='muted'; p.textContent='No stories yet.'; tgt.appendChild(p); return; }
+    items.forEach((s,i)=>tgt.appendChild(storyRow(s,i)));
+  }
+  function requirePremium(){ if(!isPremium){ alert('This is a Premium feature. Enter a valid code for a 14‑day trial.'); return false; } return true; }
+  function viewStory(s){
+    const dlg=document.createElement('dialog');
+    dlg.style.width='min(90vw,820px)';
+    dlg.innerHTML=`<form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #e5e7eb"><strong>${esc(s.title||'Story')}</strong><button autofocus class="btn">Close</button></form><div style="padding:16px"><div class="muted" style="margin-bottom:6px">${esc(s.happened_label || (s.happened_sort?new Date(s.happened_sort).toDateString():new Date(s.created).toLocaleString()))}</div><div style="white-space:pre-wrap;font-family:system-ui">${esc(s.text||'')}</div></div>`;
+    document.body.appendChild(dlg); dlg.addEventListener('close',()=>dlg.remove()); dlg.showModal();
+  }
+  function delStory(idx){ if(!confirm('Delete this story?')) return; const items=loadStories(); items.splice(idx,1); saveStories(items); renderLib(innerWidth<1024); }
+  function undoRewrite(idx){ const items=loadStories(); const s=items[idx]; if(!s?.prev) return alert('No previous version stored.'); s.text=s.prev; delete s.prev; saveStories(items); renderLib(innerWidth<1024); }
+  async function rewriteAI(idx){
+    const items=loadStories(); const s=items[idx]; if(!s) return;
+    const payload = { text: s.text, style: "warm, vivid, cohesive autobiography with gentle pacing and sensory details", lang: lang.value || 'en' };
+    const r = await fetch('/api/rewrite', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    if(!r.ok){ alert('Rewrite failed.'); return; }
+    const data = await r.json(); s.prev = s.text; s.text = data.text || s.text; s.rewritten_at = new Date().toISOString();
+    saveStories(items); renderLib(innerWidth<1024);
+  }
+  function downloadDocx(s){
+    const zip = new JSZip();
+    const meta = `Title: ${s.title||'Story'}\nWhen: ${s.happened_label || s.happened_sort || ''}\nCreated: ${new Date(s.created).toLocaleString()}\n\n`;
+    zip.file('story.txt', meta + (s.text||'')); zip.generateAsync({type:'blob'}).then(blob=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(s.title||'story')+'.zip'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); });
+  }
+
+  exportCsvBtn.onclick=()=>{
+    const items=loadStories();
+    const rows=[['title','happened_label','happened_sort','created','text']];
+    items.forEach(s=>rows.push([s.title||'',s.happened_label||'',s.happened_sort||'',s.created||'',(s.text||'').replace(/\n/g,'\\n')]));
+    const csv=rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='memoir_stories.csv'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  };
+  exportBookBtn.onclick=()=>{ if(!requirePremium()) return; alert('PDF export placeholder — Canva/real PDF pipeline coming.'); };
+
+  /* ===== Approx date ===== */
+  function parseApproxDate(input){
+    if(!input) return { label:'', sort:null };
+    const s=input.trim().toLowerCase();
+    const iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); if(iso){const d=new Date(+iso[1],+iso[2]-1,+iso[3]);return{label:input,sort:d.toISOString().slice(0,10)};}
+    const yOnly=s.match(/(\d{4})/); if(yOnly){const d=new Date(+yOnly[1],0,1);return{label:input,sort:d.toISOString().slice(0,10)};}
+    const season=s.match(/^(early|mid|late)?\s*(spring|summer|autumn|fall|winter)\s+(\d{4})$/);
+    if(season){const y=+season[3];const base={spring:2,summer:5,autumn:8,fall:8,winter:11}[season[2]];let m=base,day=1;if(season[1]==='mid')day=10;if(season[1]==='late')day=20;const d=new Date(y,m,day);return{label:input,sort:d.toISOString().slice(0,10)};}
+    return { label:input, sort:null };
+  }
+
+  /* ===== RECORDING WITH MEDIARECORDER → WHISPER ===== */
+  let mediaRecorder=null, recChunks=[], recActive=false, elapsed=0, timer=null;
+
+  async function startRec(){
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation:true, noiseSuppression:true } });
+      // Use a common Opus container that Whisper accepts
+      mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+    }catch(e){
+      asr.textContent = 'Mic permission denied or unsupported.';
       return;
     }
-    await startApp(session);
-  } catch (err) {
-    showGuardError(err);
+
+    recChunks = [];
+    mediaRecorder.ondataavailable = (e)=>{ if(e.data && e.data.size) recChunks.push(e.data); };
+    mediaRecorder.onstop = async ()=>{ await finalizeTranscription(); };
+
+    asr.textContent='Recording…';
+    mic.textContent='Stop Recording'; mic.classList.add('pulse');
+    elapsed=0; remain.textContent=getCap()+'s'; bar.style.width='0%'; meter.style.display='flex';
+
+    mediaRecorder.start(1000);
+    timer=setInterval(()=>{
+      elapsed++; const cap=getCap();
+      bar.style.width=(elapsed/cap*100)+'%';
+      remain.textContent=Math.max(0,cap-elapsed)+'s';
+      if(elapsed>=cap){ stopRec(); }
+    },1000);
+
+    recActive=true;
   }
 
-  function showGuardError(err) {
-    console.error('Session check failed:', err);
-    guard.textContent = 'Could not confirm your session. Reloading to sign in…';
-    setTimeout(() => { window.location.replace('/login.html'); }, 1200);
+  function stopRec(){
+    try{ mediaRecorder && mediaRecorder.state !== 'inactive' && mediaRecorder.stop(); }catch{}
+    if(timer){ clearInterval(timer); timer=null; }
+    mic.textContent='Record'; mic.classList.remove('pulse');
+    recActive=false;
   }
 
-  /* ===== Main App once session is ready ===== */
-  async function startApp(session) {
-    // Load profile: plan, trial, role
-    const { data: profile, error: pErr } = await supabase.from('profiles').select('plan, trial_end, role').single();
-    if (pErr) console.warn('Profile read issue:', pErr);
+  async function finalizeTranscription(){
+    asr.textContent='Transcribing…';
+    try{
+      const blob = new Blob(recChunks, { type: 'audio/webm' });
+      const fd = new FormData();
+      // Name helps API; language hint improves accuracy
+      fd.append('audio', blob, 'memoir.webm');
+      fd.append('lang', BCP[lang.value] || 'fr'); // default to fr for your target
 
-    const trialUntil = profile?.trial_end ? new Date(profile.trial_end) : null;
-    const trialActive = trialUntil && Date.now() < trialUntil.getTime();
-    const isAdmin = profile?.role === 'admin';
-    let isPremium = isAdmin || profile?.plan === 'premium' || trialActive;
-
-    guard.style.display='none'; app.style.display='grid';
-    document.getElementById('logout').onclick = async ()=>{ await supabase.auth.signOut(); window.location.replace('/login.html'); };
-
-    // Plan badge
-    const planBadge = document.getElementById('planBadge');
-    if (isAdmin) {
-      planBadge.textContent = 'Plan: Admin';
-    } else if (isPremium) {
-      planBadge.textContent = trialActive
-        ? `Plan: Premium (trial until ${trialUntil.toLocaleDateString()})`
-        : 'Plan: Premium';
-    } else {
-      planBadge.textContent = 'Plan: Free';
-    }
-
-    /* ===== Redeem code UI ===== */
-    const codeInput = document.getElementById('codeInput');
-    const redeemBtn = document.getElementById('redeemBtn');
-    const redeemMsg = document.getElementById('redeemMsg');
-    const setRedeemMsg = (t)=>{ if(redeemMsg) redeemMsg.textContent = t || ''; };
-
-    redeemBtn?.addEventListener('click', async () => {
-      setRedeemMsg('');
-      const code = codeInput.value.trim();
-      if(!code) { setRedeemMsg('Enter a code.'); return; }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if(!user){ setRedeemMsg('Please sign in first.'); return; }
-
-      try{
-        const { data, error } = await supabase.rpc('redeem_code', { p_code: code });
-        if (error) throw error;
-
-        if (data?.ok) {
-          setRedeemMsg(`✅ Premium until ${new Date(data.trial_end).toLocaleDateString()}`);
-          location.reload();
-        } else {
-          const map={not_authenticated:'Please sign in first.',not_found:'Code not found.',expired:'Code expired.',exhausted:'Code already used.',already_premium:'You already have Premium.'};
-          setRedeemMsg('❌ ' + (map[data?.error] || 'Redeem failed.'));
-        }
-      }catch(e){
-        setRedeemMsg('❌ ' + (e.message || String(e)));
-      }
-    });
-
-    /* ===== DOM ===== */
-    const $=id=>document.getElementById(id);
-    const lang=$('lang'), promptsWrap=$('prompts');
-    const titleEl=$('title'), whenEl=$('when'), transcriptEl=$('transcript');
-    const mic=$('mic'), meter=$('meter'), bar=$('bar'), remain=$('remain'), asr=$('asr');
-    const save=$('save'), clearBtn=$('clear'), library=$('library');
-    const drawer=$('drawer'), libraryDrawer=$('libraryDrawer'), toggleLib=$('toggleLib'), closeDrawer=$('closeDrawer');
-    const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
-    const exportBookBtn=$('exportBook'), exportCsvBtn=$('exportCsv');
-
-    /* ===== Gating: controls ===== */
-    function setPremiumUI(enabled){
-      const lockBtn = (btn, on, title) => {
-        btn.toggleAttribute('disabled', !on);
-        btn.classList.toggle('lock', !on);
-        if (!on && title) btn.title = title; else btn.removeAttribute('title');
-      };
-      lockBtn(exportBookBtn, enabled, 'Premium only');
-    }
-    setPremiumUI(isPremium);
-
-    // Recording cap by plan
-    const CAP_FREE = 120;     // 2 min
-    const CAP_PREM = 900;     // 15 min
-    const getCap = () => (isPremium ? CAP_PREM : CAP_FREE);
-
-    /* ===== Topics (chip word) + Spoken prompts (full sentence) ===== */
-    const TOPIC_WORDS = {
-      en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
-      fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
-      es:["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"],
-      nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
-    };
-    const PROMPT_SENTENCES = {
-      en:{Childhood:"Tell me something about your youth.",Family:"Tell me about your family and the people who raised you.",School:"What was school like for you?",Work:"Tell me about your first job or career.",Love:"How did you meet your partner, or what did love mean to you then?",War:"What big world events or conflicts did you live through?",Travel:"Where did you travel that left a mark on you?",Traditions:"Which family traditions mattered most to you?",Holidays:"Describe a holiday you remember vividly.",Lessons:"What life lesson did you learn the hard way?",Advice:"What advice would you give your younger self?","Turning-points":"What was a turning point that changed your path?"},
-      fr:{Enfance:"Parlez-moi de votre jeunesse, d’un souvenir marquant.",Famille:"Parlez-moi de votre famille et des personnes qui vous ont élevé.",École:"Comment était l’école pour vous ?",Travail:"Racontez-moi votre premier travail ou votre carrière.",Amour:"Comment avez-vous rencontré votre partenaire, et que signifiait l’amour pour vous ?",Guerre:"Quels grands événements ou conflits avez-vous vécus ?",Voyages:"Quels voyages vous ont marqué(e) ?",Traditions:"Quelles traditions familiales comptaient le plus ?",Fêtes:"Décrivez une fête dont vous vous souvenez clairement.",Leçons:"Quelle leçon de vie avez-vous apprise à la dure ?",Conseils:"Quel conseil donneriez-vous à votre jeune vous ?",Déclics:"Quel déclic a changé votre trajectoire ?"},
-      es:{Infancia:"Cuéntame algo sobre tu juventud.",Familia:"Háblame de tu familia y de quienes te criaron.",Escuela:"¿Cómo era la escuela para ti?",Trabajo:"Cuéntame sobre tu primer trabajo o tu carrera.",Amor:"¿Cómo conociste a tu pareja y qué significaba el amor entonces?",Guerra:"¿Qué grandes eventos o conflictos viviste?",Viajes:"¿Qué viajes te marcaron?",Tradiciones:"¿Qué tradiciones familiares eran importantes para ti?",Fiestas:"Describe una fiesta que recuerdes con claridad.",Lecciones:"¿Qué lección de vida aprendiste con dificultad?",Consejos:"¿Qué consejo le darías a tu yo joven?","Puntos-clave":"¿Cuál fue un punto de inflexión en tu vida?"},
-      nl:{Jeugd:"Vertel me iets over je jeugd.",Familie:"Vertel over je familie en de mensen die je hebben opgevoed.",School:"Hoe was school voor jou?",Werk:"Vertel over je eerste baan of je loopbaan.",Liefde:"Hoe heb je je partner ontmoet, en wat betekende liefde toen?",Oorlog:"Welke grote gebeurtenissen of conflicten heb je meegemaakt?",Reizen:"Welke reizen hebben indruk op je gemaakt?",Tradities:"Welke familietradities waren belangrijk voor je?",Feestdagen:"Beschrijf een feestdag die je helder herinnert.",Lessen:"Welke levensles heb je op de harde manier geleerd?",Advies:"Welk advies zou je je jongere zelf geven?",Keerpunt:"Wat was een keerpunt in je leven?"}
-    };
-    const BCP={en:'en-US',fr:'fr-FR',es:'es-ES',nl:'nl-NL'};
-
-    /* ===== ElevenLabs TTS (server endpoint) + system fallback ===== */
-    const VOICE_BY_LANG = {
-      en: 'KoVIHoyLDrQyd4pGalbs',
-      fr: 'TfGtrgcVrXWjJkeB51T1',
-      nl: 'yO6w2xlECAQRFP6pX7Hw',
-      es: 'ZpEtuMdTIlJXYXAhevhG'
-    };
-
-    async function speakViaElevenLabs(sentence, code){
-      try{
-        const r = await fetch('/api/voice', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ text: sentence, voiceId: VOICE_BY_LANG[code] || VOICE_BY_LANG.en })
-        });
-        if(!r.ok) throw new Error('tts_failed');
-        const blob = await r.blob();
-        const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-        await audio.play();
-        setTimeout(()=>URL.revokeObjectURL(url), 60000);
-        return true;
-      }catch(e){
-        console.warn('ElevenLabs TTS failed → system fallback', e);
-        return false;
-      }
-    }
-    function speakSystem(sentence, code){
-      if(!('speechSynthesis' in window)) return;
-      const u=new SpeechSynthesisUtterance(String(sentence));
-      u.lang=BCP[code]||'en-US'; u.rate=.95; u.pitch=1; u.volume=1;
-      speechSynthesis.cancel(); speechSynthesis.speak(u);
-    }
-    async function speakPrompt(oneWord, code){
-      const sentence=(PROMPT_SENTENCES[code]||{})[oneWord] || oneWord;
-      const ok = await speakViaElevenLabs(sentence, code);
-      if(!ok) speakSystem(sentence, code);
-    }
-
-    function renderPrompts(){
-      const code=lang.value; promptsWrap.innerHTML='';
-      (TOPIC_WORDS[code]||TOPIC_WORDS.en).forEach(word=>{
-        const chip=document.createElement('div'); chip.className='chip'; chip.textContent=word;
-        chip.onclick=()=>{ titleEl.value=word; speakPrompt(word, code); };
-        promptsWrap.appendChild(chip);
-      });
-    }
-
-    /* ===== Modes ===== */
-    tabGuided.onclick=()=>{ tabGuided.classList.add('active'); tabFree.classList.remove('active'); guidedBlock.style.display='block'; };
-    tabFree.onclick=()=>{ tabFree.classList.add('active'); tabGuided.classList.remove('active'); guidedBlock.style.display='none'; };
-    lang.onchange=()=>{ renderPrompts(); };
-
-    /* ===== Library drawer (mobile) ===== */
-    toggleLib.onclick=()=>{ if(innerWidth>=1024){ renderLib(); } else { drawer.classList.add('show'); renderLib(true); } };
-    closeDrawer.onclick=()=>drawer.classList.remove('show');
-    drawer.addEventListener('click',(e)=>{ if(e.target===drawer) drawer.classList.remove('show'); });
-
-    /* ===== Recording (Web Speech Recognition) ===== */
-    let recognition=null, recActive=false, elapsed=0, timer=null;
-    function startRec(){
-      const SR = window.webkitSpeechRecognition || window.SpeechRecognition;
-      if(!SR){ asr.textContent='Speech recognition is not available in this browser.'; return; }
-      recognition=new SR();
-      recognition.lang = BCP[lang.value] || 'en-US';
-      recognition.continuous=true; recognition.interimResults=true;
-      let full='';
-      recognition.onresult=(e)=>{
-        let inter='';
-        for(let i=e.resultIndex;i<e.results.length;i++){
-          const r=e.results[i]; if(r.isFinal) full+=r[0].transcript+' '; else inter+=r[0].transcript;
-        }
-        const txt=(full+inter).trim();
-        transcriptEl.textContent = txt || 'Your words will appear here…';
-        save.disabled = !txt;
-      };
-      recognition.onend=()=>{ stopRec(); };
-      try{ recognition.start(); }catch{}
-      asr.textContent='Transcribing…';
-      mic.textContent='Stop Recording'; mic.classList.add('pulse');
-      elapsed=0; remain.textContent=getCap()+'s'; bar.style.width='0%'; meter.style.display='flex';
-      timer=setInterval(()=>{ elapsed++; const cap=getCap(); bar.style.width=(elapsed/cap*100)+'%'; remain.textContent=Math.max(0,cap-elapsed)+'s'; if(elapsed>=cap) stopRec(); },1000);
-      recActive=true;
-    }
-    function stopRec(){
-      try{ recognition && recognition.stop(); }catch{}
-      if(timer){ clearInterval(timer); timer=null; }
-      mic.textContent='Record'; mic.classList.remove('pulse'); asr.textContent='';
-      recActive=false;
-    }
-    mic.onclick=()=>{ recActive?stopRec():startRec(); };
-
-    /* ===== Approx date parser ===== */
-    function parseApproxDate(input){
-      if(!input) return { label:'', sort:null };
-      const s=input.trim().toLowerCase();
-      const iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); if(iso){const d=new Date(+iso[1],+iso[2]-1,+iso[3]);return{label:input,sort:d.toISOString().slice(0,10)};}
-      const yOnly=s.match(/(\d{4})/); if(yOnly){const d=new Date(+yOnly[1],0,1);return{label:input,sort:d.toISOString().slice(0,10)};}
-      const season=s.match(/^(early|mid|late)?\s*(spring|summer|autumn|fall|winter)\s+(\d{4})$/);
-      if(season){const y=+season[3];const base={spring:2,summer:5,autumn:8,fall:8,winter:11}[season[2]];let m=base,day=1;if(season[1]==='mid')day=10;if(season[1]==='late')day=20;const d=new Date(y,m,day);return{label:input,sort:d.toISOString().slice(0,10)};}
-      return { label:input, sort:null };
-    }
-
-    /* ===== Library (localStorage for now) ===== */
-    const LSKEY='memoir.stories';
-    const loadStories=()=>{try{return JSON.parse(localStorage.getItem(LSKEY)||'[]')}catch{return[]}};
-    const saveStories=(list)=>localStorage.setItem(LSKEY,JSON.stringify(list));
-    const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-
-    function storyRow(s, idx){
-      const row=document.createElement('div'); row.className='story';
-      const meta=document.createElement('div'); meta.style.minWidth='0';
-      const h=document.createElement('h3'); h.textContent=s.title||'Story';
-      const t=document.createElement('div'); t.className='muted';
-      t.textContent= s.happened_label || (s.happened_sort?new Date(s.happened_sort).toDateString():new Date(s.created).toLocaleString());
-      meta.appendChild(h); meta.appendChild(t);
-
-      const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px'; actions.style.flexWrap='wrap';
-      const make=(txt,fn,disabled)=>{const b=document.createElement('button'); b.className='btn'; b.textContent=txt; if(disabled){ b.disabled=true; b.classList.add('lock'); } b.onclick=fn; return b;};
-      actions.appendChild(make('View',()=>viewStory(s)));
-      actions.appendChild(make('Rewrite (AI)',()=>requirePremium() && rewriteAI(idx), !isPremium));
-      actions.appendChild(make('Undo',()=>undoRewrite(idx), !s.prev));
-      actions.appendChild(make('Download .docx',()=>downloadDocx(s)));
-      actions.appendChild(make('Delete',()=>delStory(idx)));
-      row.appendChild(meta); row.appendChild(actions);
-      return row;
-    }
-
-    function renderLib(toDrawer=false){
-      const items=loadStories();
-      const tgt = toDrawer?libraryDrawer:library;
-      tgt.innerHTML=''; if(!items.length){ const p=document.createElement('p'); p.className='muted'; p.textContent='No stories yet.'; tgt.appendChild(p); return; }
-      items.forEach((s,i)=>tgt.appendChild(storyRow(s,i)));
-    }
-
-    function requirePremium(){
-      if (!isPremium) {
-        alert('This is a Premium feature. Enter a valid code to unlock a 14‑day trial.');
-        return false;
-      }
-      return true;
-    }
-
-    function viewStory(s){
-      const dlg=document.createElement('dialog');
-      dlg.style.width='min(90vw,820px)';
-      dlg.innerHTML=`<form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #e5e7eb"><strong>${esc(s.title||'Story')}</strong><button autofocus class="btn">Close</button></form><div style="padding:16px"><div class="muted" style="margin-bottom:6px">${esc(s.happened_label || (s.happened_sort?new Date(s.happened_sort).toDateString():new Date(s.created).toLocaleString()))}</div><div style="white-space:pre-wrap;font-family:system-ui">${esc(s.text||'')}</div></div>`;
-      document.body.appendChild(dlg); dlg.addEventListener('close',()=>dlg.remove()); dlg.showModal();
-    }
-
-    function delStory(idx){
-      if(!confirm('Delete this story?')) return;
-      const items=loadStories(); items.splice(idx,1); saveStories(items); renderLib(innerWidth<1024);
-    }
-
-    function undoRewrite(idx){
-      const items=loadStories(); const s=items[idx]; if(!s?.prev) return alert('No previous version stored.');
-      s.text=s.prev; delete s.prev; saveStories(items); renderLib(innerWidth<1024);
-    }
-
-    async function rewriteAI(idx){
-      const items=loadStories(); const s=items[idx]; if(!s) return;
-      const payload = {
-        text: s.text,
-        style: "warm, vivid, cohesive autobiography with gentle pacing and sensory details",
-        lang: lang.value || 'en'
-      };
-      const r = await fetch('/api/rewrite', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-      if(!r.ok){ alert('Rewrite failed.'); return; }
+      const r = await fetch('/api/transcribe', { method: 'POST', body: fd });
+      if(!r.ok){ const t=await r.text(); throw new Error(t||'fail'); }
       const data = await r.json();
-      s.prev = s.text; s.text = data.text || s.text;
-      s.rewritten_at = new Date().toISOString();
-      saveStories(items); renderLib(innerWidth<1024);
+      const prev = transcriptEl.textContent === 'Your words will appear here…' ? '' : transcriptEl.textContent + ' ';
+      const txt = (data.text||'').trim();
+      transcriptEl.textContent = (prev + txt).trim() || 'Your words will appear here…';
+      save.disabled = !!txt;
+      asr.textContent='Done.';
+    }catch(e){
+      console.error(e);
+      asr.textContent='Transcription failed.';
+    }finally{
+      setTimeout(()=>{ asr.textContent=''; }, 2000);
     }
+  }
 
-    function downloadDocx(s){
-      // simple .docx-like container via zip with a .txt (keeps it basic)
-      const zip = new JSZip();
-      const meta = `Title: ${s.title||'Story'}\nWhen: ${s.happened_label || s.happened_sort || ''}\nCreated: ${new Date(s.created).toLocaleString()}\n\n`;
-      zip.file('story.txt', meta + (s.text||''));
-      zip.generateAsync({type:'blob'}).then(blob=>{
-        const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(s.title||'story')+'.zip'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-      });
-    }
+  mic.onclick=()=>{ recActive?stopRec():startRec(); };
 
-    exportCsvBtn.onclick=()=>{
-      const items=loadStories();
-      const rows=[['title','happened_label','happened_sort','created','text']];
-      items.forEach(s=>rows.push([s.title||'',s.happened_label||'',s.happened_sort||'',s.created||'',(s.text||'').replace(/\n/g,'\\n')]));
-      const csv=rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n');
-      const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='memoir_stories.csv'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-    };
+  /* ===== Mobile drawer and tabs ===== */
+  const toggleLib=document.getElementById('toggleLib'), drawer=document.getElementById('drawer'), libraryDrawer=document.getElementById('libraryDrawer'), closeDrawer=document.getElementById('closeDrawer');
+  toggleLib.onclick=()=>{ if(innerWidth>=1024){ renderLib(); } else { drawer.classList.add('show'); renderLib(true); } };
+  closeDrawer.onclick=()=>drawer.classList.remove('show');
+  drawer.addEventListener('click',(e)=>{ if(e.target===drawer) drawer.classList.remove('show'); });
 
-    exportBookBtn.onclick=()=>{
-      if(!requirePremium()) return;
-      alert('PDF export placeholder — we will swap this for a Canva/real PDF pipeline next.');
-    };
+  const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
+  tabGuided.onclick=()=>{ tabGuided.classList.add('active'); tabFree.classList.remove('active'); guidedBlock.style.display='block'; };
+  tabFree.onclick=()=>{ tabFree.classList.add('active'); tabGuided.classList.remove('active'); guidedBlock.style.display='none'; };
 
-    /* ===== Save story ===== */
-    save.onclick=()=>{
-      const txt=transcriptEl.textContent.trim(); if(!txt) return;
-      const when=parseApproxDate(whenEl.value);
-      const story={ title:titleEl.value||'Story', text:txt, created:new Date().toISOString(), happened_label:when.label, happened_sort:when.sort };
-      const items=loadStories(); items.unshift(story); saveStories(items); renderLib(innerWidth<1024);
-      // reset
-      transcriptEl.textContent='Your words will appear here…'; save.disabled=true; titleEl.value=''; whenEl.value='';
-    };
-    clearBtn.onclick=()=>{ transcriptEl.textContent='Your words will appear here…'; save.disabled=true; };
+  // initial
+  renderPrompts(); renderLib();
 
-    // initial render
-    renderPrompts(); renderLib();
-  } // end startApp
+  /* ===== Multilingual FAQ (unchanged) ===== */
+  const FAQ = {
+    en: { title: "Help / FAQ", items: [
+      ["How do I use this app?","1) Pick a language. 2) Tap a topic (or choose Free). 3) Press Record and speak. 4) Stop recording, then Save story. You’ll find saved stories in Library."],
+      ["How does AI rewrite work?","Open Library → Rewrite (AI). Premium/Admin only. It keeps your original; you can Undo."],
+      ["How do I export stories?","Use Download .docx (zip with text) or Export CSV for a spreadsheet. PDF export is coming."],
+      ["How do I sign up / log in?","Use the login page with email + password. After sign‑in you’ll land here automatically."],
+      ["How do I get Premium?","Enter a trial code in the header (Redeem). Trials last 14 days. Paid plan will also unlock Premium."],
+      ["Microphone or speech not working?","Allow mic permissions. Safari/iOS needs the page in the foreground with the ringer on. If speech recognition isn’t available, you can still type your story."]
+    ]},
+    fr: { title: "Aide / FAQ", items: [
+      ["Comment utiliser l’application ?","1) Choisissez une langue. 2) Touchez un sujet (ou Free). 3) Appuyez sur Enregistrer et parlez. 4) Arrêtez, puis Enregistrer l’histoire. Vos histoires sont dans la Bibliothèque."],
+      ["Comment fonctionne la réécriture IA ?","Ouvrez Bibliothèque → Réécriture (IA). Réservé Premium/Admin. L’original est conservé ; vous pouvez Annuler."],
+      ["Comment exporter les histoires ?","Utilisez Télécharger .docx (zip + texte) ou Exporter CSV. L’export PDF arrive bientôt."],
+      ["Comment s’inscrire / se connecter ?","Depuis la page de connexion avec e‑mail + mot de passe. Après connexion, vous arriverez ici."],
+      ["Comment obtenir Premium ?","Entrez un code d’essai (Redeem) dans l’en‑tête. L’essai dure 14 jours. Un abonnement payant débloquera aussi Premium."],
+      ["Micro ou voix ne fonctionnent pas ?","Autorisez l’accès au micro. Sur Safari/iOS, gardez la page au premier plan et activez le son. Si la reconnaissance vocale n’est pas dispo, vous pouvez taper votre histoire."]
+    ]},
+    es: { title: "Ayuda / Preguntas frecuentes", items: [
+      ["¿Cómo uso la app?","1) Elige idioma. 2) Toca un tema (o Free). 3) Pulsa Grabar y habla. 4) Detén y Guarda la historia. La verás en la Biblioteca."],
+      ["¿Cómo funciona la reescritura con IA?","Abre Biblioteca → Reescribir (IA). Solo Premium/Admin. Conserva el original; puedes Deshacer."],
+      ["¿Cómo exporto historias?","Descarga .docx (zip con texto) o Exportar CSV. El PDF llegará pronto."],
+      ["¿Cómo registrarme / iniciar sesión?","Desde la página de acceso con correo + contraseña. Tras iniciar sesión llegarás aquí."],
+      ["¿Cómo obtengo Premium?","Introduce un código de prueba en la cabecera (Redeem). Dura 14 días. El plan de pago también lo desbloquea."],
+      ["¿No funciona el micrófono o la voz?","Permite permisos de micrófono. En Safari/iOS, mantén la página en primer plano y el sonido activo. Si no hay reconocimiento de voz, puedes teclear tu historia."]
+    ]},
+    nl: { title: "Help / Veelgestelde vragen", items: [
+      ["Hoe gebruik ik de app?","1) Kies een taal. 2) Tik op een onderwerp (of Free). 3) Druk op Opnemen en spreek. 4) Stop en Sla verhaal op. Je vindt verhalen in de Bibliotheek."],
+      ["Hoe werkt AI‑herschrijven?","Open Bibliotheek → Herschrijf (AI). Alleen Premium/Admin. Het origineel blijft bewaard; je kunt Ongedaan maken."],
+      ["Hoe exporteer ik verhalen?","Gebruik Download .docx (zip met tekst) of Exporteer CSV. PDF‑export volgt nog."],
+      ["Hoe registreer / log ik in?","Via de loginpagina met e‑mail + wachtwoord. Na inloggen kom je automatisch hier."],
+      ["Hoe krijg ik Premium?","Voer een proefcode in bovenaan (Redeem). Proef duurt 14 dagen. Een betaald plan geeft ook Premium."],
+      ["Werkt microfoon of spraak niet?","Sta microfoontoegang toe. Op Safari/iOS moet de pagina vooraan staan en het geluid aan. Als spraakherkenning ontbreekt, kun je je verhaal typen."]
+    ]}
+  };
+  const helpBtn   = document.getElementById('helpBtn');
+  const faqDialog = document.getElementById('faqDialog');
+  const faqTitle  = document.getElementById('faqTitle');
+  const faqBody   = document.getElementById('faqBody');
+  function renderFAQ() {
+    const l = FAQ[document.getElementById('lang').value] || FAQ.en;
+    faqTitle.textContent = l.title;
+    faqBody.innerHTML = l.items.map(([q,a]) =>
+      `<details style="margin:8px 0"><summary><strong>${q}</strong></summary><div style="margin-top:6px">${a}</div></details>`
+    ).join('');
+  }
+  helpBtn?.addEventListener('click', () => { renderFAQ(); faqDialog.showModal(); });
 
 })();
 </script>
