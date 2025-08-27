@@ -61,6 +61,7 @@ dialog{border:none;border-radius:12px;box-shadow:var(--shadow);max-width:min(820
 footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
 .badgePlan{padding:6px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px}
 .input{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit;width:100%}
+pre.log{white-space:pre-wrap;font-size:12px;color:var(--muted);background:rgba(2,8,23,.04);padding:8px;border-radius:8px;border:1px solid var(--border)}
 </style>
 </head>
 <body>
@@ -121,6 +122,7 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
               <div id="remain" class="muted">120s</div>
             </div>
             <div id="asr" class="muted"></div>
+            <pre id="debug" class="log" style="display:none"></pre>
           </div>
 
           <div class="actions" style="display:flex;gap:10px;flex-wrap:wrap">
@@ -189,32 +191,30 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
   else planBadge.textContent = 'Plan: Free';
 
   /* ===== Redeem code ===== */
-  const codeInput = document.getElementById('codeInput');
-  const redeemBtn = document.getElementById('redeemBtn');
-  const redeemMsg = document.getElementById('redeemMsg');
-  const setRedeemMsg = (t)=>{ if(redeemMsg) redeemMsg.textContent = t || ''; };
-  redeemBtn?.addEventListener('click', async () => {
+  const codeInput=document.getElementById('codeInput'), redeemBtn=document.getElementById('redeemBtn'), redeemMsg=document.getElementById('redeemMsg');
+  const setRedeemMsg=t=>{ if(redeemMsg) redeemMsg.textContent=t||''; };
+  redeemBtn?.addEventListener('click', async ()=>{
     setRedeemMsg('');
-    const code = codeInput.value.trim();
-    if(!code) { setRedeemMsg('Enter a code.'); return; }
-    const { data: { user } } = await supabase.auth.getUser();
+    const code=codeInput.value.trim();
+    if(!code){ setRedeemMsg('Enter a code.'); return; }
+    const { data:{user} } = await supabase.auth.getUser();
     if(!user){ setRedeemMsg('Please sign in first.'); return; }
     try{
       const { data, error } = await supabase.rpc('redeem_code', { p_code: code });
       if (error) throw error;
-      if (data?.ok) { setRedeemMsg(`✅ Premium until ${new Date(data.trial_end).toLocaleDateString()}`); location.reload(); }
-      else {
+      if (data?.ok){ setRedeemMsg(`✅ Premium until ${new Date(data.trial_end).toLocaleDateString()}`); location.reload(); }
+      else{
         const map={not_authenticated:'Please sign in first.',not_found:'Code not found.',expired:'Code expired.',exhausted:'Code already used.',already_premium:'You already have Premium.'};
-        setRedeemMsg('❌ ' + (map[data?.error] || 'Redeem failed.'));
+        setRedeemMsg('❌ '+(map[data?.error]||'Redeem failed.'));
       }
-    }catch(e){ setRedeemMsg('❌ ' + (e.message || String(e))); }
+    }catch(e){ setRedeemMsg('❌ '+(e.message||String(e))); }
   });
 
   /* ===== DOM ===== */
   const $=id=>document.getElementById(id);
   const lang=$('lang'), promptsWrap=$('prompts');
   const titleEl=$('title'), whenEl=$('when'), transcriptEl=$('transcript');
-  const mic=$('mic'), meter=$('meter'), bar=$('bar'), remain=$('remain'), asr=$('asr');
+  const mic=$('mic'), meter=$('meter'), bar=$('bar'), remain=$('remain'), asr=$('asr'), debug=$('debug');
   const save=$('save'), clearBtn=$('clear'), library=$('library');
   const drawer=$('drawer'), libraryDrawer=$('libraryDrawer'), toggleLib=$('toggleLib'), closeDrawer=$('closeDrawer');
   const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
@@ -230,11 +230,11 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
   }
   setPremiumUI(isPremium);
 
-  const CAP_FREE = 120;
-  const CAP_PREM = 900;
+  const CAP_FREE = 120;   // 2 min
+  const CAP_PREM = 900;   // 15 min
   const getCap = () => (isPremium ? CAP_PREM : CAP_FREE);
 
-  /* ===== Topics + prompts (unchanged) ===== */
+  /* ===== Topics + prompts ===== */
   const TOPIC_WORDS = {
     en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
     fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
@@ -248,7 +248,6 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     nl:{Jeugd:"Vertel me iets over je jeugd.",Familie:"Vertel over je familie en de mensen die je hebben opgevoed.",School:"Hoe was school voor jou?",Werk:"Vertel over je eerste baan of je loopbaan.",Liefde:"Hoe heb je je partner ontmoet, en wat betekende liefde toen?",Oorlog:"Welke grote gebeurtenissen of conflicten heb je meegemaakt?",Reizen:"Welke reizen hebben indruk op je gemaakt?",Tradities:"Welke familietradities waren belangrijk voor je?",Feestdagen:"Beschrijf een feestdag die je helder herinnert.",Lessen:"Welke levensles heb je op de harde manier geleerd?",Advies:"Welk advies zou je je jongere zelf geven?",Keerpunt:"Wat was een keerpunt in je leven?"}
   };
 
-  /* ===== ElevenLabs prompt voice (unchanged) ===== */
   const VOICE_BY_LANG = { en:'KoVIHoyLDrQyd4pGalbs', fr:'TfGtrgcVrXWjJkeB51T1', nl:'yO6w2xlECAQRFP6pX7Hw', es:'ZpEtuMdTIlJXYXAhevhG' };
   async function speakViaElevenLabs(sentence, code){
     try{
@@ -260,12 +259,12 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
   }
   function speakSystem(sentence, code){
     if(!('speechSynthesis' in window)) return;
-    const u=new SpeechSynthesisUtterance(String(sentence)); u.lang=code||'en'; u.rate=.95; u.pitch=1; u.volume=1; speechSynthesis.cancel(); speechSynthesis.speak(u);
+    const u=new SpeechSynthesisUtterance(String(sentence)); u.lang=({en:'en-US',fr:'fr-FR',es:'es-ES',nl:'nl-NL'})[code]||'en-US';
+    u.rate=.95; u.pitch=1; u.volume=1; speechSynthesis.cancel(); speechSynthesis.speak(u);
   }
   async function speakPrompt(oneWord, code){
     const s=(PROMPT_SENTENCES[code]||{})[oneWord] || oneWord;
-    const ok = await speakViaElevenLabs(s, code);
-    if(!ok) speakSystem(s, code);
+    const ok = await speakViaElevenLabs(s, code); if(!ok) speakSystem(s, code);
   }
   function renderPrompts(){
     const code=lang.value; promptsWrap.innerHTML='';
@@ -276,7 +275,7 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     });
   }
 
-  /* ===== Library helpers (unchanged) ===== */
+  /* ===== Library ===== */
   const LSKEY='memoir.stories';
   const loadStories=()=>{try{return JSON.parse(localStorage.getItem(LSKEY)||'[]')}catch{return[]}};
   const saveStories=(list)=>localStorage.setItem(LSKEY,JSON.stringify(list));
@@ -303,7 +302,7 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     tgt.innerHTML=''; if(!items.length){ const p=document.createElement('p'); p.className='muted'; p.textContent='No stories yet.'; tgt.appendChild(p); return; }
     items.forEach((s,i)=>tgt.appendChild(storyRow(s,i)));
   }
-  function requirePremium(){ if(!isPremium){ alert('This is a Premium feature. Enter a valid code for a 14‑day trial.'); return false; } return true; }
+  function requirePremium(){ if(!isPremium){ alert('This is a Premium feature. Enter a valid code for a 14-day trial.'); return false; } return true; }
   function viewStory(s){
     const dlg=document.createElement('dialog');
     dlg.style.width='min(90vw,820px)';
@@ -324,7 +323,6 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     const zip = new JSZip(); const meta = `Title: ${s.title||'Story'}\nWhen: ${s.happened_label || s.happened_sort || ''}\nCreated: ${new Date(s.created).toLocaleString()}\n\n`;
     zip.file('story.txt', meta + (s.text||'')); zip.generateAsync({type:'blob'}).then(blob=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(s.title||'story')+'.zip'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); });
   }
-
   exportCsvBtn.onclick=()=>{
     const items=loadStories();
     const rows=[['title','happened_label','happened_sort','created','text']];
@@ -348,22 +346,57 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
   /* ===== CHUNKED RECORDING → WHISPER ===== */
   const BCP = { en:'en', fr:'fr', es:'es', nl:'nl' }; // language hint
   let mediaRecorder=null, recActive=false, elapsed=0, timer=null;
-  let sending=false, seq=0;
+
+  // queue + worker
+  let chunkQueue = [];
+  let workerBusy = false;
+  let seq = 0;
+
+  function extFromMime(mime) {
+    if (!mime) return 'webm';
+    if (mime.includes('mp4')) return 'mp4';
+    if (mime.includes('webm')) return 'webm';
+    if (mime.includes('ogg')) return 'ogg';
+    return 'webm';
+  }
+
+  function log(msg){
+    // toggle to see low-level logs
+    // debug.style.display='block';
+    if(debug){ debug.textContent = ((debug.textContent||'') + '\n' + msg).trim(); }
+    console.log(msg);
+  }
+
+  async function processQueue() {
+    if (workerBusy) return;
+    workerBusy = true;
+    while (chunkQueue.length) {
+      const item = chunkQueue.shift();
+      try {
+        await sendChunkNow(item.blob, item.mime, item.seq);
+      } catch (e) {
+        log('Chunk failed: '+(e.message||e));
+      }
+    }
+    workerBusy = false;
+  }
 
   async function startRec(){
     try{
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation:true, noiseSuppression:true } });
-      const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus'
-                 : MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4'
-                 : 'audio/webm';
+      const mime =
+        MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' :
+        (MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : 'audio/webm');
+
       mediaRecorder = new MediaRecorder(stream, { mimeType: mime });
 
-      mediaRecorder.ondataavailable = async (e) => {
+      mediaRecorder.ondataavailable = (e) => {
         if (!e.data || !e.data.size) return;
-        // Immediately send this chunk (queue if a send is in flight)
-        await sendChunk(e.data);
+        chunkQueue.push({ blob: e.data, mime, seq: ++seq });
+        processQueue();
       };
-      mediaRecorder.onstop = () => { /* no-op: all chunks are already sent */ };
+
+      mediaRecorder.onstop = () => { /* queue will drain */ };
 
     }catch(e){
       asr.textContent = 'Mic permission denied or unsupported.';
@@ -372,11 +405,11 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
 
     asr.textContent='Recording…';
     mic.textContent='Stop Recording'; mic.classList.add('pulse');
-    elapsed=0; seq=0; remain.textContent=getCap()+'s'; bar.style.width='0%'; meter.style.display='flex';
-    transcriptEl.textContent = transcriptEl.textContent === 'Your words will appear here…' ? '' : transcriptEl.textContent;
+    elapsed=0; seq=0; chunkQueue.length=0;
+    remain.textContent=getCap()+'s'; bar.style.width='0%'; meter.style.display='flex';
+    if (transcriptEl.textContent.trim() === 'Your words will appear here…') transcriptEl.textContent='';
 
-    // Request chunks every 5s (or as supported)
-    mediaRecorder.start(5000);
+    mediaRecorder.start(5000); // every 5s
 
     timer=setInterval(()=>{
       elapsed++; const cap=getCap();
@@ -389,48 +422,50 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
   }
 
   function stopRec(){
-    try{ mediaRecorder && mediaRecorder.state !== 'inactive' && mediaRecorder.stop(); }catch{}
-    if(timer){ clearInterval(timer); timer=null; }
+    try{ if(mediaRecorder && mediaRecorder.state!=='inactive') mediaRecorder.stop(); }catch{}
+    if (timer){ clearInterval(timer); timer=null; }
     mic.textContent='Record'; mic.classList.remove('pulse');
     asr.textContent='Finishing…';
     recActive=false;
-    // Give a short grace period to finish last in-flight chunk send
+
     const t0 = Date.now();
     (function waitFlush(){
-      if (!sending || Date.now()-t0>8000) { asr.textContent='Done.'; setTimeout(()=>asr.textContent='', 1500); return; }
-      setTimeout(waitFlush, 200);
+      if (!workerBusy && chunkQueue.length===0) {
+        asr.textContent='Done.'; setTimeout(()=>asr.textContent='',1500); return;
+      }
+      if (Date.now()-t0>8000) {
+        asr.textContent='Done (some chunks may have been skipped).'; setTimeout(()=>asr.textContent='',2500); return;
+      }
+      setTimeout(waitFlush,150);
     })();
   }
 
-  async function sendChunk(blob){
-    // Simple "one at a time" queue: if sending, wait and retry
-    if (sending) { await new Promise(r=>setTimeout(r, 120)); return sendChunk(blob); }
-    sending = true;
-    try{
-      const fd = new FormData();
-      fd.append('audio', blob, `chunk-${(++seq)}.webm`);
-      fd.append('lang', BCP[lang.value] || 'fr');
-      fd.append('seq', String(seq));
+  async function sendChunkNow(blob, mime, seqNum){
+    asr.textContent = `Uploading chunk ${seqNum}…`;
+    const fd = new FormData();
+    const ext = extFromMime(mime || blob.type);
+    fd.append('audio', blob, `chunk-${seqNum}.${ext}`);
+    fd.append('lang', BCP[lang.value] || 'fr');
+    fd.append('seq', String(seqNum));
 
-      const r = await fetch('/api/transcribe-chunk', { method:'POST', body: fd });
-      if(!r.ok){ console.warn('chunk fail', await r.text()); return; }
-      const data = await r.json();
-      const text = (data.text||'').trim();
-      if (text) {
-        const prev = transcriptEl.textContent.trim();
-        transcriptEl.textContent = (prev ? (prev + ' ') : '') + text;
-        save.disabled = false;
-      }
-    }catch(e){
-      console.warn('sendChunk error', e);
-    }finally{
-      sending = false;
+    const r = await fetch('/api/transcribe-chunk', { method:'POST', body: fd });
+    if (!r.ok) {
+      const txt = await r.text().catch(()=>String(r.status));
+      throw new Error(`HTTP ${r.status}: ${txt}`);
     }
+    const data = await r.json().catch(()=>({text:''}));
+    const text = (data.text || '').trim();
+    if (text) {
+      const prev = transcriptEl.textContent.trim();
+      transcriptEl.textContent = (prev ? (prev + ' ') : '') + text;
+      save.disabled = false;
+    }
+    asr.textContent = `Chunk ${seqNum} transcribed.`;
   }
 
   mic.onclick=()=>{ recActive?stopRec():startRec(); };
 
-  /* ===== Drawer / Tabs / FAQ (unchanged) ===== */
+  /* ===== Drawer / Tabs / FAQ ===== */
   toggleLib.onclick=()=>{ if(innerWidth>=1024){ renderLib(); } else { drawer.classList.add('show'); renderLib(true); } };
   closeDrawer.onclick=()=>drawer.classList.remove('show');
   drawer.addEventListener('click',(e)=>{ if(e.target===drawer) drawer.classList.remove('show'); });
@@ -438,55 +473,65 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
   tabGuided.onclick=()=>{ tabGuided.classList.add('active'); tabFree.classList.remove('active'); guidedBlock.style.display='block'; };
   tabFree.onclick=()=>{ tabFree.classList.add('active'); tabGuided.classList.remove('active'); guidedBlock.style.display='none'; };
 
-  renderPrompts(); renderLib();
+  /* ===== Save/Clear ===== */
+  save.onclick=()=>{
+    const txt=transcriptEl.textContent.trim(); if(!txt) return;
+    const when=parseApproxDate(whenEl.value);
+    const story={ title:titleEl.value||'Story', text:txt, created:new Date().toISOString(), happened_label:when.label, happened_sort:when.sort };
+    const items=loadStories(); items.unshift(story); saveStories(items); renderLib(innerWidth<1024);
+    transcriptEl.textContent='Your words will appear here…'; save.disabled=true; titleEl.value=''; whenEl.value='';
+  };
+  clearBtn.onclick=()=>{ transcriptEl.textContent='Your words will appear here…'; save.disabled=true; };
 
+  /* ===== FAQ ===== */
   const FAQ = {
     en: { title: "Help / FAQ", items: [
       ["How do I use this app?","1) Pick a language. 2) Tap a topic (or choose Free). 3) Press Record and speak. 4) Stop recording, then Save story. You’ll find saved stories in Library."],
       ["How does AI rewrite work?","Open Library → Rewrite (AI). Premium/Admin only. It keeps your original; you can Undo."],
       ["How do I export stories?","Use Download .docx (zip with text) or Export CSV for a spreadsheet. PDF export is coming."],
-      ["How do I sign up / log in?","Use the login page with email + password. After sign‑in you’ll land here automatically."],
+      ["How do I sign up / log in?","Use the login page with email + password. After sign-in you’ll land here automatically."],
       ["How do I get Premium?","Enter a trial code in the header (Redeem). Trials last 14 days. Paid plan will also unlock Premium."],
       ["Microphone or speech not working?","Allow mic permissions. iOS/Safari must stay foreground with ringer on."]
     ]},
     fr: { title: "Aide / FAQ", items: [
-      ["Comment utiliser l’application ?","1) Choisissez une langue. 2) Touchez un sujet (ou Free). 3) Appuyez sur Enregistrer et parlez. 4) Arrêtez, puis Enregistrer l’histoire. Vos histoires sont dans la Bibliothèque."],
-      ["Comment fonctionne la réécriture IA ?","Ouvrez Bibliothèque → Réécriture (IA). Réservé Premium/Admin. L’original est conservé ; vous pouvez Annuler."],
-      ["Comment exporter les histoires ?","Utilisez Télécharger .docx (zip + texte) ou Exporter CSV. L’export PDF arrive bientôt."],
-      ["Comment s’inscrire / se connecter ?","Depuis la page de connexion avec e‑mail + mot de passe. Après connexion, vous arriverez ici."],
-      ["Comment obtenir Premium ?","Entrez un code d’essai (Redeem) dans l’en‑tête. L’essai dure 14 jours. Un abonnement payant débloquera aussi Premium."],
-      ["Micro ou voix ne fonctionnent pas ?","Autorisez le micro. Sur iOS/Safari, gardez la page au premier plan avec le son activé."]
+      ["Comment utiliser l’application ?","1) Choisissez une langue. 2) Touchez un sujet (ou Free). 3) Appuyez sur Enregistrer et parlez. 4) Arrêtez, puis Enregistrez l’histoire. Vos histoires sont dans la Bibliothèque."],
+      ["Comment fonctionne la réécriture IA ?","Bibliothèque → Réécriture (IA). Premium/Admin uniquement. L’original est conservé ; vous pouvez Annuler."],
+      ["Comment exporter les histoires ?","Télécharger .docx (zip + texte) ou Exporter CSV. Export PDF bientôt."],
+      ["Comment s’inscrire / se connecter ?","Depuis la page de connexion (e-mail + mot de passe)."],
+      ["Comment obtenir Premium ?","Saisissez un code d’essai (Redeem) en haut. L’essai dure 14 jours."],
+      ["Micro / voix ne fonctionnent pas ?","Autorisez le micro. Sur iOS/Safari, gardez la page au premier plan avec le son activé."]
     ]},
     es: { title: "Ayuda / Preguntas frecuentes", items: [
       ["¿Cómo uso la app?","1) Elige idioma. 2) Toca un tema (o Free). 3) Pulsa Grabar y habla. 4) Detén y Guarda la historia."],
-      ["¿Cómo funciona la reescritura con IA?","Biblioteca → Reescribir (IA). Solo Premium/Admin."],
-      ["¿Cómo exporto historias?","Descarga .docx o Exportar CSV. PDF próximamente."],
+      ["Reescritura con IA","Biblioteca → Reescribir (IA). Solo Premium/Admin."],
+      ["Exportar","Descarga .docx o Exportar CSV. PDF próximamente."],
       ["Registro / acceso","Usa la página de acceso con correo y contraseña."],
       ["Premium","Canjea un código de prueba en la cabecera."],
       ["Micrófono / voz","Permite micrófono. iOS/Safari en primer plano con sonido."]
     ]},
     nl: { title: "Help / Veelgestelde vragen", items: [
       ["Hoe gebruik ik de app?","1) Kies een taal. 2) Tik een onderwerp (of Free). 3) Druk op Opnemen en spreek. 4) Stop en Sla op."],
-      ["AI‑herschrijven","Bibliotheek → Herschrijf (AI). Alleen Premium/Admin."],
+      ["AI-herschrijven","Bibliotheek → Herschrijf (AI). Alleen Premium/Admin."],
       ["Exporteren","Download .docx of Exporteer CSV. PDF volgt."],
-      ["Registreren / inloggen","Via de loginpagina met e‑mail + wachtwoord."],
+      ["Registreren / inloggen","Via de loginpagina met e-mail + wachtwoord."],
       ["Premium","Vul bovenaan een proefcode in."],
       ["Microfoon / spraak","Sta microfoon toe. iOS/Safari vooraan en geluid aan."]
     ]}
   };
-  const helpBtn   = document.getElementById('helpBtn');
-  const faqDialog = document.getElementById('faqDialog');
-  const faqTitle  = document.getElementById('faqTitle');
-  const faqBody   = document.getElementById('faqBody');
-  function renderFAQ() {
-    const l = FAQ[document.getElementById('lang').value] || FAQ.en;
-    faqTitle.textContent = l.title;
-    faqBody.innerHTML = l.items.map(([q,a]) =>
-      `<details style="margin:8px 0"><summary><strong>${q}</strong></summary><div style="margin-top:6px">${a}</div></details>`
-    ).join('');
-  }
-  helpBtn?.addEventListener('click', () => { renderFAQ(); faqDialog.showModal(); });
+  const helpBtn=document.getElementById('helpBtn'), faqDialog=document.getElementById('faqDialog'), faqTitle=document.getElementById('faqTitle'), faqBody=document.getElementById('faqBody');
+  function renderFAQ(){ const l = FAQ[lang.value] || FAQ.en; faqTitle.textContent=l.title; faqBody.innerHTML=l.items.map(([q,a])=>`<details style="margin:8px 0"><summary><strong>${q}</strong></summary><div style="margin-top:6px">${a}</div></details>`).join(''); }
+  helpBtn?.addEventListener('click', ()=>{ renderFAQ(); faqDialog.showModal(); });
 
+  // init
+  const toggleLib=document.getElementById('toggleLib'), closeDrawer=document.getElementById('closeDrawer'), drawer=document.getElementById('drawer'), libraryDrawer=document.getElementById('libraryDrawer');
+  toggleLib.onclick=()=>{ if(innerWidth>=1024){ renderLib(); } else { drawer.classList.add('show'); renderLib(true); } };
+  closeDrawer.onclick=()=>drawer.classList.remove('show');
+  drawer.addEventListener('click',(e)=>{ if(e.target===drawer) drawer.classList.remove('show'); });
+  document.getElementById('tabGuided').onclick=()=>{ tabGuided.classList.add('active'); tabFree.classList.remove('active'); guidedBlock.style.display='block'; };
+  document.getElementById('tabFree').onclick=()=>{ tabFree.classList.add('active'); tabGuided.classList.remove('active'); guidedBlock.style.display='none'; };
+
+  lang.onchange=renderPrompts;
+  renderPrompts(); renderLib();
 })();
 </script>
 </body>
