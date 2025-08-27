@@ -74,7 +74,7 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
         <div class="controls">
           <select id="lang" aria-label="Language">
             <option value="en">English</option>
-            <option value="fr">Français</option>
+            <option value="fr" selected>Français</option>
             <option value="es">Español</option>
             <option value="nl">Nederlands</option>
           </select>
@@ -137,11 +137,10 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
         </aside>
       </div>
 
-      <footer>Cloud prototype — Whisper transcription default. EN/FR/ES/NL prompts + voice, library, AI rewrite, CSV, trials.</footer>
+      <footer>Whisper chunked transcription enabled. EN/FR/ES/NL prompts + voice, library, AI rewrite, CSV, trials.</footer>
     </div>
   </div>
 
-  <!-- Mobile drawer -->
   <div id="drawer" class="drawer" aria-hidden="true">
     <div class="panel">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -152,7 +151,6 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     </div>
   </div>
 
-  <!-- Help / FAQ dialog -->
   <dialog id="faqDialog">
     <form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #e5e7eb">
       <strong id="faqTitle">Help / FAQ</strong>
@@ -161,7 +159,6 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     <div id="faqBody" style="padding:16px;max-width:min(820px,92vw)"></div>
   </dialog>
 
-  <!-- libs -->
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
 
@@ -186,19 +183,12 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
   guard.style.display='none'; app.style.display='grid';
   document.getElementById('logout').onclick = async ()=>{ await supabase.auth.signOut(); window.location.replace('/login.html'); };
 
-  // Plan badge
   const planBadge = document.getElementById('planBadge');
-  if (isAdmin) {
-    planBadge.textContent = 'Plan: Admin';
-  } else if (isPremium) {
-    planBadge.textContent = trialActive
-      ? `Plan: Premium (trial until ${trialUntil.toLocaleDateString()})`
-      : 'Plan: Premium';
-  } else {
-    planBadge.textContent = 'Plan: Free';
-  }
+  if (isAdmin) planBadge.textContent = 'Plan: Admin';
+  else if (isPremium) planBadge.textContent = trialActive ? `Plan: Premium (trial until ${trialUntil.toLocaleDateString()})` : 'Plan: Premium';
+  else planBadge.textContent = 'Plan: Free';
 
-  /* ===== Redeem code UI ===== */
+  /* ===== Redeem code ===== */
   const codeInput = document.getElementById('codeInput');
   const redeemBtn = document.getElementById('redeemBtn');
   const redeemMsg = document.getElementById('redeemMsg');
@@ -230,7 +220,6 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
   const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
   const exportBookBtn=$('exportBook'), exportCsvBtn=$('exportCsv');
 
-  // Gating
   function setPremiumUI(enabled){
     const lockBtn = (btn, on, title) => {
       btn.toggleAttribute('disabled', !on);
@@ -241,12 +230,11 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
   }
   setPremiumUI(isPremium);
 
-  const CAP_FREE = 120;      // seconds
+  const CAP_FREE = 120;
   const CAP_PREM = 900;
   const getCap = () => (isPremium ? CAP_PREM : CAP_FREE);
-  const BCP={en:'en',fr:'fr',es:'es',nl:'nl'}; // we pass ISO hint to backend
 
-  /* ===== Topics + Spoken prompts (same) ===== */
+  /* ===== Topics + prompts (unchanged) ===== */
   const TOPIC_WORDS = {
     en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
     fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
@@ -260,7 +248,7 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     nl:{Jeugd:"Vertel me iets over je jeugd.",Familie:"Vertel over je familie en de mensen die je hebben opgevoed.",School:"Hoe was school voor jou?",Werk:"Vertel over je eerste baan of je loopbaan.",Liefde:"Hoe heb je je partner ontmoet, en wat betekende liefde toen?",Oorlog:"Welke grote gebeurtenissen of conflicten heb je meegemaakt?",Reizen:"Welke reizen hebben indruk op je gemaakt?",Tradities:"Welke familietradities waren belangrijk voor je?",Feestdagen:"Beschrijf een feestdag die je helder herinnert.",Lessen:"Welke levensles heb je op de harde manier geleerd?",Advies:"Welk advies zou je je jongere zelf geven?",Keerpunt:"Wat was een keerpunt in je leven?"}
   };
 
-  /* ===== ElevenLabs TTS for prompts (unchanged) ===== */
+  /* ===== ElevenLabs prompt voice (unchanged) ===== */
   const VOICE_BY_LANG = { en:'KoVIHoyLDrQyd4pGalbs', fr:'TfGtrgcVrXWjJkeB51T1', nl:'yO6w2xlECAQRFP6pX7Hw', es:'ZpEtuMdTIlJXYXAhevhG' };
   async function speakViaElevenLabs(sentence, code){
     try{
@@ -272,12 +260,12 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
   }
   function speakSystem(sentence, code){
     if(!('speechSynthesis' in window)) return;
-    const u=new SpeechSynthesisUtterance(String(sentence)); u.lang=(code||'en'); u.rate=.95; u.pitch=1; u.volume=1; speechSynthesis.cancel(); speechSynthesis.speak(u);
+    const u=new SpeechSynthesisUtterance(String(sentence)); u.lang=code||'en'; u.rate=.95; u.pitch=1; u.volume=1; speechSynthesis.cancel(); speechSynthesis.speak(u);
   }
   async function speakPrompt(oneWord, code){
-    const sentence=(PROMPT_SENTENCES[code]||{})[oneWord] || oneWord;
-    const ok = await speakViaElevenLabs(sentence, code);
-    if(!ok) speakSystem(sentence, code);
+    const s=(PROMPT_SENTENCES[code]||{})[oneWord] || oneWord;
+    const ok = await speakViaElevenLabs(s, code);
+    if(!ok) speakSystem(s, code);
   }
   function renderPrompts(){
     const code=lang.value; promptsWrap.innerHTML='';
@@ -288,7 +276,7 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     });
   }
 
-  /* ===== Library / helpers (unchanged) ===== */
+  /* ===== Library helpers (unchanged) ===== */
   const LSKEY='memoir.stories';
   const loadStories=()=>{try{return JSON.parse(localStorage.getItem(LSKEY)||'[]')}catch{return[]}};
   const saveStories=(list)=>localStorage.setItem(LSKEY,JSON.stringify(list));
@@ -333,8 +321,7 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     saveStories(items); renderLib(innerWidth<1024);
   }
   function downloadDocx(s){
-    const zip = new JSZip();
-    const meta = `Title: ${s.title||'Story'}\nWhen: ${s.happened_label || s.happened_sort || ''}\nCreated: ${new Date(s.created).toLocaleString()}\n\n`;
+    const zip = new JSZip(); const meta = `Title: ${s.title||'Story'}\nWhen: ${s.happened_label || s.happened_sort || ''}\nCreated: ${new Date(s.created).toLocaleString()}\n\n`;
     zip.file('story.txt', meta + (s.text||'')); zip.generateAsync({type:'blob'}).then(blob=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(s.title||'story')+'.zip'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); });
   }
 
@@ -358,28 +345,39 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     return { label:input, sort:null };
   }
 
-  /* ===== RECORDING WITH MEDIARECORDER → WHISPER ===== */
-  let mediaRecorder=null, recChunks=[], recActive=false, elapsed=0, timer=null;
+  /* ===== CHUNKED RECORDING → WHISPER ===== */
+  const BCP = { en:'en', fr:'fr', es:'es', nl:'nl' }; // language hint
+  let mediaRecorder=null, recActive=false, elapsed=0, timer=null;
+  let sending=false, seq=0;
 
   async function startRec(){
     try{
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation:true, noiseSuppression:true } });
-      // Use a common Opus container that Whisper accepts
-      mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+      const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus'
+                 : MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4'
+                 : 'audio/webm';
+      mediaRecorder = new MediaRecorder(stream, { mimeType: mime });
+
+      mediaRecorder.ondataavailable = async (e) => {
+        if (!e.data || !e.data.size) return;
+        // Immediately send this chunk (queue if a send is in flight)
+        await sendChunk(e.data);
+      };
+      mediaRecorder.onstop = () => { /* no-op: all chunks are already sent */ };
+
     }catch(e){
       asr.textContent = 'Mic permission denied or unsupported.';
       return;
     }
 
-    recChunks = [];
-    mediaRecorder.ondataavailable = (e)=>{ if(e.data && e.data.size) recChunks.push(e.data); };
-    mediaRecorder.onstop = async ()=>{ await finalizeTranscription(); };
-
     asr.textContent='Recording…';
     mic.textContent='Stop Recording'; mic.classList.add('pulse');
-    elapsed=0; remain.textContent=getCap()+'s'; bar.style.width='0%'; meter.style.display='flex';
+    elapsed=0; seq=0; remain.textContent=getCap()+'s'; bar.style.width='0%'; meter.style.display='flex';
+    transcriptEl.textContent = transcriptEl.textContent === 'Your words will appear here…' ? '' : transcriptEl.textContent;
 
-    mediaRecorder.start(1000);
+    // Request chunks every 5s (or as supported)
+    mediaRecorder.start(5000);
+
     timer=setInterval(()=>{
       elapsed++; const cap=getCap();
       bar.style.width=(elapsed/cap*100)+'%';
@@ -394,50 +392,54 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     try{ mediaRecorder && mediaRecorder.state !== 'inactive' && mediaRecorder.stop(); }catch{}
     if(timer){ clearInterval(timer); timer=null; }
     mic.textContent='Record'; mic.classList.remove('pulse');
+    asr.textContent='Finishing…';
     recActive=false;
+    // Give a short grace period to finish last in-flight chunk send
+    const t0 = Date.now();
+    (function waitFlush(){
+      if (!sending || Date.now()-t0>8000) { asr.textContent='Done.'; setTimeout(()=>asr.textContent='', 1500); return; }
+      setTimeout(waitFlush, 200);
+    })();
   }
 
-  async function finalizeTranscription(){
-    asr.textContent='Transcribing…';
+  async function sendChunk(blob){
+    // Simple "one at a time" queue: if sending, wait and retry
+    if (sending) { await new Promise(r=>setTimeout(r, 120)); return sendChunk(blob); }
+    sending = true;
     try{
-      const blob = new Blob(recChunks, { type: 'audio/webm' });
       const fd = new FormData();
-      // Name helps API; language hint improves accuracy
-      fd.append('audio', blob, 'memoir.webm');
-      fd.append('lang', BCP[lang.value] || 'fr'); // default to fr for your target
+      fd.append('audio', blob, `chunk-${(++seq)}.webm`);
+      fd.append('lang', BCP[lang.value] || 'fr');
+      fd.append('seq', String(seq));
 
-      const r = await fetch('/api/transcribe', { method: 'POST', body: fd });
-      if(!r.ok){ const t=await r.text(); throw new Error(t||'fail'); }
+      const r = await fetch('/api/transcribe-chunk', { method:'POST', body: fd });
+      if(!r.ok){ console.warn('chunk fail', await r.text()); return; }
       const data = await r.json();
-      const prev = transcriptEl.textContent === 'Your words will appear here…' ? '' : transcriptEl.textContent + ' ';
-      const txt = (data.text||'').trim();
-      transcriptEl.textContent = (prev + txt).trim() || 'Your words will appear here…';
-      save.disabled = !!txt;
-      asr.textContent='Done.';
+      const text = (data.text||'').trim();
+      if (text) {
+        const prev = transcriptEl.textContent.trim();
+        transcriptEl.textContent = (prev ? (prev + ' ') : '') + text;
+        save.disabled = false;
+      }
     }catch(e){
-      console.error(e);
-      asr.textContent='Transcription failed.';
+      console.warn('sendChunk error', e);
     }finally{
-      setTimeout(()=>{ asr.textContent=''; }, 2000);
+      sending = false;
     }
   }
 
   mic.onclick=()=>{ recActive?stopRec():startRec(); };
 
-  /* ===== Mobile drawer and tabs ===== */
-  const toggleLib=document.getElementById('toggleLib'), drawer=document.getElementById('drawer'), libraryDrawer=document.getElementById('libraryDrawer'), closeDrawer=document.getElementById('closeDrawer');
+  /* ===== Drawer / Tabs / FAQ (unchanged) ===== */
   toggleLib.onclick=()=>{ if(innerWidth>=1024){ renderLib(); } else { drawer.classList.add('show'); renderLib(true); } };
   closeDrawer.onclick=()=>drawer.classList.remove('show');
   drawer.addEventListener('click',(e)=>{ if(e.target===drawer) drawer.classList.remove('show'); });
 
-  const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
   tabGuided.onclick=()=>{ tabGuided.classList.add('active'); tabFree.classList.remove('active'); guidedBlock.style.display='block'; };
   tabFree.onclick=()=>{ tabFree.classList.add('active'); tabGuided.classList.remove('active'); guidedBlock.style.display='none'; };
 
-  // initial
   renderPrompts(); renderLib();
 
-  /* ===== Multilingual FAQ (unchanged) ===== */
   const FAQ = {
     en: { title: "Help / FAQ", items: [
       ["How do I use this app?","1) Pick a language. 2) Tap a topic (or choose Free). 3) Press Record and speak. 4) Stop recording, then Save story. You’ll find saved stories in Library."],
@@ -445,7 +447,7 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
       ["How do I export stories?","Use Download .docx (zip with text) or Export CSV for a spreadsheet. PDF export is coming."],
       ["How do I sign up / log in?","Use the login page with email + password. After sign‑in you’ll land here automatically."],
       ["How do I get Premium?","Enter a trial code in the header (Redeem). Trials last 14 days. Paid plan will also unlock Premium."],
-      ["Microphone or speech not working?","Allow mic permissions. Safari/iOS needs the page in the foreground with the ringer on. If speech recognition isn’t available, you can still type your story."]
+      ["Microphone or speech not working?","Allow mic permissions. iOS/Safari must stay foreground with ringer on."]
     ]},
     fr: { title: "Aide / FAQ", items: [
       ["Comment utiliser l’application ?","1) Choisissez une langue. 2) Touchez un sujet (ou Free). 3) Appuyez sur Enregistrer et parlez. 4) Arrêtez, puis Enregistrer l’histoire. Vos histoires sont dans la Bibliothèque."],
@@ -453,23 +455,23 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
       ["Comment exporter les histoires ?","Utilisez Télécharger .docx (zip + texte) ou Exporter CSV. L’export PDF arrive bientôt."],
       ["Comment s’inscrire / se connecter ?","Depuis la page de connexion avec e‑mail + mot de passe. Après connexion, vous arriverez ici."],
       ["Comment obtenir Premium ?","Entrez un code d’essai (Redeem) dans l’en‑tête. L’essai dure 14 jours. Un abonnement payant débloquera aussi Premium."],
-      ["Micro ou voix ne fonctionnent pas ?","Autorisez l’accès au micro. Sur Safari/iOS, gardez la page au premier plan et activez le son. Si la reconnaissance vocale n’est pas dispo, vous pouvez taper votre histoire."]
+      ["Micro ou voix ne fonctionnent pas ?","Autorisez le micro. Sur iOS/Safari, gardez la page au premier plan avec le son activé."]
     ]},
     es: { title: "Ayuda / Preguntas frecuentes", items: [
-      ["¿Cómo uso la app?","1) Elige idioma. 2) Toca un tema (o Free). 3) Pulsa Grabar y habla. 4) Detén y Guarda la historia. La verás en la Biblioteca."],
-      ["¿Cómo funciona la reescritura con IA?","Abre Biblioteca → Reescribir (IA). Solo Premium/Admin. Conserva el original; puedes Deshacer."],
-      ["¿Cómo exporto historias?","Descarga .docx (zip con texto) o Exportar CSV. El PDF llegará pronto."],
-      ["¿Cómo registrarme / iniciar sesión?","Desde la página de acceso con correo + contraseña. Tras iniciar sesión llegarás aquí."],
-      ["¿Cómo obtengo Premium?","Introduce un código de prueba en la cabecera (Redeem). Dura 14 días. El plan de pago también lo desbloquea."],
-      ["¿No funciona el micrófono o la voz?","Permite permisos de micrófono. En Safari/iOS, mantén la página en primer plano y el sonido activo. Si no hay reconocimiento de voz, puedes teclear tu historia."]
+      ["¿Cómo uso la app?","1) Elige idioma. 2) Toca un tema (o Free). 3) Pulsa Grabar y habla. 4) Detén y Guarda la historia."],
+      ["¿Cómo funciona la reescritura con IA?","Biblioteca → Reescribir (IA). Solo Premium/Admin."],
+      ["¿Cómo exporto historias?","Descarga .docx o Exportar CSV. PDF próximamente."],
+      ["Registro / acceso","Usa la página de acceso con correo y contraseña."],
+      ["Premium","Canjea un código de prueba en la cabecera."],
+      ["Micrófono / voz","Permite micrófono. iOS/Safari en primer plano con sonido."]
     ]},
     nl: { title: "Help / Veelgestelde vragen", items: [
-      ["Hoe gebruik ik de app?","1) Kies een taal. 2) Tik op een onderwerp (of Free). 3) Druk op Opnemen en spreek. 4) Stop en Sla verhaal op. Je vindt verhalen in de Bibliotheek."],
-      ["Hoe werkt AI‑herschrijven?","Open Bibliotheek → Herschrijf (AI). Alleen Premium/Admin. Het origineel blijft bewaard; je kunt Ongedaan maken."],
-      ["Hoe exporteer ik verhalen?","Gebruik Download .docx (zip met tekst) of Exporteer CSV. PDF‑export volgt nog."],
-      ["Hoe registreer / log ik in?","Via de loginpagina met e‑mail + wachtwoord. Na inloggen kom je automatisch hier."],
-      ["Hoe krijg ik Premium?","Voer een proefcode in bovenaan (Redeem). Proef duurt 14 dagen. Een betaald plan geeft ook Premium."],
-      ["Werkt microfoon of spraak niet?","Sta microfoontoegang toe. Op Safari/iOS moet de pagina vooraan staan en het geluid aan. Als spraakherkenning ontbreekt, kun je je verhaal typen."]
+      ["Hoe gebruik ik de app?","1) Kies een taal. 2) Tik een onderwerp (of Free). 3) Druk op Opnemen en spreek. 4) Stop en Sla op."],
+      ["AI‑herschrijven","Bibliotheek → Herschrijf (AI). Alleen Premium/Admin."],
+      ["Exporteren","Download .docx of Exporteer CSV. PDF volgt."],
+      ["Registreren / inloggen","Via de loginpagina met e‑mail + wachtwoord."],
+      ["Premium","Vul bovenaan een proefcode in."],
+      ["Microfoon / spraak","Sta microfoon toe. iOS/Safari vooraan en geluid aan."]
     ]}
   };
   const helpBtn   = document.getElementById('helpBtn');
