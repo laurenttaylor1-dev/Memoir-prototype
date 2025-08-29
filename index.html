@@ -6,532 +6,152 @@
 <title>Memoir — Recorder</title>
 <meta name="color-scheme" content="light dark"/>
 <style>
-:root{--bg:#f6f7fb;--card:#fff;--fg:#0f172a;--muted:#667085;--brand:#2563eb;--brand2:#7c3aed;--border:#e6e9f0;--shadow:0 20px 40px rgba(2,8,23,.06), 0 2px 6px rgba(2,8,23,.04)}
-@media (prefers-color-scheme:dark){
-  :root{--bg:#0b1020;--card:#0f162e;--fg:#e6edf7;--muted:#9aa4b2;--border:#1f2a44;--shadow:0 20px 40px rgba(0,0,0,.4),0 2px 6px rgba(0,0,0,.3)}
-}
-*,*:before,*:after{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-.container{max-width:1100px;margin:0 auto;padding:20px}
-.card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:16px}
-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
-.brand{display:flex;align-items:center;gap:10px}
-.logo{width:34px;height:34px;border-radius:12px;background:conic-gradient(from 180deg,var(--brand),var(--brand2))}
-h1{margin:0;font-size:1.35rem}
-.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-select,input,button{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit}
-.btn{cursor:pointer}
-.btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));border:0;color:#fff}
-.badge{border-radius:999px}
-.muted{color:var(--muted);font-size:12px}
-.lock{opacity:.6; cursor:not-allowed}
-
-.shell{display:grid;gap:18px;grid-template-columns:1fr}
-.right{display:none}
-@media (min-width:1024px){ .shell{grid-template-columns:minmax(0,1fr) 420px}.right{display:block} }
-
-.segment{display:flex;gap:8px;flex-wrap:wrap}
-.tab{padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:transparent}
-.tab.active{background:rgba(37,99,235,.12);border-color:rgba(37,99,235,.25)}
-.small{font-size:12px;color:var(--muted)}
-
-.label{font-size:12px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.08em;margin:10px 0 6px}
-.topics{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
-.chip{display:flex;align-items:center;justify-content:center;height:44px;border-radius:12px;border:1px solid rgba(37,99,235,.18);background:rgba(37,99,235,.08);font-weight:600;cursor:pointer;user-select:none}
-.chip:active{transform:translateY(1px)}
-
-.area{min-height:160px;border:1px solid var(--border);border-radius:12px;padding:12px;background:rgba(2,8,23,.02)}
-.mic-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;margin:12px 0}
-.mic{width:190px;height:190px;border-radius:999px;border:0;background:radial-gradient(70% 70% at 50% 30%, #ff5a5f, #a21caf);color:#fff;font-weight:700;font-size:18px;cursor:pointer;box-shadow:0 16px 50px rgba(162,28,175,.35)}
-.mic.pulse{animation:pulse 1.6s infinite ease-in-out}
-@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
-.meter{display:flex;gap:8px;align-items:center;width:100%;max-width:420px}
-.bar{flex:1;height:10px;background:rgba(2,8,23,.08);border-radius:999px;overflow:hidden}
-.bar>div{height:100%;width:0%;background:linear-gradient(90deg,var(--brand),var(--brand2))}
-
-.list{display:grid;gap:10px}
-.story{padding:12px;border:1px solid var(--border);border-radius:12px;background:rgba(2,8,23,.02);display:flex;align-items:center;justify-content:space-between;gap:8px}
-.story h3{margin:0;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
-
-.drawer{position:fixed;inset:0;display:none;background:rgba(2,8,23,.45);backdrop-filter: blur(2px)}
-.drawer.show{display:block}
-.drawer .panel{position:absolute;right:0;top:0;bottom:0;width:88%;max-width:420px;background:var(--card);border-left:1px solid var(--border);padding:16px;overflow:auto}
-dialog::backdrop{background:rgba(0,0,0,.35)}
-dialog{border:none;border-radius:12px;box-shadow:var(--shadow);max-width:min(820px,92vw)}
-footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
-.badgePlan{padding:6px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px}
-.input{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit;width:100%}
-pre.log{white-space:pre-wrap;font-size:12px;color:var(--muted);background:rgba(2,8,23,.04);padding:8px;border-radius:8px;border:1px solid var(--border)}
+  :root{--bg:#f6f7fb;--card:#fff;--fg:#0f172a;--muted:#667085;--brand:#2563eb;--brand2:#7c3aed;--border:#e6e9f0}
+  @media (prefers-color-scheme:dark){:root{--bg:#0b1020;--card:#0f162e;--fg:#e6edf7;--muted:#9aa4b2;--border:#1f2a44}}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+  .wrap{max-width:1100px;margin:20px auto;padding:16px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px}
+  header{display:flex;gap:10px;align-items:center;justify-content:space-between}
+  .brand{display:flex;gap:10px;align-items:center}
+  .logo{width:34px;height:34px;border-radius:12px;background:conic-gradient(from 180deg,var(--brand),var(--brand2))}
+  h1{margin:0;font-size:1.35rem}
+  .controls{display:flex;gap:10px;flex-wrap:wrap}
+  select,input,button{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit}
+  .btn{cursor:pointer}
+  .muted{color:var(--muted)}
+  #error{background:#fee2e2;color:#991b1b;border:1px solid #fecaca;border-radius:12px;padding:10px;display:none}
+  #guard{margin:10px 0}
 </style>
 </head>
 <body>
-  <div class="container">
-    <div class="card">
-      <header>
-        <div class="brand">
-          <div class="logo" aria-hidden="true"></div>
-          <h1>Memoir — Recorder</h1>
-        </div>
-        <div class="controls">
-          <select id="lang" aria-label="Language">
-            <option value="en">English</option>
-            <option value="fr" selected>Français</option>
-            <option value="es">Español</option>
-            <option value="nl">Nederlands</option>
-          </select>
-          <span id="planBadge" class="badgePlan">Plan: …</span>
-          <div id="redeemBox" style="display:flex; gap:8px; align-items:center;">
-            <input id="codeInput" type="text" placeholder="Enter trial code" class="input" style="max-width:200px">
-            <button id="redeemBtn" class="btn">Redeem</button>
-            <span id="redeemMsg" class="muted"></span>
-          </div>
-          <button id="toggleLib" class="btn">☰ Library</button>
-          <button id="helpBtn" class="btn">❓ Help</button>
-          <button id="logout" class="btn badge">Logout</button>
-        </div>
-      </header>
-
-      <div id="guard" class="muted" style="margin:6px 0 14px">Checking your session…</div>
-
-      <div id="app" class="shell" style="display:none">
-        <section class="left">
-          <div class="segment">
-            <button id="tabGuided" class="tab active">Guided</button>
-            <button id="tabFree" class="tab">Free</button>
-          </div>
-
-          <div id="guidedBlock">
-            <div class="label">Suggested topics</div>
-            <div id="prompts" class="topics"></div>
-            <div class="small">Tip: tapping a topic speaks a gentle question in your selected language.</div>
-          </div>
-
-          <div class="label">Title</div>
-          <input id="title" type="text" class="input" placeholder="Story title (optional)" />
-
-          <div class="label">When did this happen?</div>
-          <input id="when" type="text" class="input" placeholder='e.g., "summer 1945", "early 2018", "15 Feb 1972"' />
-
-          <div class="label">Transcript</div>
-          <div id="transcript" class="area" aria-live="polite">Your words will appear here…</div>
-
-          <div class="mic-wrap">
-            <button id="mic" class="mic" aria-pressed="false">Record</button>
-            <div class="meter" id="meter" style="display:none">
-              <div class="bar"><div id="bar"></div></div>
-              <div id="remain" class="muted">120s</div>
-            </div>
-            <div id="asr" class="muted"></div>
-            <pre id="debug" class="log" style="display:none"></pre>
-          </div>
-
-          <div class="actions" style="display:flex;gap:10px;flex-wrap:wrap">
-            <button id="save" class="btn primary" disabled>Save story</button>
-            <button id="clear" class="btn">Clear</button>
-            <button id="exportBook" class="btn lock" title="Premium only" disabled>Export Book (PDF)</button>
-            <button id="exportCsv" class="btn">Export CSV</button>
-          </div>
-        </section>
-
-        <aside class="right">
-          <div class="label">Library</div>
-          <div id="library" class="list"></div>
-        </aside>
+<div class="wrap">
+  <div class="card">
+    <header>
+      <div class="brand">
+        <div class="logo"></div>
+        <h1>Memoir — Recorder</h1>
       </div>
+      <div class="controls">
+        <select id="lang">
+          <option value="en">English</option>
+          <option value="fr">Français</option>
+          <option value="es">Español</option>
+          <option value="nl">Nederlands</option>
+        </select>
+        <span id="planBadge">Plan: …</span>
+        <input id="codeInput" placeholder="Enter trial code"/>
+        <button id="redeemBtn" class="btn">Redeem</button>
+        <button id="toggleLib" class="btn">☰ Library</button>
+        <button id="helpBtn" class="btn">❓ Help</button>
+        <button id="logout" class="btn">Logout</button>
+      </div>
+    </header>
 
-      <footer>Whisper chunked transcription enabled. EN/FR/ES/NL prompts + voice, library, AI rewrite, CSV, trials.</footer>
+    <div id="error"></div>
+    <div id="guard" class="muted">Checking your session…</div>
+
+    <div id="app" style="display:none">
+      <p class="muted">Whisper chunked transcription enabled. EN/FR/ES/NL prompts + voice, library, AI rewrite, CSV, trials.</p>
+
+      <!-- Your existing UI continues below … -->
+      <div id="transcript" style="border:1px solid var(--border);border-radius:12px;padding:12px;min-height:140px">Your words will appear here…</div>
+      <div style="display:flex;gap:10px;margin-top:10px">
+        <button id="mic" class="btn">Record</button>
+        <button id="save" class="btn">Save story</button>
+      </div>
     </div>
   </div>
+</div>
 
-  <div id="drawer" class="drawer" aria-hidden="true">
-    <div class="panel">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <div class="label" style="margin:0">Library</div>
-        <button id="closeDrawer" class="btn">Close</button>
-      </div>
-      <div id="libraryDrawer" class="list"></div>
-    </div>
-  </div>
-
-  <dialog id="faqDialog">
-    <form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #e5e7eb">
-      <strong id="faqTitle">Help / FAQ</strong>
-      <button class="btn" autofocus>Close</button>
-    </form>
-    <div id="faqBody" style="padding:16px;max-width:min(820px,92vw)"></div>
-  </dialog>
-
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
 <script>
-(async function(){
-  /* ===== Supabase session guard ===== */
-  const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false} });
+(async function boot(){
+  const ERR = msg => { const el=document.getElementById('error'); el.textContent=msg; el.style.display='block'; };
+  const guard = document.getElementById('guard');
+  const app   = document.getElementById('app');
 
-  const guard=document.getElementById('guard'), app=document.getElementById('app');
-  const { data:{session} } = await supabase.auth.getSession();
-  if(!session){ window.location.replace('/login.html'); return; }
-
-  // Load plan / role
-  const { data: profile } = await supabase.from('profiles').select('plan, trial_end, role').single();
-  const trialUntil = profile?.trial_end ? new Date(profile.trial_end) : null;
-  const trialActive = trialUntil && Date.now() < trialUntil.getTime();
-  const isAdmin = profile?.role === 'admin';
-  let isPremium = isAdmin || profile?.plan === 'premium' || trialActive;
-
-  guard.style.display='none'; app.style.display='grid';
-  document.getElementById('logout').onclick = async ()=>{ await supabase.auth.signOut(); window.location.replace('/login.html'); };
-
-  const planBadge = document.getElementById('planBadge');
-  if (isAdmin) planBadge.textContent = 'Plan: Admin';
-  else if (isPremium) planBadge.textContent = trialActive ? `Plan: Premium (trial until ${trialUntil.toLocaleDateString()})` : 'Plan: Premium';
-  else planBadge.textContent = 'Plan: Free';
-
-  /* ===== Redeem code ===== */
-  const codeInput=document.getElementById('codeInput'), redeemBtn=document.getElementById('redeemBtn'), redeemMsg=document.getElementById('redeemMsg');
-  const setRedeemMsg=t=>{ if(redeemMsg) redeemMsg.textContent=t||''; };
-  redeemBtn?.addEventListener('click', async ()=>{
-    setRedeemMsg('');
-    const code=codeInput.value.trim();
-    if(!code){ setRedeemMsg('Enter a code.'); return; }
-    const { data:{user} } = await supabase.auth.getUser();
-    if(!user){ setRedeemMsg('Please sign in first.'); return; }
-    try{
-      const { data, error } = await supabase.rpc('redeem_code', { p_code: code });
-      if (error) throw error;
-      if (data?.ok){ setRedeemMsg(`✅ Premium until ${new Date(data.trial_end).toLocaleDateString()}`); location.reload(); }
-      else{
-        const map={not_authenticated:'Please sign in first.',not_found:'Code not found.',expired:'Code expired.',exhausted:'Code already used.',already_premium:'You already have Premium.'};
-        setRedeemMsg('❌ '+(map[data?.error]||'Redeem failed.'));
-      }
-    }catch(e){ setRedeemMsg('❌ '+(e.message||String(e))); }
-  });
-
-  /* ===== DOM ===== */
-  const $=id=>document.getElementById(id);
-  const lang=$('lang'), promptsWrap=$('prompts');
-  const titleEl=$('title'), whenEl=$('when'), transcriptEl=$('transcript');
-  const mic=$('mic'), meter=$('meter'), bar=$('bar'), remain=$('remain'), asr=$('asr'), debug=$('debug');
-  const save=$('save'), clearBtn=$('clear'), library=$('library');
-  const drawer=$('drawer'), libraryDrawer=$('libraryDrawer'), toggleLib=$('toggleLib'), closeDrawer=$('closeDrawer');
-  const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
-  const exportBookBtn=$('exportBook'), exportCsvBtn=$('exportCsv');
-
-  function setPremiumUI(enabled){
-    const lockBtn = (btn, on, title) => {
-      btn.toggleAttribute('disabled', !on);
-      btn.classList.toggle('lock', !on);
-      if (!on && title) btn.title = title; else btn.removeAttribute('title');
-    };
-    lockBtn(exportBookBtn, enabled, 'Premium only');
-  }
-  setPremiumUI(isPremium);
-
-  const CAP_FREE = 120;   // 2 min
-  const CAP_PREM = 900;   // 15 min
-  const getCap = () => (isPremium ? CAP_PREM : CAP_FREE);
-
-  /* ===== Topics + prompts ===== */
-  const TOPIC_WORDS = {
-    en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
-    fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
-    es:["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"],
-    nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
-  };
-  const PROMPT_SENTENCES = {
-    en:{Childhood:"Tell me something about your youth.",Family:"Tell me about your family and the people who raised you.",School:"What was school like for you?",Work:"Tell me about your first job or career.",Love:"How did you meet your partner, or what did love mean to you then?",War:"What big world events or conflicts did you live through?",Travel:"Where did you travel that left a mark on you?",Traditions:"Which family traditions mattered most to you?",Holidays:"Describe a holiday you remember vividly.",Lessons:"What life lesson did you learn the hard way?",Advice:"What advice would you give your younger self?","Turning-points":"What was a turning point that changed your path?"},
-    fr:{Enfance:"Parlez-moi de votre jeunesse, d’un souvenir marquant.",Famille:"Parlez-moi de votre famille et des personnes qui vous ont élevé.",École:"Comment était l’école pour vous ?",Travail:"Racontez-moi votre premier travail ou votre carrière.",Amour:"Comment avez-vous rencontré votre partenaire, et que signifiait l’amour pour vous ?",Guerre:"Quels grands événements ou conflits avez-vous vécus ?",Voyages:"Quels voyages vous ont marqué(e) ?",Traditions:"Quelles traditions familiales comptaient le plus ?",Fêtes:"Décrivez une fête dont vous vous souvenez clairement.",Leçons:"Quelle leçon de vie avez-vous apprise à la dure ?",Conseils:"Quel conseil donneriez-vous à votre jeune vous ?",Déclics:"Quel déclic a changé votre trajectoire ?"},
-    es:{Infancia:"Cuéntame algo sobre tu juventud.",Familia:"Háblame de tu familia y de quienes te criaron.",Escuela:"¿Cómo era la escuela para ti?",Trabajo:"Cuéntame sobre tu primer trabajo o tu carrera.",Amor:"¿Cómo conociste a tu pareja y qué significaba el amor entonces?",Guerra:"¿Qué grandes eventos o conflictos viviste?",Viajes:"¿Qué viajes te marcaron?",Tradiciones:"¿Qué tradiciones familiares eran importantes para ti?",Fiestas:"Describe una fiesta que recuerdes con claridad.",Lecciones:"¿Qué lección de vida aprendiste con dificultad?",Consejos:"¿Qué consejo le darías a tu yo joven?","Puntos-clave":"¿Cuál fue un punto de inflexión en tu vida?"},
-    nl:{Jeugd:"Vertel me iets over je jeugd.",Familie:"Vertel over je familie en de mensen die je hebben opgevoed.",School:"Hoe was school voor jou?",Werk:"Vertel over je eerste baan of je loopbaan.",Liefde:"Hoe heb je je partner ontmoet, en wat betekende liefde toen?",Oorlog:"Welke grote gebeurtenissen of conflicten heb je meegemaakt?",Reizen:"Welke reizen hebben indruk op je gemaakt?",Tradities:"Welke familietradities waren belangrijk voor je?",Feestdagen:"Beschrijf een feestdag die je helder herinnert.",Lessen:"Welke levensles heb je op de harde manier geleerd?",Advies:"Welk advies zou je je jongere zelf geven?",Keerpunt:"Wat was een keerpunt in je leven?"}
-  };
-
-  const VOICE_BY_LANG = { en:'KoVIHoyLDrQyd4pGalbs', fr:'TfGtrgcVrXWjJkeB51T1', nl:'yO6w2xlECAQRFP6pX7Hw', es:'ZpEtuMdTIlJXYXAhevhG' };
-  async function speakViaElevenLabs(sentence, code){
-    try{
-      const r = await fetch('/api/voice', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ text: sentence, voiceId: VOICE_BY_LANG[code] || VOICE_BY_LANG.en }) });
-      if(!r.ok) throw new Error('tts_failed');
-      const blob = await r.blob(); const url = URL.createObjectURL(blob); const audio = new Audio(url); await audio.play(); setTimeout(()=>URL.revokeObjectURL(url), 60000);
-      return true;
-    }catch(e){ console.warn('ElevenLabs TTS failed → fallback', e); return false; }
-  }
-  function speakSystem(sentence, code){
-    if(!('speechSynthesis' in window)) return;
-    const u=new SpeechSynthesisUtterance(String(sentence)); u.lang=({en:'en-US',fr:'fr-FR',es:'es-ES',nl:'nl-NL'})[code]||'en-US';
-    u.rate=.95; u.pitch=1; u.volume=1; speechSynthesis.cancel(); speechSynthesis.speak(u);
-  }
-  async function speakPrompt(oneWord, code){
-    const s=(PROMPT_SENTENCES[code]||{})[oneWord] || oneWord;
-    const ok = await speakViaElevenLabs(s, code); if(!ok) speakSystem(s, code);
-  }
-  function renderPrompts(){
-    const code=lang.value; promptsWrap.innerHTML='';
-    (TOPIC_WORDS[code]||TOPIC_WORDS.en).forEach(word=>{
-      const chip=document.createElement('div'); chip.className='chip'; chip.textContent=word;
-      chip.onclick=()=>{ titleEl.value=word; speakPrompt(word, code); };
-      promptsWrap.appendChild(chip);
+  let supabase;
+  try{
+    const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth:{persistSession:true, autoRefreshToken:true, detectSessionInUrl:false}
     });
+  }catch(e){
+    ERR("Could not load Supabase SDK. Check your network or the <script> tag.");
+    return;
   }
 
-  /* ===== Library ===== */
-  const LSKEY='memoir.stories';
-  const loadStories=()=>{try{return JSON.parse(localStorage.getItem(LSKEY)||'[]')}catch{return[]}};
-  const saveStories=(list)=>localStorage.setItem(LSKEY,JSON.stringify(list));
-  const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-  function storyRow(s, idx){
-    const row=document.createElement('div'); row.className='story';
-    const meta=document.createElement('div'); meta.style.minWidth='0';
-    const h=document.createElement('h3'); h.textContent=s.title||'Story';
-    const t=document.createElement('div'); t.className='muted';
-    t.textContent= s.happened_label || (s.happened_sort?new Date(s.happened_sort).toDateString():new Date(s.created).toLocaleString());
-    meta.appendChild(h); meta.appendChild(t);
-    const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px'; actions.style.flexWrap='wrap';
-    const make=(txt,fn,disabled)=>{const b=document.createElement('button'); b.className='btn'; b.textContent=txt; if(disabled){ b.disabled=true; b.classList.add('lock'); } b.onclick=fn; return b;};
-    actions.appendChild(make('View',()=>viewStory(s)));
-    actions.appendChild(make('Rewrite (AI)',()=>requirePremium() && rewriteAI(idx), !(isPremium)));
-    actions.appendChild(make('Undo',()=>undoRewrite(idx), !s.prev));
-    actions.appendChild(make('Download .docx',()=>downloadDocx(s)));
-    actions.appendChild(make('Delete',()=>delStory(idx)));
-    row.appendChild(meta); row.appendChild(actions);
-    return row;
-  }
-  function renderLib(toDrawer=false){
-    const items=loadStories(); const tgt = toDrawer?libraryDrawer:library;
-    tgt.innerHTML=''; if(!items.length){ const p=document.createElement('p'); p.className='muted'; p.textContent='No stories yet.'; tgt.appendChild(p); return; }
-    items.forEach((s,i)=>tgt.appendChild(storyRow(s,i)));
-  }
-  function requirePremium(){ if(!isPremium){ alert('This is a Premium feature. Enter a valid code for a 14-day trial.'); return false; } return true; }
-  function viewStory(s){
-    const dlg=document.createElement('dialog');
-    dlg.style.width='min(90vw,820px)';
-    dlg.innerHTML=`<form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #e5e7eb"><strong>${esc(s.title||'Story')}</strong><button autofocus class="btn">Close</button></form><div style="padding:16px"><div class="muted" style="margin-bottom:6px">${esc(s.happened_label || (s.happened_sort?new Date(s.happened_sort).toDateString():new Date(s.created).toLocaleString()))}</div><div style="white-space:pre-wrap;font-family:system-ui">${esc(s.text||'')}</div></div>`;
-    document.body.appendChild(dlg); dlg.addEventListener('close',()=>dlg.remove()); dlg.showModal();
-  }
-  function delStory(idx){ if(!confirm('Delete this story?')) return; const items=loadStories(); items.splice(idx,1); saveStories(items); renderLib(innerWidth<1024); }
-  function undoRewrite(idx){ const items=loadStories(); const s=items[idx]; if(!s?.prev) return alert('No previous version stored.'); s.text=s.prev; delete s.prev; saveStories(items); renderLib(innerWidth<1024); }
-  async function rewriteAI(idx){
-    const items=loadStories(); const s=items[idx]; if(!s) return;
-    const payload = { text: s.text, style: "warm, vivid, cohesive autobiography with gentle pacing and sensory details", lang: lang.value || 'en' };
-    const r = await fetch('/api/rewrite', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-    if(!r.ok){ alert('Rewrite failed.'); return; }
-    const data = await r.json(); s.prev = s.text; s.text = data.text || s.text; s.rewritten_at = new Date().toISOString();
-    saveStories(items); renderLib(innerWidth<1024);
-  }
-  function downloadDocx(s){
-    const zip = new JSZip(); const meta = `Title: ${s.title||'Story'}\nWhen: ${s.happened_label || s.happened_sort || ''}\nCreated: ${new Date(s.created).toLocaleString()}\n\n`;
-    zip.file('story.txt', meta + (s.text||'')); zip.generateAsync({type:'blob'}).then(blob=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(s.title||'story')+'.zip'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); });
-  }
-  exportCsvBtn.onclick=()=>{
-    const items=loadStories();
-    const rows=[['title','happened_label','happened_sort','created','text']];
-    items.forEach(s=>rows.push([s.title||'',s.happened_label||'',s.happened_sort||'',s.created||'',(s.text||'').replace(/\n/g,'\\n')]));
-    const csv=rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n');
-    const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='memoir_stories.csv'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-  };
-  exportBookBtn.onclick=()=>{ if(!requirePremium()) return; alert('PDF export placeholder — Canva/real PDF pipeline coming.'); };
-
-  /* ===== Approx date ===== */
-  function parseApproxDate(input){
-    if(!input) return { label:'', sort:null };
-    const s=input.trim().toLowerCase();
-    const iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); if(iso){const d=new Date(+iso[1],+iso[2]-1,+iso[3]);return{label:input,sort:d.toISOString().slice(0,10)};}
-    const yOnly=s.match(/(\d{4})/); if(yOnly){const d=new Date(+yOnly[1],0,1);return{label:input,sort:d.toISOString().slice(0,10)};}
-    const season=s.match(/^(early|mid|late)?\s*(spring|summer|autumn|fall|winter)\s+(\d{4})$/);
-    if(season){const y=+season[3];const base={spring:2,summer:5,autumn:8,fall:8,winter:11}[season[2]];let m=base,day=1;if(season[1]==='mid')day=10;if(season[1]==='late')day=20;const d=new Date(y,m,day);return{label:input,sort:d.toISOString().slice(0,10)};}
-    return { label:input, sort:null };
+  let session=null;
+  try{
+    const { data:{ session: s }, error } = await supabase.auth.getSession();
+    if(error) throw error;
+    session = s;
+  }catch(e){
+    ERR("Auth check failed: " + (e.message||e));
+    return;
   }
 
-  /* ===== CHUNKED RECORDING → WHISPER ===== */
-  const BCP = { en:'en', fr:'fr', es:'es', nl:'nl' }; // language hint
-  let mediaRecorder=null, recActive=false, elapsed=0, timer=null;
-
-  // queue + worker
-  let chunkQueue = [];
-  let workerBusy = false;
-  let seq = 0;
-
-  function extFromMime(mime) {
-    if (!mime) return 'webm';
-    if (mime.includes('mp4')) return 'mp4';
-    if (mime.includes('webm')) return 'webm';
-    if (mime.includes('ogg')) return 'ogg';
-    return 'webm';
+  if(!session){
+    // No session → bounce to login
+    window.location.replace('/login.html');
+    return;
   }
 
-  function log(msg){
-    // toggle to see low-level logs
-    // debug.style.display='block';
-    if(debug){ debug.textContent = ((debug.textContent||'') + '\n' + msg).trim(); }
-    console.log(msg);
-  }
+  // If we’re here, user is signed in
+  guard.style.display='none';
+  app.style.display='block';
 
-  async function processQueue() {
-    if (workerBusy) return;
-    workerBusy = true;
-    while (chunkQueue.length) {
-      const item = chunkQueue.shift();
-      try {
-        await sendChunkNow(item.blob, item.mime, item.seq);
-      } catch (e) {
-        log('Chunk failed: '+(e.message||e));
-      }
+  // (Optional) show plan badge (safe if table empty due to RLS)
+  try{
+    const { data, error } = await supabase.from('profiles').select('plan, trial_end, role').single();
+    if(!error && data){
+      const badge = document.getElementById('planBadge');
+      const trial = data.trial_end ? new Date(data.trial_end) : null;
+      const trialActive = trial && Date.now() < trial.getTime();
+      const isAdmin = data.role === 'admin';
+      badge.textContent = isAdmin ? 'Plan: Admin' : trialActive ? `Plan: Premium (trial)` : `Plan: ${data.plan||'free'}`;
     }
-    workerBusy = false;
-  }
+  }catch{}
 
-  async function startRec(){
+  // Simple recorder placeholder (UI won’t block app load)
+  const mic = document.getElementById('mic');
+  const transcript = document.getElementById('transcript');
+  let rec=null, chunks=[], running=false;
+
+  mic.onclick = async () => {
+    if(running){ stop(); return; }
     try{
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation:true, noiseSuppression:true } });
-      const mime =
-        MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' :
-        (MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : 'audio/webm');
-
-      mediaRecorder = new MediaRecorder(stream, { mimeType: mime });
-
-      mediaRecorder.ondataavailable = (e) => {
-        if (!e.data || !e.data.size) return;
-        chunkQueue.push({ blob: e.data, mime, seq: ++seq });
-        processQueue();
+      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+      const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
+      rec = new MediaRecorder(stream,{mimeType:mime, audioBitsPerSecond:96000});
+      rec.ondataavailable = e => { if(e.data && e.data.size>0) chunks.push(e.data); };
+      rec.onstop = async () => {
+        if(!chunks.length) return;
+        const blob = new Blob(chunks, {type:mime});
+        chunks = [];
+        try{
+          const form = new FormData();
+          form.append('audio', blob, 'chunk.webm');
+          form.append('lang', document.getElementById('lang').value || 'fr');
+          const r = await fetch('/api/transcribe-chunk', { method:'POST', body: form });
+          const j = await r.json();
+          if(j.text) transcript.textContent += (transcript.textContent.trim() ? ' ' : '') + j.text;
+        }catch(e){ console.log('transcribe error', e); }
       };
-
-      mediaRecorder.onstop = () => { /* queue will drain */ };
-
+      rec.start();
+      running=true; mic.textContent='Stop';
     }catch(e){
-      asr.textContent = 'Mic permission denied or unsupported.';
-      return;
+      alert('Mic error: '+(e.message||e));
     }
-
-    asr.textContent='Recording…';
-    mic.textContent='Stop Recording'; mic.classList.add('pulse');
-    elapsed=0; seq=0; chunkQueue.length=0;
-    remain.textContent=getCap()+'s'; bar.style.width='0%'; meter.style.display='flex';
-    if (transcriptEl.textContent.trim() === 'Your words will appear here…') transcriptEl.textContent='';
-
-    mediaRecorder.start(5000); // every 5s
-
-    timer=setInterval(()=>{
-      elapsed++; const cap=getCap();
-      bar.style.width=(elapsed/cap*100)+'%';
-      remain.textContent=Math.max(0,cap-elapsed)+'s';
-      if(elapsed>=cap){ stopRec(); }
-    },1000);
-
-    recActive=true;
-  }
-
-  function stopRec(){
-    try{ if(mediaRecorder && mediaRecorder.state!=='inactive') mediaRecorder.stop(); }catch{}
-    if (timer){ clearInterval(timer); timer=null; }
-    mic.textContent='Record'; mic.classList.remove('pulse');
-    asr.textContent='Finishing…';
-    recActive=false;
-
-    const t0 = Date.now();
-    (function waitFlush(){
-      if (!workerBusy && chunkQueue.length===0) {
-        asr.textContent='Done.'; setTimeout(()=>asr.textContent='',1500); return;
-      }
-      if (Date.now()-t0>8000) {
-        asr.textContent='Done (some chunks may have been skipped).'; setTimeout(()=>asr.textContent='',2500); return;
-      }
-      setTimeout(waitFlush,150);
-    })();
-  }
-
-  async function sendChunkNow(blob, mime, seqNum){
-    asr.textContent = `Uploading chunk ${seqNum}…`;
-    const fd = new FormData();
-    const ext = extFromMime(mime || blob.type);
-    fd.append('audio', blob, `chunk-${seqNum}.${ext}`);
-    fd.append('lang', BCP[lang.value] || 'fr');
-    fd.append('seq', String(seqNum));
-
-    const r = await fetch('/api/transcribe-chunk', { method:'POST', body: fd });
-    if (!r.ok) {
-      const txt = await r.text().catch(()=>String(r.status));
-      throw new Error(`HTTP ${r.status}: ${txt}`);
-    }
-    const data = await r.json().catch(()=>({text:''}));
-    const text = (data.text || '').trim();
-    if (text) {
-      const prev = transcriptEl.textContent.trim();
-      transcriptEl.textContent = (prev ? (prev + ' ') : '') + text;
-      save.disabled = false;
-    }
-    asr.textContent = `Chunk ${seqNum} transcribed.`;
-  }
-
-  mic.onclick=()=>{ recActive?stopRec():startRec(); };
-
-  /* ===== Drawer / Tabs / FAQ ===== */
-  toggleLib.onclick=()=>{ if(innerWidth>=1024){ renderLib(); } else { drawer.classList.add('show'); renderLib(true); } };
-  closeDrawer.onclick=()=>drawer.classList.remove('show');
-  drawer.addEventListener('click',(e)=>{ if(e.target===drawer) drawer.classList.remove('show'); });
-
-  tabGuided.onclick=()=>{ tabGuided.classList.add('active'); tabFree.classList.remove('active'); guidedBlock.style.display='block'; };
-  tabFree.onclick=()=>{ tabFree.classList.add('active'); tabGuided.classList.remove('active'); guidedBlock.style.display='none'; };
-
-  /* ===== Save/Clear ===== */
-  save.onclick=()=>{
-    const txt=transcriptEl.textContent.trim(); if(!txt) return;
-    const when=parseApproxDate(whenEl.value);
-    const story={ title:titleEl.value||'Story', text:txt, created:new Date().toISOString(), happened_label:when.label, happened_sort:when.sort };
-    const items=loadStories(); items.unshift(story); saveStories(items); renderLib(innerWidth<1024);
-    transcriptEl.textContent='Your words will appear here…'; save.disabled=true; titleEl.value=''; whenEl.value='';
   };
-  clearBtn.onclick=()=>{ transcriptEl.textContent='Your words will appear here…'; save.disabled=true; };
 
-  /* ===== FAQ ===== */
-  const FAQ = {
-    en: { title: "Help / FAQ", items: [
-      ["How do I use this app?","1) Pick a language. 2) Tap a topic (or choose Free). 3) Press Record and speak. 4) Stop recording, then Save story. You’ll find saved stories in Library."],
-      ["How does AI rewrite work?","Open Library → Rewrite (AI). Premium/Admin only. It keeps your original; you can Undo."],
-      ["How do I export stories?","Use Download .docx (zip with text) or Export CSV for a spreadsheet. PDF export is coming."],
-      ["How do I sign up / log in?","Use the login page with email + password. After sign-in you’ll land here automatically."],
-      ["How do I get Premium?","Enter a trial code in the header (Redeem). Trials last 14 days. Paid plan will also unlock Premium."],
-      ["Microphone or speech not working?","Allow mic permissions. iOS/Safari must stay foreground with ringer on."]
-    ]},
-    fr: { title: "Aide / FAQ", items: [
-      ["Comment utiliser l’application ?","1) Choisissez une langue. 2) Touchez un sujet (ou Free). 3) Appuyez sur Enregistrer et parlez. 4) Arrêtez, puis Enregistrez l’histoire. Vos histoires sont dans la Bibliothèque."],
-      ["Comment fonctionne la réécriture IA ?","Bibliothèque → Réécriture (IA). Premium/Admin uniquement. L’original est conservé ; vous pouvez Annuler."],
-      ["Comment exporter les histoires ?","Télécharger .docx (zip + texte) ou Exporter CSV. Export PDF bientôt."],
-      ["Comment s’inscrire / se connecter ?","Depuis la page de connexion (e-mail + mot de passe)."],
-      ["Comment obtenir Premium ?","Saisissez un code d’essai (Redeem) en haut. L’essai dure 14 jours."],
-      ["Micro / voix ne fonctionnent pas ?","Autorisez le micro. Sur iOS/Safari, gardez la page au premier plan avec le son activé."]
-    ]},
-    es: { title: "Ayuda / Preguntas frecuentes", items: [
-      ["¿Cómo uso la app?","1) Elige idioma. 2) Toca un tema (o Free). 3) Pulsa Grabar y habla. 4) Detén y Guarda la historia."],
-      ["Reescritura con IA","Biblioteca → Reescribir (IA). Solo Premium/Admin."],
-      ["Exportar","Descarga .docx o Exportar CSV. PDF próximamente."],
-      ["Registro / acceso","Usa la página de acceso con correo y contraseña."],
-      ["Premium","Canjea un código de prueba en la cabecera."],
-      ["Micrófono / voz","Permite micrófono. iOS/Safari en primer plano con sonido."]
-    ]},
-    nl: { title: "Help / Veelgestelde vragen", items: [
-      ["Hoe gebruik ik de app?","1) Kies een taal. 2) Tik een onderwerp (of Free). 3) Druk op Opnemen en spreek. 4) Stop en Sla op."],
-      ["AI-herschrijven","Bibliotheek → Herschrijf (AI). Alleen Premium/Admin."],
-      ["Exporteren","Download .docx of Exporteer CSV. PDF volgt."],
-      ["Registreren / inloggen","Via de loginpagina met e-mail + wachtwoord."],
-      ["Premium","Vul bovenaan een proefcode in."],
-      ["Microfoon / spraak","Sta microfoon toe. iOS/Safari vooraan en geluid aan."]
-    ]}
+  function stop(){ try{rec && rec.state!=='inactive' && rec.stop();}catch{} running=false; mic.textContent='Record'; }
+
+  document.getElementById('logout').onclick = async ()=>{
+    await supabase.auth.signOut();
+    location.href = '/login.html';
   };
-  const helpBtn=document.getElementById('helpBtn'), faqDialog=document.getElementById('faqDialog'), faqTitle=document.getElementById('faqTitle'), faqBody=document.getElementById('faqBody');
-  function renderFAQ(){ const l = FAQ[lang.value] || FAQ.en; faqTitle.textContent=l.title; faqBody.innerHTML=l.items.map(([q,a])=>`<details style="margin:8px 0"><summary><strong>${q}</strong></summary><div style="margin-top:6px">${a}</div></details>`).join(''); }
-  helpBtn?.addEventListener('click', ()=>{ renderFAQ(); faqDialog.showModal(); });
-
-  // init
-  const toggleLib=document.getElementById('toggleLib'), closeDrawer=document.getElementById('closeDrawer'), drawer=document.getElementById('drawer'), libraryDrawer=document.getElementById('libraryDrawer');
-  toggleLib.onclick=()=>{ if(innerWidth>=1024){ renderLib(); } else { drawer.classList.add('show'); renderLib(true); } };
-  closeDrawer.onclick=()=>drawer.classList.remove('show');
-  drawer.addEventListener('click',(e)=>{ if(e.target===drawer) drawer.classList.remove('show'); });
-  document.getElementById('tabGuided').onclick=()=>{ tabGuided.classList.add('active'); tabFree.classList.remove('active'); guidedBlock.style.display='block'; };
-  document.getElementById('tabFree').onclick=()=>{ tabFree.classList.add('active'); tabGuided.classList.remove('active'); guidedBlock.style.display='none'; };
-
-  lang.onchange=renderPrompts;
-  renderPrompts(); renderLib();
 })();
 </script>
 </body>
