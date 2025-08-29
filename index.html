@@ -6,21 +6,44 @@
 <title>Memoir — Recorder</title>
 <meta name="color-scheme" content="light dark"/>
 <style>
-  :root{--bg:#f6f7fb;--card:#fff;--fg:#0f172a;--muted:#667085;--brand:#2563eb;--brand2:#7c3aed;--border:#e6e9f0}
-  @media (prefers-color-scheme:dark){:root{--bg:#0b1020;--card:#0f162e;--fg:#e6edf7;--muted:#9aa4b2;--border:#1f2a44}}
+  :root{--bg:#f6f7fb;--card:#fff;--fg:#0f172a;--muted:#667085;--brand:#2563eb;--brand2:#7c3aed;--border:#e6e9f0;--shadow:0 20px 40px rgba(2,8,23,.06), 0 2px 6px rgba(2,8,23,.04)}
+  @media (prefers-color-scheme:dark){:root{--bg:#0b1020;--card:#0f162e;--fg:#e6edf7;--muted:#9aa4b2;--border:#1f2a44;--shadow:0 20px 40px rgba(0,0,0,.4),0 2px 6px rgba(0,0,0,.3)}}
+  *,*:before,*:after{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
   .wrap{max-width:1100px;margin:20px auto;padding:16px}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px}
-  header{display:flex;gap:10px;align-items:center;justify-content:space-between}
-  .brand{display:flex;gap:10px;align-items:center}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:16px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+  .brand{display:flex;align-items:center;gap:10px}
   .logo{width:34px;height:34px;border-radius:12px;background:conic-gradient(from 180deg,var(--brand),var(--brand2))}
   h1{margin:0;font-size:1.35rem}
-  .controls{display:flex;gap:10px;flex-wrap:wrap}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
   select,input,button{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit}
   .btn{cursor:pointer}
+  .btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));border:0;color:#fff}
   .muted{color:var(--muted)}
-  #error{background:#fee2e2;color:#991b1b;border:1px solid #fecaca;border-radius:12px;padding:10px;display:none}
-  #guard{margin:10px 0}
+  .badge{border-radius:999px;border:1px solid var(--border);padding:6px 10px}
+  #error{display:none;background:#fee2e2;color:#991b1b;border:1px solid #fecaca;border-radius:12px;padding:10px;margin-bottom:10px}
+  .shell{display:grid;gap:18px;grid-template-columns:1fr}
+  @media (min-width:1024px){ .shell{grid-template-columns:minmax(0,1fr) 420px} }
+  .label{font-size:12px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.08em;margin:10px 0 6px}
+  .segment{display:flex;gap:8px;flex-wrap:wrap}
+  .tab{padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:transparent}
+  .tab.active{background:rgba(37,99,235,.12);border-color:rgba(37,99,235,.25)}
+  .topics{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+  .chip{display:flex;align-items:center;justify-content:center;height:44px;border-radius:12px;border:1px solid rgba(37,99,235,.18);background:rgba(37,99,235,.08);font-weight:600;cursor:pointer;user-select:none}
+  .chip:active{transform:translateY(1px)}
+  .input{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit;width:100%}
+  .area{min-height:180px;border:1px solid var(--border);border-radius:12px;padding:12px;background:rgba(2,8,23,.02)}
+  .mic{padding:14px 18px;border-radius:999px;border:0;background:linear-gradient(90deg,#ff5a5f,#a21caf);color:#fff;font-weight:700;cursor:pointer}
+  .meter{display:flex;gap:8px;align-items:center;width:100%;max-width:420px}
+  .bar{flex:1;height:10px;background:rgba(2,8,23,.08);border-radius:999px;overflow:hidden}
+  .bar>div{height:100%;width:0%;background:linear-gradient(90deg,var(--brand),var(--brand2))}
+  .list{display:grid;gap:10px}
+  .story{padding:12px;border:1px solid var(--border);border-radius:12px;background:rgba(2,8,23,.02);display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .story h3{margin:0;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+  dialog::backdrop{background:rgba(0,0,0,.35)}
+  dialog{border:none;border-radius:12px;box-shadow:var(--shadow);max-width:min(920px,92vw)}
+  footer{margin:16px 0 6px;text-align:center;color:var(--muted);font-size:12px}
 </style>
 </head>
 <body>
@@ -38,119 +61,322 @@
           <option value="es">Español</option>
           <option value="nl">Nederlands</option>
         </select>
-        <span id="planBadge">Plan: …</span>
-        <input id="codeInput" placeholder="Enter trial code"/>
+        <span id="planBadge" class="badge">Plan: …</span>
+        <input id="codeInput" placeholder="Enter trial code" style="max-width:200px"/>
         <button id="redeemBtn" class="btn">Redeem</button>
-        <button id="toggleLib" class="btn">☰ Library</button>
         <button id="helpBtn" class="btn">❓ Help</button>
-        <button id="logout" class="btn">Logout</button>
+        <button id="logout" class="btn badge">Logout</button>
       </div>
     </header>
 
     <div id="error"></div>
     <div id="guard" class="muted">Checking your session…</div>
 
-    <div id="app" style="display:none">
-      <p class="muted">Whisper chunked transcription enabled. EN/FR/ES/NL prompts + voice, library, AI rewrite, CSV, trials.</p>
+    <div id="app" class="shell" style="display:none">
+      <!-- LEFT -->
+      <section>
+        <div class="segment">
+          <button id="tabGuided" class="tab active">Guided</button>
+          <button id="tabFree" class="tab">Free</button>
+        </div>
 
-      <!-- Your existing UI continues below … -->
-      <div id="transcript" style="border:1px solid var(--border);border-radius:12px;padding:12px;min-height:140px">Your words will appear here…</div>
-      <div style="display:flex;gap:10px;margin-top:10px">
-        <button id="mic" class="btn">Record</button>
-        <button id="save" class="btn">Save story</button>
-      </div>
+        <div id="guidedBlock">
+          <div class="label">Suggested topics</div>
+          <div id="prompts" class="topics"></div>
+          <div class="muted" style="font-size:12px">Tip: tapping a topic speaks a gentle question in your selected language.</div>
+        </div>
+
+        <div class="label">Title</div>
+        <input id="title" class="input" placeholder="Story title (optional)"/>
+
+        <div class="label">When did this happen?</div>
+        <input id="when" class="input" placeholder='e.g., "summer 1945", "early 2018", "15 Feb 1972"' />
+
+        <div class="label">Transcript</div>
+        <div id="transcript" class="area" aria-live="polite">Your words will appear here…</div>
+
+        <div style="display:flex;gap:12px;align-items:center;margin:12px 0">
+          <button id="mic" class="mic">Record</button>
+          <div class="meter" id="meter" style="display:none">
+            <div class="bar"><div id="bar"></div></div>
+            <div id="remain" class="muted">—</div>
+          </div>
+          <div id="asr" class="muted"></div>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button id="save" class="btn primary" disabled>Save story</button>
+          <button id="clear" class="btn">Clear</button>
+          <button id="exportCsv" class="btn">Export CSV</button>
+        </div>
+      </section>
+
+      <!-- RIGHT -->
+      <aside>
+        <div class="label">Library</div>
+        <div id="library" class="list"></div>
+      </aside>
     </div>
+
+    <footer>Whisper chunked transcription enabled. EN/FR/ES/NL prompts + voice, library, AI rewrite, CSV, trials.</footer>
   </div>
 </div>
 
+<!-- Help / FAQ -->
+<dialog id="helpDialog">
+  <form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--border)">
+    <strong>How to use Memoir</strong>
+    <button autofocus class="btn">Close</button>
+  </form>
+  <div style="padding:16px;max-width:900px">
+    <h3>1) Record</h3>
+    <p>Select a language, tap a topic (it will speak a guiding question), then press <em>Record</em>. Your speech is sent every ~5 seconds to Whisper and appears in the transcript.</p>
+    <h3>2) Save & Library</h3>
+    <p>Give the story a title and approximate date (e.g. “summer 1945”), then Save. Manage, rewrite (Premium/Admin), download, or delete from the Library.</p>
+    <h3>3) Premium trial</h3>
+    <p>Enter a trial code to unlock Premium features for 14 days.</p>
+    <h3>4) Export</h3>
+    <p>Use CSV export now. (PDF/Canva export can be added later.)</p>
+  </div>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
 <script>
-(async function boot(){
-  const ERR = msg => { const el=document.getElementById('error'); el.textContent=msg; el.style.display='block'; };
-  const guard = document.getElementById('guard');
-  const app   = document.getElementById('app');
+(async function(){
+  const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {auth:{persistSession:true, autoRefreshToken:true, detectSessionInUrl:false}});
 
-  let supabase;
+  const ERR = (msg)=>{ const el=document.getElementById('error'); el.textContent=msg; el.style.display='block'; };
+  const guard=document.getElementById('guard'), app=document.getElementById('app');
+
+  // Session guard
   try{
-    const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth:{persistSession:true, autoRefreshToken:true, detectSessionInUrl:false}
-    });
-  }catch(e){
-    ERR("Could not load Supabase SDK. Check your network or the <script> tag.");
-    return;
-  }
+    const { data:{session} } = await supabase.auth.getSession();
+    if(!session){ location.replace('/login.html'); return; }
+  }catch(e){ ERR('Auth error: '+(e.message||e)); return; }
 
-  let session=null;
+  // Plan badge (ignore errors silently)
+  let isPremium=false;
   try{
-    const { data:{ session: s }, error } = await supabase.auth.getSession();
-    if(error) throw error;
-    session = s;
-  }catch(e){
-    ERR("Auth check failed: " + (e.message||e));
-    return;
-  }
-
-  if(!session){
-    // No session → bounce to login
-    window.location.replace('/login.html');
-    return;
-  }
-
-  // If we’re here, user is signed in
-  guard.style.display='none';
-  app.style.display='block';
-
-  // (Optional) show plan badge (safe if table empty due to RLS)
-  try{
-    const { data, error } = await supabase.from('profiles').select('plan, trial_end, role').single();
-    if(!error && data){
-      const badge = document.getElementById('planBadge');
-      const trial = data.trial_end ? new Date(data.trial_end) : null;
-      const trialActive = trial && Date.now() < trial.getTime();
-      const isAdmin = data.role === 'admin';
-      badge.textContent = isAdmin ? 'Plan: Admin' : trialActive ? `Plan: Premium (trial)` : `Plan: ${data.plan||'free'}`;
-    }
+    const { data } = await supabase.from('profiles').select('plan, trial_end, role').single();
+    const trial = data?.trial_end ? new Date(data.trial_end) : null;
+    const trialActive = trial && Date.now() < trial.getTime();
+    const isAdmin = data?.role === 'admin';
+    isPremium = isAdmin || data?.plan === 'premium' || trialActive;
+    document.getElementById('planBadge').textContent =
+      isAdmin ? 'Plan: Admin' : trialActive ? 'Plan: Premium (trial)' : 'Plan: ' + (data?.plan || 'free');
   }catch{}
 
-  // Simple recorder placeholder (UI won’t block app load)
-  const mic = document.getElementById('mic');
-  const transcript = document.getElementById('transcript');
-  let rec=null, chunks=[], running=false;
+  // UI ready
+  guard.style.display='none'; app.style.display='grid';
 
-  mic.onclick = async () => {
-    if(running){ stop(); return; }
+  // ====== HELP ======
+  document.getElementById('helpBtn').onclick = ()=> document.getElementById('helpDialog').showModal();
+
+  // ====== REDEEM ======
+  document.getElementById('redeemBtn').onclick = async ()=>{
+    const code = (document.getElementById('codeInput').value||'').trim();
+    if(!code) return alert('Enter a code.');
+    try{
+      const { data, error } = await supabase.rpc('redeem_code', { p_code: code });
+      if(error) throw error;
+      if(data?.ok){ alert('Premium unlocked until '+ new Date(data.trial_end).toLocaleDateString()); location.reload(); }
+      else{
+        const msg = {not_found:'Code not found', expired:'Code expired', exhausted:'Code already used', already_premium:'You already have Premium'}[data?.error] || 'Redeem failed';
+        alert(msg);
+      }
+    }catch(e){ alert('Redeem error: '+(e.message||e)); }
+  };
+
+  // ====== LOGOUT ======
+  document.getElementById('logout').onclick = async ()=>{ await supabase.auth.signOut(); location.href='/login.html'; };
+
+  // ====== Topics + prompts (ElevenLabs via /api/voice with your voices) ======
+  const TOPIC_WORDS = {
+    en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
+    fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
+    es:["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"],
+    nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
+  };
+  const PROMPT_SENTENCES = {
+    en:{Childhood:"Tell me something about your youth.",Family:"Tell me about your family and the people who raised you.",School:"What was school like for you?",Work:"Tell me about your first job or career.",Love:"How did you meet your partner, or what did love mean to you then?",War:"What big world events or conflicts did you live through?",Travel:"Where did you travel that left a mark on you?",Traditions:"Which family traditions mattered most to you?",Holidays:"Describe a holiday you remember vividly.",Lessons:"What life lesson did you learn the hard way?",Advice:"What advice would you give your younger self?","Turning-points":"What was a turning point that changed your path?"},
+    fr:{Enfance:"Parlez-moi de votre jeunesse, d’un souvenir marquant.",Famille:"Parlez-moi de votre famille et des personnes qui vous ont élevé.",École:"Comment était l’école pour vous ?",Travail:"Racontez-moi votre premier travail ou votre carrière.",Amour:"Comment avez-vous rencontré votre partenaire, et que signifiait l’amour pour vous ?",Guerre:"Quels grands événements ou conflits avez-vous vécus ?",Voyages:"Quels voyages vous ont marqué(e) ?",Traditions:"Quelles traditions familiales comptaient le plus ?",Fêtes:"Décrivez une fête dont vous vous souvenez clairement.",Leçons:"Quelle leçon de vie avez-vous apprise à la dure ?",Conseils:"Quel conseil donneriez-vous à votre jeune vous ?",Déclics:"Quel déclic a changé votre trajectoire ?"},
+    es:{Infancia:"Cuéntame algo sobre tu juventud.",Familia:"Háblame de tu familia y de quienes te criaron.",Escuela:"¿Cómo era la escuela para ti?",Trabajo:"Cuéntame sobre tu primer trabajo o tu carrera.",Amor:"¿Cómo conociste a tu pareja y qué significaba el amor entonces?",Guerra:"¿Qué grandes eventos o conflictos viviste?",Viajes:"¿Qué viajes te marcaron?",Tradiciones:"¿Qué tradiciones familiares eran importantes para ti?",Fiestas:"Describe una fiesta que recuerdes con claridad.",Lecciones:"¿Qué lección de vida aprendiste con dificultad?",Consejos:"¿Qué consejo le darías a tu yo joven?","Puntos-clave":"¿Cuál fue un punto de inflexión en tu vida?"},
+    nl:{Jeugd:"Vertel me iets over je jeugd.",Familie:"Vertel over je familie en de mensen die je hebben opgevoed.",School:"Hoe was school voor jou?",Werk:"Vertel over je eerste baan of je loopbaan.",Liefde:"Hoe heb je je partner ontmoet, en wat betekende liefde toen?",Oorlog:"Welke grote gebeurtenissen of conflicten heb je meegemaakt?",Reizen:"Welke reizen hebben indruk op je gemaakt?",Tradities:"Welke familietradities waren belangrijk voor je?",Feestdagen:"Beschrijf een feestdag die je helder herinnert.",Lessen:"Welke levensles heb je op de harde manier geleerd?",Advies:"Welk advies zou je je jongere zelf geven?",Keerpunt:"Wat was een keerpunt in je leven?"}
+  };
+  const BCP={en:'en-US',fr:'fr-FR',es:'es-ES',nl:'nl-NL'};
+  const VOICE_BY_LANG = { en:'KoVIHoyLDrQyd4pGalbs', fr:'TfGtrgcVrXWjJkeB51T1', nl:'yO6w2xlECAQRFP6pX7Hw', es:'ZpEtuMdTIlJXYXAhevhG' };
+
+  const $=id=>document.getElementById(id);
+  const lang=$('lang'), promptsWrap=$('prompts'), titleEl=$('title');
+  function speakSystem(sentence, code){
+    if(!('speechSynthesis' in window)) return;
+    const u=new SpeechSynthesisUtterance(String(sentence));
+    u.lang=BCP[code]||'en-US'; u.rate=.95; u.pitch=1; u.volume=1;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }
+  async function speakViaElevenLabs(sentence, code){
+    try{
+      const r = await fetch('/api/voice', {method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ text: sentence, voiceId: VOICE_BY_LANG[code] || VOICE_BY_LANG.en })});
+      if(!r.ok) throw new Error('tts_failed');
+      const blob = await r.blob();
+      const url = URL.createObjectURL(blob);
+      const a = new Audio(url); await a.play(); setTimeout(()=>URL.revokeObjectURL(url), 60000);
+    }catch{ speakSystem(sentence, code); }
+  }
+  function renderPrompts(){
+    const code=lang.value; promptsWrap.innerHTML='';
+    (TOPIC_WORDS[code]||TOPIC_WORDS.en).forEach(word=>{
+      const chip=document.createElement('div'); chip.className='chip'; chip.textContent=word;
+      chip.onclick=()=>{ titleEl.value=word; const s=(PROMPT_SENTENCES[code]||{})[word]||word; speakViaElevenLabs(s,code); };
+      promptsWrap.appendChild(chip);
+    });
+  }
+  renderPrompts(); lang.onchange=renderPrompts;
+
+  // Tabs
+  const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
+  tabGuided.onclick=()=>{ tabGuided.classList.add('active'); tabFree.classList.remove('active'); guidedBlock.style.display='block'; };
+  tabFree.onclick=()=>{ tabFree.classList.add('active'); tabGuided.classList.remove('active'); guidedBlock.style.display='none'; };
+
+  // ====== Recording with chunked Whisper ======
+  const transcriptEl=$('transcript'), mic=$('mic'), meter=$('meter'), bar=$('bar'), remain=$('remain'), asr=$('asr');
+  let rec=null, chunks=[], running=false, timer=null, elapsed=0;
+  const CHUNK_MS = 5000; // every 5s
+  function capSec(){ return isPremium ? 900 : 120; } // 15m vs 2m
+
+  mic.onclick = async ()=>{
+    if(running){ stopRec(true); return; }
     try{
       const stream = await navigator.mediaDevices.getUserMedia({audio:true});
       const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
-      rec = new MediaRecorder(stream,{mimeType:mime, audioBitsPerSecond:96000});
+      rec = new MediaRecorder(stream, { mimeType:mime, audioBitsPerSecond:96000 });
+      chunks = []; elapsed=0; bar.style.width='0%'; remain.textContent = capSec()+'s'; meter.style.display='flex';
       rec.ondataavailable = e => { if(e.data && e.data.size>0) chunks.push(e.data); };
-      rec.onstop = async () => {
-        if(!chunks.length) return;
-        const blob = new Blob(chunks, {type:mime});
-        chunks = [];
-        try{
-          const form = new FormData();
-          form.append('audio', blob, 'chunk.webm');
-          form.append('lang', document.getElementById('lang').value || 'fr');
-          const r = await fetch('/api/transcribe-chunk', { method:'POST', body: form });
-          const j = await r.json();
-          if(j.text) transcript.textContent += (transcript.textContent.trim() ? ' ' : '') + j.text;
-        }catch(e){ console.log('transcribe error', e); }
-      };
-      rec.start();
+      rec.onstop = async ()=>{ await flushChunk(); meter.style.display='none'; asr.textContent=''; };
+      rec.start(250);
       running=true; mic.textContent='Stop';
-    }catch(e){
-      alert('Mic error: '+(e.message||e));
-    }
+      asr.textContent='Transcribing…';
+
+      // timers
+      timer = setInterval(async ()=>{
+        elapsed++; bar.style.width = (elapsed/capSec()*100)+'%'; remain.textContent = Math.max(0,capSec()-elapsed)+'s';
+        if(elapsed % 5 === 0) await flushChunk();
+        if(elapsed >= capSec()) stopRec(true);
+      },1000);
+
+    }catch(e){ alert('Mic error: '+(e.message||e)); }
   };
 
-  function stop(){ try{rec && rec.state!=='inactive' && rec.stop();}catch{} running=false; mic.textContent='Record'; }
+  async function flushChunk(){
+    if(!chunks.length) return;
+    const blob = new Blob(chunks, { type: rec.mimeType||'audio/webm' });
+    chunks = [];
+    try{
+      const form = new FormData();
+      form.append('audio', blob, 'chunk.webm');
+      form.append('lang', lang.value || 'fr');
+      const r = await fetch('/api/transcribe-chunk', { method:'POST', body: form });
+      const j = await r.json();
+      if(j?.text){
+        const cur = transcriptEl.textContent.trim();
+        transcriptEl.textContent = (cur? cur+' ' : '') + j.text;
+        $('save').disabled = !transcriptEl.textContent.trim();
+      }
+    }catch(e){ console.log('transcribe error', e); }
+  }
 
-  document.getElementById('logout').onclick = async ()=>{
-    await supabase.auth.signOut();
-    location.href = '/login.html';
+  function stopRec(manual){
+    try{ rec && rec.state!=='inactive' && rec.stop(); }catch{}
+    if(timer){ clearInterval(timer); timer=null; }
+    running=false; mic.textContent='Record';
+  }
+
+  // ====== Save / Library / Export / Rewrite ======
+  const whenEl=$('when'), saveBtn=$('save'), clearBtn=$('clear'), library=$('library'), exportCsvBtn=$('exportCsv');
+  const LSKEY='memoir.stories';
+  const loadStories=()=>{try{return JSON.parse(localStorage.getItem(LSKEY)||'[]')}catch{return[]}};
+  const saveStories=list=>localStorage.setItem(LSKEY,JSON.stringify(list));
+  const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+  function parseApproxDate(input){
+    if(!input) return { label:'', sort:null };
+    const s=input.trim().toLowerCase();
+    const iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); if(iso){const d=new Date(+iso[1],+iso[2]-1,+iso[3]);return{label:input,sort:d.toISOString().slice(0,10)};}
+    const yOnly=s.match(/(\d{4})/); if(yOnly){const d=new Date(+yOnly[1],0,1);return{label:input,sort:d.toISOString().slice(0,10)};}
+    const season=s.match(/^(early|mid|late)?\s*(spring|summer|autumn|fall|winter)\s+(\d{4})$/);
+    if(season){const y=+season[3];const base={spring:2,summer:5,autumn:8,fall:8,winter:11}[season[2]];let m=base,day=1;if(season[1]==='mid')day=10;if(season[1]==='late')day=20;const d=new Date(y,m,day);return{label:input,sort:d.toISOString().slice(0,10)};}
+    return { label:input, sort:null };
+  }
+
+  function storyRow(s, idx){
+    const row=document.createElement('div'); row.className='story';
+    const meta=document.createElement('div'); meta.style.minWidth='0';
+    const h=document.createElement('h3'); h.textContent=s.title||'Story';
+    const t=document.createElement('div'); t.className='muted';
+    t.textContent = s.happened_label || (s.happened_sort?new Date(s.happened_sort).toDateString():new Date(s.created).toLocaleString());
+    meta.appendChild(h); meta.appendChild(t);
+    const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px'; actions.style.flexWrap='wrap';
+    const make=(txt,fn,disabled)=>{const b=document.createElement('button'); b.className='btn'; b.textContent=txt; if(disabled){ b.disabled=true; b.classList.add('lock'); } b.onclick=fn; return b;};
+    actions.appendChild(make('View',()=>viewStory(s)));
+    actions.appendChild(make('Rewrite (AI)',()=>isPremium && rewriteAI(idx), !isPremium));
+    actions.appendChild(make('Undo',()=>undoRewrite(idx), !s.prev));
+    actions.appendChild(make('Download .docx',()=>downloadDocx(s)));
+    actions.appendChild(make('Delete',()=>delStory(idx)));
+    row.appendChild(meta); row.appendChild(actions);
+    return row;
+  }
+
+  function renderLib(){
+    const items=loadStories(); library.innerHTML='';
+    if(!items.length){ const p=document.createElement('p'); p.className='muted'; p.textContent='No stories yet.'; library.appendChild(p); return; }
+    items.forEach((s,i)=>library.appendChild(storyRow(s,i)));
+  }
+  renderLib();
+
+  function viewStory(s){
+    const dlg=document.createElement('dialog');
+    dlg.innerHTML=`<form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--border)"><strong>${esc(s.title||'Story')}</strong><button autofocus class="btn">Close</button></form><div style="padding:16px"><div class="muted" style="margin-bottom:6px">${esc(s.happened_label || (s.happened_sort?new Date(s.happened_sort).toDateString():new Date(s.created).toLocaleString()))}</div><div style="white-space:pre-wrap;font-family:system-ui">${esc(s.text||'')}</div></div>`;
+    document.body.appendChild(dlg); dlg.addEventListener('close',()=>dlg.remove()); dlg.showModal();
+  }
+  function delStory(idx){ if(!confirm('Delete this story?')) return; const items=loadStories(); items.splice(idx,1); saveStories(items); renderLib(); }
+  function undoRewrite(idx){ const items=loadStories(); const s=items[idx]; if(!s?.prev) return alert('No previous version stored.'); s.text=s.prev; delete s.prev; saveStories(items); renderLib(); }
+
+  async function rewriteAI(idx){
+    const items=loadStories(); const s=items[idx]; if(!s) return;
+    const payload={ text:s.text, style:"warm, vivid, cohesive autobiography", lang:lang.value||'en' };
+    const r=await fetch('/api/rewrite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!r.ok){ alert('Rewrite failed.'); return; }
+    const j=await r.json(); s.prev=s.text; s.text=j.text||s.text; s.rewritten_at=new Date().toISOString(); saveStories(items); renderLib();
+  }
+
+  function downloadDocx(s){
+    const zip=new JSZip();
+    const meta=`Title: ${s.title||'Story'}\nWhen: ${s.happened_label || s.happened_sort || ''}\nCreated: ${new Date(s.created).toLocaleString()}\n\n`;
+    zip.file('story.txt', meta + (s.text||'')); zip.generateAsync({type:'blob'}).then(b=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=(s.title||'story')+'.zip'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);});
+  }
+
+  exportCsvBtn.onclick=()=>{
+    const items=loadStories(); const rows=[['title','happened_label','happened_sort','created','text']];
+    items.forEach(s=>rows.push([s.title||'',s.happened_label||'',s.happened_sort||'',s.created||'',(s.text||'').replace(/\n/g,'\\n')]));
+    const csv=rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='memoir_stories.csv'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  };
+
+  // Save/Clear
+  const titleIn=$('title');
+  function onTranscriptChanged(){ $('save').disabled = !transcriptEl.textContent.trim(); }
+  const observer=new MutationObserver(onTranscriptChanged); observer.observe(transcriptEl,{childList:true,subtree:true,characterData:true});
+  $('clear').onclick=()=>{ transcriptEl.textContent='Your words will appear here…'; onTranscriptChanged(); };
+  $('save').onclick=()=>{
+    const txt=transcriptEl.textContent.trim(); if(!txt) return;
+    const when=parseApproxDate(whenEl.value);
+    const story={ title:titleIn.value||'Story', text:txt, created:new Date().toISOString(), happened_label:when.label, happened_sort:when.sort };
+    const items=loadStories(); items.unshift(story); saveStories(items); renderLib();
+    transcriptEl.textContent='Your words will appear here…'; onTranscriptChanged(); titleIn.value=''; whenEl.value='';
   };
 })();
 </script>
