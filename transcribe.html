@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Memoir — Transcription Debugger</title>
+<meta name="color-scheme" content="light dark"/>
+<style>
+body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;margin:0;padding:24px;background:#0b1020;color:#e6edf7}
+.card{max-width:900px;margin:0 auto;background:#0f162e;border:1px solid #1f2a44;border-radius:16px;box-shadow:0 12px 32px rgba(0,0,0,.35);padding:18px}
+h1{margin:0 0 12px;font-size:20px}
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+select,button{padding:10px 12px;border-radius:12px;border:1px solid #1f2a44;background:transparent;color:inherit}
+button.primary{background:linear-gradient(90deg,#2563eb,#7c3aed);border:0;color:#fff}
+.area{min-height:160px;border:1px solid #1f2a44;border-radius:12px;padding:12px;background:#0c142b}
+.log{white-space:pre-wrap;font-size:12px;color:#9aa4b2;background:#0c142b;border:1px solid #1f2a44;border-radius:12px;padding:10px}
+.badge{font-size:12px;color:#9aa4b2}
+.mic{width:180px;height:180px;border-radius:999px;border:0;background:radial-gradient(70% 70% at 50% 30%, #ff5a5f, #a21caf);color:#fff;font-weight:700;font-size:18px;cursor:pointer;box-shadow:0 16px 50px rgba(162,28,175,.35)}
+.mic.pulse{animation:pulse 1.6s infinite ease-in-out}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
+.meter{display:flex;gap:8px;align-items:center;width:100%;max-width:420px;margin:8px 0}
+.bar{flex:1;height:10px;background:#0c142b;border-radius:999px;overflow:hidden;border:1px solid #1f2a44}
+.bar>div{height:100%;width:0%;background:linear-gradient(90deg,#2563eb,#7c3aed)}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Transcription Debugger</h1>
+  <div class="controls">
+    <label for="lang">Language:</label>
+    <select id="lang">
+      <option value="en">English</option>
+      <option value="fr" selected>Français</option>
+      <option value="es">Español</option>
+      <option value="nl">Nederlands</option>
+    </select>
+    <span class="badge">Sends 5s chunks to <code>/api/transcribe-chunk</code></span>
+  </div>
+
+  <div class="area" id="transcript" aria-live="polite">Transcript will appear here…</div>
+
+  <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin:12px 0">
+    <button id="mic" class="mic">Record</button>
+    <div class="meter"><div class="bar"><div id="bar"></div></div><div id="remain" class="badge">—</div></div>
+    <div id="asr" class="badge"></div>
+  </div>
+
+  <h3 style="margin:12px 0 6px">Chunk Log</h3>
+  <pre id="log" class="log"></pre>
+</div>
+
+<script>
+const transcriptEl=document.getElementById('transcript');
+const mic=document.getElementById('mic'), asr=document.getElementById('asr');
+const bar=document.getElementById('bar'), remain=document.getElementById('remain'), logEl=document.getElementById('log');
+const langSel=document.getElementById('lang');
+
+const BCP = { en:'en', fr:'fr', es:'es', nl:'nl' };
+let mediaRecorder=null, elapsed=0, timer=null, recActive=false;
+let chunkQueue=[], workerBusy=false, seq=0;
+
+function log(s){ logEl.textContent += s + "\n"; logEl.scrollTop = logEl.scrollHeight; console.log(s); }
+function extFromMime(m){ if(!m) return 'webm'; if(m.includes('mp4')) return 'mp4'; if(m.includes('webm')) return 'webm'; if(m.includes('ogg')) return 'ogg'; return 'webm'; }
+
+async function processQueue(){
+  if(workerBusy) return;
+  workerBusy=true;
+  while(chunkQueue.length){
+    const item=chunkQueue.shift();
+    try{ await sendChunkNow(item.blob, item.mime, item.seq); }
+    catch(e){ log(`❌ Chunk ${item.seq} failed: ${e.message||e}`); }
+  }
+  workerBusy=false;
+}
+
+async function sendChunkNow(blob, mime, seqNum){
+  asr.textContent=`Uploading chunk ${seqNum}…`;
+  const fd=new FormData();
+  const ext=extFromMime(mime || blob.type);
+  fd.append('audio', blob, `chunk-${seqNum}.${ext}`);
+  fd.append('lang', BCP[langSel.value] || 'fr');
+  fd.append('seq', String(seqNum));
+  const t0=performance.now();
+  const r=await fetch('/api/transcribe-chunk',{method:'POST',body:fd});
+  const dt=(performance.now()-t0).toFixed(0);
+  if(!r.ok){ const b=await r.text().catch(()=>String(r.status)); log(`HTTP ${r.status} in ${dt}ms: ${b}`); throw new Error(`HTTP ${r.status}`); }
+  const data=await r.json().catch(()=>({text:''}));
+  const text=(data.text||'').trim();
+  if(text){
+    const prev=transcriptEl.textContent.trim();
+    transcriptEl.textContent = prev && prev!=='Transcript will appear here…' ? prev + ' ' + text : text;
+  }
+  log(`✅ Chunk ${seqNum} (${(blob.size/1024).toFixed(1)} KB, ${ext}) → +${text.length} chars in ${dt}ms`);
+  asr.textContent=`Chunk ${seqNum} transcribed.`;
+}
+
+async function startRec(){
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
+    const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus'
+               : (MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : 'audio/webm');
+    mediaRecorder=new MediaRecorder(stream,{mimeType:mime});
+    mediaRecorder.ondataavailable=(e)=>{ if(!e.data||!e.data.size) return; chunkQueue.push({blob:e.data,mime,seq:++seq}); processQueue(); };
+  }catch(e){ asr.textContent='Mic permission denied or unsupported.'; return; }
+
+  mic.textContent='Stop Recording'; mic.classList.add('pulse');
+  elapsed=0; seq=0; chunkQueue.length=0; transcriptEl.textContent='';
+
+  mediaRecorder.start(5000);
+  timer=setInterval(()=>{ elapsed++; bar.style.width=(elapsed/600*100)+'%'; remain.textContent=`${600-elapsed}s`; },1000);
+  recActive=true;
+  log('▶️ Recording started (chunks every 5s)');
+}
+
+function stopRec(){
+  try{ if(mediaRecorder && mediaRecorder.state!=='inactive') mediaRecorder.stop(); }catch{}
+  if(timer){ clearInterval(timer); timer=null; }
+  mic.textContent='Record'; mic.classList.remove('pulse');
+  asr.textContent='Finishing…';
+  recActive=false;
+  const t0=Date.now();
+  (function waitFlush(){
+    if(!workerBusy && chunkQueue.length===0){ asr.textContent='Done.'; setTimeout(()=>asr.textContent='',1200); log('⏹️ Stopped & flushed'); return; }
+    if(Date.now()-t0>8000){ asr.textContent='Done (some chunks may be missing)'; setTimeout(()=>asr.textContent='',1800); log('⚠️ Timeout waiting for queue'); return; }
+    setTimeout(waitFlush,150);
+  })();
+}
+
+mic.onclick=()=>{ recActive?stopRec():startRec(); };
+</script>
+</body>
+</html>
