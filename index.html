@@ -6,194 +6,261 @@
 <title>Memoir — Recorder</title>
 <meta name="color-scheme" content="light dark"/>
 <style>
-  :root{--bg:#f6f7fb;--card:#fff;--fg:#0f172a;--muted:#667085;--brand:#2563eb;--brand2:#7c3aed;--border:#e6e9f0;--shadow:0 20px 40px rgba(2,8,23,.06), 0 2px 6px rgba(2,8,23,.04)}
-  @media (prefers-color-scheme:dark){:root{--bg:#0b1020;--card:#0f162e;--fg:#e6edf7;--muted:#9aa4b2;--border:#1f2a44;--shadow:0 20px 40px rgba(0,0,0,.4),0 2px 6px rgba(0,0,0,.3)}}
-  *,*:before,*:after{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-  .wrap{max-width:1100px;margin:20px auto;padding:16px}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:16px}
-  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
-  .brand{display:flex;align-items:center;gap:10px}
-  .logo{width:34px;height:34px;border-radius:12px;background:conic-gradient(from 180deg,var(--brand),var(--brand2))}
-  h1{margin:0;font-size:1.35rem}
-  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  select,input,button{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit}
-  .btn{cursor:pointer}
-  .btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));border:0;color:#fff}
-  .muted{color:var(--muted)}
-  .badge{border-radius:999px;border:1px solid var(--border);padding:6px 10px}
-  #error{display:none;background:#fee2e2;color:#991b1b;border:1px solid #fecaca;border-radius:12px;padding:10px;margin-bottom:10px}
-  .shell{display:grid;gap:18px;grid-template-columns:1fr}
-  @media (min-width:1024px){ .shell{grid-template-columns:minmax(0,1fr) 420px} }
-  .label{font-size:12px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.08em;margin:10px 0 6px}
-  .segment{display:flex;gap:8px;flex-wrap:wrap}
-  .tab{padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:transparent}
-  .tab.active{background:rgba(37,99,235,.12);border-color:rgba(37,99,235,.25)}
-  .topics{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
-  .chip{display:flex;align-items:center;justify-content:center;height:44px;border-radius:12px;border:1px solid rgba(37,99,235,.18);background:rgba(37,99,235,.08);font-weight:600;cursor:pointer;user-select:none}
-  .chip:active{transform:translateY(1px)}
-  .input{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit;width:100%}
-  .area{min-height:180px;border:1px solid var(--border);border-radius:12px;padding:12px;background:rgba(2,8,23,.02)}
-  .mic{padding:14px 18px;border-radius:999px;border:0;background:linear-gradient(90deg,#ff5a5f,#a21caf);color:#fff;font-weight:700;cursor:pointer}
-  .meter{display:flex;gap:8px;align-items:center;width:100%;max-width:420px}
-  .bar{flex:1;height:10px;background:rgba(2,8,23,.08);border-radius:999px;overflow:hidden}
-  .bar>div{height:100%;width:0%;background:linear-gradient(90deg,var(--brand),var(--brand2))}
-  .list{display:grid;gap:10px}
-  .story{padding:12px;border:1px solid var(--border);border-radius:12px;background:rgba(2,8,23,.02);display:flex;align-items:center;justify-content:space-between;gap:8px}
-  .story h3{margin:0;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
-  dialog::backdrop{background:rgba(0,0,0,.35)}
-  dialog{border:none;border-radius:12px;box-shadow:var(--shadow);max-width:min(920px,92vw)}
-  footer{margin:16px 0 6px;text-align:center;color:var(--muted);font-size:12px}
+:root{
+  --bg:#f6f7fb;--card:#fff;--fg:#0f172a;--muted:#667085;--brand:#2563eb;--brand2:#7c3aed;--border:#e6e9f0;
+  --shadow:0 20px 40px rgba(2,8,23,.06), 0 2px 6px rgba(2,8,23,.04)
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0b1020;--card:#0f162e;--fg:#e6edf7;--muted:#9aa4b2;--border:#1f2a44;--shadow:0 20px 40px rgba(0,0,0,.4),0 2px 6px rgba(0,0,0,.3)}
+}
+*,*:before,*:after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+.container{max-width:1100px;margin:0 auto;padding:20px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:16px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{width:34px;height:34px;border-radius:12px;background:conic-gradient(from 180deg,var(--brand),var(--brand2))}
+h1{margin:0;font-size:1.35rem}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+select,input,button{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit}
+.btn{cursor:pointer}
+.btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));border:0;color:#fff}
+.badge{border-radius:999px}
+.muted{color:var(--muted);font-size:12px}
+.lock{opacity:.6; cursor:not-allowed}
+
+.shell{display:grid;gap:18px;grid-template-columns:1fr}
+.right{display:none}
+@media (min-width:1024px){ .shell{grid-template-columns:minmax(0,1fr) 420px}.right{display:block} }
+
+.segment{display:flex;gap:8px;flex-wrap:wrap}
+.tab{padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:transparent}
+.tab.active{background:rgba(37,99,235,.12);border-color:rgba(37,99,235,.25)}
+.small{font-size:12px;color:var(--muted)}
+
+.label{font-size:12px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.08em;margin:10px 0 6px}
+.topics{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.chip{display:flex;align-items:center;justify-content:center;height:44px;border-radius:12px;border:1px solid rgba(37,99,235,.18);background:rgba(37,99,235,.08);font-weight:600;cursor:pointer;user-select:none}
+.chip:active{transform:translateY(1px)}
+
+.area{min-height:160px;border:1px solid var(--border);border-radius:12px;padding:12px;background:rgba(2,8,23,.02)}
+
+footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
+.badgePlan{padding:6px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px}
+.input{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit;width:100%}
+
+/* ===== Big round mic above transcript ===== */
+.mic {
+  width: 180px; height: 180px; border-radius: 50%; border: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 18px; color: #fff; cursor: pointer;
+  background: radial-gradient(70% 70% at 50% 30%, #ff5a5f, #a21caf);
+  box-shadow: 0 24px 60px rgba(162,28,175,.35), 0 6px 16px rgba(0,0,0,.15);
+  transition: transform .08s ease;
+}
+.mic:active { transform: scale(0.98); }
+.mic.pulse { animation: micPulse 1.6s infinite ease-in-out; }
+@keyframes micPulse { 0%{transform:scale(1)} 50%{transform:scale(1.04)} 100%{transform:scale(1)} }
+
+.recorder-row{display:flex;gap:14px;align-items:center;justify-content:center;margin:14px 0;flex-wrap:wrap}
+.recorder-side{display:flex;flex-direction:column;gap:8px;min-width:260px}
+.meter{display:flex;gap:8px;align-items:center;width:100%;max-width:420px}
+.bar{flex:1;height:10px;background:rgba(2,8,23,.08);border-radius:999px;overflow:hidden}
+.bar>div{height:100%;width:0%;background:linear-gradient(90deg,var(--brand),var(--brand2))}
+.drawer{position:fixed;inset:0;display:none;background:rgba(2,8,23,.45);backdrop-filter: blur(2px)}
+.drawer.show{display:block}
+.drawer .panel{position:absolute;right:0;top:0;bottom:0;width:88%;max-width:420px;background:var(--card);border-left:1px solid var(--border);padding:16px;overflow:auto}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog{border:none;border-radius:12px;box-shadow:var(--shadow);max-width:min(820px,92vw)}
+.list{display:grid;gap:10px}
+.story{padding:12px;border:1px solid var(--border);border-radius:12px;background:rgba(2,8,23,.02);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.story h3{margin:0;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="card">
-    <header>
-      <div class="brand">
-        <div class="logo"></div>
-        <h1>Memoir — Recorder</h1>
-      </div>
-      <div class="controls">
-        <select id="lang">
-          <option value="en">English</option>
-          <option value="fr">Français</option>
-          <option value="es">Español</option>
-          <option value="nl">Nederlands</option>
-        </select>
-        <span id="planBadge" class="badge">Plan: …</span>
-        <input id="codeInput" placeholder="Enter trial code" style="max-width:200px"/>
-        <button id="redeemBtn" class="btn">Redeem</button>
-        <button id="helpBtn" class="btn">❓ Help</button>
-        <button id="logout" class="btn badge">Logout</button>
-      </div>
-    </header>
-
-    <div id="error"></div>
-    <div id="guard" class="muted">Checking your session…</div>
-
-    <div id="app" class="shell" style="display:none">
-      <!-- LEFT -->
-      <section>
-        <div class="segment">
-          <button id="tabGuided" class="tab active">Guided</button>
-          <button id="tabFree" class="tab">Free</button>
+  <div class="container">
+    <div class="card">
+      <header>
+        <div class="brand">
+          <div class="logo" aria-hidden="true"></div>
+          <h1>Memoir — Recorder</h1>
         </div>
-
-        <div id="guidedBlock">
-          <div class="label">Suggested topics</div>
-          <div id="prompts" class="topics"></div>
-          <div class="muted" style="font-size:12px">Tip: tapping a topic speaks a gentle question in your selected language.</div>
-        </div>
-
-        <div class="label">Title</div>
-        <input id="title" class="input" placeholder="Story title (optional)"/>
-
-        <div class="label">When did this happen?</div>
-        <input id="when" class="input" placeholder='e.g., "summer 1945", "early 2018", "15 Feb 1972"' />
-
-        <div class="label">Transcript</div>
-        <div id="transcript" class="area" aria-live="polite">Your words will appear here…</div>
-
-        <div style="display:flex;gap:12px;align-items:center;margin:12px 0">
-          <button id="mic" class="mic">Record</button>
-          <div class="meter" id="meter" style="display:none">
-            <div class="bar"><div id="bar"></div></div>
-            <div id="remain" class="muted">—</div>
+        <div class="controls">
+          <select id="lang">
+            <option value="en">English</option>
+            <option value="fr">Français</option>
+            <option value="es">Español</option>
+            <option value="nl">Nederlands</option>
+          </select>
+          <span id="planBadge" class="badgePlan">Plan: …</span>
+          <div id="redeemBox" style="display:flex; gap:8px; align-items:center;">
+            <input id="codeInput" type="text" placeholder="Enter trial code" class="input" style="max-width:200px">
+            <button id="redeemBtn" class="btn">Redeem</button>
+            <span id="redeemMsg" class="muted"></span>
           </div>
-          <div id="asr" class="muted"></div>
+          <button id="toggleLib" class="btn">☰ Library</button>
+          <button id="helpBtn" class="btn">❓ Help</button>
+          <button id="logout" class="btn badge">Logout</button>
         </div>
+      </header>
 
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button id="save" class="btn primary" disabled>Save story</button>
-          <button id="clear" class="btn">Clear</button>
-          <button id="exportCsv" class="btn">Export CSV</button>
-        </div>
-      </section>
+      <div id="guard" class="muted" style="margin:6px 0 14px">Checking your session…</div>
 
-      <!-- RIGHT -->
-      <aside>
-        <div class="label">Library</div>
-        <div id="library" class="list"></div>
-      </aside>
+      <div id="app" class="shell" style="display:none">
+        <section class="left">
+          <div class="segment">
+            <button id="tabGuided" class="tab active">Guided</button>
+            <button id="tabFree" class="tab">Free</button>
+          </div>
+
+          <div id="guidedBlock">
+            <div class="label">Suggested topics</div>
+            <div id="prompts" class="topics"></div>
+            <div class="small">Tip: tapping a topic speaks a gentle question in your selected language.</div>
+          </div>
+
+          <div class="label">Title</div>
+          <input id="title" type="text" class="input" placeholder="Story title (optional)" />
+
+          <div class="label">When did this happen?</div>
+          <input id="when" type="text" class="input" placeholder='e.g., "summer 1945", "early 2018", "15 Feb 1972"' />
+
+          <!-- === Recorder ABOVE transcript === -->
+          <div class="label">Recorder</div>
+          <div class="recorder-row">
+            <button id="mic" class="mic" aria-pressed="false">Record</button>
+            <div class="recorder-side">
+              <div class="meter" id="meter" style="display:none">
+                <div class="bar"><div id="bar"></div></div>
+                <div id="remain" class="muted">—</div>
+              </div>
+              <div id="asr" class="muted"></div>
+            </div>
+          </div>
+
+          <div class="label">Transcript</div>
+          <div id="transcript" class="area" aria-live="polite">Your words will appear here…</div>
+
+          <div class="actions" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+            <button id="save" class="btn primary" disabled>Save story</button>
+            <button id="clear" class="btn">Clear</button>
+            <button id="exportBook" class="btn lock" title="Premium only" disabled>Export Book (PDF)</button>
+            <button id="exportCsv" class="btn">Export CSV</button>
+          </div>
+        </section>
+
+        <aside class="right">
+          <div class="label">Library</div>
+          <div id="library" class="list"></div>
+        </aside>
+      </div>
+
+      <footer>Cloud prototype — EN/FR/ES/NL prompts with voice, recorder, library. Premium/Admin: AI rewrite + PDF export. Single-use trial codes supported.</footer>
     </div>
-
-    <footer>Whisper chunked transcription enabled. EN/FR/ES/NL prompts + voice, library, AI rewrite, CSV, trials.</footer>
   </div>
-</div>
 
-<!-- Help / FAQ -->
-<dialog id="helpDialog">
-  <form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--border)">
-    <strong>How to use Memoir</strong>
-    <button autofocus class="btn">Close</button>
-  </form>
-  <div style="padding:16px;max-width:900px">
-    <h3>1) Record</h3>
-    <p>Select a language, tap a topic (it will speak a guiding question), then press <em>Record</em>. Your speech is sent every ~5 seconds to Whisper and appears in the transcript.</p>
-    <h3>2) Save & Library</h3>
-    <p>Give the story a title and approximate date (e.g. “summer 1945”), then Save. Manage, rewrite (Premium/Admin), download, or delete from the Library.</p>
-    <h3>3) Premium trial</h3>
-    <p>Enter a trial code to unlock Premium features for 14 days.</p>
-    <h3>4) Export</h3>
-    <p>Use CSV export now. (PDF/Canva export can be added later.)</p>
+  <!-- Mobile drawer -->
+  <div id="drawer" class="drawer" aria-hidden="true">
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="label" style="margin:0">Library</div>
+        <button id="closeDrawer" class="btn">Close</button>
+      </div>
+      <div id="libraryDrawer" class="list"></div>
+    </div>
   </div>
-</dialog>
 
-<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
+  <!-- libs -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
+
 <script>
 (async function(){
+  /* ===== Supabase session guard (your project) ===== */
   const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {auth:{persistSession:true, autoRefreshToken:true, detectSessionInUrl:false}});
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false} });
 
-  const ERR = (msg)=>{ const el=document.getElementById('error'); el.textContent=msg; el.style.display='block'; };
   const guard=document.getElementById('guard'), app=document.getElementById('app');
+  const { data:{session} } = await supabase.auth.getSession();
+  if(!session){ window.location.replace('/login.html'); return; }
 
-  // Session guard
-  try{
-    const { data:{session} } = await supabase.auth.getSession();
-    if(!session){ location.replace('/login.html'); return; }
-  }catch(e){ ERR('Auth error: '+(e.message||e)); return; }
+  // Load profile: plan, trial, role
+  const { data: profile } = await supabase.from('profiles').select('plan, trial_end, role').single();
+  const trialUntil = profile?.trial_end ? new Date(profile.trial_end) : null;
+  const trialActive = trialUntil && Date.now() < trialUntil.getTime();
+  const isAdmin = profile?.role === 'admin';
+  let isPremium = isAdmin || profile?.plan === 'premium' || trialActive;
 
-  // Plan badge (ignore errors silently)
-  let isPremium=false;
-  try{
-    const { data } = await supabase.from('profiles').select('plan, trial_end, role').single();
-    const trial = data?.trial_end ? new Date(data.trial_end) : null;
-    const trialActive = trial && Date.now() < trial.getTime();
-    const isAdmin = data?.role === 'admin';
-    isPremium = isAdmin || data?.plan === 'premium' || trialActive;
-    document.getElementById('planBadge').textContent =
-      isAdmin ? 'Plan: Admin' : trialActive ? 'Plan: Premium (trial)' : 'Plan: ' + (data?.plan || 'free');
-  }catch{}
-
-  // UI ready
   guard.style.display='none'; app.style.display='grid';
+  document.getElementById('logout').onclick = async ()=>{ await supabase.auth.signOut(); window.location.replace('/login.html'); };
 
-  // ====== HELP ======
-  document.getElementById('helpBtn').onclick = ()=> document.getElementById('helpDialog').showModal();
+  // Plan badge
+  const planBadge = document.getElementById('planBadge');
+  if (isAdmin) {
+    planBadge.textContent = 'Plan: Admin';
+  } else if (isPremium) {
+    planBadge.textContent = trialActive
+      ? `Plan: Premium (trial until ${trialUntil.toLocaleDateString()})`
+      : 'Plan: Premium';
+  } else {
+    planBadge.textContent = 'Plan: Free';
+  }
 
-  // ====== REDEEM ======
-  document.getElementById('redeemBtn').onclick = async ()=>{
-    const code = (document.getElementById('codeInput').value||'').trim();
-    if(!code) return alert('Enter a code.');
+  /* ===== Redeem code UI ===== */
+  const codeInput = document.getElementById('codeInput');
+  const redeemBtn = document.getElementById('redeemBtn');
+  const redeemMsg = document.getElementById('redeemMsg');
+  const setRedeemMsg = (t)=>{ if(redeemMsg) redeemMsg.textContent = t || ''; };
+
+  redeemBtn?.addEventListener('click', async () => {
+    setRedeemMsg('');
+    const code = codeInput.value.trim();
+    if(!code) { setRedeemMsg('Enter a code.'); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    if(!user){ setRedeemMsg('Please sign in first.'); return; }
+
     try{
       const { data, error } = await supabase.rpc('redeem_code', { p_code: code });
-      if(error) throw error;
-      if(data?.ok){ alert('Premium unlocked until '+ new Date(data.trial_end).toLocaleDateString()); location.reload(); }
-      else{
-        const msg = {not_found:'Code not found', expired:'Code expired', exhausted:'Code already used', already_premium:'You already have Premium'}[data?.error] || 'Redeem failed';
-        alert(msg);
+      if (error) throw error;
+      if (data?.ok) {
+        setRedeemMsg(`✅ Premium until ${new Date(data.trial_end).toLocaleDateString()}`);
+        location.reload();
+      } else {
+        const map={not_authenticated:'Please sign in first.',not_found:'Code not found.',expired:'Code expired.',exhausted:'Code already used.',already_premium:'You already have Premium.'};
+        setRedeemMsg('❌ ' + (map[data?.error] || 'Redeem failed.'));
       }
-    }catch(e){ alert('Redeem error: '+(e.message||e)); }
-  };
+    }catch(e){
+      setRedeemMsg('❌ ' + (e.message || String(e)));
+    }
+  });
 
-  // ====== LOGOUT ======
-  document.getElementById('logout').onclick = async ()=>{ await supabase.auth.signOut(); location.href='/login.html'; };
+  /* ===== DOM ===== */
+  const $=id=>document.getElementById(id);
+  const lang=$('lang'), promptsWrap=$('prompts');
+  const titleEl=$('title'), whenEl=$('when'), transcriptEl=$('transcript');
+  const mic=$('mic'), meter=$('meter'), bar=$('bar'), remain=$('remain'), asr=$('asr');
+  const save=$('save'), clearBtn=$('clear'), library=$('library');
+  const drawer=$('drawer'), libraryDrawer=$('libraryDrawer'), toggleLib=$('toggleLib'), closeDrawer=$('closeDrawer');
+  const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
+  const exportBookBtn=$('exportBook'), exportCsvBtn=$('exportCsv'), helpBtn=$('helpBtn');
 
-  // ====== Topics + prompts (ElevenLabs via /api/voice with your voices) ======
+  /* ===== Gating: controls ===== */
+  function setPremiumUI(enabled){
+    const lockBtn = (btn, on, title) => {
+      btn.toggleAttribute('disabled', !on);
+      btn.classList.toggle('lock', !on);
+      if (!on && title) btn.title = title; else btn.removeAttribute('title');
+    };
+    lockBtn(exportBookBtn, enabled, 'Premium only');
+  }
+  setPremiumUI(isPremium);
+
+  const CAP_FREE = 120;     // 2 min
+  const CAP_PREM = 900;     // 15 min
+  const getCap = () => (isPremium ? CAP_PREM : CAP_FREE);
+
+  /* ===== Topics (chip word) + Spoken prompts (full sentence) ===== */
   const TOPIC_WORDS = {
     en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
     fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
@@ -207,101 +274,99 @@
     nl:{Jeugd:"Vertel me iets over je jeugd.",Familie:"Vertel over je familie en de mensen die je hebben opgevoed.",School:"Hoe was school voor jou?",Werk:"Vertel over je eerste baan of je loopbaan.",Liefde:"Hoe heb je je partner ontmoet, en wat betekende liefde toen?",Oorlog:"Welke grote gebeurtenissen of conflicten heb je meegemaakt?",Reizen:"Welke reizen hebben indruk op je gemaakt?",Tradities:"Welke familietradities waren belangrijk voor je?",Feestdagen:"Beschrijf een feestdag die je helder herinnert.",Lessen:"Welke levensles heb je op de harde manier geleerd?",Advies:"Welk advies zou je je jongere zelf geven?",Keerpunt:"Wat was een keerpunt in je leven?"}
   };
   const BCP={en:'en-US',fr:'fr-FR',es:'es-ES',nl:'nl-NL'};
-  const VOICE_BY_LANG = { en:'KoVIHoyLDrQyd4pGalbs', fr:'TfGtrgcVrXWjJkeB51T1', nl:'yO6w2xlECAQRFP6pX7Hw', es:'ZpEtuMdTIlJXYXAhevhG' };
 
-  const $=id=>document.getElementById(id);
-  const lang=$('lang'), promptsWrap=$('prompts'), titleEl=$('title');
+  /* ===== ElevenLabs TTS (server endpoint) + system fallback ===== */
+  const VOICE_BY_LANG = {
+    en: 'KoVIHoyLDrQyd4pGalbs',
+    fr: 'TfGtrgcVrXWjJkeB51T1',
+    nl: 'yO6w2xlECAQRFP6pX7Hw',
+    es: 'ZpEtuMdTIlJXYXAhevhG'
+  };
+  async function speakViaElevenLabs(sentence, code){
+    try{
+      const r = await fetch('/api/voice', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ text: sentence, voiceId: VOICE_BY_LANG[code] || VOICE_BY_LANG.en })
+      });
+      if(!r.ok) throw new Error('tts_failed');
+      const blob = await r.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      await audio.play();
+      setTimeout(()=>URL.revokeObjectURL(url), 60000);
+      return true;
+    }catch(e){ console.warn('ElevenLabs TTS failed → system fallback', e); return false; }
+  }
   function speakSystem(sentence, code){
     if(!('speechSynthesis' in window)) return;
     const u=new SpeechSynthesisUtterance(String(sentence));
     u.lang=BCP[code]||'en-US'; u.rate=.95; u.pitch=1; u.volume=1;
     speechSynthesis.cancel(); speechSynthesis.speak(u);
   }
-  async function speakViaElevenLabs(sentence, code){
-    try{
-      const r = await fetch('/api/voice', {method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ text: sentence, voiceId: VOICE_BY_LANG[code] || VOICE_BY_LANG.en })});
-      if(!r.ok) throw new Error('tts_failed');
-      const blob = await r.blob();
-      const url = URL.createObjectURL(blob);
-      const a = new Audio(url); await a.play(); setTimeout(()=>URL.revokeObjectURL(url), 60000);
-    }catch{ speakSystem(sentence, code); }
+  async function speakPrompt(oneWord, code){
+    const sentence=(PROMPT_SENTENCES[code]||{})[oneWord] || oneWord;
+    const ok = await speakViaElevenLabs(sentence, code);
+    if(!ok) speakSystem(sentence, code);
   }
   function renderPrompts(){
     const code=lang.value; promptsWrap.innerHTML='';
     (TOPIC_WORDS[code]||TOPIC_WORDS.en).forEach(word=>{
       const chip=document.createElement('div'); chip.className='chip'; chip.textContent=word;
-      chip.onclick=()=>{ titleEl.value=word; const s=(PROMPT_SENTENCES[code]||{})[word]||word; speakViaElevenLabs(s,code); };
+      chip.onclick=()=>{ titleEl.value=word; speakPrompt(word, code); };
       promptsWrap.appendChild(chip);
     });
   }
-  renderPrompts(); lang.onchange=renderPrompts;
 
-  // Tabs
-  const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
+  /* ===== Modes ===== */
   tabGuided.onclick=()=>{ tabGuided.classList.add('active'); tabFree.classList.remove('active'); guidedBlock.style.display='block'; };
   tabFree.onclick=()=>{ tabFree.classList.add('active'); tabGuided.classList.remove('active'); guidedBlock.style.display='none'; };
+  lang.onchange=()=>{ renderPrompts(); };
 
-  // ====== Recording with chunked Whisper ======
-  const transcriptEl=$('transcript'), mic=$('mic'), meter=$('meter'), bar=$('bar'), remain=$('remain'), asr=$('asr');
-  let rec=null, chunks=[], running=false, timer=null, elapsed=0;
-  const CHUNK_MS = 5000; // every 5s
-  function capSec(){ return isPremium ? 900 : 120; } // 15m vs 2m
+  /* ===== Library drawer (mobile) ===== */
+  toggleLib.onclick=()=>{ if(innerWidth>=1024){ renderLib(); } else { drawer.classList.add('show'); renderLib(true); } };
+  closeDrawer.onclick=()=>drawer.classList.remove('show');
+  drawer.addEventListener('click',(e)=>{ if(e.target===drawer) drawer.classList.remove('show'); });
 
-  mic.onclick = async ()=>{
-    if(running){ stopRec(true); return; }
-    try{
-      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
-      const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
-      rec = new MediaRecorder(stream, { mimeType:mime, audioBitsPerSecond:96000 });
-      chunks = []; elapsed=0; bar.style.width='0%'; remain.textContent = capSec()+'s'; meter.style.display='flex';
-      rec.ondataavailable = e => { if(e.data && e.data.size>0) chunks.push(e.data); };
-      rec.onstop = async ()=>{ await flushChunk(); meter.style.display='none'; asr.textContent=''; };
-      rec.start(250);
-      running=true; mic.textContent='Stop';
-      asr.textContent='Transcribing…';
-
-      // timers
-      timer = setInterval(async ()=>{
-        elapsed++; bar.style.width = (elapsed/capSec()*100)+'%'; remain.textContent = Math.max(0,capSec()-elapsed)+'s';
-        if(elapsed % 5 === 0) await flushChunk();
-        if(elapsed >= capSec()) stopRec(true);
-      },1000);
-
-    }catch(e){ alert('Mic error: '+(e.message||e)); }
-  };
-
-  async function flushChunk(){
-    if(!chunks.length) return;
-    const blob = new Blob(chunks, { type: rec.mimeType||'audio/webm' });
-    chunks = [];
-    try{
-      const form = new FormData();
-      form.append('audio', blob, 'chunk.webm');
-      form.append('lang', lang.value || 'fr');
-      const r = await fetch('/api/transcribe-chunk', { method:'POST', body: form });
-      const j = await r.json();
-      if(j?.text){
-        const cur = transcriptEl.textContent.trim();
-        transcriptEl.textContent = (cur? cur+' ' : '') + j.text;
-        $('save').disabled = !transcriptEl.textContent.trim();
+  /* ===== Recording (Web Speech Recognition in-browser) =====
+     NOTE: This keeps the app working everywhere without backend changes.
+     If you later want Whisper chunked streaming in the main app instead of in /transcribe.html,
+     we can swap this block to use MediaRecorder + your /api/transcribe-chunk endpoint. */
+  let recognition=null, recActive=false, elapsed=0, timer=null;
+  function startRec(){
+    const SR = window.webkitSpeechRecognition || window.SpeechRecognition;
+    if(!SR){ asr.textContent='Speech recognition is not available in this browser.'; return; }
+    recognition=new SR();
+    recognition.lang = BCP[lang.value] || 'en-US';
+    recognition.continuous=true; recognition.interimResults=true;
+    let full='';
+    recognition.onresult=(e)=>{
+      let inter='';
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        const r=e.results[i];
+        if(r.isFinal) full+=r[0].transcript+' ';
+        else inter+=r[0].transcript;
       }
-    }catch(e){ console.log('transcribe error', e); }
+      const txt=(full+inter).trim();
+      transcriptEl.textContent = txt || 'Your words will appear here…';
+      save.disabled = !txt;
+    };
+    recognition.onend=()=>{ stopRec(); };
+    try{ recognition.start(); }catch{}
+    asr.textContent='Transcribing…';
+    mic.textContent='Stop'; mic.classList.add('pulse'); mic.setAttribute('aria-pressed','true');
+    elapsed=0; remain.textContent=getCap()+'s'; bar.style.width='0%'; meter.style.display='flex';
+    timer=setInterval(()=>{ elapsed++; const cap=getCap(); bar.style.width=(elapsed/cap*100)+'%'; remain.textContent=Math.max(0,cap-elapsed)+'s'; if(elapsed>=cap) stopRec(); },1000);
+    recActive=true;
   }
-
-  function stopRec(manual){
-    try{ rec && rec.state!=='inactive' && rec.stop(); }catch{}
+  function stopRec(){
+    try{ recognition && recognition.stop(); }catch{}
     if(timer){ clearInterval(timer); timer=null; }
-    running=false; mic.textContent='Record';
+    mic.textContent='Record'; mic.classList.remove('pulse'); mic.setAttribute('aria-pressed','false');
+    asr.textContent=''; recActive=false;
   }
+  mic.onclick=()=>{ recActive?stopRec():startRec(); };
 
-  // ====== Save / Library / Export / Rewrite ======
-  const whenEl=$('when'), saveBtn=$('save'), clearBtn=$('clear'), library=$('library'), exportCsvBtn=$('exportCsv');
-  const LSKEY='memoir.stories';
-  const loadStories=()=>{try{return JSON.parse(localStorage.getItem(LSKEY)||'[]')}catch{return[]}};
-  const saveStories=list=>localStorage.setItem(LSKEY,JSON.stringify(list));
-  const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-
+  /* ===== Approx date parser ===== */
   function parseApproxDate(input){
     if(!input) return { label:'', sort:null };
     const s=input.trim().toLowerCase();
@@ -312,17 +377,24 @@
     return { label:input, sort:null };
   }
 
+  /* ===== Library (localStorage) ===== */
+  const LSKEY='memoir.stories';
+  const loadStories=()=>{try{return JSON.parse(localStorage.getItem(LSKEY)||'[]')}catch{return[]}};
+  const saveStories=(list)=>localStorage.setItem(LSKEY,JSON.stringify(list));
+  const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
   function storyRow(s, idx){
     const row=document.createElement('div'); row.className='story';
     const meta=document.createElement('div'); meta.style.minWidth='0';
     const h=document.createElement('h3'); h.textContent=s.title||'Story';
     const t=document.createElement('div'); t.className='muted';
-    t.textContent = s.happened_label || (s.happened_sort?new Date(s.happened_sort).toDateString():new Date(s.created).toLocaleString());
+    t.textContent= s.happened_label || (s.happened_sort?new Date(s.happened_sort).toDateString():new Date(s.created).toLocaleString());
     meta.appendChild(h); meta.appendChild(t);
+
     const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px'; actions.style.flexWrap='wrap';
     const make=(txt,fn,disabled)=>{const b=document.createElement('button'); b.className='btn'; b.textContent=txt; if(disabled){ b.disabled=true; b.classList.add('lock'); } b.onclick=fn; return b;};
     actions.appendChild(make('View',()=>viewStory(s)));
-    actions.appendChild(make('Rewrite (AI)',()=>isPremium && rewriteAI(idx), !isPremium));
+    actions.appendChild(make('Rewrite (AI)',()=>requirePremium() && rewriteAI(idx), !isPremium));
     actions.appendChild(make('Undo',()=>undoRewrite(idx), !s.prev));
     actions.appendChild(make('Download .docx',()=>downloadDocx(s)));
     actions.appendChild(make('Delete',()=>delStory(idx)));
@@ -330,54 +402,101 @@
     return row;
   }
 
-  function renderLib(){
-    const items=loadStories(); library.innerHTML='';
-    if(!items.length){ const p=document.createElement('p'); p.className='muted'; p.textContent='No stories yet.'; library.appendChild(p); return; }
-    items.forEach((s,i)=>library.appendChild(storyRow(s,i)));
+  function renderLib(toDrawer=false){
+    const items=loadStories();
+    const tgt = toDrawer?libraryDrawer:library;
+    tgt.innerHTML=''; if(!items.length){ const p=document.createElement('p'); p.className='muted'; p.textContent='No stories yet.'; tgt.appendChild(p); return; }
+    items.forEach((s,i)=>tgt.appendChild(storyRow(s,i)));
   }
-  renderLib();
+
+  function requirePremium(){
+    if (!isPremium) {
+      alert('This is a Premium feature. Enter a valid code to unlock a 14-day trial.');
+      return false;
+    }
+    return true;
+  }
 
   function viewStory(s){
     const dlg=document.createElement('dialog');
-    dlg.innerHTML=`<form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--border)"><strong>${esc(s.title||'Story')}</strong><button autofocus class="btn">Close</button></form><div style="padding:16px"><div class="muted" style="margin-bottom:6px">${esc(s.happened_label || (s.happened_sort?new Date(s.happened_sort).toDateString():new Date(s.created).toLocaleString()))}</div><div style="white-space:pre-wrap;font-family:system-ui">${esc(s.text||'')}</div></div>`;
+    dlg.style.width='min(90vw,820px)';
+    dlg.innerHTML=`<form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #e5e7eb"><strong>${esc(s.title||'Story')}</strong><button autofocus class="btn">Close</button></form><div style="padding:16px"><div class="muted" style="margin-bottom:6px">${esc(s.happened_label || (s.happened_sort?new Date(s.happened_sort).toDateString():new Date(s.created).toLocaleString()))}</div><div style="white-space:pre-wrap;font-family:system-ui">${esc(s.text||'')}</div></div>`;
     document.body.appendChild(dlg); dlg.addEventListener('close',()=>dlg.remove()); dlg.showModal();
   }
-  function delStory(idx){ if(!confirm('Delete this story?')) return; const items=loadStories(); items.splice(idx,1); saveStories(items); renderLib(); }
-  function undoRewrite(idx){ const items=loadStories(); const s=items[idx]; if(!s?.prev) return alert('No previous version stored.'); s.text=s.prev; delete s.prev; saveStories(items); renderLib(); }
+
+  function delStory(idx){
+    if(!confirm('Delete this story?')) return;
+    const items=loadStories(); items.splice(idx,1); saveStories(items); renderLib(innerWidth<1024);
+  }
+
+  function undoRewrite(idx){
+    const items=loadStories(); const s=items[idx]; if(!s?.prev) return alert('No previous version stored.');
+    s.text=s.prev; delete s.prev; saveStories(items); renderLib(innerWidth<1024);
+  }
 
   async function rewriteAI(idx){
     const items=loadStories(); const s=items[idx]; if(!s) return;
-    const payload={ text:s.text, style:"warm, vivid, cohesive autobiography", lang:lang.value||'en' };
-    const r=await fetch('/api/rewrite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const payload = {
+      text: s.text,
+      style: "warm, vivid, cohesive autobiography with gentle pacing and sensory details",
+      lang: lang.value || 'en'
+    };
+    const r = await fetch('/api/rewrite', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
     if(!r.ok){ alert('Rewrite failed.'); return; }
-    const j=await r.json(); s.prev=s.text; s.text=j.text||s.text; s.rewritten_at=new Date().toISOString(); saveStories(items); renderLib();
+    const data = await r.json();
+    s.prev = s.text; s.text = data.text || s.text;
+    s.rewritten_at = new Date().toISOString();
+    saveStories(items); renderLib(innerWidth<1024);
   }
 
   function downloadDocx(s){
-    const zip=new JSZip();
-    const meta=`Title: ${s.title||'Story'}\nWhen: ${s.happened_label || s.happened_sort || ''}\nCreated: ${new Date(s.created).toLocaleString()}\n\n`;
-    zip.file('story.txt', meta + (s.text||'')); zip.generateAsync({type:'blob'}).then(b=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=(s.title||'story')+'.zip'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);});
+    const zip = new JSZip();
+    const meta = `Title: ${s.title||'Story'}\nWhen: ${s.happened_label || s.happened_sort || ''}\nCreated: ${new Date(s.created).toLocaleString()}\n\n`;
+    zip.file('story.txt', meta + (s.text||''));
+    zip.generateAsync({type:'blob'}).then(blob=>{
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(s.title||'story')+'.zip'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+    });
   }
 
   exportCsvBtn.onclick=()=>{
-    const items=loadStories(); const rows=[['title','happened_label','happened_sort','created','text']];
+    const items=loadStories();
+    const rows=[['title','happened_label','happened_sort','created','text']];
     items.forEach(s=>rows.push([s.title||'',s.happened_label||'',s.happened_sort||'',s.created||'',(s.text||'').replace(/\n/g,'\\n')]));
     const csv=rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n');
     const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='memoir_stories.csv'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
   };
 
-  // Save/Clear
-  const titleIn=$('title');
-  function onTranscriptChanged(){ $('save').disabled = !transcriptEl.textContent.trim(); }
-  const observer=new MutationObserver(onTranscriptChanged); observer.observe(transcriptEl,{childList:true,subtree:true,characterData:true});
-  $('clear').onclick=()=>{ transcriptEl.textContent='Your words will appear here…'; onTranscriptChanged(); };
-  $('save').onclick=()=>{
+  exportBookBtn.onclick=()=>{
+    if(!requirePremium()) return;
+    alert('PDF export placeholder — we will swap this for a Canva/real PDF pipeline next.');
+  };
+
+  /* ===== Save story ===== */
+  save.onclick=()=>{
     const txt=transcriptEl.textContent.trim(); if(!txt) return;
     const when=parseApproxDate(whenEl.value);
-    const story={ title:titleIn.value||'Story', text:txt, created:new Date().toISOString(), happened_label:when.label, happened_sort:when.sort };
-    const items=loadStories(); items.unshift(story); saveStories(items); renderLib();
-    transcriptEl.textContent='Your words will appear here…'; onTranscriptChanged(); titleIn.value=''; whenEl.value='';
+    const story={ title:titleEl.value||'Story', text:txt, created:new Date().toISOString(), happened_label:when.label, happened_sort:when.sort };
+    const items=loadStories(); items.unshift(story); saveStories(items); renderLib(innerWidth<1024);
+    transcriptEl.textContent='Your words will appear here…'; save.disabled=true; titleEl.value=''; whenEl.value='';
   };
+  clearBtn.onclick=()=>{ transcriptEl.textContent='Your words will appear here…'; save.disabled=true; };
+
+  /* ===== Help / FAQ dialog ===== */
+  helpBtn.onclick=()=>{
+    const dlg=document.createElement('dialog');
+    dlg.innerHTML=`<form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #e5e7eb"><strong>Help & FAQ</strong><button autofocus class="btn">Close</button></form>
+    <div style="padding:16px;line-height:1.55">
+      <p><strong>1) How to record?</strong><br/>Pick a language, tap <em>Record</em>, speak, then tap <em>Stop</em>. Your text appears below. Give it a title and tap <em>Save story</em>.</p>
+      <p><strong>2) Guided topics</strong><br/>Tap a topic word to hear a helpful question and set the title.</p>
+      <p><strong>3) AI Rewrite (Premium)</strong><br/>In the Library, click <em>Rewrite (AI)</em> to polish wording. Redeem a trial code to unlock Premium.</p>
+      <p><strong>4) Export</strong><br/>Use <em>Export CSV</em> for a spreadsheet of your stories. PDF/Book export will arrive soon.</p>
+      <p><strong>5) Family library</strong><br/>Saved stories stay in your device for now (prototype). Cloud sync is on the roadmap.</p>
+    </div>`;
+    document.body.appendChild(dlg); dlg.addEventListener('close',()=>dlg.remove()); dlg.showModal();
+  };
+
+  // Initial UI
+  renderPrompts(); renderLib();
 })();
 </script>
 </body>
