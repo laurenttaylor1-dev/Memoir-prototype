@@ -1,4 +1,5 @@
-const CACHE = 'memoir-shell-v1';
+// sw.js
+const CACHE = 'memoir-shell-v3'; // <-- bump this to bust old cache
 const ASSETS = [
   '/', '/landing.html', '/index.html',
   '/images/open-book.jpg',
@@ -14,7 +15,7 @@ self.addEventListener('install', (e) => {
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
     )
   );
   self.clients.claim();
@@ -24,14 +25,19 @@ self.addEventListener('fetch', (e) => {
   const { request } = e;
   const isAPI = request.url.includes('/api/');
   if (isAPI) {
-    e.respondWith(fetch(request).catch(() => new Response(JSON.stringify({ error: 'offline' }), { status: 503 })));
+    e.respondWith(fetch(request).catch(() =>
+      new Response(JSON.stringify({ error: 'offline' }), { status: 503 })
+    ));
     return;
   }
   e.respondWith(
-    caches.match(request).then(cached => cached || fetch(request).then(resp => {
-      const copy = resp.clone();
-      caches.open(CACHE).then(c => c.put(request, copy));
-      return resp;
-    }).catch(() => cached))
+    caches.match(request).then(cached =>
+      cached ||
+      fetch(request).then(resp => {
+        const copy = resp.clone();
+        caches.open(CACHE).then(c => c.put(request, copy));
+        return resp;
+      }).catch(() => cached)
+    )
   );
 });
