@@ -1,6 +1,5 @@
 {
-  "framework": null,
-  "cleanUrls": false,
+  "cleanUrls": true,
   "trailingSlash": false,
   "headers": [
     {
@@ -9,5 +8,8 @@
         { "key": "Cache-Control", "value": "no-store" }
       ]
     }
+  ],
+  "redirects": [
+    { "source": "/", "destination": "/landing.html", "permanent": false }
   ]
 }
