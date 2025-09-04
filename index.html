@@ -5,11 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Memoir — Recorder</title>
 <meta name="color-scheme" content="light dark"/>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#2563eb">
 <style>
 :root{
   --bg:#f6f7fb; --card:#fff; --fg:#0f172a; --muted:#667085;
   --brand:#2563eb; --brand2:#7c3aed; --border:#e6e9f0;
-  --shadow:0 20px 40px rgba(2,8,23,.06), 0 2px 6px rgba(2,8,23,.04)
+  --shadow:0 20px 40px rgba(2,8,23,.06), 0 2px 6px rgba(2,8,23,.04);
+  --warn:#b45309; --ok:#047857;
 }
 @media (prefers-color-scheme:dark){
   :root{--bg:#0b1020;--card:#0f162e;--fg:#e6edf7;--muted:#9aa4b2;--border:#1f2a44;--shadow:0 20px 40px rgba(0,0,0,.4),0 2px 6px rgba(0,0,0,.3)}
@@ -18,22 +21,35 @@
 body{margin:0;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
 .container{max-width:1100px;margin:0 auto;padding:20px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:16px}
-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:10px}
 .logo{width:34px;height:34px;border-radius:12px;background:conic-gradient(from 180deg,var(--brand),var(--brand2))}
 h1{margin:0;font-size:1.35rem}
-.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-select,input,button{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit}
-.btn{cursor:pointer}
-.btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));border:0;color:#fff}
-.badgePlan{padding:6px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px}
 .muted{color:var(--muted);font-size:12px}
+.badgePlan{padding:6px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px}
+.btn{padding:12px 14px;border-radius:14px;border:1px solid var(--border);background:transparent;color:inherit;cursor:pointer;font-weight:600}
+.btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));border:0;color:#fff}
 .lock{opacity:.6;cursor:not-allowed}
 .label{font-size:12px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.08em;margin:10px 0 6px}
 .input{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit;width:100%}
 .area{min-height:220px;border:1px solid var(--border);border-radius:12px;padding:12px;background:rgba(2,8,23,.02);white-space:pre-wrap}
 .row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
 
+/* Big control tiles */
+.controlsGrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:8px 0}
+@media (max-width:900px){ .controlsGrid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+.tile{display:flex;justify-content:center;align-items:center;gap:8px;padding:12px;border:1px solid var(--border);border-radius:14px;background:rgba(2,8,23,.02);font-weight:700;cursor:pointer}
+.tile select{border:none;background:transparent;font-weight:700}
+.tile .sub{font-size:12px;color:var(--muted);font-weight:500}
+
+/* Book banner */
+.banner{
+  width:100%; aspect-ratio:16/5; border-radius:16px; overflow:hidden; border:1px solid var(--border);
+  background:#ddd center/cover no-repeat url('/images/open-book.jpg');
+  margin:8px 0 14px;
+}
+
+/* Layout */
 .shell{display:grid;gap:18px;grid-template-columns:1fr}
 .right{display:none}
 @media (min-width:1024px){ .shell{grid-template-columns:minmax(0,1fr) 420px}.right{display:block} }
@@ -43,14 +59,16 @@ select,input,button{padding:10px 12px;border-radius:12px;border:1px solid var(--
 .tab.active{background:rgba(37,99,235,.12);border-color:rgba(37,99,235,.25)}
 .small{font-size:12px;color:var(--muted)}
 
-.topics{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
-.chip{display:flex;align-items:center;justify-content:center;height:44px;border-radius:12px;border:1px solid rgba(37,99,235,.18);background:rgba(37,99,235,.08);font-weight:600;cursor:pointer;user-select:none}
+/* Guided chips (smaller) */
+.topics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media (max-width:700px){ .topics{grid-template-columns:repeat(2,1fr)} }
+.chip{display:flex;align-items:center;justify-content:center;height:38px;border-radius:12px;border:1px solid rgba(37,99,235,.18);background:rgba(37,99,235,.08);font-weight:600;cursor:pointer;user-select:none}
 .chip:active{transform:translateY(1px)}
 
-/* BIG ROUND RECORD BUTTON */
+/* Big round record button */
 .record-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;margin:6px 0 16px}
 #mic{
-  width:180px;height:180px;border-radius:999px;border:0;color:#fff;font-weight:700;font-size:18px;cursor:pointer;
+  width:190px;height:190px;border-radius:999px;border:0;color:#fff;font-weight:700;font-size:18px;cursor:pointer;
   background:radial-gradient(70% 70% at 50% 30%, #ff5a5f, #a21caf);
   box-shadow:0 18px 60px rgba(162,28,175,.35);
 }
@@ -64,13 +82,20 @@ select,input,button{padding:10px 12px;border-radius:12px;border:1px solid var(--
 .list{display:grid;gap:10px}
 .story{padding:12px;border:1px solid var(--border);border-radius:12px;background:rgba(2,8,23,.02);display:flex;align-items:center;justify-content:space-between;gap:8px}
 .story h3{margin:0;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.badge{padding:4px 8px;border-radius:999px;border:1px solid var(--border);font-size:12px}
 
+/* Drawer */
 .drawer{position:fixed;inset:0;display:none;background:rgba(2,8,23,.45);backdrop-filter: blur(2px)}
 .drawer.show{display:block}
 .drawer .panel{position:absolute;right:0;top:0;bottom:0;width:88%;max-width:420px;background:var(--card);border-left:1px solid var(--border);padding:16px;overflow:auto}
 dialog::backdrop{background:rgba(0,0,0,.35)}
 dialog{border:none;border-radius:12px;box-shadow:var(--shadow);max-width:min(820px,92vw)}
 footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
+
+/* Online/offline banner */
+#netBanner{margin:-6px 0 10px; padding:8px 12px; border-radius:10px; font-size:13px}
+.net-off{background:#fff7ed;border:1px solid #fbbf24;color:#92400e}
+.net-on{background:#ecfdf5;border:1px solid #34d399;color:#065f46}
 </style>
 </head>
 <body>
@@ -81,39 +106,48 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
         <div class="logo" aria-hidden="true"></div>
         <h1>Memoir — Recorder</h1>
       </div>
-      <div class="controls">
-        <select id="lang">
+      <span id="planBadge" class="badgePlan">Plan: …</span>
+    </header>
+
+    <!-- Large control tiles -->
+    <div class="controlsGrid">
+      <div class="tile">
+        <span>🌐</span>
+        <select id="lang" aria-label="Language">
           <option value="en">English</option>
           <option value="fr">Français</option>
           <option value="es">Español</option>
           <option value="nl">Nederlands</option>
         </select>
-        <span id="planBadge" class="badgePlan">Plan: …</span>
-        <div id="redeemBox" class="row">
-          <input id="codeInput" type="text" placeholder="Enter trial code" class="input" style="max-width:200px">
-          <button id="redeemBtn" class="btn">Redeem</button>
-          <span id="redeemMsg" class="muted"></span>
-        </div>
-        <button id="toggleLib" class="btn">☰ Library</button>
-        <button id="helpBtn" class="btn">❓ Help</button>
-        <button id="logout" class="btn">Logout</button>
       </div>
-    </header>
+      <button id="toggleLib" class="tile" title="Open Library">📚 <span>Library</span></button>
+      <button id="helpBtn" class="tile" title="Help">❓ <span>Help</span></button>
+      <div class="tile" title="Redeem code">
+        <input id="codeInput" type="text" placeholder="Trial code" class="input" style="max-width:140px">
+        <button id="redeemBtn" class="btn">Redeem</button>
+      </div>
+      <button id="logout" class="tile" title="Logout">🚪 <span>Logout</span></button>
+    </div>
 
+    <div class="banner" title="Open book banner"></div>
+
+    <div id="netBanner" class="net-on">You are online. Chunks will upload live.</div>
     <div id="guard" class="muted">Checking your session…</div>
 
     <div id="app" class="shell" style="display:none">
       <section class="left">
-
         <div class="segment">
           <button id="tabGuided" class="tab active">Guided</button>
           <button id="tabFree" class="tab">Free</button>
         </div>
 
         <div id="guidedBlock">
-          <div class="label">Suggested topics</div>
+          <div class="label" style="display:flex;justify-content:space-between;align-items:center">
+            <span>Suggested topics</span>
+            <button id="refreshPrompts" class="btn">↻ Refresh</button>
+          </div>
           <div id="prompts" class="topics"></div>
-          <div class="small">Tip: tap a topic to hear a gentle question in your selected language.</div>
+          <div class="small">Tap a topic to hear a gentle question in your language.</div>
         </div>
 
         <div class="label">Recorder</div>
@@ -124,6 +158,10 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
             <div id="remain" class="muted">00:00</div>
           </div>
           <div id="recMsg" class="muted"></div>
+        </div>
+
+        <div class="row">
+          <button id="syncNow" class="btn">⟳ Sync now</button>
         </div>
 
         <div class="label">Transcript</div>
@@ -141,7 +179,7 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
       </aside>
     </div>
 
-    <footer>Whisper chunked transcription. EN/FR/ES/NL. Guided prompts with voice. Library, CSV, trials.</footer>
+    <footer>Offline-first Whisper chunking. EN/FR/ES/NL. 4 guided topics with refresh. Library, CSV, trials.</footer>
   </div>
 </div>
 
@@ -161,8 +199,63 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
 
 <script>
+/* ===== IndexedDB helpers for offline queue ===== */
+const DB_NAME='memoir-db', DB_VER=1;
+let dbPromise=null;
+function idbOpen(){
+  if(dbPromise) return dbPromise;
+  dbPromise=new Promise((resolve,reject)=>{
+    const req=indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded=()=>{ const db=req.result;
+      if(!db.objectStoreNames.contains('sessions')){
+        db.createObjectStore('sessions',{keyPath:'id'});
+      }
+      if(!db.objectStoreNames.contains('chunks')){
+        const c=db.createObjectStore('chunks',{keyPath:'key'});
+        c.createIndex('bySession','sessionId',{unique:false});
+      }
+    };
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+  return dbPromise;
+}
+async function idbPut(store, obj){
+  const db=await idbOpen(); return new Promise((res,rej)=>{
+    const tx=db.transaction(store,'readwrite'); tx.objectStore(store).put(obj);
+    tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error);
+  });
+}
+async function idbGetAllBySession(sessionId){
+  const db=await idbOpen(); return new Promise((res,rej)=>{
+    const tx=db.transaction('chunks','readonly'); const idx=tx.objectStore('chunks').index('bySession');
+    const req=idx.getAll(sessionId); req.onsuccess=()=>res(req.result||[]); req.onerror=()=>rej(req.error);
+  });
+}
+async function idbDeleteSessionData(sessionId){
+  const db=await idbOpen();
+  await new Promise((res,rej)=>{
+    const tx=db.transaction('sessions','readwrite'); tx.objectStore('sessions').delete(sessionId);
+    tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error);
+  });
+  const chunks=await idbGetAllBySession(sessionId);
+  await Promise.all(chunks.map(ch=>new Promise((res,rej)=>{
+    const tx=db.transaction('chunks','readwrite'); tx.objectStore('chunks').delete(ch.key);
+    tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error);
+  })));
+}
+async function idbListSessions(){
+  const db=await idbOpen(); return new Promise((res,rej)=>{
+    const tx=db.transaction('sessions','readonly'); const req=tx.objectStore('sessions').getAll();
+    req.onsuccess=()=>res(req.result||[]); req.onerror=()=>rej(req.error);
+  });
+}
+
 (async function(){
-  /* ===== Supabase (your project) ===== */
+  // Service worker
+  if('serviceWorker' in navigator){ try{ await navigator.serviceWorker.register('/sw.js'); }catch{} }
+
+  // Supabase
   const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false} });
@@ -171,7 +264,6 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
   const { data:{session} } = await supabase.auth.getSession();
   if(!session){ window.location.replace('/login.html'); return; }
 
-  // profile -> plan
   const { data: profile } = await supabase.from('profiles').select('plan, trial_end, role').single();
   const trialUntil = profile?.trial_end ? new Date(profile.trial_end) : null;
   const trialActive = trialUntil && Date.now() < trialUntil.getTime();
@@ -183,10 +275,21 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
   planBadge.textContent = isAdmin ? 'Plan: Admin' : isPremium ? (trialActive ? `Plan: Premium (trial until ${trialUntil.toLocaleDateString()})` : 'Plan: Premium') : 'Plan: Free';
   document.getElementById('logout').onclick = async ()=>{ await supabase.auth.signOut(); window.location.replace('/login.html'); };
 
-  /* ===== Redeem code ===== */
+  // Online banner
+  const netBanner=document.getElementById('netBanner');
+  function updNetBanner(){
+    if(navigator.onLine){ netBanner.textContent='You are online. Chunks will upload live.'; netBanner.className='net-on'; }
+    else { netBanner.textContent='You are offline. Recording is stored locally and will upload later.'; netBanner.className='net-off'; }
+  }
+  window.addEventListener('online', ()=>{ updNetBanner(); processAllPending(); });
+  window.addEventListener('offline', updNetBanner);
+  updNetBanner();
+  document.getElementById('syncNow').onclick=processAllPending;
+
+  // Redeem
   const codeInput = document.getElementById('codeInput');
   const redeemBtn = document.getElementById('redeemBtn');
-  const redeemMsg = document.getElementById('redeemMsg');
+  const redeemMsg = document.createElement('span'); redeemMsg.className='muted'; redeemBtn.after(redeemMsg);
   redeemBtn.onclick = async ()=>{
     const code=(codeInput.value||'').trim(); redeemMsg.textContent='';
     if(!code){ redeemMsg.textContent='Enter a code.'; return; }
@@ -198,16 +301,16 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     }catch(e){ redeemMsg.textContent='❌ '+(e.message||String(e)); }
   };
 
-  /* ===== DOM ===== */
+  // DOM
   const $=id=>document.getElementById(id);
-  const lang=$('lang'), promptsWrap=$('prompts');
+  const lang=$('lang'), promptsWrap=$('prompts'), refreshBtn=$('refreshPrompts');
   const mic=$('mic'), meter=$('meter'), bar=$('bar'), remain=$('remain'), recMsg=$('recMsg');
   const transcriptEl=$('transcript'), saveBtn=$('save'), exportCsvBtn=$('exportCsv');
   const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
   const drawer=$('drawer'), library=$('library'), libraryDrawer=$('libraryDrawer');
   const toggleLib=$('toggleLib'), closeDrawer=$('closeDrawer');
 
-  /* ===== Topic chips + spoken guidance ===== */
+  // Topics & voice
   const TOPIC_WORDS = {
     en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
     fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
@@ -216,9 +319,9 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
   };
   const PROMPT_SENTENCES = {
     en:{Childhood:"Tell me something about your youth.",Family:"Tell me about your family and the people who raised you.",School:"What was school like for you?",Work:"Tell me about your first job or career.",Love:"How did you meet your partner, or what did love mean to you then?",War:"What big world events or conflicts did you live through?",Travel:"Where did you travel that left a mark on you?",Traditions:"Which family traditions mattered most to you?",Holidays:"Describe a holiday you remember vividly.",Lessons:"What life lesson did you learn the hard way?",Advice:"What advice would you give your younger self?","Turning-points":"What was a turning point that changed your path?"},
-    fr:{Enfance:"Parlez-moi de votre jeunesse, d’un souvenir marquant.",Famille:"Parlez-moi de votre famille et des personnes qui vous ont élevé.",École:"Comment était l’école pour vous ?",Travail:"Racontez-moi votre premier travail ou votre carrière.",Amour:"Comment avez-vous rencontré votre partenaire, et que signifiait l’amour pour vous ?",Guerre:"Quels grands événements ou conflits avez-vous vécus ?",Voyages:"Quels voyages vous ont marqué(e) ?",Traditions:"Quelles traditions familiales comptaient le plus ?",Fêtes:"Décrivez une fête dont vous vous souvenez clairement.",Leçons:"Quelle leçon de vie avez-vous apprise à la dure ?",Conseils:"Quel conseil donneriez-vous à votre jeune vous ?",Déclics:"Quel déclic a changé votre trajectoire ?"},
-    es:{Infancia:"Cuéntame algo sobre tu juventud.",Familia:"Háblame de tu familia y de quienes te criaron.",Escuela:"¿Cómo era la escuela para ti?",Trabajo:"Cuéntame sobre tu primer trabajo o tu carrera.",Amor:"¿Cómo conociste a tu pareja y qué significaba el amor entonces?",Guerra:"¿Qué grandes eventos o conflictos viviste?",Viajes:"¿Qué viajes te marcaron?",Tradiciones:"¿Qué tradiciones familiares eran importantes para ti?",Fiestas:"Describe una fiesta que recuerdes con claridad.",Lecciones:"¿Qué lección de vida aprendiste con dificultad?",Consejos:"¿Qué consejo le darías a tu yo joven?","Puntos-clave":"¿Cuál fue un punto de inflexión en tu vida?"},
-    nl:{Jeugd:"Vertel me iets over je jeugd.",Familie:"Vertel over je familie en de mensen die je hebben opgevoed.",School:"Hoe was school voor jou?",Werk:"Vertel over je eerste baan of je loopbaan.",Liefde:"Hoe heb je je partner ontmoet, en wat betekende liefde toen?",Oorlog:"Welke grote gebeurtenissen of conflicten heb je meegemaakt?",Reizen:"Welke reizen hebben indruk op je gemaakt?",Tradities:"Welke familietradities waren belangrijk voor je?",Feestdagen:"Beschrijf een feestdag die je helder herinnert.",Lessen:"Welke levensles heb je op de harde manier geleerd?",Advies:"Welk advies zou je je jongere zelf geven?",Keerpunt:"Wat was een keerpunt in je leven?"}
+        fr:{Enfance:"Parlez-moi de votre jeunesse, d’un souvenir marquant.",Famille:"Parlez-moi de votre famille et des personnes qui vous ont élevé.",École:"Comment était l’école pour vous ?",Travail:"Racontez-moi votre premier travail ou votre carrière.",Amour:"Comment avez-vous rencontré votre partenaire, et que signifiait l’amour pour vous ?",Guerre:"Quels grands événements ou conflits avez-vous vécus ?",Voyages:"Quels voyages vous ont marqué(e) ?",Traditions:"Quelles traditions familiales comptaient le plus ?",Fêtes:"Décrivez une fête dont vous vous souvenez clairement.",Leçons:"Quelle leçon de vie avez-vous apprise à la dure ?",Conseils:"Quel conseil donneriez-vous à votre jeune vous ?",Déclics:"Quel déclic a changé votre trajectoire ?"},
+        es:{Infancia:"Cuéntame algo sobre tu juventud.",Familia:"Háblame de tu familia y de quienes te criaron.",Escuela:"¿Cómo era la escuela para ti?",Trabajo:"Cuéntame sobre tu primer trabajo o tu carrera.",Amor:"¿Cómo conociste a tu pareja y qué significaba el amor entonces?",Guerra:"¿Qué grandes eventos o conflictos viviste?",Viajes:"¿Qué viajes te marcaron?",Tradiciones:"¿Qué tradiciones familiares eran importantes para ti?",Fiestas:"Describe una fiesta que recuerdes con claridad.",Lecciones:"¿Qué lección de vida aprendiste con dificultad?",Consejos:"¿Qué consejo le darías a tu yo joven?","Puntos-clave":"¿Cuál fue un punto de inflexión en tu vida?"},
+        nl:{Jeugd:"Vertel me iets over je jeugd.",Familie:"Vertel over je familie en de mensen die je hebben opgevoed.",School:"Hoe was school voor jou?",Werk:"Vertel over je eerste baan of je loopbaan.",Liefde:"Hoe heb je je partner ontmoet, en wat betekende liefde toen?",Oorlog:"Welke grote gebeurtenissen of conflicten heb je meegemaakt?",Reizen:"Welke reizen hebben indruk op je gemaakt?",Tradities:"Welke familietradities waren belangrijk voor je?",Feestdagen:"Beschrijf een feestdag die je helder herinnert.",Lessen:"Welke levensles heb je op de harde manier geleerd?",Advies:"Welk advies zou je je jongere zelf geven?",Keerpunt:"Wat was een keerpunt in je leven?"}
   };
   const BCP_TTS={en:'en-US',fr:'fr-FR',es:'es-ES',nl:'nl-NL'};
   const VOICE_BY_LANG = { en:'KoVIHoyLDrQyd4pGalbs', fr:'TfGtrgcVrXWjJkeB51T1', nl:'yO6w2xlECAQRFP6pX7Hw', es:'ZpEtuMdTIlJXYXAhevhG' };
@@ -230,7 +333,7 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
       const blob = await r.blob(); const url = URL.createObjectURL(blob);
       const audio = new Audio(url); await audio.play(); setTimeout(()=>URL.revokeObjectURL(url),60000);
       return true;
-    }catch(e){ console.warn('TTS fallback',e); return false; }
+    }catch(e){ return false; }
   }
   function speakSystem(sentence, code){
     if(!('speechSynthesis' in window)) return;
@@ -243,21 +346,30 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     const ok = await speakViaElevenLabs(sentence, code);
     if(!ok) speakSystem(sentence, code);
   }
+
+  function pickFour(arr){
+    const a=[...arr]; // shallow copy
+    for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+    return a.slice(0,4);
+  }
   function renderPrompts(){
     const code=lang.value; promptsWrap.innerHTML='';
-    (TOPIC_WORDS[code]||TOPIC_WORDS.en).forEach(word=>{
+    const all=(TOPIC_WORDS[code]||TOPIC_WORDS.en);
+    pickFour(all).forEach(word=>{
       const chip=document.createElement('div'); chip.className='chip'; chip.textContent=word;
       chip.onclick=()=>{ speakPrompt(word, code); };
       promptsWrap.appendChild(chip);
     });
   }
+  renderPrompts();
+  lang.onchange=renderPrompts;
+  refreshBtn.onclick=renderPrompts;
 
   // Tabs
   tabGuided.onclick=()=>{ tabGuided.classList.add('active'); tabFree.classList.remove('active'); guidedBlock.style.display='block'; };
   tabFree.onclick=()=>{ tabFree.classList.add('active'); tabGuided.classList.remove('active'); guidedBlock.style.display='none'; };
-  lang.onchange=renderPrompts;
 
-  /* ===== Library (local) ===== */
+  /* ===== Library (local + pending sessions) ===== */
   const LSKEY='memoir.stories';
   const loadStories=()=>{try{return JSON.parse(localStorage.getItem(LSKEY)||'[]')}catch{return[]}};
   const saveStories=(list)=>localStorage.setItem(LSKEY,JSON.stringify(list));
@@ -275,26 +387,32 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     actions.appendChild(v); actions.appendChild(del);
     row.appendChild(meta); row.appendChild(actions); return row;
   }
-  function renderLib(toDrawer=false){
+  async function pendingRow(session){
+    const row=document.createElement('div'); row.className='story';
+    const meta=document.createElement('div'); meta.style.minWidth='0';
+    const h=document.createElement('h3'); h.textContent='Pending upload';
+    const t=document.createElement('div'); t.className='muted';
+    t.textContent=`${new Date(session.created).toLocaleString()} — ${session.lang.toUpperCase()}`;
+    const badge=document.createElement('span'); badge.className='badge'; badge.textContent='Pending';
+    meta.appendChild(h); meta.appendChild(t); meta.appendChild(badge);
+    const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px'; actions.style.flexWrap='wrap';
+    const sync=document.createElement('button'); sync.className='btn'; sync.textContent='Process';
+    sync.onclick=()=>processSession(session.id);
+    const drop=document.createElement('button'); drop.className='btn'; drop.textContent='Discard';
+    drop.onclick=async()=>{ if(!confirm('Discard pending audio?'))return; await idbDeleteSessionData(session.id); renderLib(); };
+    actions.appendChild(sync); actions.appendChild(drop);
+    row.appendChild(meta); row.appendChild(actions); return row;
+  }
+  async function renderLib(toDrawer=false){
     const items=loadStories();
+    const sessions=await idbListSessions();
     const tgt=toDrawer?libraryDrawer:library; tgt.innerHTML='';
-    if(!items.length){ const p=document.createElement('p'); p.className='muted'; p.textContent='No stories yet.'; tgt.appendChild(p); return; }
+    for(const s of sessions){ tgt.appendChild(await pendingRow(s)); }
+    if(!items.length && !sessions.length){ const p=document.createElement('p'); p.className='muted'; p.textContent='No stories yet.'; tgt.appendChild(p); return; }
     items.forEach((s,i)=>tgt.appendChild(storyRow(s,i)));
   }
   renderLib();
-  document.getElementById('helpBtn').onclick=()=>{
-    const d=document.createElement('dialog');
-    d.innerHTML = `<form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #e5e7eb"><strong>How to use Memoir</strong><button autofocus class="btn">Close</button></form>
-      <div style="padding:16px;line-height:1.55">
-        <p><b>Guided:</b> tap a topic to hear a friendly question in your language.</p>
-        <p><b>Record:</b> press the big button. We send audio in 5-second chunks to Whisper and append text below.</p>
-        <p><b>Save:</b> click <em>Save story</em> to add to your library. Export CSV anytime.</p>
-        <p><b>Premium:</b> redeem a code for longer recordings & advanced features.</p>
-      </div>`;
-    document.body.appendChild(d); d.addEventListener('close',()=>d.remove()); d.showModal();
-  };
 
-  // Drawer
   document.getElementById('toggleLib').onclick=()=>{ if(innerWidth>=1024){ renderLib(false); window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}) } else { drawer.classList.add('show'); renderLib(true); } };
   document.getElementById('closeDrawer').onclick=()=>drawer.classList.remove('show');
   drawer.addEventListener('click',(e)=>{ if(e.target===drawer) drawer.classList.remove('show'); });
@@ -307,8 +425,8 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='memoir_stories.csv'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
   };
 
-  /* ===== Whisper CHUNKED recorder ===== */
-  const BCP_WHISPER={en:'en', fr:'fr', es:'es', nl:'nl'}; // language hint
+  /* ===== Whisper CHUNKED recorder with OFFLINE QUEUE ===== */
+  const BCP_WHISPER={en:'en', fr:'fr', es:'es', nl:'nl'};
   const micBtn=mic;
   let stream=null, mr=null, recording=false, startedAt=0, secs=0, tick=null;
   let mime='audio/webm;codecs=opus', ext='webm';
@@ -322,6 +440,9 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
   const CHUNK_MS = 5000;
   const CAP_SEC  = isPremium ? 900 : 120;
 
+  let currentSessionId=null;
+  function makeSessionId(){ return 's_'+Date.now()+'_'+Math.random().toString(36).slice(2,8); }
+
   function updTimer(){
     secs=Math.floor((Date.now()-startedAt)/1000);
     const left=Math.max(0, CAP_SEC - secs);
@@ -331,24 +452,33 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     bar.style.width=Math.min(100, (secs/CAP_SEC*100))+'%';
     if(secs>=CAP_SEC) stopRec();
   }
-  async function sendChunk(blob){
-    try{
-      const promptTail = (transcriptEl.textContent || '').slice(-200);
-      const fd = new FormData();
-      fd.append('audio', blob, `chunk.${ext}`);
-      fd.append('prompt', promptTail);
-      fd.append('lang', BCP_WHISPER[lang.value] || 'en');
-      const r = await fetch(`/api/transcribe-chunk?ext=${encodeURIComponent(ext)}`, { method:'POST', body: fd });
-      if(!r.ok) throw new Error('chunk request failed');
-      const data = await r.json();
-      const text = (data.text || '').trim();
-      if(text){
-        if(transcriptEl.textContent === 'Your words will appear here…') transcriptEl.textContent='';
-        transcriptEl.textContent += (transcriptEl.textContent ? ' ' : '') + text;
-        saveBtn.disabled = true; // keep disabled until stop, then enable
-      }
-    }catch(e){ console.warn('Chunk failed', e); recMsg.textContent='Network error (kept recording).'; }
+
+  async function sendChunkOrQueue(blob, sessionId){
+    const promptTail = (transcriptEl.textContent || '').slice(-200);
+    if(navigator.onLine){
+      try{
+        const fd = new FormData();
+        fd.append('audio', blob, `chunk.${ext}`);
+        fd.append('prompt', promptTail);
+        fd.append('lang', BCP_WHISPER[lang.value] || 'en');
+        const r = await fetch(`/api/transcribe-chunk?ext=${encodeURIComponent(ext)}`, { method:'POST', body: fd });
+        if(!r.ok) throw new Error('chunk request failed');
+        const data = await r.json();
+        const text = (data.text || '').trim();
+        if(text){
+          if(transcriptEl.textContent === 'Your words will appear here…') transcriptEl.textContent='';
+          transcriptEl.textContent += (transcriptEl.textContent ? ' ' : '') + text;
+        }
+        return;
+      }catch(e){ /* fallthrough to local queue */ }
+    }
+    await idbPut('sessions',{ id:sessionId, lang:lang.value, created: Date.now(), status:'pending', transcript: (transcriptEl.textContent||'') });
+    const key=sessionId+'|'+Date.now();
+    await idbPut('chunks',{ key, sessionId, ts:Date.now(), ext, lang:lang.value, data: blob });
+    recMsg.textContent='Saved a chunk locally (offline). It will sync later.';
+    await renderLib();
   }
+
   async function startRec(){
     try{ stream = await navigator.mediaDevices.getUserMedia({ audio:true }); }
     catch{ recMsg.textContent='Microphone permission was denied.'; return; }
@@ -356,29 +486,62 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     micBtn.textContent='Stop'; micBtn.classList.add('pulse'); micBtn.setAttribute('aria-pressed','true');
     recording=true; startedAt=Date.now(); secs=0; updTimer(); tick=setInterval(updTimer,1000);
 
+    currentSessionId = makeSessionId();
     mr = new MediaRecorder(stream, { mimeType:mime, audioBitsPerSecond:128000 });
-    mr.ondataavailable = e => { if(e.data && e.data.size>0) sendChunk(e.data); };
+    mr.ondataavailable = e => { if(e.data && e.data.size>0) sendChunkOrQueue(e.data, currentSessionId); };
     mr.start(CHUNK_MS);
   }
+
   function stopRec(){
     if(!recording) return;
     recording=false; micBtn.textContent='Record'; micBtn.classList.remove('pulse'); micBtn.setAttribute('aria-pressed','false');
     meter.style.display='none'; clearInterval(tick); tick=null;
     try{ mr && mr.state!=='inactive' && mr.stop(); }catch{}
     try{ stream && stream.getTracks().forEach(t=>t.stop()); }catch{}
-    // enable save after recording session ends
     const hasText = (transcriptEl.textContent||'').trim() && transcriptEl.textContent!=='Your words will appear here…';
     saveBtn.disabled = !hasText;
+    currentSessionId=null;
   }
   micBtn.onclick = ()=> recording ? stopRec() : startRec();
 
-  /* ===== Save story locally ===== */
-  function renderLib(toDrawer=false){
-    const items=loadStories();
-    const tgt=toDrawer?libraryDrawer:library; tgt.innerHTML='';
-    if(!items.length){ const p=document.createElement('p'); p.className='muted'; p.textContent='No stories yet.'; tgt.appendChild(p); return; }
-    items.forEach((s,i)=>tgt.appendChild(storyRow(s,i)));
+  async function processSession(sessionId){
+    const sessions=await idbListSessions();
+    const sess=sessions.find(s=>s.id===sessionId); if(!sess) return;
+    const chunks=await idbGetAllBySession(sessionId);
+    chunks.sort((a,b)=>a.ts-b.ts);
+    let rollingText = sess.transcript || '';
+    for(const ch of chunks){
+      try{
+        const fd=new FormData();
+        fd.append('audio', ch.data, `chunk.${ch.ext||'webm'}`);
+        fd.append('prompt', rollingText.slice(-200));
+        fd.append('lang', BCP_WHISPER[ch.lang] || 'en');
+        const r = await fetch(`/api/transcribe-chunk?ext=${encodeURIComponent(ch.ext||'webm')}`, { method:'POST', body: fd });
+        if(!r.ok) throw new Error('chunk failed');
+        const data = await r.json();
+        const text = (data.text||'').trim();
+        if(text) rollingText += (rollingText?' ':'') + text;
+      }catch(e){
+        break;
+      }
+    }
+    if(rollingText && rollingText!==sess.transcript){
+      const title = prompt('Title for processed story?','Story') || 'Story';
+      const items=loadStories(); items.unshift({ title, text:rollingText, created:new Date().toISOString() });
+      saveStories(items);
+      await idbDeleteSessionData(sessionId);
+      await renderLib();
+      alert('Pending audio processed and saved to Library.');
+    }else{
+      alert('Could not process yet (still offline or no new text). Try again later.');
+    }
   }
+  async function processAllPending(){
+    const sessions=await idbListSessions();
+    for(const s of sessions){ await processSession(s.id); }
+  }
+
+  // Save story
   saveBtn.onclick=()=>{
     const txt=transcriptEl.textContent.trim();
     if(!txt || txt==='Your words will appear here…') return;
@@ -388,8 +551,23 @@ footer{margin:20px 0 8px;text-align:center;color:var(--muted);font-size:12px}
     transcriptEl.textContent='Your words will appear here…'; saveBtn.disabled=true;
   };
 
-  // init
-  renderPrompts(); renderLib();
+  // Help
+  document.getElementById('helpBtn').onclick=()=>{
+    const d=document.createElement('dialog');
+    d.innerHTML = `<form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #e5e7eb"><strong>How to use Memoir</strong><button autofocus class="btn">Close</button></form>
+      <div style="padding:16px;line-height:1.55">
+        <p><b>Guided:</b> tap a topic to hear a friendly question in your language. Click ↻ to see new suggestions.</p>
+        <p><b>Record:</b> press the big button. We send 5-second chunks to Whisper. If you lose signal, chunks are saved locally and will sync later.</p>
+        <p><b>Save:</b> click <em>Save story</em> to add it to your Library. Export CSV anytime.</p>
+        <p><b>Pending uploads:</b> show at the top of the Library. Use <em>Sync now</em> or wait until you’re back online.</p>
+      </div>`;
+    document.body.appendChild(d); d.addEventListener('close',()=>d.remove()); d.showModal();
+  };
+
+  // Drawer
+  document.getElementById('toggleLib').onclick=()=>{ if(innerWidth>=1024){ renderLib(false); window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}) } else { drawer.classList.add('show'); renderLib(true); } };
+  document.getElementById('closeDrawer').onclick=()=>drawer.classList.remove('show');
+  drawer.addEventListener('click',(e)=>{ if(e.target===drawer) drawer.classList.remove('show'); });
 
 })();
 </script>
