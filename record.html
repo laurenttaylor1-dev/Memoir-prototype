@@ -1,111 +1,242 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Memoir — Record</title>
-  <link rel="stylesheet" href="/styles.css" />
-  <style>
-    /* page-specific sugar to keep things soft/smooth */
-    .page { max-width: 1100px; margin: 0 auto; padding: 20px; }
-    .card { background: var(--card, #fff); border: 1px solid var(--border,#e8e8ee); border-radius: 18px; box-shadow: var(--shadow, 0 20px 40px rgba(2,8,23,.06)); padding: 18px; }
-    .row { display: grid; gap: 18px; grid-template-columns: 1fr; }
-    @media (min-width: 1024px){ .row { grid-template-columns: minmax(0,1fr) 380px; } }
-    .section-label { font-size: 12px; letter-spacing: .08em; color: var(--muted,#667085); text-transform: uppercase; margin: 8px 0 6px; }
-    .input, .select, .btn { border-radius: 12px; border: 1px solid var(--border,#e8e8ee); padding: 10px 12px; background: transparent; }
-    .btn { cursor: pointer; }
-    .btn.primary { background: linear-gradient(90deg, #2563eb, #7c3aed); color: #fff; border: 0; }
-    .pill { padding: 6px 10px; border: 1px solid var(--border,#e8e8ee); border-radius: 999px; font-size: 12px; color: var(--muted,#667085); }
-    .muted { color: var(--muted,#667085); font-size: 12px; }
-    .area { min-height: 180px; border: 1px solid var(--border,#e8e8ee); border-radius: 12px; padding: 12px; background: rgba(2,8,23,.02); }
-    .topics { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap: 10px; }
-    .chip { display:flex; align-items:center; justify-content:center; height:42px; border:1px solid rgba(37,99,235,.18); background:rgba(37,99,235,.07); border-radius: 12px; font-weight:600; cursor:pointer; }
-    .chip:active { transform: translateY(1px); }
-    .rec-wrap { display:flex; flex-direction:column; align-items:center; gap:12px; margin: 10px 0 18px; }
-    .rec-btn { width: 160px; height: 160px; border-radius: 999px; border: 0; background: radial-gradient(70% 70% at 50% 30%, #ff5a5f, #a21caf); color: #fff; font-weight: 700; font-size: 18px; cursor: pointer; box-shadow: 0 16px 50px rgba(162,28,175,.35); }
-    .rec-btn.pulse { animation: pulse 1.6s infinite ease-in-out; }
-    @keyframes pulse { 0%{transform:scale(1)} 50%{transform:scale(1.04)} 100%{transform:scale(1)} }
-    .meter { width: 100%; max-width: 420px; display:flex; align-items:center; gap:8px; }
-    .bar { flex:1; height:10px; background: rgba(2,8,23,.08); border-radius: 999px; overflow:hidden; }
-    .bar > div { height:100%; width:0%; background: linear-gradient(90deg, #2563eb, #7c3aed); }
-    .thumb { width: 100%; border-radius: 12px; border: 1px solid var(--border,#e8e8ee); object-fit: cover; max-height: 180px; }
-    .lib-list { display: grid; gap: 10px; }
-    .row-item { display:flex; justify-content:space-between; gap:8px; border:1px solid var(--border,#e8e8ee); background: rgba(2,8,23,.02); border-radius: 12px; padding: 10px; }
-    .row-item h4 { margin: 0; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Record — Memoir</title>
+<link rel="stylesheet" href="/styles.css"/>
 </head>
 <body>
-  <div class="page">
-    <div class="card">
-      <header style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;">
-        <div style="display:flex; align-items:center; gap:10px;">
-          <div style="width:34px; height:34px; border-radius:12px; background:conic-gradient(from 180deg, #2563eb, #7c3aed)"></div>
-          <strong>Memoir — Record</strong>
-        </div>
-        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-          <span id="planBadge" class="pill">Plan: …</span>
-          <button id="logout" class="btn pill">Logout</button>
-        </div>
-      </header>
 
-      <div id="guard" class="muted">Checking your session…</div>
-
-      <div id="app" class="row" style="display:none">
-        <!-- Left: recorder -->
-        <section>
-          <div style="display:flex; gap:10px; margin-bottom:8px;">
-            <button id="tabGuided" class="pill" style="background:rgba(37,99,235,.08); border-color:rgba(37,99,235,.25)">Guided</button>
-            <button id="tabFree" class="pill">Free</button>
-          </div>
-
-          <div id="guidedBlock">
-            <div class="section-label">Suggested topics</div>
-            <div id="prompts" class="topics"></div>
-            <div class="muted">Tap a topic to set the title; it can also speak a guiding sentence in your language.</div>
-          </div>
-
-          <div class="section-label">Title</div>
-          <input id="title" class="input" placeholder="Story title (optional)" />
-
-          <div class="section-label">When did this happen?</div>
-          <input id="when" class="input" placeholder='e.g., "summer 1945", "early 2018", "15 Feb 1972"' />
-
-          <div class="section-label">Add a picture (optional)</div>
-          <input id="imageInput" type="file" accept="image/*" class="input" />
-          <img id="thumb" class="thumb" style="display:none" alt="preview" />
-
-          <div class="section-label">Transcript</div>
-          <div id="transcript" class="area" aria-live="polite">Your words will appear here…</div>
-
-          <div class="rec-wrap">
-            <button id="recordBtn" class="rec-btn" aria-pressed="false">Record</button>
-            <div class="meter" id="meter" style="display:none">
-              <div class="bar"><div id="bar"></div></div>
-              <div id="remain" class="muted">…</div>
-            </div>
-            <div id="recStatus" class="muted"></div>
-          </div>
-
-          <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button id="saveBtn" class="btn primary" disabled>Save story</button>
-            <button id="clearBtn" class="btn">Clear</button>
-          </div>
-        </section>
-
-        <!-- Right: library -->
-        <aside>
-          <div style="display:flex; align-items:center; justify-content:space-between;">
-            <div class="section-label" style="margin:0">Library</div>
-            <button id="refreshLib" class="btn pill">Refresh</button>
-          </div>
-          <div id="library" class="lib-list" style="margin-top:8px;"></div>
-        </aside>
-      </div>
+<nav class="nav">
+  <div class="nav-inner container">
+    <div class="brand"><div class="logo"></div> Memoir</div>
+    <div class="links">
+      <a class="btn" href="/landing.html">About</a>
+      <a class="btn" href="/stories.html">My Stories</a>
+      <select class="btn" data-lang>
+        <option value="en">🇬🇧 English</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="nl">🇳🇱 Nederlands</option>
+        <option value="es">🇪🇸 Español</option>
+      </select>
+      <a class="btn" href="/login.html">Login</a>
     </div>
   </div>
+</nav>
 
-  <!-- Supabase & app -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
-  <script src="/app.js"></script>
+<main class="container">
+  <section class="card">
+    <div class="grid-two">
+      <div>
+        <div class="segment">
+          <button id="tabGuided" class="tab active">Guided</button>
+          <button id="tabFree" class="tab">Free</button>
+          <span class="badge" id="planBadge">Plan: …</span>
+        </div>
+
+        <!-- Big mic button first -->
+        <div style="display:flex;gap:16px;align-items:center;margin:14px 0">
+          <button id="mic" class="mic-big" aria-pressed="false">Record</button>
+          <div class="muted" id="recHint">Your words will appear below.</div>
+        </div>
+
+        <div id="guidedBlock">
+          <div class="label">Today's prompts</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <div id="promptRow" class="segment"></div>
+            <button class="btn" id="refreshPrompts">Refresh</button>
+          </div>
+        </div>
+
+        <div class="label">Transcript</div>
+        <div id="transcript" class="area" aria-live="polite">Your words will appear here…</div>
+
+        <div class="segment" style="margin-top:12px">
+          <button id="save" class="btn primary" disabled>Save story</button>
+          <button id="clear" class="btn">Clear</button>
+        </div>
+      </div>
+
+      <aside>
+        <div class="label">Title</div>
+        <input id="title" class="input" placeholder="Story title (optional)"/>
+        <div class="label">When did this happen?</div>
+        <input id="when" class="input" placeholder='e.g., "summer 1945", "early 2018", "15 Feb 1972"'/>
+        <div class="label">Add photo</div>
+        <input id="photo" type="file" accept="image/*" class="input"/>
+
+        <div class="label">Library</div>
+        <div id="library" class="gallery"></div>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<script>
+  // ---------- ENV + Supabase ----------
+  window.ENV = { SUPABASE_URL: "{{SUPABASE_URL}}", SUPABASE_ANON_KEY: "{{SUPABASE_ANON_KEY}}" };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
+<script src="/app.js"></script>
+<script>
+(async function(){
+  const supabase = window.supabaseClient;
+  const { data: { session } } = await supabase.auth.getSession();
+  if(!session){ window.location.replace('/login.html'); return; }
+  const user = session.user;
+
+  // ---- UI refs
+  const $=id=>document.getElementById(id);
+  const mic=$('mic'), transcriptEl=$('transcript'), save=$('save'), clearBtn=$('clear');
+  const titleEl=$('title'), whenEl=$('when'), photoEl=$('photo');
+  const promptRow=$('promptRow'), refreshBtn=$('refreshPrompts');
+  const tabGuided=$('tabGuided'), tabFree=$('tabFree'), guidedBlock=$('guidedBlock');
+  const library=$('library');
+
+  // ---- Plan badge (reads profiles)
+  (async()=>{
+    const { data: profile } = await supabase.from('profiles').select('plan, trial_end, role').single();
+    const badge=document.getElementById('planBadge');
+    const trialUntil = profile?.trial_end ? new Date(profile.trial_end) : null;
+    const trialActive = trialUntil && Date.now() < trialUntil.getTime();
+    const isAdmin = profile?.role === 'admin';
+    if(isAdmin) badge.textContent='Plan: Admin';
+    else if (profile?.plan==='premium' || trialActive) badge.textContent='Plan: Premium';
+    else badge.textContent='Plan: Free';
+  })();
+
+  // ---- Topics (4 at a time)
+  const TOPICS = {
+    en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
+    fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
+    es:["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"],
+    nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
+  };
+  function draw4(){
+    const code = (localStorage.getItem('memoir.lang') || 'en');
+    const arr = (TOPICS[code]||TOPICS.en).slice();
+    const picks=[];
+    while(picks.length<4 && arr.length){ picks.push(arr.splice(Math.floor(Math.random()*arr.length),1)[0]); }
+    promptRow.innerHTML='';
+    picks.forEach(word=>{
+      const b=document.createElement('button'); b.className='btn'; b.textContent=word;
+      b.onclick=()=>{ titleEl.value=word; };
+      promptRow.appendChild(b);
+    });
+  }
+  refreshBtn.onclick=draw4; draw4();
+
+  // ---- Guided toggle
+  tabGuided.onclick=()=>{ tabGuided.classList.add('active'); tabFree.classList.remove('active'); guidedBlock.style.display='block'; };
+  tabFree.onclick=()=>{ tabFree.classList.add('active'); tabGuided.classList.remove('active'); guidedBlock.style.display='none'; };
+
+  // ---- Recording (simple browser SR for now; you can swap to chunked Whisper)
+  let recognition=null, recActive=false;
+  function startRec(){
+    const SR = window.webkitSpeechRecognition || window.SpeechRecognition;
+    if(!SR){ alert('Speech recognition not available in this browser.'); return; }
+    recognition=new SR();
+    const code=(localStorage.getItem('memoir.lang')||'en');
+    const BCP={en:'en-US',fr:'fr-FR',es:'es-ES',nl:'nl-NL'};
+    recognition.lang = BCP[code]||'en-US';
+    recognition.continuous=true; recognition.interimResults=true;
+    let full='';
+    recognition.onresult=(e)=>{
+      let inter='';
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        const r=e.results[i]; if(r.isFinal) full+=r[0].transcript+' '; else inter+=r[0].transcript;
+      }
+      const txt=(full+inter).trim();
+      transcriptEl.textContent = txt || 'Your words will appear here…';
+      save.disabled = !txt;
+    };
+    recognition.onend=()=>{ stopRec(); };
+    try{ recognition.start(); }catch{}
+    mic.classList.add('pulse'); mic.textContent='Stop';
+    recActive=true;
+  }
+  function stopRec(){
+    try{ recognition && recognition.stop(); }catch{}
+    mic.classList.remove('pulse'); mic.textContent='Record';
+    recActive=false;
+  }
+  mic.onclick=()=>{ recActive?stopRec():startRec(); };
+
+  // ---- Basic approx date parser
+  function parseApproxDate(input){
+    if(!input) return { label:'', sort:null };
+    const s=input.trim().toLowerCase();
+    const iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); if(iso){const d=new Date(+iso[1],+iso[2]-1,+iso[3]);return{label:input,sort:d.toISOString().slice(0,10)};}
+    const yOnly=s.match(/(\d{4})/); if(yOnly){const d=new Date(+yOnly[1],0,1);return{label:input,sort:d.toISOString().slice(0,10)};}
+    const season=s.match(/^(early|mid|late)?\s*(spring|summer|autumn|fall|winter)\s+(\d{4})$/);
+    if(season){const y=+season[3];const base={spring:2,summer:5,autumn:8,fall:8,winter:11}[season[2]];let m=base,day=1;if(season[1]==='mid')day=10;if(season[1]==='late')day=20;const d=new Date(y,m,day);return{label:input,sort:d.toISOString().slice(0,10)};}
+    return { label:input, sort:null };
+  }
+
+  // ---- Save story (to Supabase)
+  async function uploadImageIfAny(userId){
+    const f = photoEl.files?.[0];
+    if(!f) return null;
+    const path = `${userId}/${Date.now()}-${f.name.replace(/\s+/g,'_')}`;
+    const { error } = await supabase.storage.from('memoir-images').upload(path, f, { upsert:false });
+    if (error) { alert('Photo upload failed: '+error.message); return null; }
+    return path;
+  }
+
+  save.onclick = async () => {
+    const text = transcriptEl.textContent.trim();
+    if (!text) return;
+    const when = parseApproxDate(whenEl.value);
+    const image_path = await uploadImageIfAny(user.id);
+
+    const { error } = await supabase.from('stories').insert({
+      user_id: user.id,
+      title: titleEl.value || 'Story',
+      transcript: text,
+      original_transcript: text,
+      happened_label: when.label,
+      happened_sort: when.sort,
+      created_at: new Date().toISOString(),
+      // audio_url: null, // wire later if needed
+      // duration_sec: null,
+      // image path goes to storage, we store the path string:
+      // Add a column image_path text (nullable) to stories if you don't have it yet.
+      image_path
+    });
+    if (error) { alert('Save failed: '+error.message); return; }
+
+    // reset
+    transcriptEl.textContent='Your words will appear here…';
+    titleEl.value=''; whenEl.value=''; photoEl.value='';
+    save.disabled=true;
+
+    loadLibrary(); // refresh small library on the side
+    alert('Saved!');
+  };
+
+  clearBtn.onclick=()=>{ transcriptEl.textContent='Your words will appear here…'; save.disabled=true; };
+
+  // ---- Mini library (recent stories)
+  async function loadLibrary(){
+    const { data, error } = await supabase
+      .from('stories')
+      .select('id,title,created_at,image_path')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending:false })
+      .limit(6);
+    if (error) return;
+    library.innerHTML='';
+    (data||[]).forEach(s=>{
+      const div=document.createElement('div'); div.className='thumb';
+      div.innerHTML = s.image_path
+        ? `<img src="${supabase.storage.from('memoir-images').getPublicUrl(s.image_path).data.publicUrl}" alt="">`
+        : `<div style="padding:10px" class="muted">${(s.title||'Story')}</div>`;
+      library.appendChild(div);
+    });
+  }
+  loadLibrary();
+})();
+</script>
 </body>
 </html>
