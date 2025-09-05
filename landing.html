@@ -1,102 +1,181 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>MEMOIR APP – Preserve your memories forever</title>
-<link rel="stylesheet" href="/styles.css"/>
-<meta name="color-scheme" content="light"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Memoir App — Preserve Your Memories Forever</title>
+
+  <!-- Soft, clean look directly here so it renders exactly as intended -->
+  <style>
+    :root{
+      --bg:#f8f7f5;
+      --card:#ffffff;
+      --ink:#2f2a25;
+      --muted:#6f6a65;
+      --brand:#6b4c2f;        /* warm brown */
+      --brand-2:#7b5bff;      /* subtle accent used sparingly */
+      --border:#e8e5e1;
+      --shadow:0 10px 30px rgba(0,0,0,.06);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    a{text-decoration:none;color:inherit}
+
+    /* Header */
+    header{
+      position:sticky;top:0;z-index:10;
+      background:#fff;border-bottom:1px solid var(--border);
+      padding:12px 20px; box-shadow:0 2px 10px rgba(0,0,0,.02);
+    }
+    .nav{
+      max-width:1100px;margin:0 auto;
+      display:flex;align-items:center;gap:14px;justify-content:space-between;
+    }
+    .brand{font-weight:700;color:var(--brand)}
+    .subtitle{color:var(--muted);font-size:12px}
+    .menu{display:flex;align-items:center;gap:14px}
+    .chip{padding:8px 12px;border:1px solid var(--border);border-radius:999px;background:#fff}
+    .chip:hover{border-color:#ddd}
+    select{border:1px solid var(--border);border-radius:12px;padding:8px 10px;background:#fff;color:var(--ink)}
+
+    /* Main shell */
+    .wrap{max-width:1100px;margin:22px auto; padding:0 16px}
+
+    /* Hero */
+    .hero{
+      display:grid;grid-template-columns:1fr;gap:18px;
+      background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .hero-img{width:100%;height:min(54vh,480px);object-fit:cover;background:#ddd}
+    .hero-text{padding:18px}
+    .h1{font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:.2px;margin:6px 0 12px}
+    .muted{color:var(--muted)}
+
+    /* Two action cards */
+    .grid-2{display:grid;grid-template-columns:1fr;gap:16px;margin-top:18px}
+    @media(min-width:900px){ .hero{grid-template-columns:1.2fr .9fr} .grid-2{grid-template-columns:1fr 1fr} }
+    .card{
+      background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);
+      padding:20px;display:flex;flex-direction:column;gap:8px;align-items:flex-start
+    }
+    .card h3{margin:0 0 6px 0}
+    .btn{
+      background:var(--brand);color:#fff;border:0;border-radius:12px;padding:12px 16px;cursor:pointer;font-weight:700
+    }
+    .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--border)}
+    .btn:hover{filter:brightness(1.02)}
+
+    /* Features */
+    .grid-3{display:grid;grid-template-columns:1fr;gap:16px;margin-top:18px}
+    @media(min-width:900px){ .grid-3{grid-template-columns:repeat(3,1fr)} }
+    .feature{
+      background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);
+      padding:20px
+    }
+    .feature h4{margin:0 0 6px 0}
+    .foot{color:var(--muted);font-size:12px;margin:26px 0 12px;text-align:center}
+  </style>
 </head>
 <body>
 
-<!-- Top nav -->
-<nav class="nav">
-  <div class="nav-inner container">
-    <div class="brand">
-      <div class="logo" aria-hidden="true"></div>
-      MEMOIR APP – Preserve your memories forever
+  <!-- Header -->
+  <header>
+    <div class="nav">
+      <div>
+        <div class="brand">MEMOIR APP — Preserve your memories forever</div>
+        <div class="subtitle">Record • Transcribe • Share privately with family</div>
+      </div>
+      <nav class="menu">
+        <a class="chip" href="landing.html">About</a>
+        <a class="chip" href="login.html">Login</a>
+        <a class="chip" href="record.html">Record</a>
+        <a class="chip" href="stories.html">My Stories</a>
+        <select id="lang">
+          <option value="en">🇺🇸 English</option>
+          <option value="fr">🇫🇷 Français</option>
+          <option value="nl">🇳🇱 Nederlands</option>
+          <option value="es">🇪🇸 Español</option>
+        </select>
+      </nav>
     </div>
-    <div class="links">
-      <a class="btn" href="/landing.html">About</a>
-      <a class="btn" href="/login.html">Login</a>
-      <a class="btn" href="/record.html">Record</a>
-      <a class="btn" href="/stories.html">My Stories</a>
+  </header>
 
-      <select class="btn" data-lang>
-        <option value="en">🇬🇧 English</option>
-        <option value="fr">🇫🇷 Français</option>
-        <option value="nl">🇳🇱 Nederlands</option>
-        <option value="es">🇪🇸 Español</option>
-      </select>
-    </div>
-  </div>
-</nav>
+  <main class="wrap">
 
-<main class="container">
-  <!-- Hero -->
-  <section class="hero">
-    <div class="hero-img">
-      <img data-hero-img alt="Open book"/>
-    </div>
-    <div class="hero-copy">
-      <h1 class="h1"><span class="soft">Preserve</span> Your Memories Forever</h1>
-      <p class="subtle">Record, transcribe, and organize your life stories with the power of AI. Share with family in a private library.</p>
+    <!-- HERO with rotating image -->
+    <section class="hero">
+      <img id="heroImg" src="assets/book-1.jpg" alt="Open book" class="hero-img" />
+      <div class="hero-text">
+        <h1 class="h1">Preserve Your Memories Forever</h1>
+        <p class="muted">Record once, keep for generations. Start a recording in one tap, add a title and when it
+          happened, then share safely with your family.</p>
 
-      <div class="quick">
-        <div class="card">
-          <div class="title">Start Recording</div>
-          <p class="subtle">Tap to begin. Add a title and “when it happened” later.</p>
-          <div class="cta">
-            <a class="btn primary" href="/record.html">Start recording</a>
-          </div>
+        <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+          <a class="btn" href="record.html">Start Recording</a>
+          <a class="btn secondary" href="stories.html">View My Stories</a>
         </div>
-        <div class="card">
-          <div class="title">View My Stories</div>
-          <p class="subtle">Browse, rewrite with AI, and export your stories to share with your family.</p>
-          <div class="cta">
-            <a class="btn" href="/stories.html">My stories</a>
+
+        <!-- The two action cards live just below the hero on smaller screens,
+             but on wide screens the hero sits left and these cards sit right -->
+        <div class="grid-2" style="margin-top:16px">
+          <div class="card">
+            <h3>Start Recording</h3>
+            <p class="muted" style="margin:0">One tap to begin. Add a title and “when it happened” later.</p>
+            <a class="btn" href="record.html">Start Recording</a>
+          </div>
+          <div class="card">
+            <h3>View My Stories</h3>
+            <p class="muted" style="margin:0">Browse, rewrite with AI, export, and share with your family.</p>
+            <a class="btn secondary" href="stories.html">My Stories</a>
           </div>
         </div>
       </div>
+    </section>
 
-      <div class="feature-grid">
-        <div class="feature">
-          <h4>Smart Transcription</h4>
-          <div class="muted">Server-side Whisper for accurate EN/FR/NL/ES.</div>
-        </div>
-        <div class="feature">
-          <h4>Guided + Free</h4>
-          <div class="muted">Gentle topic prompts or free-form recording.</div>
-        </div>
-        <div class="feature">
-          <h4>Synced Library</h4>
-          <div class="muted">Stories & photos are synced via Supabase across devices.</div>
-        </div>
+    <!-- Features row -->
+    <section class="grid-3">
+      <div class="feature">
+        <h4>Smart Transcription</h4>
+        <p class="muted">Server-side Whisper for accurate EN/FR/ES/NL, resilient to spotty connections.</p>
       </div>
-    </div>
-  </section>
+      <div class="feature">
+        <h4>Guided or Free</h4>
+        <p class="muted">Use gentle prompts or speak freely. Add a date or period like “early 1970s”.</p>
+      </div>
+      <div class="feature">
+        <h4>Private Library</h4>
+        <p class="muted">Stories and media saved in your private account. Export to PDF/CSV when you’re ready.</p>
+      </div>
+    </section>
 
-  <!-- FAQ / About (short) -->
-  <section class="card" style="margin-top:18px">
-    <h3 style="margin:0 0 6px">About & FAQ</h3>
-    <div class="muted">
-      <p><strong>What is this?</strong> Memoir App helps families record and preserve life stories. It uses accurate speech-to-text (Whisper) and keeps your content safe in a private library.</p>
-      <p><strong>How to start?</strong> Click <em>Record</em>, pick a language, choose a topic (or free mode), and press the big round button. Save when you’re done.</p>
-      <p><strong>Where are my stories?</strong> Click <em>My Stories</em> to view, rewrite with AI, download, or manage your library.</p>
-    </div>
-  </section>
+    <div class="foot">© Memoir App — built for families</div>
+  </main>
 
-  <footer class="footer">© 2025 Memoir App — Made with care.</footer>
-</main>
+  <script>
+    // Simple 30s rotator for /assets/book-1.jpg..book-3.jpg
+    const hero = document.getElementById('heroImg');
+    const imgs = ["assets/book-1.jpg","assets/book-2.jpg","assets/book-3.jpg"];
+    let idx = 0;
 
-<!-- Env → populated by Vercel runtime, do NOT hardcode secrets -->
-<script>
-  window.ENV = {
-    SUPABASE_URL:  "{{SUPABASE_URL}}",
-    SUPABASE_ANON_KEY: "{{SUPABASE_ANON_KEY}}"
-  };
-</script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
-<script src="/app.js"></script>
+    function nextHero(){
+      idx = (idx + 1) % imgs.length;
+      const url = imgs[idx];
+      // Preload then swap for a smooth feel
+      const probe = new Image();
+      probe.onload = () => { hero.src = url; };
+      probe.onerror = () => { /* ignore if missing */ };
+      probe.src = url;
+    }
+    setInterval(nextHero, 30000); // 30s
+
+    // Optional: persist chosen language across pages
+    const langSel = document.getElementById('lang');
+    langSel.value = localStorage.getItem('memoir.lang') || 'en';
+    langSel.addEventListener('change', ()=>{
+      localStorage.setItem('memoir.lang', langSel.value);
+    });
+  </script>
 </body>
 </html>
