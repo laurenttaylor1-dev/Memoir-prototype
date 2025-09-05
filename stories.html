@@ -1,111 +1,90 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>My Stories — Memoir App</title>
-<meta name="color-scheme" content="light dark" />
-<style>
-  :root{--bg:#faf9f7;--card:#fff;--ink:#2d2a26;--muted:#6f6b65;--brand:#7a5af8;--brand2:#b98af9;--gold:#7b5a33;--border:#e8e4de;--shadow:0 14px 36px rgba(0,0,0,.06), 0 2px 6px rgba(0,0,0,.04);--radius:20px}
-  @media (prefers-color-scheme:dark){
-    :root{--bg:#0f1114;--card:#14171b;--ink:#e8e8ea;--muted:#9b9aa1;--border:#23262c;--shadow:0 18px 44px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.3);--gold:#caa369}
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,Inter,Segoe UI,Roboto}
-  .topbar{position:sticky;top:0;z-index:50;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:10px 18px}
-  .brand{display:flex;align-items:center;gap:10px;font-weight:700}
-  .logo{width:28px;height:28px;border-radius:8px;background:conic-gradient(from 180deg,var(--brand),var(--brand2))}
-  .nav a{border:1px solid var(--border);padding:8px 12px;border-radius:999px;text-decoration:none;color:inherit}
-  .container{max-width:1000px;margin:0 auto;padding:24px 18px}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
-  .item{display:flex;gap:12px;align-items:flex-start;border-top:1px solid var(--border);padding:12px 0}
-  .item img{width:80px;height:80px;object-fit:cover;border-radius:12px;border:1px solid var(--border)}
-  .row{display:flex;gap:8px;flex-wrap:wrap}
-  .btn{border:1px solid var(--border);background:transparent;border-radius:999px;padding:8px 12px;cursor:pointer}
-  .btn.primary{background:var(--gold);color:#fff;border:0}
-  .muted{color:var(--muted)}
-</style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Stories — Memoir</title>
+<link rel="stylesheet" href="/styles.css">
+<link rel="icon" href="data:,">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
 </head>
 <body>
-  <div class="topbar">
-    <div class="brand"><div class="logo" aria-hidden="true"></div> <span>Memoir — My Stories</span></div>
-    <nav class="nav">
-      <a href="/">Home</a>
-      <a href="/record.html">Record</a>
-      <a href="/login.html">Login</a>
-    </nav>
-  </div>
-
-  <main class="container">
-    <div class="card">
-      <div class="row" style="justify-content:space-between; align-items:center">
-        <h2 style="margin:0">Your Library</h2>
-        <button id="exportCsv" class="btn">Export CSV</button>
-      </div>
-      <div id="list" class="muted" style="margin-top:6px">Loading…</div>
+<nav class="nav">
+  <div class="nav-inner container">
+    <div class="brand"><div class="logo"></div><div>MEMOIR APP</div></div>
+    <div class="nav-links">
+      <a href="/index.html" class="link">Home</a>
+      <a href="/record.html" class="link needs-auth">Record</a>
+      <a href="/login.html" class="link" id="nav-login">Login</a>
+      <select id="lang" class="lang">
+        <option value="en">🇬🇧 English</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="nl">🇳🇱 Nederlands</option>
+        <option value="es">🇪🇸 Español</option>
+      </select>
+      <span id="userBadge" class="badge hidden"></span>
+      <button id="logoutBtn" class="btn pill ghost">Logout</button>
     </div>
-  </main>
+  </div>
+</nav>
 
-  <script>
-    // Local storage demo; swap to Supabase table if you already have one
-    const LSKEY='memoir.stories';
-    const load=()=>{ try{return JSON.parse(localStorage.getItem(LSKEY)||'[]')}catch{return[]} };
-    const save=(arr)=>localStorage.setItem(LSKEY, JSON.stringify(arr));
-    const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+<main class="container">
+  <section class="section">
+    <div class="card">
+      <div class="kicker">Your Library</div>
+      <h1 style="margin-top:6px">My Stories</h1>
+      <div id="list" class="features" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))"></div>
+    </div>
+  </section>
+</main>
 
-    const listEl = document.getElementById('list');
-    function render(){
-      const items = load();
-      if(!items.length){ listEl.textContent='No stories yet.'; return; }
-      listEl.innerHTML='';
-      items.forEach((s,i)=>{
-        const wrap=document.createElement('div'); wrap.className='item';
-        const img = document.createElement('img');
-        if(s.photo) img.src = s.photo; else { img.style.display='none'; img.alt=''; }
-        const meta=document.createElement('div');
-        meta.innerHTML = `<div style="font-weight:700">${esc(s.title||'Story')}</div>
-                          <div class="muted">${esc(s.happened_label||'')}</div>
-                          <div style="white-space:pre-wrap; margin-top:6px">${esc((s.text||'').slice(0,220))}…</div>`;
-        const actions=document.createElement('div'); actions.className='row';
-        const view=document.createElement('button'); view.className='btn'; view.textContent='View';
-        view.onclick=()=>viewStory(s);
-        const del=document.createElement('button'); del.className='btn'; del.textContent='Delete';
-        del.onclick=()=>{ const arr=load(); arr.splice(i,1); save(arr); render(); };
-        actions.appendChild(view); actions.appendChild(del);
+<script src="/app.js"></script>
+<script>
+// For now read from localStorage (same key as before)
+const LSKEY='memoir.stories';
+const list = document.getElementById('list');
 
-        wrap.appendChild(img); wrap.appendChild(meta); wrap.appendChild(actions);
-        listEl.appendChild(wrap);
-      });
-    }
-    render();
+function esc(s){return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
 
-    function viewStory(s){
-      const dlg=document.createElement('dialog');
-      dlg.style.padding='0'; dlg.style.border='0'; dlg.style.borderRadius='16px'; dlg.style.maxWidth='min(800px,92vw)';
-      dlg.innerHTML = `
-        <form method="dialog" style="display:flex;justify-content:space-between;gap:10px;align-items:center;padding:12px;border-bottom:1px solid var(--border)">
-          <strong>${esc(s.title||'Story')}</strong>
-          <button class="btn">Close</button>
-        </form>
-        <div style="padding:16px">
-          ${s.photo?`<img src="${s.photo}" style="width:160px;height:160px;object-fit:cover;border-radius:12px;border:1px solid var(--border);margin-bottom:12px" />`:''}
-          <div class="muted" style="margin-bottom:8px">${esc(s.happened_label||'')}</div>
-          <div style="white-space:pre-wrap">${esc(s.text||'')}</div>
-        </div>`;
-      document.body.appendChild(dlg);
-      dlg.addEventListener('close', ()=>dlg.remove());
-      dlg.showModal();
-    }
-
-    document.getElementById('exportCsv').onclick=()=>{
-      const items=load();
-      const rows=[['title','happened_label','happened_sort','created','text']];
-      items.forEach(s=>rows.push([s.title||'',s.happened_label||'',s.happened_sort||'',s.created||'',(s.text||'').replace(/\n/g,'\\n')]));
-      const csv=rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n');
-      const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a');
-      a.href=URL.createObjectURL(blob); a.download='memoir_stories.csv'; a.click();
-      setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-    };
-  </script>
+function render(){
+  let items=[];
+  try{ items = JSON.parse(localStorage.getItem(LSKEY)||'[]'); }catch{}
+  list.innerHTML='';
+  if(!items.length){
+    const p=document.createElement('p'); p.className='muted'; p.textContent='No stories yet.';
+    list.appendChild(p); return;
+  }
+  items.forEach((s,idx)=>{
+    const card=document.createElement('div'); card.className='feature';
+    card.innerHTML = `
+      <h4>${esc(s.title||'Story')}</h4>
+      <p class="small">${esc(s.happened_label || (s.happened_sort||'').slice(0,10) || new Date(s.created).toLocaleString())}</p>
+      <p class="muted" style="height:3.5em;overflow:hidden">${esc((s.text||'').slice(0,160))}…</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn pill ghost" data-view="${idx}">View</button>
+        <button class="btn pill" data-dl="${idx}">Download .txt</button>
+        <button class="btn pill ghost" data-del="${idx}">Delete</button>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+list.addEventListener('click', (e)=>{
+  const items = JSON.parse(localStorage.getItem(LSKEY)||'[]');
+  const view = e.target.getAttribute('data-view');
+  const dl = e.target.getAttribute('data-dl');
+  const del = e.target.getAttribute('data-del');
+  if(view!==null){
+    const s=items[+view]; alert((s?.title||'Story')+'\n\n'+(s?.text||''));
+  }else if(dl!==null){
+    const s=items[+dl];
+    const blob=new Blob([s?.text||''],{type:'text/plain'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(s?.title||'story')+'.txt'; a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  }else if(del!==null){
+    if(confirm('Delete this story?')){ items.splice(+del,1); localStorage.setItem(LSKEY,JSON.stringify(items)); render(); }
+  }
+});
+render();
+</script>
 </body>
 </html>
