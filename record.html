@@ -1,240 +1,275 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Memoir App — Record</title>
-<link rel="preload" href="assets/book-1.jpg" as="image">
-<style>
-:root{
-  --bg:#f8f7f5; --card:#ffffff; --ink:#2f2a25; --muted:#6f6a65;
-  --brand:#6b4c2f; --brand2:#7b5bff; --border:#e8e5e1; --radius:18px;
-  --shadow:0 10px 30px rgba(0,0,0,.06);
-}
-*{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-
-/* Header shared with landing */
-header{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--border);box-shadow:0 2px 10px rgba(0,0,0,.02)}
-.nav{max-width:1100px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
-.brandblock{display:flex;flex-direction:column}
-.brand{font-weight:800;color:var(--ink)}
-.sub{color:var(--muted);font-size:12px}
-.menu{display:flex;gap:10px;align-items:center}
-.pill{display:inline-flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--border);border-radius:999px;padding:10px 14px;min-width:110px;font-weight:600;color:var(--ink);text-decoration:none}
-.pill:hover{border-color:#ddd}
-select.pill{appearance:none;padding-right:28px;background:
-  linear-gradient(45deg,transparent 50%,#999 50%) right 10px center/8px 8px no-repeat,
-  linear-gradient(135deg,#999 50%,transparent 50%) right 4px center/8px 8px no-repeat, #fff}
-
-.wrap{max-width:1100px;margin:20px auto;padding:0 16px}
-
-/* Layout */
-.grid{display:grid;grid-template-columns:1fr;gap:16px}
-@media(min-width:1000px){.grid{grid-template-columns:1.2fr .8fr}}
-.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
-
-/* Tabs */
-.tabs{display:flex;gap:8px;margin-bottom:8px}
-.tab{border:1px solid var(--border);border-radius:999px;padding:8px 12px;background:#fff;cursor:pointer}
-.tab.active{background:#efe9e3;border-color:#e0d7cf;font-weight:700}
-
-/* Prompts */
-.headrow{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.h2{font-weight:800}
-.small{color:var(--muted);font-size:12px}
-.chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
-@media(min-width:760px){.chips{grid-template-columns:repeat(4,minmax(0,1fr))}}
-.chip{display:flex;align-items:center;justify-content:center;border:1px solid #e4ded7;background:#f6f1eb;border-radius:12px;height:40px;font-weight:700;cursor:pointer}
-.chip:active{transform:translateY(1px)}
-.refresh{border:1px solid var(--border);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer}
-
-/* Form */
-.label{font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.06em;margin-top:10px}
-.input, .area{width:100%;border:1px solid var(--border);border-radius:12px;background:#fff;color:inherit;padding:10px}
-.area{min-height:200px}
-
-/* Recorder */
-.recbox{display:flex;flex-direction:column;align-items:center;gap:10px;margin:12px 0}
-.mic{width:190px;height:190px;border-radius:999px;border:0;background:radial-gradient(70% 70% at 50% 30%, #ff5a5f, #a26a2a);color:#fff;font-weight:800;font-size:18px;cursor:pointer;box-shadow:0 16px 50px rgba(162,106,42,.35)}
-.mic.pulse{animation:pulse 1.6s infinite ease-in-out}
-@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
-.meter{display:flex;gap:8px;align-items:center;width:100%;max-width:420px}
-.bar{flex:1;height:10px;background:#eee;border-radius:999px;overflow:hidden}
-.bar>div{height:100%;width:0%;background:linear-gradient(90deg,var(--brand),var(--brand2))}
-.btn{background:var(--brand);color:#fff;border:0;border-radius:12px;padding:12px 16px;font-weight:800;cursor:pointer}
-.btn.secondary{background:#fff;border:1px solid var(--border);color:var(--ink)}
-.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
-</style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Memoir — Record</title>
 </head>
 <body>
-  <!-- HEADER -->
-  <header>
-    <div class="nav">
-      <div class="brandblock">
-        <div class="brand">MEMOIR APP — Preserve your memories forever</div>
-        <div class="sub">Record • Transcribe • Share privately with family</div>
-      </div>
-      <nav class="menu">
-        <a class="pill" href="landing.html">Home</a>
-        <a class="pill" href="login.html">Login</a>
-        <a class="pill" href="record.html">Record</a>
-        <a class="pill" href="stories.html">My Stories</a>
-        <select class="pill" id="lang">
-          <option value="en">🇺🇸 English</option>
-          <option value="fr">🇫🇷 Français</option>
-          <option value="nl">🇳🇱 Nederlands</option>
-          <option value="es">🇪🇸 Español</option>
-        </select>
-      </nav>
-    </div>
-  </header>
+  <!-- shared header -->
+  <!-- paste the SHARED HEADER block here -->
+  <div class="container">
+    <div class="grid two">
+      <section class="card" style="padding:16px">
+        <div class="grid two" style="align-items:start">
+          <div>
+            <div class="pill" style="display:flex;gap:8px">
+              <button id="tabGuided" class="btn ghost" data-i18n="guided">Guided</button>
+              <button id="tabFree"   class="btn ghost" data-i18n="free">Free</button>
+            </div>
 
-  <main class="wrap">
-    <div class="grid">
-      <!-- Left: recorder + transcript -->
-      <section class="card">
-        <div class="tabs">
-          <div id="tabGuided" class="tab active">Guided</div>
-          <div id="tabFree" class="tab">Free</div>
-        </div>
+            <!-- Guided block -->
+            <div id="guidedBlock" style="margin-top:12px">
+              <div class="muted" data-i18n="todays_suggestions">Today’s suggested prompts</div>
+              <div id="prompts" class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-top:8px"></div>
+              <button id="refresh" class="btn" style="margin-top:8px" data-i18n="refresh_prompts">Suggest other prompts</button>
+            </div>
 
-        <div id="guidedBlock">
-          <div class="headrow">
-            <div class="h2">Today’s suggested prompts</div>
-            <button id="refreshPrompts" class="refresh">Suggest other prompts</button>
+            <!-- Free block -->
+            <div id="freeBlock" style="display:none;margin-top:12px" class="muted" data-i18n="free">Free</div>
+
+            <div style="margin-top:14px">
+              <label class="muted" data-i18n="title_label">Title</label>
+              <input id="title" class="input" placeholder="e.g. My first school day">
+            </div>
+
+            <div style="margin-top:10px">
+              <label class="muted" data-i18n="when_label">When did this happen?</label>
+              <input id="when" class="input" placeholder='e.g. "summer 1945", "early 2018", "15 Feb 1972"'>
+            </div>
+
+            <div style="margin-top:14px">
+              <label class="muted" data-i18n="add_photo">Add a photo (optional)</label>
+              <input id="photo" type="file" accept="image/*" class="input">
+              <img id="photoPreview" style="margin-top:8px;max-width:100%;border-radius:12px;display:none"/>
+            </div>
           </div>
-          <div class="small">Tap a topic to hear a gentle question and prefill the title.</div>
-          <div id="chips" class="chips"></div>
-        </div>
 
-        <div class="label">Title</div>
-        <input id="title" class="input" placeholder="Story title (optional)"/>
+          <!-- Record + transcript column -->
+          <div style="text-align:center">
+            <button id="recBtn" class="round big" data-i18n="start_recording">Start Recording</button>
+            <div class="muted" id="recHint" style="margin-top:6px"></div>
 
-        <div class="label">When did this happen?</div>
-        <input id="when" class="input" placeholder='e.g., "summer 1945", "early 2018", "15 Feb 1972"' />
+            <div class="card" style="margin-top:12px;padding:12px">
+              <div id="transcript" class="muted" style="min-height:160px;white-space:pre-wrap" data-i18n="transcript_placeholder">Your words will appear here…</div>
+            </div>
 
-        <div class="label">Transcript</div>
-        <div id="transcript" class="area" aria-live="polite">Your words will appear here…</div>
-
-        <div class="recbox">
-          <button id="mic" class="mic" aria-pressed="false">Record</button>
-          <div class="meter" id="meter" style="display:none">
-            <div class="bar"><div id="bar"></div></div>
-            <div id="remain" class="small">120s</div>
+            <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
+              <button id="save" class="btn primary" data-i18n="save_story" disabled>Save story</button>
+            </div>
           </div>
-          <div id="asr" class="small"></div>
-        </div>
-
-        <div class="actions">
-          <button id="save" class="btn" disabled>Save story</button>
-          <button id="clear" class="btn secondary">Clear</button>
         </div>
       </section>
 
-      <!-- Right: library preview (local for now) -->
-      <aside class="card">
-        <div class="h2">Library (recent)</div>
-        <div id="lib" class="small">No stories yet.</div>
-        <div class="actions"><a class="btn secondary" href="stories.html">Open full library</a></div>
+      <aside class="card" style="padding:16px">
+        <div class="muted" style="margin-bottom:8px">Library (latest)</div>
+        <div id="library"></div>
       </aside>
     </div>
-  </main>
+  </div>
 
-  <!-- Supabase JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
 <script>
-/* ====== Config ====== */
-const SUPABASE_URL  = "https://jrjqciywlijhhcxfxywh.supabase.co";
-const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
+/* ---------- Supabase ---------- */
+const supabaseClient = window.supabase.createClient(
+  "https://jrjqciywlijhhcxfxywh.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak",
+  { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:false } }
+);
 
-/* ====== Session guard ====== */
+let sessionUser = null;
 (async()=>{
-  const { data:{session} } = await supabase.auth.getSession();
-  if(!session) location.replace('login.html');
+  const { data:{ session } } = await supabaseClient.auth.getSession();
+  if(!session){ location.replace('login.html'); return; }
+  sessionUser = session.user;
+  applyI18N();
+  renderPrompts(); loadLatest();
 })();
 
-/* ====== Language & prompts ====== */
-const langSel=document.getElementById('lang');
-langSel.value = localStorage.getItem('memoir.lang') || 'en';
-langSel.addEventListener('change',()=>{localStorage.setItem('memoir.lang', langSel.value); renderPrompts();});
-
-const TOPIC_WORDS={
+/* ---------- Guided prompts + voice hint (same IDs you gave me) ---------- */
+const TOPIC_WORDS = {
   en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
   fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
   nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"],
   es:["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"]
 };
-const PROMPT_SENTENCE={
-  en:(w)=>({Childhood:"Tell me something about your youth."}[w]||`Tell me about ${w.toLowerCase()}.`),
-  fr:(w)=>({Enfance:"Parlez-moi de votre jeunesse, d’un souvenir marquant."}[w]||`Parlez-moi de ${w.toLowerCase()}.`),
-  nl:(w)=>({Jeugd:"Vertel me iets over je jeugd."}[w]||`Vertel over ${w.toLowerCase()}.`),
-  es:(w)=>({Infancia:"Cuéntame algo sobre tu juventud."}[w]||`Háblame de ${w.toLowerCase()}.`)
-};
-const BCP={en:'en-US',fr:'fr-FR',nl:'nl-NL',es:'es-ES'};
-
-const chipsEl=document.getElementById('chips');
-const refreshBtn=document.getElementById('refreshPrompts');
-function pick4(arr){ const a=[...arr]; const out=[]; while(a.length && out.length<4){ out.push(a.splice(Math.floor(Math.random()*a.length),1)[0]); } return out;}
-function speak(sentence, code){ if(!('speechSynthesis' in window)) return; const u=new SpeechSynthesisUtterance(sentence); u.lang=BCP[code]||'en-US'; speechSynthesis.cancel(); speechSynthesis.speak(u); }
+function pick4(arr){ const a=[...arr]; const out=[]; while(out.length<4 && a.length){ out.push(a.splice(Math.floor(Math.random()*a.length),1)[0]); } return out; }
 function renderPrompts(){
-  const lang=langSel.value||'en';
-  const all=TOPIC_WORDS[lang]||TOPIC_WORDS.en;
-  const four=pick4(all);
-  chipsEl.innerHTML='';
-  four.forEach(word=>{
-    const c=document.createElement('div'); c.className='chip'; c.textContent=word;
-    c.onclick=()=>{ document.getElementById('title').value=word; speak((PROMPT_SENTENCE[lang]||PROMPT_SENTENCE.en)(word), lang);}
-    chipsEl.appendChild(c);
+  const lang = getLang();
+  const wrap = document.getElementById('prompts'); wrap.innerHTML='';
+  pick4(TOPIC_WORDS[lang]||TOPIC_WORDS.en).forEach(w=>{
+    const d=document.createElement('div'); d.className='chip'; d.textContent=w;
+    d.onclick=()=>{ document.getElementById('title').value = w; speakHint(lang, w); };
+    wrap.appendChild(d);
   });
 }
-refreshBtn.onclick=renderPrompts;
+document.getElementById('refresh').onclick=renderPrompts;
 
-/* ====== Recorder (browser Web Speech as placeholder) ====== */
-const transcriptEl=document.getElementById('transcript'), saveBtn=document.getElementById('save');
-const meter=document.getElementById('meter'), bar=document.getElementById('bar'), remain=document.getElementById('remain'), mic=document.getElementById('mic'), asr=document.getElementById('asr');
-let recognition=null, recOn=false, elapsed=0, timer=null; const CAP=120;
-function startRec(){
-  const SR=window.webkitSpeechRecognition||window.SpeechRecognition;
-  if(!SR){ asr.textContent='Speech recognition not available in this browser.'; return; }
-  recognition=new SR(); recognition.lang=BCP[langSel.value]||'en-US'; recognition.continuous=true; recognition.interimResults=true;
-  let full='';
-  recognition.onresult=(e)=>{ let inter=''; for(let i=e.resultIndex;i<e.results.length;i++){ const r=e.results[i]; if(r.isFinal) full+=r[0].transcript+' '; else inter+=r[0].transcript; } const txt=(full+inter).trim(); transcriptEl.textContent=txt||'Your words will appear here…'; saveBtn.disabled=!txt; };
-  recognition.onend=()=>stopRec();
-  try{ recognition.start(); }catch{}
-  mic.classList.add('pulse'); mic.textContent='Stop Recording'; asr.textContent='Transcribing…'; meter.style.display='flex';
-  elapsed=0; remain.textContent=CAP+'s'; bar.style.width='0%';
-  timer=setInterval(()=>{ elapsed++; bar.style.width=(elapsed/CAP*100)+'%'; remain.textContent=Math.max(0,CAP-elapsed)+'s'; if(elapsed>=CAP) stopRec(); },1000);
-  recOn=true;
-}
-function stopRec(){
-  try{ recognition&&recognition.stop(); }catch{}
-  if(timer){ clearInterval(timer); timer=null; }
-  mic.classList.remove('pulse'); mic.textContent='Record'; asr.textContent=''; recOn=false;
-}
-mic.onclick=()=>{ recOn?stopRec():startRec(); };
+// Light voice prompt (fallback)
+function speakHint(code, word){
+  const sentence = {
+    en:`Tell me something about your ${word.toLowerCase()}.`,
+    fr:`Parlez-moi de votre ${word.toLowerCase()}.`,
+    nl:`Vertel iets over je ${word.toLowerCase()}.`,
+    es:`Cuéntame sobre tu ${word.toLowerCase()}.`,
+  }[code] || `Tell me something about your ${word.toLowerCase()}.`;
 
-/* ====== Save locally (you already have Supabase pipeline elsewhere) ====== */
-const LS='memoir.stories';
-const load=()=>{try{return JSON.parse(localStorage.getItem(LS)||'[]')}catch{return[]}};
-const store=(list)=>localStorage.setItem(LS,JSON.stringify(list));
-const lib=document.getElementById('lib');
-function renderLib(){
-  const items=load(); if(!items.length){ lib.textContent='No stories yet.'; return; }
-  lib.innerHTML = items.slice(0,4).map(s=>`• ${s.title||'Story'} — <span class="small">${s.happened_label||new Date(s.created).toLocaleString()}</span>`).join('<br>');
+  if('speechSynthesis' in window){
+    const u = new SpeechSynthesisUtterance(sentence);
+    u.lang = ({en:'en-US',fr:'fr-FR',nl:'nl-NL',es:'es-ES'})[code] || 'en-US';
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }
 }
-document.getElementById('clear').onclick=()=>{ transcriptEl.textContent='Your words will appear here…'; saveBtn.disabled=true; };
-document.getElementById('save').onclick=()=>{
-  const text=transcriptEl.textContent.trim(); if(!text) return;
-  const t=document.getElementById('title').value||'Story'; const when=document.getElementById('when').value||'';
-  const items=load(); items.unshift({title:t,text,created:new Date().toISOString(),happened_label:when}); store(items); renderLib();
-  transcriptEl.textContent='Your words will appear here…'; saveBtn.disabled=true; document.getElementById('title').value=''; document.getElementById('when').value='';
-  alert('Saved locally. (Supabase save can be added next.)');
+
+/* ---------- Photo preview ---------- */
+const photoInput = document.getElementById('photo');
+const photoPreview = document.getElementById('photoPreview');
+let photoFile = null;
+photoInput.onchange = (e)=>{
+  photoFile = e.target.files?.[0] || null;
+  if(photoFile){
+    const url = URL.createObjectURL(photoFile);
+    photoPreview.src = url; photoPreview.style.display='block';
+  }else{
+    photoPreview.style.display='none';
+  }
 };
 
-/* Init */
-renderPrompts(); renderLib();
+/* ---------- Recording + transcript (prefers chunked, falls back to Web Speech) ---------- */
+const recBtn = document.getElementById('recBtn');
+const transcriptEl = document.getElementById('transcript');
+const saveBtn = document.getElementById('save');
+
+let recorder=null, mediaStream=null, audioChunks=[], recording=false, audioBlob=null;
+
+async function startRecording(){
+  // Use MediaRecorder to capture audio; your server Whisper endpoint can accept blobs
+  mediaStream = await navigator.mediaDevices.getUserMedia({audio:true});
+  recorder = new MediaRecorder(mediaStream);
+  audioChunks = [];
+  recorder.ondataavailable = (e)=>{ if(e.data.size) audioChunks.push(e.data); };
+  recorder.onstop = ()=>{ audioBlob = new Blob(audioChunks, { type:'audio/webm' }); saveBtn.disabled = false; };
+  recorder.start(1000);
+  // if you have a chunked Whisper endpoint, you can POST e.data in ondataavailable here.
+  // For now, we record and send once on stop to /api/transcribe.
+  recording=true; recBtn.textContent=t('stop_recording'); recBtn.classList.add('pulse');
+  transcriptEl.textContent = t('transcript_placeholder');
+}
+
+async function stopRecording(){
+  recording=false;
+  recBtn.textContent=t('start_recording'); recBtn.classList.remove('pulse');
+  if(recorder && recorder.state!=='inactive'){ recorder.stop(); }
+  if(mediaStream){ mediaStream.getTracks().forEach(tr=>tr.stop()); }
+  // Send audio for transcription (Whisper server)
+  try{
+    const fd = new FormData();
+    fd.append('audio', audioBlob, 'memoir.webm');
+    fd.append('lang', getLang());
+    const r = await fetch('/api/transcribe', { method:'POST', body:fd });
+    if(r.ok){
+      const j = await r.json();
+      transcriptEl.textContent = j.text || '';
+    }else{
+      transcriptEl.textContent = '(transcription failed)';
+    }
+  }catch(e){
+    console.warn(e); transcriptEl.textContent='(transcription unavailable)';
+  }
+}
+
+recBtn.onclick = ()=> recording ? stopRecording() : startRecording();
+
+/* ---------- Save story to Supabase (upload files + insert row) ---------- */
+function parseApproxDate(input){
+  if(!input) return { label:'', sort:null };
+  const s=input.trim().toLowerCase();
+  const iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if(iso){ const d=new Date(+iso[1],+iso[2]-1,+iso[3]); return {label:input, sort:d.toISOString().slice(0,10)}; }
+  const yOnly=s.match(/(\d{4})/);
+  if(yOnly){ const d=new Date(+yOnly[1],0,1); return {label:input, sort:d.toISOString().slice(0,10)}; }
+  return { label:input, sort:null };
+}
+
+async function uploadToBucket(bucket, file, filename){
+  const path = `${sessionUser.id}/${Date.now()}-${filename}`;
+  const { data, error } = await supabaseClient.storage.from(bucket).upload(path, file, { upsert:false });
+  if(error) throw error;
+  const { data: pub } = supabaseClient.storage.from(bucket).getPublicUrl(path);
+  return pub.publicUrl;
+}
+
+document.getElementById('save').onclick = async ()=>{
+  const title = document.getElementById('title').value.trim() || 'Story';
+  const when  = parseApproxDate(document.getElementById('when').value);
+  const text  = transcriptEl.textContent.trim();
+
+  if(!text){ alert('Nothing to save yet.'); return; }
+
+  saveBtn.disabled = true;
+
+  let audioUrl=null, photoUrl=null;
+  try{
+    if(audioBlob){ audioUrl = await uploadToBucket('memoir-audio', audioBlob, 'audio.webm'); }
+    if(photoFile){ photoUrl = await uploadToBucket('memoir-images', photoFile, photoFile.name || 'photo.jpg'); }
+
+    const { error } = await supabaseClient
+      .from('stories')
+      .insert({
+        user_id: sessionUser.id,
+        title, transcript: text,
+        audio_url: audioUrl, photo_url: photoUrl,
+        happened_label: when.label, happened_sort: when.sort
+      });
+
+    if(error) throw error;
+
+    alert('Saved!');
+    document.getElementById('title').value='';
+    document.getElementById('when').value='';
+    transcriptEl.textContent=t('transcript_placeholder');
+    photoInput.value=''; photoFile=null; photoPreview.style.display='none';
+    saveBtn.disabled=false;
+    loadLatest();
+  }catch(e){
+    console.error(e);
+    alert('Save failed: ' + (e.message||e));
+    saveBtn.disabled=false;
+  }
+};
+
+/* ---------- Tabs ---------- */
+const tabGuided = document.getElementById('tabGuided');
+const tabFree   = document.getElementById('tabFree');
+const guidedBlock = document.getElementById('guidedBlock');
+const freeBlock   = document.getElementById('freeBlock');
+tabGuided.onclick = ()=>{ guidedBlock.style.display='block'; freeBlock.style.display='none'; };
+tabFree.onclick   = ()=>{ guidedBlock.style.display='none';  freeBlock.style.display='block'; };
+
+/* ---------- Library preview ---------- */
+async function loadLatest(){
+  const { data, error } = await supabaseClient
+    .from('stories')
+    .select('id,title,created_at,photo_url')
+    .eq('user_id', sessionUser.id)
+    .order('created_at',{ascending:false})
+    .limit(5);
+  const box = document.getElementById('library'); box.innerHTML='';
+  if(error || !data?.length){ box.innerHTML='<div class="muted">No stories yet.</div>'; return; }
+  data.forEach(s=>{
+    const row = document.createElement('div');
+    row.className='grid'; row.style.gridTemplateColumns='60px 1fr';
+    row.style.alignItems='center';
+    row.style.marginBottom='10px';
+    row.innerHTML = `
+      <img src="${s.photo_url||'assets/book-1.jpg'}" style="width:56px;height:56px;object-fit:cover;border-radius:10px;border:1px solid #eee"/>
+      <div>
+        <div style="font-weight:600">${s.title||'Story'}</div>
+        <div class="muted" style="font-size:12px">${new Date(s.created_at).toLocaleString()}</div>
+      </div>
+    `;
+    box.appendChild(row);
+  });
+}
 </script>
 </body>
 </html>
