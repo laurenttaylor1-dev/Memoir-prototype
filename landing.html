@@ -3,87 +3,50 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Memoir — Preserve Life Stories</title>
-<meta name="color-scheme" content="light dark"/>
-<link rel="manifest" href="/manifest.webmanifest">
-<meta name="theme-color" content="#2563eb">
-<style>
-:root{
-  --bg:#fbf9f5; --fg:#0f172a; --muted:#667085; --card:#fff;
-  --brand:#2563eb; --brand2:#7c3aed; --border:#e6e9f0;
-}
-@media (prefers-color-scheme:dark){
-  :root{--bg:#0e1325; --card:#0f162e; --fg:#e6edf7; --muted:#9aa4b2; --border:#1f2a44;}
-}
-*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-.wrap{max-width:1100px;margin:0 auto;padding:24px}
-.nav{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.logo{display:flex;gap:10px;align-items:center}
-.badge{padding:6px 10px;border:1px solid var(--border);border-radius:999px;color:var(--muted);font-size:12px}
-.btn{padding:12px 16px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit;cursor:pointer;font-weight:600}
-.btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));border:0;color:#fff}
-.hero{display:grid;grid-template-columns:1.05fr 1fr;gap:28px;align-items:center;margin:32px 0}
-@media (max-width:900px){ .hero{grid-template-columns:1fr} }
-.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px}
-.h1{font-size:44px;line-height:1.1;margin:0 0 10px}
-.sub{color:var(--muted);font-size:18px;margin:0 0 18px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin:28px 0}
-.footer{margin:28px 0 10px;color:var(--muted);text-align:center;font-size:12px}
-.tag{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(37,99,235,.10);border:1px solid rgba(37,99,235,.25);font-size:12px}
-.book{
-  width:100%; aspect-ratio:16/10; border-radius:18px; overflow:hidden; border:1px solid var(--border);
-  background:#ddd center/cover no-repeat url('/images/open-book.jpg');
-}
-</style>
+<title>MemoryKeeper — Home</title>
+<link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <div class="wrap">
-    <div class="nav">
-      <div class="logo">
-        <div style="width:32px;height:32px;border-radius:12px;background:conic-gradient(from 180deg,var(--brand),var(--brand2))"></div>
-        <strong>Memoir</strong>
-        <span class="badge">Beta</span>
-      </div>
-      <div style="display:flex;gap:10px">
-        <a href="/login.html" class="btn">Log in</a>
-        <a href="/index.html" class="btn primary">Open App</a>
-      </div>
-    </div>
+<div id="mk-nav"></div>
+<script src="/app.js"></script>
 
-    <div class="hero">
+<div class="container">
+  <div class="card">
+    <section class="hero">
+      <div class="hero-img">
+        <!-- Replace with your own open-book image if you like -->
+        <img src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0ea?q=80&w=1400&auto=format&fit=crop" alt="Open book">
+      </div>
       <div>
-        <h1 class="h1">A gentle way to record a life story.</h1>
-        <p class="sub">Speak freely or follow prompts. Memoir captures, organizes, and keeps stories safe for your family—online or offline.</p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <a href="/index.html" class="btn primary">Start Recording</a>
-          <a href="/login.html" class="btn">Sign in</a>
+        <h2 class="hero-title">Preserve Your Memories Forever</h2>
+        <p class="hero-sub">Record, transcribe and organize life stories with the power of AI. Share with family in a safe private library.</p>
+        <div class="grid two" style="margin-top:16px">
+          <div class="tile">
+            <h3>Start Recording</h3>
+            <p class="hero-sub">One tap to begin. You can add a title and “when it happened” later.</p>
+            <button class="btn primary cta" onclick="mk.go('/index.html')">Start Recording</button>
+          </div>
+          <div class="tile">
+            <h3>View My Stories</h3>
+            <p class="hero-sub">Browse, rewrite with AI, export, and share with your family.</p>
+            <button class="btn cta" onclick="document.dispatchEvent(new CustomEvent('mk-open-library')); mk.go('/index.html')">My Stories</button>
+          </div>
         </div>
-        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
-          <span class="tag">Offline-first</span>
-          <span class="tag">Whisper transcription</span>
-          <span class="tag">Guided prompts</span>
-          <span class="tag">Family library</span>
+
+        <div style="margin-top:24px">
+          <h3 style="margin:0 0 10px 0">Features</h3>
+          <div class="grid two">
+            <div class="tile"><h3>Smart Transcription</h3><p class="hero-sub">Server-side Whisper for accurate EN/FR/NL/ES.</p></div>
+            <div class="tile"><h3>Multi-language</h3><p class="hero-sub">Prompts in 4 languages, with gentle spoken guidance.</p></div>
+            <div class="tile"><h3>Story Organization</h3><p class="hero-sub">Sort by title or “when it happened”.</p></div>
+            <div class="tile"><h3>Export & Share</h3><p class="hero-sub">CSV + .docx (zip) today; book PDF soon.</p></div>
+          </div>
         </div>
       </div>
-      <div class="book" title="Open book showing life chapters"></div>
-    </div>
-
-    <div class="grid">
-      <div class="card">
-        <strong>Comfort first</strong>
-        <p style="color:var(--muted)">Large controls, clear guidance, one-tap recording. Prompts in EN/FR/ES/NL.</p>
-      </div>
-      <div class="card">
-        <strong>Reliable offline</strong>
-        <p style="color:var(--muted)">No connection? We safely queue audio chunks and sync later—nothing is lost.</p>
-      </div>
-      <div class="card">
-        <strong>Made for families</strong>
-        <p style="color:var(--muted)">Invite relatives to follow along and help turn chapters into a book.</p>
-      </div>
-    </div>
-
-    <div class="footer">© Memoir — Prototype</div>
+    </section>
+    <footer>© MemoryKeeper</footer>
   </div>
+</div>
+
 </body>
 </html>
