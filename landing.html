@@ -3,50 +3,100 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>MemoryKeeper — Home</title>
-<link rel="stylesheet" href="/styles.css">
+<title>MEMOIR APP – Preserve your memories forever</title>
+<link rel="stylesheet" href="/styles.css"/>
+<meta name="color-scheme" content="light"/>
 </head>
 <body>
-<div id="mk-nav"></div>
-<script src="/app.js"></script>
 
-<div class="container">
-  <div class="card">
-    <section class="hero">
-      <div class="hero-img">
-        <!-- Replace with your own open-book image if you like -->
-        <img src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0ea?q=80&w=1400&auto=format&fit=crop" alt="Open book">
-      </div>
-      <div>
-        <h2 class="hero-title">Preserve Your Memories Forever</h2>
-        <p class="hero-sub">Record, transcribe and organize life stories with the power of AI. Share with family in a safe private library.</p>
-        <div class="grid two" style="margin-top:16px">
-          <div class="tile">
-            <h3>Start Recording</h3>
-            <p class="hero-sub">One tap to begin. You can add a title and “when it happened” later.</p>
-            <button class="btn primary cta" onclick="mk.go('/index.html')">Start Recording</button>
-          </div>
-          <div class="tile">
-            <h3>View My Stories</h3>
-            <p class="hero-sub">Browse, rewrite with AI, export, and share with your family.</p>
-            <button class="btn cta" onclick="document.dispatchEvent(new CustomEvent('mk-open-library')); mk.go('/index.html')">My Stories</button>
-          </div>
-        </div>
+<!-- Top nav -->
+<nav class="nav">
+  <div class="nav-inner container">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      MEMOIR APP – Preserve your memories forever
+    </div>
+    <div class="links">
+      <a class="btn" href="/landing.html">About</a>
+      <a class="btn" href="/login.html">Login</a>
+      <a class="btn" href="/record.html">Record</a>
+      <a class="btn" href="/stories.html">My Stories</a>
 
-        <div style="margin-top:24px">
-          <h3 style="margin:0 0 10px 0">Features</h3>
-          <div class="grid two">
-            <div class="tile"><h3>Smart Transcription</h3><p class="hero-sub">Server-side Whisper for accurate EN/FR/NL/ES.</p></div>
-            <div class="tile"><h3>Multi-language</h3><p class="hero-sub">Prompts in 4 languages, with gentle spoken guidance.</p></div>
-            <div class="tile"><h3>Story Organization</h3><p class="hero-sub">Sort by title or “when it happened”.</p></div>
-            <div class="tile"><h3>Export & Share</h3><p class="hero-sub">CSV + .docx (zip) today; book PDF soon.</p></div>
-          </div>
-        </div>
-      </div>
-    </section>
-    <footer>© MemoryKeeper</footer>
+      <select class="btn" data-lang>
+        <option value="en">🇬🇧 English</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="nl">🇳🇱 Nederlands</option>
+        <option value="es">🇪🇸 Español</option>
+      </select>
+    </div>
   </div>
-</div>
+</nav>
 
+<main class="container">
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-img">
+      <img data-hero-img alt="Open book"/>
+    </div>
+    <div class="hero-copy">
+      <h1 class="h1"><span class="soft">Preserve</span> Your Memories Forever</h1>
+      <p class="subtle">Record, transcribe, and organize your life stories with the power of AI. Share with family in a private library.</p>
+
+      <div class="quick">
+        <div class="card">
+          <div class="title">Start Recording</div>
+          <p class="subtle">Tap to begin. Add a title and “when it happened” later.</p>
+          <div class="cta">
+            <a class="btn primary" href="/record.html">Start recording</a>
+          </div>
+        </div>
+        <div class="card">
+          <div class="title">View My Stories</div>
+          <p class="subtle">Browse, rewrite with AI, and export your stories to share with your family.</p>
+          <div class="cta">
+            <a class="btn" href="/stories.html">My stories</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature-grid">
+        <div class="feature">
+          <h4>Smart Transcription</h4>
+          <div class="muted">Server-side Whisper for accurate EN/FR/NL/ES.</div>
+        </div>
+        <div class="feature">
+          <h4>Guided + Free</h4>
+          <div class="muted">Gentle topic prompts or free-form recording.</div>
+        </div>
+        <div class="feature">
+          <h4>Synced Library</h4>
+          <div class="muted">Stories & photos are synced via Supabase across devices.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ / About (short) -->
+  <section class="card" style="margin-top:18px">
+    <h3 style="margin:0 0 6px">About & FAQ</h3>
+    <div class="muted">
+      <p><strong>What is this?</strong> Memoir App helps families record and preserve life stories. It uses accurate speech-to-text (Whisper) and keeps your content safe in a private library.</p>
+      <p><strong>How to start?</strong> Click <em>Record</em>, pick a language, choose a topic (or free mode), and press the big round button. Save when you’re done.</p>
+      <p><strong>Where are my stories?</strong> Click <em>My Stories</em> to view, rewrite with AI, download, or manage your library.</p>
+    </div>
+  </section>
+
+  <footer class="footer">© 2025 Memoir App — Made with care.</footer>
+</main>
+
+<!-- Env → populated by Vercel runtime, do NOT hardcode secrets -->
+<script>
+  window.ENV = {
+    SUPABASE_URL:  "{{SUPABASE_URL}}",
+    SUPABASE_ANON_KEY: "{{SUPABASE_ANON_KEY}}"
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
+<script src="/app.js"></script>
 </body>
 </html>
