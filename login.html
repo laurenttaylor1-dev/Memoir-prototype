@@ -1,71 +1,54 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Memoir — Login</title>
-<meta name="color-scheme" content="light dark"/>
-<style>
-:root{--bg:#f6f7fb;--card:#fff;--fg:#0f172a;--muted:#667085;--border:#e6e9f0}
-@media(prefers-color-scheme:dark){:root{--bg:#0b1020;--card:#0f162e;--fg:#e6edf7;--muted:#9aa4b2;--border:#1f2a44}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-.container{max-width:420px;margin:8vh auto;padding:20px}
-.card{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:0 10px 30px rgba(2,8,23,.06);padding:20px}
-h1{margin:0 0 16px}
-label{display:block;margin:10px 0 6px;font-size:13px;color:var(--muted)}
-input,button{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit}
-button{cursor:pointer}
-.row{display:flex;gap:10px;margin-top:10px}
-a{color:inherit}
-small{color:var(--muted)}
-.err{color:#b00020;margin:8px 0 0}
-</style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Memoir — Login</title>
 </head>
 <body>
+  <!-- shared header -->
+  <!-- paste the SHARED HEADER block here -->
+
   <div class="container">
-    <div class="card">
-      <h1>Sign in to Memoir</h1>
+    <section class="card" style="padding:16px;max-width:560px;margin:20px auto">
+      <h2 data-i18n="sign_in">Sign in</h2>
+      <div style="display:grid;gap:10px;margin-top:10px">
+        <label class="muted" for="email" data-i18n="email">Email</label>
+        <input id="email" class="input" type="email" placeholder="you@example.com"/>
 
-      <label>Email</label>
-      <input id="email" type="email" placeholder="you@example.com" autocomplete="email"/>
+        <label class="muted" for="password" data-i18n="password">Password</label>
+        <input id="password" class="input" type="password" placeholder="••••••••"/>
 
-      <label>Password</label>
-      <input id="password" type="password" placeholder="••••••••" autocomplete="current-password"/>
-
-      <div class="row">
-        <button id="signin">Sign In</button>
-        <button id="signup" title="Create account">Sign Up</button>
+        <button id="signin" class="btn primary" data-i18n="sign_in">Sign in</button>
       </div>
-
-      <p class="err" id="err"></p>
-      <p style="margin-top:14px"><small>Have a trial code? You can redeem it after signing in.</small></p>
-    </div>
+      <div id="msg" class="muted" style="margin-top:10px"></div>
+    </section>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
-  <script>
-    // Supabase
-    const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
-    const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{ persistSession:true, autoRefreshToken:true } });
+<script>
+const sb = window.supabase.createClient(
+  "https://jrjqciywlijhhcxfxywh.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak",
+  { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:false } }
+);
 
-    const $ = id => document.getElementById(id);
-    const email = $('email'), password=$('password'), err=$('err');
+(async()=>{
+  const { data:{ session } } = await sb.auth.getSession();
+  if(session){ location.replace('stories.html'); return; } // already logged
+  applyI18N();
+})();
 
-    $('signin').onclick = async () => {
-      err.textContent = '';
-      const { data, error } = await supa.auth.signInWithPassword({ email: email.value.trim(), password: password.value });
-      if (error) { err.textContent = error.message; return; }
-      location.replace('/');
-    };
+async function doLogin(){
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const msg = document.getElementById('msg'); msg.textContent='';
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if(error){ msg.textContent = error.message; return; }
+  location.replace('stories.html');
+}
 
-    $('signup').onclick = async () => {
-      err.textContent = '';
-      const { data, error } = await supa.auth.signUp({ email: email.value.trim(), password: password.value });
-      if (error) { err.textContent = error.message; return; }
-      alert('Check your email to confirm your account, then sign in.');
-    };
-  </script>
+document.getElementById('signin').onclick = doLogin;
+document.getElementById('password').addEventListener('keypress',(e)=>{ if(e.key==='Enter') doLogin(); });
+</script>
 </body>
 </html>
