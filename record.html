@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Record — Memoir App</title>
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="/favicon.ico" />
+<style>
+  :root{--bg:#faf9f7;--card:#fff;--ink:#2d2a26;--muted:#6f6b65;--brand:#7a5af8;--brand2:#b98af9;--gold:#7b5a33;--border:#e8e4de;--shadow:0 14px 36px rgba(0,0,0,.06), 0 2px 6px rgba(0,0,0,.04);--radius:20px}
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#0f1114;--card:#14171b;--ink:#e8e8ea;--muted:#9b9aa1;--border:#23262c;--shadow:0 18px 44px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.3);--gold:#caa369}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,Inter,Segoe UI,Roboto}
+  .topbar{position:sticky;top:0;z-index:50;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:10px 18px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700}
+  .logo{width:28px;height:28px;border-radius:8px;background:conic-gradient(from 180deg,var(--brand),var(--brand2));box-shadow:0 4px 14px rgba(122,90,248,.25)}
+  .nav a{border:1px solid var(--border);padding:8px 12px;border-radius:999px;text-decoration:none;color:inherit}
+  .container{max-width:1100px;margin:0 auto;padding:24px 18px}
+  .grid{display:grid;grid-template-columns:1fr;gap:18px}
+  @media(min-width:980px){ .grid{grid-template-columns: 520px 1fr} }
+
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+  .headline{font-weight:800;font-size:clamp(22px,3.2vw,30px);letter-spacing:.01em;margin:6px 0 14px}
+  .muted{color:var(--muted)}
+  .tabs{display:flex;gap:10px;margin-bottom:10px}
+  .tab{border:1px solid var(--border);border-radius:999px;padding:8px 12px;background:transparent;cursor:pointer}
+  .tab.active{background:rgba(122,90,248,.12);border-color:rgba(122,90,248,.35)}
+
+  /* Prompts row: show 4 at a time */
+  .prompts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+  .chip{height:40px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:999px;background:rgba(0,0,0,.02);cursor:pointer}
+  .controls{display:flex;align-items:center;gap:8px;margin:8px 0 12px}
+
+  /* Big round record button */
+  .recwrap{display:flex;flex-direction:column;align-items:center;gap:12px;margin:10px 0 18px}
+  .mic{width:220px;height:220px;border-radius:50%;border:0;cursor:pointer;color:#fff;font-weight:800;font-size:18px;background:radial-gradient(70% 70% at 50% 30%, #ff6a6a, #a855f7);box-shadow:0 22px 60px rgba(168,85,247,.35)}
+  .mic.pulse{animation:pulse 1.6s ease-in-out infinite}
+  @keyframes pulse{0%{transform:scale(1)} 50%{transform:scale(1.05)} 100%{transform:scale(1)}}
+
+  .area{min-height:240px;border:1px solid var(--border);border-radius:16px;background:rgba(0,0,0,.02);padding:12px;white-space:pre-wrap}
+  .bar{height:8px;border-radius:999px;background:rgba(0,0,0,.06);overflow:hidden}
+  .bar>div{height:100%;width:0%;background:linear-gradient(90deg,var(--brand),var(--brand2))}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{border:1px solid var(--border);background:transparent;border-radius:999px;padding:10px 14px;cursor:pointer}
+  .btn.primary{background:var(--gold);color:#fff;border:0}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand"><div class="logo" aria-hidden="true"></div> <span>Memoir — Record</span></div>
+    <nav class="nav">
+      <a href="/">Home</a>
+      <a href="/stories.html">My Stories</a>
+      <a href="/login.html">Login</a>
+    </nav>
+  </div>
+
+  <main class="container">
+    <div class="grid">
+      <section class="panel">
+        <div class="headline">Tell your story</div>
+        <div class="tabs">
+          <button id="tabGuided" class="tab active">Guided</button>
+          <button id="tabFree" class="tab">Free</button>
+          <div class="controls" style="margin-left:auto">
+            <button id="refreshPrompts" class="btn">↻ Refresh</button>
+          </div>
+        </div>
+
+        <div id="guidedBlock">
+          <div class="prompts" id="prompts"></div>
+          <div class="muted" style="margin:6px 0 8px">Tap a topic to set your title and play a gentle spoken guidance.</div>
+        </div>
+
+        <div class="recwrap">
+          <button id="mic" class="mic" aria-pressed="false">Start Recording</button>
+          <div class="bar"><div id="prog"></div></div>
+          <div id="capInfo" class="muted"></div>
+        </div>
+
+        <div class="row">
+          <input id="title" placeholder="Title (optional)" class="btn" style="flex:1; border-radius:12px" />
+          <input id="when" placeholder="When did this happen?" class="btn" style="flex:1; border-radius:12px" />
+          <label class="btn" style="position:relative;">
+            <input id="photo" type="file" accept="image/*" style="position:absolute; inset:0; opacity:0; cursor:pointer" />
+            + Add photo
+          </label>
+        </div>
+
+        <div id="transcript" class="area" aria-live="polite">Your words will appear here…</div>
+
+        <div class="row" style="margin-top:10px">
+          <button id="save" class="btn primary" disabled>Save story</button>
+          <button id="clear" class="btn">Clear</button>
+          <a class="btn" href="/stories.html">Open Library</a>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <div class="headline" style="font-size:20px">Library (preview)</div>
+        <div id="library" class="muted">No stories yet.</div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- Supabase + your chunking client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
+  <script src="/transcribe-chunk.js"></script>
+  <script>
+    // --- SESSION GUARD (redirect to login if not signed in) ---
+    const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {auth:{persistSession:true, detectSessionInUrl:false}});
+    (async()=>{
+      const { data:{session} } = await sb.auth.getSession();
+      if(!session){ location.replace('/login.html'); return; }
+    })();
+
+    // ---- Minimal app state (local-only for demo UI) ----
+    const TOPICS = {
+      en:["Childhood","Family","School","Work","Love","Travel"],
+      fr:["Enfance","Famille","École","Travail","Amour","Voyages"],
+      nl:["Jeugd","Familie","School","Werk","Liefde","Reizen"],
+      es:["Infancia","Familia","Escuela","Trabajo","Amor","Viajes"]
+    };
+    const LANG = 'en';  // (hook up to your selector if needed)
+
+    const promptsEl = document.getElementById('prompts');
+    const refreshBtn = document.getElementById('refreshPrompts');
+    const titleEl = document.getElementById('title');
+    const whenEl = document.getElementById('when');
+    const photoEl = document.getElementById('photo');
+    const transcriptEl = document.getElementById('transcript');
+    const saveBtn = document.getElementById('save');
+    const clearBtn = document.getElementById('clear');
+    const prog = document.getElementById('prog');
+    const capInfo = document.getElementById('capInfo');
+
+    let recActive = false;
+    let photoBlob = null;
+
+    function sample4(arr){
+      const list = [...arr]; list.sort(()=>Math.random()-0.5);
+      return list.slice(0,4);
+    }
+    function renderPrompts(){
+      const four = sample4(TOPICS[LANG]||TOPICS.en);
+      promptsEl.innerHTML = '';
+      four.forEach(w=>{
+        const chip = document.createElement('div');
+        chip.className='chip'; chip.textContent=w;
+        chip.onclick=()=>{ titleEl.value = w; /* call your voice prompt here if desired */ };
+        promptsEl.appendChild(chip);
+      });
+    }
+    refreshBtn.onclick = renderPrompts; renderPrompts();
+
+    // Hook up your chunked recorder (transcribe-chunk.js)
+    // Basic shell — your transcribe file should expose start/stop and progress callbacks
+    const mic = document.getElementById('mic');
+
+    // Example API for your chunker:
+    // startChunked({ onPartialText, onProgress, langCode })
+    // stopChunked() -> returns final text
+    // This demo wires to simple placeholders. Replace with your real functions.
+
+    async function startRec(){
+      recActive = true; mic.classList.add('pulse'); mic.textContent = 'Stop Recording';
+      capInfo.textContent = 'Recording… Whisper chunk upload enabled';
+      // example: your function
+      window.startChunked?.({
+        langCode: 'nl', // set dynamically as needed
+        onPartialText: (t)=>{ transcriptEl.textContent = t; saveBtn.disabled = !t.trim(); },
+        onProgress: (pct)=>{ prog.style.width = (pct||0)+'%'; }
+      });
+    }
+    async function stopRec(){
+      recActive = false; mic.classList.remove('pulse'); mic.textContent = 'Start Recording';
+      capInfo.textContent = '';
+      const finalText = await (window.stopChunked?.() || '');
+      if(finalText) { transcriptEl.textContent = finalText; saveBtn.disabled = false; }
+    }
+    mic.onclick = ()=> recActive ? stopRec() : startRec();
+
+    photoEl.onchange = (e)=>{ photoBlob = e.target.files?.[0] || null; };
+
+    // Save (local demo) — if you already have Supabase tables for stories, swap to an insert.
+    const LSKEY='memoir.stories';
+    const load=()=>{ try{return JSON.parse(localStorage.getItem(LSKEY)||'[]')}catch{return[]} };
+    const store=(list)=>localStorage.setItem(LSKEY, JSON.stringify(list));
+
+    function parseApproxDate(input){
+      if(!input) return { label:'', sort:null };
+      const s=input.trim().toLowerCase();
+      const yOnly=s.match(/(\d{4})/); if(yOnly){const d=new Date(+yOnly[1],0,1);return{label:input,sort:d.toISOString().slice(0,10)};}
+      return { label:input, sort:null };
+    }
+
+    saveBtn.onclick=async ()=>{
+      const txt = transcriptEl.textContent.trim(); if(!txt) return;
+      const when = parseApproxDate(whenEl.value);
+      let photoDataUrl = null;
+      if(photoBlob){
+        photoDataUrl = await new Promise(res=>{
+          const r = new FileReader(); r.onload = ()=>res(r.result); r.readAsDataURL(photoBlob);
+        });
+      }
+      const item = { title:titleEl.value||'Story', text:txt, created:new Date().toISOString(),
+                     happened_label:when.label, happened_sort:when.sort, photo:photoDataUrl };
+      const list = load(); list.unshift(item); store(list);
+      transcriptEl.textContent='Your words will appear here…';
+      titleEl.value=''; whenEl.value=''; photoEl.value=''; photoBlob=null; saveBtn.disabled=true;
+      alert('Story saved. Open your Library to view it.');
+    };
+
+    clearBtn.onclick = ()=>{
+      transcriptEl.textContent='Your words will appear here…'; saveBtn.disabled=true;
+    };
+
+    // Minimal library preview
+    function renderLib(){
+      const list = load();
+      const lib = document.getElementById('library');
+      if(!list.length){ lib.textContent='No stories yet.'; return; }
+      lib.innerHTML = '';
+      list.slice(0,5).forEach(s=>{
+        const div=document.createElement('div');
+        div.style.borderTop='1px solid var(--border)'; div.style.padding='8px 0';
+        div.innerHTML = `<strong>${s.title}</strong><br><span class="muted">${s.happened_label || ''}</span>`;
+        lib.appendChild(div);
+      });
+    }
+    renderLib();
+  </script>
+</body>
+</html>
