@@ -1,327 +1,244 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>MemoryKeeper — Record</title>
-<link rel="stylesheet" href="/styles.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
-</head>
-<body>
-<div id="mk-nav"></div>
-<script src="/app.js"></script>
-
-<div class="container">
-  <div class="card">
-    <div id="guard" class="hero-sub" style="margin:6px 0 12px">Checking your session…</div>
-
-    <section id="app" style="display:none">
-      <div class="grid two" style="align-items:center;margin-bottom:10px">
-        <div>
-          <h2 class="hero-title" style="font-size:28px">Tell Your Story</h2>
-          <p class="hero-sub">Soft &amp; simple UI. Whisper chunked transcription. Guided topics.</p>
-        </div>
-        <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
-          <select id="lang" class="btn">
-            <option value="en">English</option><option value="fr">Français</option>
-            <option value="es">Español</option><option value="nl">Nederlands</option>
-          </select>
-          <span id="planBadge" class="btn">Plan: …</span>
-          <input id="codeInput" class="btn" placeholder="Enter trial code" style="min-width:220px">
-          <button id="redeemBtn" class="btn">Redeem</button>
-          <button id="openLibTop" class="btn">📖 Library</button>
-        </div>
-      </div>
-
-      <div class="record-shell">
-        <!-- Left -->
-        <section>
-          <!-- Big round record button + quick fields -->
-          <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
-            <button id="mic" class="big-record" aria-pressed="false">Record</button>
-            <div style="display:flex;flex-direction:column;gap:6px;min-width:260px">
-              <div class="label">Title</div>
-              <input id="title" class="btn" placeholder="Story title (optional)">
-              <div class="label">When did this happen?</div>
-              <input id="when" class="btn" placeholder='e.g., "summer 1945", "early 2018"'>
-            </div>
-          </div>
-
-          <!-- Add photo -->
-          <div class="label">Photo (optional)</div>
-          <div class="photo-box">
-            <img id="photoPreview" class="photo-thumb" alt="preview" src="" style="display:none">
-            <input id="photoInput" type="file" accept="image/*" capture="environment" class="btn" />
-            <button id="clearPhoto" class="btn">Remove</button>
-            <span class="smallmuted">Attach one image to this story.</span>
-          </div>
-
-          <!-- Tabs -->
-          <div style="display:flex;gap:10px;margin:10px 0 2px">
-            <button id="tabGuided" class="btn">Guided</button>
-            <button id="tabFree" class="btn ghost">Free</button>
-            <span class="smallmuted">Choose topics or just talk.</span>
-          </div>
-
-          <!-- Guided: 4 chips + refresh -->
-          <div id="guidedWrap" class="card" style="padding:14px;margin:8px 0">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <div class="label" style="margin:0">Suggested topics</div>
-              <button id="refreshTopics" class="btn">↻ Refresh</button>
-            </div>
-            <div id="chips" class="chips" style="margin-top:8px"></div>
-            <div class="smallmuted" style="margin-top:6px">Tap a topic to hear a gentle prompt in your selected language.</div>
-          </div>
-
-          <!-- Transcript -->
-          <div class="label">Transcript</div>
-          <div id="transcript" class="area" aria-live="polite">Your words will appear here…</div>
-
-          <!-- Actions -->
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
-            <button id="save" class="btn primary" disabled>Save story</button>
-            <button id="clear" class="btn">Clear</button>
-            <button id="exportCsv" class="btn">Export CSV</button>
-            <button id="exportBook" class="btn" title="Premium only" disabled>Export Book (PDF)</button>
-          </div>
-        </section>
-
-        <!-- Right -->
-        <aside>
-          <div class="label">Library</div>
-          <div id="library" class="list"></div>
-        </aside>
-      </div>
-
-      <footer>© MemoryKeeper — warm, soft UI • EN/FR/ES/NL • Whisper chunking • Library • Exports.</footer>
-    </section>
-  </div>
-</div>
-
-<!-- Drawer (mobile library) -->
-<div id="drawer" class="drawer" aria-hidden="true">
-  <div class="panel">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <div class="label" style="margin:0">Library</div>
-      <button id="closeDrawer" class="btn">Close</button>
-    </div>
-    <div id="libraryDrawer" class="list"></div>
-  </div>
-</div>
-
-<script>
-/* ====== Supabase env ====== */
-const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false} });
-
-/* ====== Session guard ====== */
-(async () => {
-  const guard = document.getElementById('guard');
-  const app   = document.getElementById('app');
-  document.getElementById('mk-logout')?.addEventListener('click', async ()=>{ await supabase.auth.signOut(); location.href='/login.html'; });
-
-  const { data:{session} } = await supabase.auth.getSession();
-  if(!session){ location.replace('/login.html'); return; }
-
-  const { data: profile } = await supabase.from('profiles').select('plan, trial_end, role').single();
-  const trialUntil = profile?.trial_end ? new Date(profile.trial_end) : null;
-  const trialActive = trialUntil && Date.now() < trialUntil.getTime();
-  const isAdmin = profile?.role === 'admin';
-  let isPremium = isAdmin || profile?.plan === 'premium' || trialActive;
-
-  guard.style.display='none'; app.style.display='block';
-  const pb = document.getElementById('planBadge');
-  pb.textContent = isAdmin ? 'Plan: Admin' : (isPremium ? (trialActive?`Plan: Premium (trial to ${trialUntil.toLocaleDateString()})`:'Plan: Premium') : 'Plan: Free');
-  document.getElementById('exportBook').disabled = !isPremium;
-
-  /* ====== Redeem trial ====== */
-  document.getElementById('redeemBtn')?.addEventListener('click', async ()=>{
-    const code = document.getElementById('codeInput').value.trim(); if(!code) return alert('Enter a code.');
-    const { data, error } = await supabase.rpc('redeem_code', { p_code: code });
-    if(error) return alert(error.message);
-    if(data?.ok){ alert('Premium activated. Reloading…'); location.reload(); }
-    else alert('Redeem failed.');
-  });
-
-  /* ====== Topics & gentle voice ====== */
-  const TOPIC_WORDS = {
-    en:["Childhood","Family","School","Work","Love","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
-    fr:["Enfance","Famille","École","Travail","Amour","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
-    es:["Infancia","Familia","Escuela","Trabajo","Amor","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"],
-    nl:["Jeugd","Familie","School","Werk","Liefde","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
-  };
-  const PROMPT_SENTENCES = {
-    en:{Childhood:"Tell me something about your youth.",Family:"Tell me about your family and the people who raised you.",School:"What was school like for you?",Work:"Tell me about your first job or career.",Love:"How did you meet your partner, or what did love mean to you then?",Travel:"Where did you travel that left a mark on you?",Traditions:"Which family traditions mattered most to you?",Holidays:"Describe a holiday you remember vividly.",Lessons:"What life lesson did you learn the hard way?",Advice:"What advice would you give your younger self?","Turning-points":"What was a turning point that changed your path?"},
-    fr:{Enfance:"Parlez-moi de votre jeunesse, d’un souvenir marquant.",Famille:"Parlez-moi de votre famille et des personnes qui vous ont élevé.",École:"Comment était l’école pour vous ?",Travail:"Racontez-moi votre premier travail ou votre carrière.",Amour:"Comment avez-vous rencontré votre partenaire, et que signifiait l’amour pour vous ?",Voyages:"Quels voyages vous ont marqué(e) ?",Traditions:"Quelles traditions familiales comptaient le plus ?",Fêtes:"Décrivez une fête dont vous vous souvenez clairement.",Leçons:"Quelle leçon de vie avez-vous apprise à la dure ?",Conseils:"Quel conseil donneriez-vous à votre jeune vous ?",Déclics:"Quel déclic a changé votre trajectoire ?"},
-    es:{Infancia:"Cuéntame algo sobre tu juventud.",Familia:"Háblame de tu familia y de quienes te criaron.",Escuela:"¿Cómo era la escuela para ti?",Trabajo:"Cuéntame sobre tu primer trabajo o tu carrera.",Amor:"¿Cómo conociste a tu pareja y qué significaba el amor entonces?",Viajes:"¿Qué viajes te marcaron?",Tradiciones:"¿Qué tradiciones familiares eran importantes para ti?",Fiestas:"Describe una fiesta que recuerdes con claridad.",Lecciones:"¿Qué lección de vida aprendiste con dificultad?",Consejos:"¿Qué consejo le darías a tu yo joven?","Puntos-clave":"¿Cuál fue un punto de inflexión en tu vida?"},
-    nl:{Jeugd:"Vertel me iets over je jeugd.",Familie:"Vertel over je familie en de mensen die je hebben opgevoed.",School:"Hoe was school voor jou?",Werk:"Vertel over je eerste baan of je loopbaan.",Liefde:"Hoe heb je je partner ontmoet, en wat betekende liefde toen?",Reizen:"Welke reizen hebben indruk op je gemaakt?",Tradities:"Welke familietradities waren belangrijk voor je?",Feestdagen:"Beschrijf een feestdag die je helder herinnert.",Lessen:"Welke levensles heb je op de harde manier geleerd?",Advies:"Welk advies zou je je jongere zelf geven?",Keerpunt:"Wat was een keerpunt in je leven?"}
-  };
-  const VOICE_BY_LANG = { en:'KoVIHoyLDrQyd4pGalbs', fr:'TfGtrgcVrXWjJkeB51T1', nl:'yO6w2xlECAQRFP6pX7Hw', es:'ZpEtuMdTIlJXYXAhevhG' };
-  const lang = document.getElementById('lang'), chips = document.getElementById('chips'), titleEl = document.getElementById('title');
-
-  function pick4(a){ return [...a].sort(()=>Math.random()-0.5).slice(0,4); }
-  function drawChips(){
-    chips.innerHTML=''; const words = pick4(TOPIC_WORDS[lang.value]||TOPIC_WORDS.en);
-    words.forEach(w=>{
-      const c=document.createElement('div'); c.className='chip'; c.textContent=w;
-      c.onclick=()=>{ titleEl.value=w; speakPrompt(w); }; chips.appendChild(c);
-    });
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MEMOIR APP – Preserve your memories forever</title>
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="/favicon.ico" />
+<style>
+  :root{
+    --bg:#faf9f7;
+    --card:#fff;
+    --ink:#2d2a26;
+    --muted:#6f6b65;
+    --brand:#7a5af8;        /* soft purple accent */
+    --brand-2:#b98af9;
+    --gold:#7b5a33;         /* warm gold for buttons/icons */
+    --border:#e8e4de;
+    --shadow:0 14px 36px rgba(0,0,0,.06), 0 2px 6px rgba(0,0,0,.04);
+    --radius:20px;
   }
-  document.getElementById('refreshTopics').onclick = drawChips;
-  lang.onchange = drawChips;
-  drawChips();
-
-  async function speakViaEleven(sentence){
-    try{
-      const r = await fetch('/api/voice', {method:'POST',headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ text: sentence, voiceId: VOICE_BY_LANG[lang.value]||VOICE_BY_LANG.en })});
-      if(!r.ok) throw 0;
-      const blob = await r.blob(); const url = URL.createObjectURL(blob); const audio = new Audio(url); await audio.play();
-      setTimeout(()=>URL.revokeObjectURL(url),60000);
-    }catch{}
-  }
-  function speakPrompt(oneWord){
-    const sentence = (PROMPT_SENTENCES[lang.value]||{})[oneWord] || oneWord;
-    speakViaEleven(sentence);
-  }
-
-  /* ====== Photo add / clear ====== */
-  let photoDataURL = "";
-  const photoInput = document.getElementById('photoInput');
-  const photoPreview = document.getElementById('photoPreview');
-  document.getElementById('clearPhoto').onclick = () => { photoDataURL=""; photoPreview.src=""; photoPreview.style.display='none'; photoInput.value=""; };
-
-  photoInput.addEventListener('change', async (e)=>{
-    const file = e.target.files?.[0]; if(!file) return;
-    const max = 1600; // light resize to keep localStorage small
-    const img = new Image();
-    img.onload = ()=>{
-      const r = Math.min(1, max/Math.max(img.width, img.height));
-      const w = Math.round(img.width*r), h = Math.round(img.height*r);
-      const canvas = document.createElement('canvas'); canvas.width=w; canvas.height=h;
-      const ctx = canvas.getContext('2d'); ctx.drawImage(img,0,0,w,h);
-      photoDataURL = canvas.toDataURL('image/jpeg', 0.8);
-      photoPreview.src = photoDataURL; photoPreview.style.display='block';
-    };
-    img.src = URL.createObjectURL(file);
-  });
-
-  /* ====== Transcript & storage ====== */
-  const transcriptEl = document.getElementById('transcript');
-  const saveBtn = document.getElementById('save');
-  const clearBtn= document.getElementById('clear');
-  const exportCsv = document.getElementById('exportCsv');
-  const exportBook= document.getElementById('exportBook');
-  const LSKEY='memoir.stories';
-  const loadStories=()=>{try{return JSON.parse(localStorage.getItem(LSKEY)||'[]')}catch{return[]}};
-  const saveStories=(list)=>localStorage.setItem(LSKEY,JSON.stringify(list));
-
-  function renderLib(toDrawer=false){
-    const items=loadStories();
-    const tgt = toDrawer?document.getElementById('libraryDrawer'):document.getElementById('library');
-    tgt.innerHTML=''; if(!items.length){ const p=document.createElement('p'); p.className='smallmuted'; p.textContent='No stories yet.'; tgt.appendChild(p); return; }
-    items.forEach((s,i)=>{
-      const row=document.createElement('div'); row.className='story';
-      const meta=document.createElement('div'); meta.className='meta'; meta.style.minWidth='0';
-      const thumb = document.createElement('img'); thumb.alt=''; if(s.photo){ thumb.src=s.photo; } else { thumb.style.display='none'; }
-      const textWrap = document.createElement('div'); textWrap.style.minWidth='0';
-      const h=document.createElement('h4'); h.textContent=s.title||'Story';
-      const t=document.createElement('div'); t.className='smallmuted';
-      t.textContent= s.happened_label || (s.happened_sort?new Date(s.happened_sort).toDateString():new Date(s.created).toLocaleString());
-      textWrap.appendChild(h); textWrap.appendChild(t);
-      meta.appendChild(thumb); meta.appendChild(textWrap);
-
-      const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px'; actions.style.flexWrap='wrap';
-      function b(txt,fn){const el=document.createElement('button'); el.className='btn'; el.textContent=txt; el.onclick=fn; return el;}
-      actions.append(b('View',()=>viewStory(s)));
-      actions.append(b('Rewrite (AI)',()=>rewriteAI(i)));
-      actions.append(b('Download .docx',()=>downloadDocx(s)));
-      actions.append(b('Delete',()=>{const arr=loadStories(); arr.splice(i,1); saveStories(arr); renderLib(toDrawer);} ));
-      row.append(meta,actions); tgt.appendChild(row);
-    });
-  }
-  function viewStory(s){
-    const dlg=document.createElement('dialog'); dlg.style.border='0'; dlg.style.borderRadius='14px'; dlg.style.padding='0';
-    const photo = s.photo ? `<img src="${s.photo}" alt="" style="max-width:100%;border-radius:12px;border:1px solid var(--border);margin-bottom:10px">` : '';
-    dlg.innerHTML=`<form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--border)"><strong>${escapeHtml(s.title||'Story')}</strong><button class="btn">Close</button></form><div style="padding:16px;max-width:min(88vw,820px)"><div class="smallmuted" style="margin-bottom:6px">${escapeHtml(s.happened_label || (s.happened_sort?new Date(s.happened_sort).toDateString():new Date(s.created).toLocaleString()))}</div>${photo}<div style="white-space:pre-wrap">${escapeHtml(s.text||'')}</div></div>`;
-    document.body.appendChild(dlg); dlg.addEventListener('close',()=>dlg.remove()); dlg.showModal();
-  }
-  function escapeHtml(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
-
-  function downloadDocx(s){
-    import('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js').then(({default:JSZip})=>{
-      const zip = new JSZip();
-      let meta = `Title: ${s.title||'Story'}\nWhen: ${s.happened_label || s.happened_sort || ''}\nCreated: ${new Date(s.created).toLocaleString()}\n\n`;
-      zip.file('story.txt', meta + (s.text||''));
-      if(s.photo){ // include photo if present
-        const base64 = s.photo.split(',')[1]||'';
-        zip.file('photo.jpg', base64, {base64:true});
-      }
-      zip.generateAsync({type:'blob'}).then(blob=>{
-        const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(s.title||'story')+'.zip'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-      });
-    });
-  }
-  function parseApproxDate(input){
-    if(!input) return {label:'', sort:null};
-    const s=input.trim().toLowerCase();
-    const yOnly=s.match(/(\d{4})/); if(yOnly){const d=new Date(+yOnly[1],0,1);return{label:input,sort:d.toISOString().slice(0,10)};}
-    const iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); if(iso){const d=new Date(+iso[1],+iso[2]-1,+iso[3]);return{label:input,sort:d.toISOString().slice(0,10)};}
-    return {label:input, sort:null};
-  }
-
-  /* ====== Chunked Whisper hook (if present) ====== */
-  const mic = document.getElementById('mic');
-  const transcript = document.getElementById('transcript');
-  let recActive=false, transcriber=null;
-  async function ensureTranscriber(){
-    if(window.ChunkTranscriber){ return new window.ChunkTranscriber({ language: lang.value }); }
-    return null; // fallback disabled to keep UX consistent with your server flow
-  }
-  async function startRec(){
-    transcriber = await ensureTranscriber();
-    mic.classList.add('pulse'); mic.textContent='Stop';
-    recActive=true;
-    if(transcriber){
-      transcriber.onpartial = (t)=>{ transcript.textContent = t || '…'; saveBtn.disabled = !t; };
-      transcriber.onfinal   = (t)=>{ transcript.textContent = t || transcript.textContent; saveBtn.disabled = !t; };
-      await transcriber.start();
-    }else{
-      transcript.textContent='(Whisper worker not loaded — add /transcribe-chunk.js)';
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0f1114; --card:#14171b; --ink:#e8e8ea; --muted:#9b9aa1;
+      --border:#23262c; --shadow:0 18px 44px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.3);
+      --gold:#caa369;
     }
   }
-  async function stopRec(){
-    mic.classList.remove('pulse'); mic.textContent='Record';
-    recActive=false;
-    if(transcriber){ await transcriber.stop(); transcriber=null; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Inter,Roboto,Helvetica,Arial;
   }
-  mic.onclick = ()=> recActive?stopRec():startRec();
 
-  /* ====== Save / Clear ====== */
-  document.getElementById('openLibTop').onclick=()=>{ if(innerWidth>=1050){ renderLib(); } else { drawer.classList.add('show'); renderLib(true); } };
-  const saveBtn = document.getElementById('save'); const clearBtn = document.getElementById('clear');
-  const title   = document.getElementById('title'); const whenEl = document.getElementById('when');
+  /* Top bar */
+  .topbar{
+    position:sticky; top:0; z-index:50;
+    background:var(--card); border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:14px; justify-content:space-between;
+    padding:10px 18px;
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px; font-weight:700;
+    letter-spacing:.02em;
+  }
+  .brand .logo{
+    width:28px; height:28px; border-radius:8px;
+    background:conic-gradient(from 180deg,var(--brand),var(--brand-2));
+    box-shadow:0 4px 14px rgba(122,90,248,.25);
+  }
+  .title-line{font-weight:700}
+  .nav{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .nav a, .nav button{
+    appearance:none; border:1px solid var(--border); background:transparent;
+    color:inherit; padding:8px 12px; border-radius:999px; text-decoration:none; cursor:pointer;
+  }
+  .nav a:hover, .nav button:hover{background:rgba(0,0,0,.03)}
+  .lang{
+    position:relative; display:flex; align-items:center; gap:8px;
+  }
+  .lang img{width:18px; height:18px; border-radius:2px; object-fit:cover}
+  .lang select{border:0; background:transparent; color:inherit; padding:8px; cursor:pointer}
 
-  saveBtn.onclick=()=>{
-    const txt=transcript.textContent.trim(); if(!txt) return;
-    const when=parseApproxDate(whenEl.value);
-    const story={ title:title.value||'Story', text:txt, created:new Date().toISOString(), happened_label:when.label, happened_sort:when.sort, photo: photoDataURL||"" };
-    const items=loadStories(); items.unshift(story); saveStories(items); renderLib();
-    transcript.textContent='Your words will appear here…'; saveBtn.disabled=true; title.value=''; whenEl.value=''; photoDataURL=""; photoPreview.src=""; photoPreview.style.display='none'; photoInput.value="";
-  };
-  clearBtn.onclick=()=>{ transcript.textContent='Your words will appear here…'; saveBtn.disabled=true; };
+  .container{max-width:1100px; margin:0 auto; padding:24px 18px}
 
-  /* ====== Library drawer ====== */
-  const drawer=document.getElementById('drawer'), closeDrawer=document.getElementById('closeDrawer');
-  closeDrawer.onclick=()=>drawer.classList.remove('show'); drawer.addEventListener('click',(e)=>{ if(e.target===drawer) drawer.classList.remove('show'); });
+  /* Hero */
+  .hero{
+    margin-top:12px; border-radius:var(--radius);
+    overflow:hidden; box-shadow:var(--shadow); position:relative;
+  }
+  .hero img{
+    display:block; width:100%; height:360px; object-fit:cover; opacity:0; transition:opacity .8s ease;
+  }
+  .hero img.active{opacity:1}
+  .headline{
+    text-align:center; margin:26px 0 12px;
+    font-weight:800; font-size:clamp(26px,3.8vw,40px);
+    letter-spacing:.01em;
+    background: linear-gradient(90deg,var(--brand),var(--brand-2));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .sub{color:var(--muted); text-align:center; font-size:15px; margin-bottom:28px}
 
-  renderLib();
-})();
-</script>
+  /* Quick actions */
+  .grid2{display:grid; grid-template-columns:1fr; gap:16px}
+  @media(min-width:920px){ .grid2{grid-template-columns:1fr 1fr} }
+  .card{
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+    padding:18px; box-shadow:var(--shadow);
+  }
+  .action h3{margin:8px 0 6px; font-size:22px}
+  .bigbtn{
+    display:block; width:100%; border:0; border-radius:999px; padding:14px 16px;
+    background:var(--gold); color:#fff; font-weight:700; cursor:pointer;
+  }
+  .bigbtn.secondary{
+    background:transparent; color:inherit; border:1px solid var(--border);
+  }
 
-<!-- If you have your chunked client helper, include it -->
-<!-- <script src="/transcribe-chunk.js"></script> -->
+  /* Features (classy and subtle) */
+  .features{margin:16px 0 40px}
+  .featgrid{display:grid; grid-template-columns:1fr; gap:14px}
+  @media(min-width:920px){ .featgrid{grid-template-columns:repeat(3,1fr)} }
+  .fcard{
+    background:var(--card); border:1px solid var(--border);
+    border-radius:16px; padding:16px; box-shadow:var(--shadow);
+  }
+  .fcard h4{margin:8px 0 6px}
+  .muted{color:var(--muted)}
 
+  /* About/FAQ section (collapsible) */
+  details{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:12px 14px}
+  details summary{cursor:pointer; font-weight:700}
+  footer{margin:28px 0 16px; text-align:center; color:var(--muted); font-size:12px}
+</style>
+</head>
+<body>
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div class="title-line">MEMOIR APP — Preserve your memories forever</div>
+    </div>
+    <nav class="nav">
+      <a href="#about">About</a>
+      <a href="/login.html">Login</a>
+      <a href="/record.html">Record</a>
+      <a href="/stories.html">My Stories</a>
+      <div class="lang">
+        <img id="flag" src="https://flagcdn.com/24x18/gb.png" alt="flag">
+        <select id="language">
+          <option value="en" data-flag="gb">English</option>
+          <option value="fr" data-flag="fr">Français</option>
+          <option value="nl" data-flag="nl">Nederlands</option>
+          <option value="es" data-flag="es">Español</option>
+        </select>
+      </div>
+    </nav>
+  </div>
+
+  <main class="container">
+    <!-- Hero with rotating book photos -->
+    <div class="hero" id="hero">
+      <!-- Images injected by JS -->
+    </div>
+
+    <h1 class="headline">Preserve Your Memories Forever</h1>
+    <p class="sub">Record, transcribe, and organize your life stories with a gentle, simple interface.</p>
+
+    <!-- Quick Actions -->
+    <section class="grid2">
+      <div class="card action">
+        <h3>Start Recording</h3>
+        <p class="muted">Begin a new voice recording with soft guidance and automatic transcription.</p>
+        <a class="bigbtn" href="/record.html">Start Recording</a>
+      </div>
+      <div class="card action">
+        <h3>View My Stories</h3>
+        <p class="muted">Browse your saved stories, export, or continue editing anytime.</p>
+        <a class="bigbtn secondary" href="/stories.html">My Stories</a>
+      </div>
+    </section>
+
+    <!-- Features (classy, subtle) -->
+    <section class="features" aria-label="Features">
+      <div class="featgrid">
+        <div class="fcard">
+          <h4>Soft Guidance</h4>
+          <p class="muted">A handful of curated prompts to gently spark memories without clutter.</p>
+        </div>
+        <div class="fcard">
+          <h4>Multi-language</h4>
+          <p class="muted">English, French, Dutch, Spanish (voice prompts + Whisper transcription).</p>
+        </div>
+        <div class="fcard">
+          <h4>Keep & Share</h4>
+          <p class="muted">Organize stories, export text/CSV, and (soon) create a printable book.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- About + FAQ -->
+    <section id="about" class="card">
+      <h3 style="margin:4px 0 12px">About & FAQ</h3>
+
+      <details open>
+        <summary>What is the goal of the app?</summary>
+        <p class="muted">Give families a calm place to record life stories in their own voice. Everything is designed to be soft, simple, and respectful.</p>
+      </details>
+      <br/>
+      <details>
+        <summary>How do I start?</summary>
+        <ol class="muted">
+          <li>Click <strong>Record</strong> and sign in if prompted.</li>
+          <li>Pick a language, tap a prompt (optional), and press the big round button.</li>
+          <li>Stop when you’re done — the text appears, and you can save it as a story.</li>
+        </ol>
+      </details>
+      <br/>
+      <details>
+        <summary>How does transcription work?</summary>
+        <p class="muted">We use chunked uploads to OpenAI Whisper for robust Dutch/French/Spanish/English transcription. If you go offline, we buffer and retry safely.</p>
+      </details>
+    </section>
+
+    <footer>© <span id="yr"></span> Memoir App</footer>
+  </main>
+
+  <script>
+    // simple language flag update (no i18n swap yet)
+    const langSel = document.getElementById('language');
+    const flagImg = document.getElementById('flag');
+    langSel.addEventListener('change', e=>{
+      const flag = langSel.options[langSel.selectedIndex].dataset.flag;
+      flagImg.src = `https://flagcdn.com/24x18/${flag}.png`;
+    });
+
+    // year
+    document.getElementById('yr').textContent = new Date().getFullYear();
+
+    // HERO ROTATOR: put your images in /images/hero/*.jpg
+    const hero = document.getElementById('hero');
+    const photos = [
+      '/images/hero/book-1.jpg',
+      '/images/hero/book-2.jpg',
+      '/images/hero/book-3.jpg'
+      // add up to 5
+    ];
+    // Create img nodes
+    photos.forEach((src,i)=>{
+      const img = document.createElement('img');
+      img.src = src;
+      if(i===0) img.classList.add('active');
+      hero.appendChild(img);
+    });
+    let idx = 0;
+    setInterval(()=>{
+      const imgs = hero.querySelectorAll('img');
+      imgs[idx].classList.remove('active');
+      idx = (idx+1) % imgs.length;
+      imgs[idx].classList.add('active');
+    }, 30000); // 30 seconds
+  </script>
 </body>
 </html>
