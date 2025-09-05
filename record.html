@@ -1,104 +1,111 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Record — Memoir</title>
-<link rel="stylesheet" href="/styles.css">
-<link rel="icon" href="data:,">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Memoir — Record</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    /* page-specific sugar to keep things soft/smooth */
+    .page { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    .card { background: var(--card, #fff); border: 1px solid var(--border,#e8e8ee); border-radius: 18px; box-shadow: var(--shadow, 0 20px 40px rgba(2,8,23,.06)); padding: 18px; }
+    .row { display: grid; gap: 18px; grid-template-columns: 1fr; }
+    @media (min-width: 1024px){ .row { grid-template-columns: minmax(0,1fr) 380px; } }
+    .section-label { font-size: 12px; letter-spacing: .08em; color: var(--muted,#667085); text-transform: uppercase; margin: 8px 0 6px; }
+    .input, .select, .btn { border-radius: 12px; border: 1px solid var(--border,#e8e8ee); padding: 10px 12px; background: transparent; }
+    .btn { cursor: pointer; }
+    .btn.primary { background: linear-gradient(90deg, #2563eb, #7c3aed); color: #fff; border: 0; }
+    .pill { padding: 6px 10px; border: 1px solid var(--border,#e8e8ee); border-radius: 999px; font-size: 12px; color: var(--muted,#667085); }
+    .muted { color: var(--muted,#667085); font-size: 12px; }
+    .area { min-height: 180px; border: 1px solid var(--border,#e8e8ee); border-radius: 12px; padding: 12px; background: rgba(2,8,23,.02); }
+    .topics { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap: 10px; }
+    .chip { display:flex; align-items:center; justify-content:center; height:42px; border:1px solid rgba(37,99,235,.18); background:rgba(37,99,235,.07); border-radius: 12px; font-weight:600; cursor:pointer; }
+    .chip:active { transform: translateY(1px); }
+    .rec-wrap { display:flex; flex-direction:column; align-items:center; gap:12px; margin: 10px 0 18px; }
+    .rec-btn { width: 160px; height: 160px; border-radius: 999px; border: 0; background: radial-gradient(70% 70% at 50% 30%, #ff5a5f, #a21caf); color: #fff; font-weight: 700; font-size: 18px; cursor: pointer; box-shadow: 0 16px 50px rgba(162,28,175,.35); }
+    .rec-btn.pulse { animation: pulse 1.6s infinite ease-in-out; }
+    @keyframes pulse { 0%{transform:scale(1)} 50%{transform:scale(1.04)} 100%{transform:scale(1)} }
+    .meter { width: 100%; max-width: 420px; display:flex; align-items:center; gap:8px; }
+    .bar { flex:1; height:10px; background: rgba(2,8,23,.08); border-radius: 999px; overflow:hidden; }
+    .bar > div { height:100%; width:0%; background: linear-gradient(90deg, #2563eb, #7c3aed); }
+    .thumb { width: 100%; border-radius: 12px; border: 1px solid var(--border,#e8e8ee); object-fit: cover; max-height: 180px; }
+    .lib-list { display: grid; gap: 10px; }
+    .row-item { display:flex; justify-content:space-between; gap:8px; border:1px solid var(--border,#e8e8ee); background: rgba(2,8,23,.02); border-radius: 12px; padding: 10px; }
+    .row-item h4 { margin: 0; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+  </style>
 </head>
 <body>
-<nav class="nav">
-  <div class="nav-inner container">
-    <div class="brand"><div class="logo"></div><div>MEMOIR APP</div></div>
-    <div class="nav-links">
-      <a href="/index.html" class="link">Home</a>
-      <a href="/stories.html" class="link needs-auth">My Stories</a>
-      <a href="/login.html" class="link" id="nav-login">Login</a>
-      <select id="lang" class="lang">
-        <option value="en">🇬🇧 English</option>
-        <option value="fr">🇫🇷 Français</option>
-        <option value="nl">🇳🇱 Nederlands</option>
-        <option value="es">🇪🇸 Español</option>
-      </select>
-      <span id="userBadge" class="badge hidden"></span>
-      <button id="logoutBtn" class="btn pill ghost">Logout</button>
+  <div class="page">
+    <div class="card">
+      <header style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:34px; height:34px; border-radius:12px; background:conic-gradient(from 180deg, #2563eb, #7c3aed)"></div>
+          <strong>Memoir — Record</strong>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <span id="planBadge" class="pill">Plan: …</span>
+          <button id="logout" class="btn pill">Logout</button>
+        </div>
+      </header>
+
+      <div id="guard" class="muted">Checking your session…</div>
+
+      <div id="app" class="row" style="display:none">
+        <!-- Left: recorder -->
+        <section>
+          <div style="display:flex; gap:10px; margin-bottom:8px;">
+            <button id="tabGuided" class="pill" style="background:rgba(37,99,235,.08); border-color:rgba(37,99,235,.25)">Guided</button>
+            <button id="tabFree" class="pill">Free</button>
+          </div>
+
+          <div id="guidedBlock">
+            <div class="section-label">Suggested topics</div>
+            <div id="prompts" class="topics"></div>
+            <div class="muted">Tap a topic to set the title; it can also speak a guiding sentence in your language.</div>
+          </div>
+
+          <div class="section-label">Title</div>
+          <input id="title" class="input" placeholder="Story title (optional)" />
+
+          <div class="section-label">When did this happen?</div>
+          <input id="when" class="input" placeholder='e.g., "summer 1945", "early 2018", "15 Feb 1972"' />
+
+          <div class="section-label">Add a picture (optional)</div>
+          <input id="imageInput" type="file" accept="image/*" class="input" />
+          <img id="thumb" class="thumb" style="display:none" alt="preview" />
+
+          <div class="section-label">Transcript</div>
+          <div id="transcript" class="area" aria-live="polite">Your words will appear here…</div>
+
+          <div class="rec-wrap">
+            <button id="recordBtn" class="rec-btn" aria-pressed="false">Record</button>
+            <div class="meter" id="meter" style="display:none">
+              <div class="bar"><div id="bar"></div></div>
+              <div id="remain" class="muted">…</div>
+            </div>
+            <div id="recStatus" class="muted"></div>
+          </div>
+
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button id="saveBtn" class="btn primary" disabled>Save story</button>
+            <button id="clearBtn" class="btn">Clear</button>
+          </div>
+        </section>
+
+        <!-- Right: library -->
+        <aside>
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div class="section-label" style="margin:0">Library</div>
+            <button id="refreshLib" class="btn pill">Refresh</button>
+          </div>
+          <div id="library" class="lib-list" style="margin-top:8px;"></div>
+        </aside>
+      </div>
     </div>
   </div>
-</nav>
 
-<main class="container">
-  <section class="section">
-    <div class="card">
-      <div class="kicker">Recorder</div>
-      <h1 class="center" style="margin-top:6px">Let’s capture a story</h1>
-      <p class="center muted">Use the buttons below. The big “Start Recording” opens the high-accuracy Whisper flow.</p>
-
-      <div class="actions-grid" style="margin-top:16px">
-        <div class="card">
-          <h3>Guided (suggested topics)</h3>
-          <div id="guided" class="muted" style="margin:10px 0 12px">Tap one to hear a gentle question.</div>
-          <div id="chips" style="display:flex;gap:8px;flex-wrap:wrap"></div>
-          <button id="refresh" class="btn pill ghost" style="margin-top:10px">Refresh topics</button>
-        </div>
-
-        <div class="card">
-          <h3>Free</h3>
-          <p class="muted">Speak freely — the recorder will transcribe as you go.</p>
-          <a href="/transcribe.html" class="btn pill" style="width:fit-content">Start Recording</a>
-        </div>
-      </div>
-
-      <div class="card" style="margin-top:16px">
-        <h3>Library</h3>
-        <p class="muted">Browse saved stories, export, or edit later.</p>
-        <a href="/stories.html" class="btn pill ghost">Open My Stories</a>
-      </div>
-    </div>
-  </section>
-</main>
-
-<script src="/app.js"></script>
-<script>
-/* Minimal guided topics & spoken prompt (system TTS fallback) */
-const TOPIC_WORDS = {
-  en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
-  fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
-  nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"],
-  es:["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"]
-};
-const PROMPT_SENTENCES = {
-  en:{Childhood:"Tell me something about your youth.",Family:"Tell me about your family.",School:"What was school like for you?",Work:"Tell me about your first job.",Love:"How did you meet your partner?",War:"What big events did you live through?",Travel:"Which trip left a mark on you?",Traditions:"Which traditions mattered to you?",Holidays:"Describe a holiday you remember.",Lessons:"What life lesson did you learn?",Advice:"What advice would you give your younger self?","Turning-points":"What was a turning point in your life?"},
-  fr:{Enfance:"Parlez-moi de votre jeunesse.",Famille:"Parlez-moi de votre famille.",École:"Comment était l’école pour vous ?",Travail:"Racontez-moi votre premier travail.",Amour:"Comment avez-vous rencontré votre partenaire ?",Guerre:"Quels grands événements avez-vous vécus ?",Voyages:"Quels voyages vous ont marqué(e) ?",Traditions:"Quelles traditions comptaient pour vous ?",Fêtes:"Décrivez une fête mémorable.",Leçons:"Quelle leçon de vie avez-vous apprise ?",Conseils:"Quel conseil donneriez-vous à votre jeune vous ?",Déclics:"Quel déclic a changé votre trajectoire ?"},
-  nl:{Jeugd:"Vertel me iets over je jeugd.",Familie:"Vertel over je familie.",School:"Hoe was school voor jou?",Werk:"Vertel over je eerste baan.",Liefde:"Hoe heb je je partner ontmoet?",Oorlog:"Welke grote gebeurtenissen maakte je mee?",Reizen:"Welke reis maakte indruk?",Tradities:"Welke tradities waren belangrijk?",Feestdagen:"Beschrijf een feestdag die je herinnert.",Lessen:"Welke levensles leerde je?",Advies:"Welk advies geef je je jongere zelf?",Keerpunt:"Wat was een keerpunt in je leven?"},
-  es:{Infancia:"Cuéntame algo sobre tu juventud.",Familia:"Háblame de tu familia.",Escuela:"¿Cómo era la escuela para ti?",Trabajo:"Cuéntame sobre tu primer trabajo.",Amor:"¿Cómo conociste a tu pareja?",Guerra:"¿Qué grandes eventos viviste?",Viajes:"¿Qué viaje te marcó?",Tradiciones:"¿Qué tradiciones eran importantes para ti?",Fiestas:"Describe una fiesta que recuerdes.",Lecciones:"¿Qué lección de vida aprendiste?",Consejos:"¿Qué consejo le darías a tu yo joven?","Puntos-clave":"¿Cuál fue un punto de inflexión?"}
-};
-const BCP={en:'en-US',fr:'fr-FR',nl:'nl-NL',es:'es-ES'};
-
-function speak(sentence, code){
-  if(!('speechSynthesis' in window)) return;
-  const u = new SpeechSynthesisUtterance(sentence);
-  u.lang = BCP[code] || 'en-US'; u.rate=.98; speechSynthesis.cancel(); speechSynthesis.speak(u);
-}
-
-function renderFour(){
-  const code = document.querySelector('#lang')?.value || 'en';
-  const pool = [...(TOPIC_WORDS[code]||TOPIC_WORDS.en)];
-  // pick 4 different
-  const chosen=[];
-  while(chosen.length<4 && pool.length){ chosen.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]); }
-  const box = document.getElementById('chips'); box.innerHTML='';
-  chosen.forEach(word=>{
-    const chip=document.createElement('button');
-    chip.className='btn pill ghost'; chip.textContent=word;
-    chip.onclick=()=>speak((PROMPT_SENTENCES[code]||{})[word]||word, code);
-    box.appendChild(chip);
-  });
-}
-document.getElementById('refresh').onclick=renderFour;
-document.getElementById('lang')?.addEventListener('change', renderFour);
-renderFour();
-</script>
+  <!-- Supabase & app -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
+  <script src="/app.js"></script>
 </body>
 </html>
