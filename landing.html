@@ -1,98 +1,95 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Memoir App — Preserve Your Memories Forever</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Memoir App — Home</title>
+<link rel="preload" href="assets/book-1.jpg" as="image">
+<link rel="preload" href="assets/book-2.jpg" as="image">
+<link rel="preload" href="assets/book-3.jpg" as="image">
+<style>
+:root{
+  --bg:#f8f7f5; --card:#ffffff; --ink:#2f2a25; --muted:#6f6a65;
+  --brand:#6b4c2f; --brand2:#7b5bff; --border:#e8e5e1; --radius:18px;
+  --shadow:0 10px 30px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
 
-  <!-- Soft, clean look directly here so it renders exactly as intended -->
-  <style>
-    :root{
-      --bg:#f8f7f5;
-      --card:#ffffff;
-      --ink:#2f2a25;
-      --muted:#6f6a65;
-      --brand:#6b4c2f;        /* warm brown */
-      --brand-2:#7b5bff;      /* subtle accent used sparingly */
-      --border:#e8e5e1;
-      --shadow:0 10px 30px rgba(0,0,0,.06);
-      --radius:18px;
-    }
-    *{box-sizing:border-box}
-    html,body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-    a{text-decoration:none;color:inherit}
+/* Shared header */
+header{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--border);box-shadow:0 2px 10px rgba(0,0,0,.02)}
+.nav{max-width:1100px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brandblock{display:flex;flex-direction:column}
+.brand{font-weight:800;color:var(--ink)}
+.sub{color:var(--muted);font-size:12px}
+.menu{display:flex;gap:10px;align-items:center}
+.pill{display:inline-flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--border);border-radius:999px;padding:10px 14px;min-width:110px;font-weight:600;color:var(--ink);text-decoration:none}
+.pill:hover{border-color:#ddd}
+select.pill{appearance:none;padding-right:28px;background:
+  linear-gradient(45deg,transparent 50%,#999 50%) right 10px center/8px 8px no-repeat,
+  linear-gradient(135deg,#999 50%,transparent 50%) right 4px center/8px 8px no-repeat, #fff}
 
-    /* Header */
-    header{
-      position:sticky;top:0;z-index:10;
-      background:#fff;border-bottom:1px solid var(--border);
-      padding:12px 20px; box-shadow:0 2px 10px rgba(0,0,0,.02);
-    }
-    .nav{
-      max-width:1100px;margin:0 auto;
-      display:flex;align-items:center;gap:14px;justify-content:space-between;
-    }
-    .brand{font-weight:700;color:var(--brand)}
-    .subtitle{color:var(--muted);font-size:12px}
-    .menu{display:flex;align-items:center;gap:14px}
-    .chip{padding:8px 12px;border:1px solid var(--border);border-radius:999px;background:#fff}
-    .chip:hover{border-color:#ddd}
-    select{border:1px solid var(--border);border-radius:12px;padding:8px 10px;background:#fff;color:var(--ink)}
+/* Shell */
+.wrap{max-width:1100px;margin:20px auto;padding:0 16px}
 
-    /* Main shell */
-    .wrap{max-width:1100px;margin:22px auto; padding:0 16px}
+/* Hero split */
+.hero{display:grid;grid-template-columns:1fr;gap:18px}
+@media(min-width:1000px){.hero{grid-template-columns:1.1fr .9fr}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+.hero .media{overflow:hidden}
+.hero img{display:block;width:100%;height:100%;object-fit:cover;border-radius:var(--radius)}
+.hero .txt{padding:22px}
+.h1{font-size:40px;line-height:1.05;text-align:center;margin:0 0 8px 0}
+.h1 span{color:#6d57ff}
+.tagline{color:var(--muted);text-align:center;margin-bottom:8px}
 
-    /* Hero */
-    .hero{
-      display:grid;grid-template-columns:1fr;gap:18px;
-      background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);
-      overflow:hidden;
-    }
-    .hero-img{width:100%;height:min(54vh,480px);object-fit:cover;background:#ddd}
-    .hero-text{padding:18px}
-    .h1{font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:.2px;margin:6px 0 12px}
-    .muted{color:var(--muted)}
+/* Two action cards below the hero text */
+.actions{display:grid;grid-template-columns:1fr;gap:14px;margin-top:12px}
+@media(min-width:680px){.actions{grid-template-columns:1fr 1fr}}
+.box{background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center}
+.boxtitle{font-weight:800}
+.boxdesc{color:var(--muted);text-align:center}
+.btn{background:var(--brand);color:#fff;border:0;border-radius:12px;padding:12px 18px;font-weight:800;cursor:pointer}
+.btn:hover{filter:brightness(.98)}
 
-    /* Two action cards */
-    .grid-2{display:grid;grid-template-columns:1fr;gap:16px;margin-top:18px}
-    @media(min-width:900px){ .hero{grid-template-columns:1.2fr .9fr} .grid-2{grid-template-columns:1fr 1fr} }
-    .card{
-      background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);
-      padding:20px;display:flex;flex-direction:column;gap:8px;align-items:flex-start
-    }
-    .card h3{margin:0 0 6px 0}
-    .btn{
-      background:var(--brand);color:#fff;border:0;border-radius:12px;padding:12px 16px;cursor:pointer;font-weight:700
-    }
-    .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--border)}
-    .btn:hover{filter:brightness(1.02)}
+/* Feature row (3 equal cards) */
+.features{display:grid;grid-template-columns:1fr;gap:14px;margin:16px 0 8px}
+@media(min-width:900px){.features{grid-template-columns:repeat(3,1fr)}}
+.feat{background:#fff;border:1px solid var(--border);border-radius:16px;padding:18px;text-align:center}
+.feat h3{margin:0 0 6px 0}
+.feat p{margin:0;color:var(--muted)}
 
-    /* Features */
-    .grid-3{display:grid;grid-template-columns:1fr;gap:16px;margin-top:18px}
-    @media(min-width:900px){ .grid-3{grid-template-columns:repeat(3,1fr)} }
-    .feature{
-      background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);
-      padding:20px
-    }
-    .feature h4{margin:0 0 6px 0}
-    .foot{color:var(--muted);font-size:12px;margin:26px 0 12px;text-align:center}
-  </style>
+/* Pricing */
+.section h2{text-align:center;margin:32px 0 10px}
+.pricing{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:900px){.pricing{grid-template-columns:repeat(2,1fr)}}
+.plan{background:#fff;border:1px solid var(--border);border-radius:16px;padding:18px;text-align:center}
+.plan .price{font-size:28px;font-weight:900}
+.muted{color:var(--muted)}
+
+/* FAQ */
+.faq{display:grid;grid-template-columns:1fr;gap:10px}
+.q{background:#fff;border:1px solid var(--border);border-radius:16px;padding:14px}
+.q b{display:block;margin-bottom:6px}
+
+/* Footer */
+footer{color:var(--muted);text-align:center;margin:18px 0}
+</style>
 </head>
 <body>
-
-  <!-- Header -->
+  <!-- HEADER (shared across pages) -->
   <header>
     <div class="nav">
-      <div>
+      <div class="brandblock">
         <div class="brand">MEMOIR APP — Preserve your memories forever</div>
-        <div class="subtitle">Record • Transcribe • Share privately with family</div>
+        <div class="sub">Record • Transcribe • Share privately with family</div>
       </div>
       <nav class="menu">
-        <a class="chip" href="landing.html">About</a>
-        <a class="chip" href="login.html">Login</a>
-        <a class="chip" href="record.html">Record</a>
-        <a class="chip" href="stories.html">My Stories</a>
-        <select id="lang">
+        <a class="pill" href="landing.html">Home</a>
+        <a class="pill" href="login.html">Login</a>
+        <a class="pill" href="record.html">Record</a>
+        <a class="pill" href="stories.html">My Stories</a>
+        <select class="pill" id="lang">
           <option value="en">🇺🇸 English</option>
           <option value="fr">🇫🇷 Français</option>
           <option value="nl">🇳🇱 Nederlands</option>
@@ -103,79 +100,89 @@
   </header>
 
   <main class="wrap">
-
-    <!-- HERO with rotating image -->
+    <!-- HERO -->
     <section class="hero">
-      <img id="heroImg" src="assets/book-1.jpg" alt="Open book" class="hero-img" />
-      <div class="hero-text">
-        <h1 class="h1">Preserve Your Memories Forever</h1>
-        <p class="muted">Record once, keep for generations. Start a recording in one tap, add a title and when it
-          happened, then share safely with your family.</p>
+      <div class="card media">
+        <img id="heroImg" src="assets/book-1.jpg" alt="Open book"/>
+      </div>
+      <div class="card txt">
+        <h1 class="h1">Preserve <span>Your</span><br/>Memories Forever</h1>
+        <p class="tagline">Record once, keep for generations. One tap to start. Add a title and “when it happened”, then share safely with your family.</p>
 
-        <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
-          <a class="btn" href="record.html">Start Recording</a>
-          <a class="btn secondary" href="stories.html">View My Stories</a>
-        </div>
-
-        <!-- The two action cards live just below the hero on smaller screens,
-             but on wide screens the hero sits left and these cards sit right -->
-        <div class="grid-2" style="margin-top:16px">
-          <div class="card">
-            <h3>Start Recording</h3>
-            <p class="muted" style="margin:0">One tap to begin. Add a title and “when it happened” later.</p>
-            <a class="btn" href="record.html">Start Recording</a>
+        <!-- two action cards only (centered buttons) -->
+        <div class="actions">
+          <div class="box">
+            <div class="boxtitle">Start Recording</div>
+            <div class="boxdesc">One tap to begin. Add a date or period like “early 1970s”.</div>
+            <button class="btn" onclick="location.href='record.html'">Start Recording</button>
           </div>
-          <div class="card">
-            <h3>View My Stories</h3>
-            <p class="muted" style="margin:0">Browse, rewrite with AI, export, and share with your family.</p>
-            <a class="btn secondary" href="stories.html">My Stories</a>
+          <div class="box">
+            <div class="boxtitle">View My Stories</div>
+            <div class="boxdesc">Browse, rewrite with AI, export, and share with your family.</div>
+            <button class="btn" onclick="location.href='stories.html'">My Stories</button>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Features row -->
-    <section class="grid-3">
-      <div class="feature">
-        <h4>Smart Transcription</h4>
-        <p class="muted">Server-side Whisper for accurate EN/FR/ES/NL, resilient to spotty connections.</p>
+    <!-- Features -->
+    <section class="features">
+      <div class="feat">
+        <h3>Smart Transcription</h3>
+        <p>Server-side Whisper for accurate EN/FR/NL/ES. Resilient to spotty connections.</p>
       </div>
-      <div class="feature">
-        <h4>Guided or Free</h4>
-        <p class="muted">Use gentle prompts or speak freely. Add a date or period like “early 1970s”.</p>
+      <div class="feat">
+        <h3>Guided or Free</h3>
+        <p>Use gentle prompts or speak freely. Add an approximate date or season.</p>
       </div>
-      <div class="feature">
-        <h4>Private Library</h4>
-        <p class="muted">Stories and media saved in your private account. Export to PDF/CSV when you’re ready.</p>
+      <div class="feat">
+        <h3>Private Library</h3>
+        <p>Stories and media saved in your private account. Export to PDF/CSV when ready.</p>
       </div>
     </section>
 
-    <div class="foot">© Memoir App — built for families</div>
+    <!-- Pricing -->
+    <section class="section">
+      <h2>Pricing</h2>
+      <div class="pricing">
+        <div class="plan">
+          <div class="boxtitle">Individual</div>
+          <div class="price">€4.99 / month</div>
+          <p class="muted">1 user. Record, transcribe, rewrite (AI), export. Share read-only links.</p>
+          <div style="margin-top:10px"><button class="btn" onclick="location.href='login.html'">Get Started</button></div>
+        </div>
+        <div class="plan">
+          <div class="boxtitle">Family</div>
+          <div class="price">€7.99 / month</div>
+          <p class="muted">Primary user + up to 4 family readers/listeners (read-only). Private and secure.</p>
+          <div style="margin-top:10px"><button class="btn" onclick="location.href='login.html'">Start Family Plan</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section">
+      <h2>FAQ</h2>
+      <div class="faq">
+        <div class="q"><b>How do I start?</b> Tap <i>Start Recording</i>. Speak naturally. You can add a title and when it happened later.</div>
+        <div class="q"><b>Can I guide the conversation?</b> Yes—use guided prompts. The app can speak a gentle question in your language.</div>
+        <div class="q"><b>What if my connection drops?</b> Recording continues locally and chunks are uploaded when available.</div>
+        <div class="q"><b>Who can access my stories?</b> Only you by default. You can share read-only access with family.</div>
+      </div>
+    </section>
+
+    <footer>© Memoir App — built for families</footer>
   </main>
 
-  <script>
-    // Simple 30s rotator for /assets/book-1.jpg..book-3.jpg
-    const hero = document.getElementById('heroImg');
-    const imgs = ["assets/book-1.jpg","assets/book-2.jpg","assets/book-3.jpg"];
-    let idx = 0;
+<script>
+  // persist language choice (shared pattern)
+  const langSel=document.getElementById('lang');
+  langSel.value = localStorage.getItem('memoir.lang') || 'en';
+  langSel.addEventListener('change',()=>localStorage.setItem('memoir.lang', langSel.value));
 
-    function nextHero(){
-      idx = (idx + 1) % imgs.length;
-      const url = imgs[idx];
-      // Preload then swap for a smooth feel
-      const probe = new Image();
-      probe.onload = () => { hero.src = url; };
-      probe.onerror = () => { /* ignore if missing */ };
-      probe.src = url;
-    }
-    setInterval(nextHero, 30000); // 30s
-
-    // Optional: persist chosen language across pages
-    const langSel = document.getElementById('lang');
-    langSel.value = localStorage.getItem('memoir.lang') || 'en';
-    langSel.addEventListener('change', ()=>{
-      localStorage.setItem('memoir.lang', langSel.value);
-    });
-  </script>
+  // simple hero rotation every 30s
+  const pics=['assets/book-1.jpg','assets/book-2.jpg','assets/book-3.jpg'];
+  let i=0; setInterval(()=>{ i=(i+1)%pics.length; document.getElementById('heroImg').src=pics[i]; }, 30000);
+</script>
 </body>
 </html>
