@@ -1,90 +1,99 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>My Stories — Memoir</title>
-<link rel="stylesheet" href="/styles.css">
-<link rel="icon" href="data:,">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>My Stories — Memoir</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <style>
+    .wrap{max-width:1100px;margin:0 auto;padding:20px}
+    .grid{display:grid;gap:16px;grid-template-columns:repeat(2,minmax(0,1fr))}
+    @media (max-width:900px){ .grid{grid-template-columns:1fr} }
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:14px;box-shadow:0 6px 18px rgba(2,8,23,.06)}
+    .title{font-weight:700;margin:0 0 6px}
+    .muted{color:#667085;font-size:12px}
+    .img{width:100%;height:220px;object-fit:cover;border-radius:12px;border:1px solid #e5e7eb;background:#f6f6f8}
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .btn{padding:8px 12px;border:1px solid #e5e7eb;background:#fff;border-radius:10px;cursor:pointer}
+    .btn.danger{border-color:#e11d48;color:#e11d48}
+    .txt{white-space:pre-wrap}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
+  <script src="/app.js"></script>
 </head>
 <body>
-<nav class="nav">
-  <div class="nav-inner container">
-    <div class="brand"><div class="logo"></div><div>MEMOIR APP</div></div>
-    <div class="nav-links">
-      <a href="/index.html" class="link">Home</a>
-      <a href="/record.html" class="link needs-auth">Record</a>
-      <a href="/login.html" class="link" id="nav-login">Login</a>
-      <select id="lang" class="lang">
-        <option value="en">🇬🇧 English</option>
-        <option value="fr">🇫🇷 Français</option>
-        <option value="nl">🇳🇱 Nederlands</option>
-        <option value="es">🇪🇸 Español</option>
-      </select>
-      <span id="userBadge" class="badge hidden"></span>
-      <button id="logoutBtn" class="btn pill ghost">Logout</button>
+  <div class="wrap">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h2>My Stories</h2>
+      <a href="/record.html" class="btn">+ New recording</a>
     </div>
+    <div id="list" class="grid"></div>
   </div>
-</nav>
 
-<main class="container">
-  <section class="section">
-    <div class="card">
-      <div class="kicker">Your Library</div>
-      <h1 style="margin-top:6px">My Stories</h1>
-      <div id="list" class="features" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))"></div>
-    </div>
-  </section>
-</main>
-
-<script src="/app.js"></script>
 <script>
-// For now read from localStorage (same key as before)
-const LSKEY='memoir.stories';
-const list = document.getElementById('list');
+(async function(){
+  const session = await Memoir.ensureSessionOrRedirect(); if(!session) return;
 
-function esc(s){return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+  const list = document.getElementById('list');
 
-function render(){
-  let items=[];
-  try{ items = JSON.parse(localStorage.getItem(LSKEY)||'[]'); }catch{}
-  list.innerHTML='';
-  if(!items.length){
-    const p=document.createElement('p'); p.className='muted'; p.textContent='No stories yet.';
-    list.appendChild(p); return;
+  function esc(s){ return String(s||'').replace(/[&<>]/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;' }[c])); }
+
+  async function row(story){
+    const wrap = document.createElement('div');
+    wrap.className = 'card';
+
+    const when = story.happened_label || (story.happened_sort ? new Date(story.happened_sort).toDateString() : new Date(story.created_at||Date.now()).toLocaleString());
+
+    // Signed media (if paths exist)
+    const imgUrl = story.image_path ? await Memoir.signedUrl(Memoir.BUCKET_IMAGES, story.image_path, 3600) : null;
+    const audioUrl = story.audio_path ? await Memoir.signedUrl(Memoir.BUCKET_AUDIO,  story.audio_path,  3600) : null;
+
+    wrap.innerHTML = `
+      ${imgUrl ? `<img class="img" src="${imgUrl}" alt="story photo">` : ``}
+      <h3 class="title">${esc(story.title || 'Story')}</h3>
+      <div class="muted">${esc(when)}</div>
+      ${audioUrl ? `<audio controls style="width:100%;margin-top:10px"><source src="${audioUrl}" type="audio/webm"></audio>` : ``}
+      <div class="txt" style="margin-top:10px">${esc(story.transcript||'')}</div>
+      <div class="row">
+        <button class="btn danger" data-del="${story.id}">Delete</button>
+      </div>
+    `;
+
+    wrap.querySelector('[data-del]').onclick = async ()=>{
+      if (!confirm('Delete this story?')) return;
+      try{
+        await Memoir.deleteStory(story.id);
+        await load();
+      }catch(e){ alert('Delete failed: ' + (e.message || String(e))); }
+    };
+
+    return wrap;
   }
-  items.forEach((s,idx)=>{
-    const card=document.createElement('div'); card.className='feature';
-    card.innerHTML = `
-      <h4>${esc(s.title||'Story')}</h4>
-      <p class="small">${esc(s.happened_label || (s.happened_sort||'').slice(0,10) || new Date(s.created).toLocaleString())}</p>
-      <p class="muted" style="height:3.5em;overflow:hidden">${esc((s.text||'').slice(0,160))}…</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn pill ghost" data-view="${idx}">View</button>
-        <button class="btn pill" data-dl="${idx}">Download .txt</button>
-        <button class="btn pill ghost" data-del="${idx}">Delete</button>
-      </div>`;
-    list.appendChild(card);
-  });
-}
-list.addEventListener('click', (e)=>{
-  const items = JSON.parse(localStorage.getItem(LSKEY)||'[]');
-  const view = e.target.getAttribute('data-view');
-  const dl = e.target.getAttribute('data-dl');
-  const del = e.target.getAttribute('data-del');
-  if(view!==null){
-    const s=items[+view]; alert((s?.title||'Story')+'\n\n'+(s?.text||''));
-  }else if(dl!==null){
-    const s=items[+dl];
-    const blob=new Blob([s?.text||''],{type:'text/plain'});
-    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(s?.title||'story')+'.txt'; a.click();
-    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-  }else if(del!==null){
-    if(confirm('Delete this story?')){ items.splice(+del,1); localStorage.setItem(LSKEY,JSON.stringify(items)); render(); }
+
+  async function load(){
+    list.innerHTML = '';
+    try{
+      const stories = await Memoir.fetchMyStories();
+      if (!stories.length){
+        const p=document.createElement('p');
+        p.className='muted';
+        p.textContent='No stories yet.';
+        list.appendChild(p);
+        return;
+      }
+      for (const s of stories){
+        list.appendChild(await row(s));
+      }
+    }catch(e){
+      const p=document.createElement('p');
+      p.className='muted'; p.textContent='Failed to load stories.';
+      list.appendChild(p);
+      console.error(e);
+    }
   }
-});
-render();
+
+  await load();
+})();
 </script>
 </body>
 </html>
