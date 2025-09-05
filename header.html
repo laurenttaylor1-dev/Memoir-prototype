@@ -1,0 +1,80 @@
+<!-- SHARED HEADER (drop into each page) -->
+<header class="site-header">
+  <div class="brand">
+    <span class="logo">📖</span>
+    <strong>MEMOIR APP — Preserve your memories forever</strong>
+  </div>
+  <nav class="topnav">
+    <a href="landing.html" class="btn ghost" data-i18n="nav_home">Home</a>
+    <a href="record.html" class="btn ghost" data-i18n="nav_record">Record</a>
+    <a href="stories.html" class="btn ghost" data-i18n="nav_stories">My Stories</a>
+    <a href="help.html" class="btn ghost" data-i18n="nav_help">Help</a>
+
+    <div class="lang">
+      <select id="langSel" title="Language">
+        <option value="en">🇬🇧 English</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="nl">🇳🇱 Nederlands</option>
+        <option value="es">🇪🇸 Español</option>
+      </select>
+    </div>
+
+    <a id="loginLink" href="login.html" class="btn outline" data-i18n="nav_login">Login</a>
+  </nav>
+</header>
+
+<style>
+:root{
+  --bg:#faf8f5; --card:#ffffff; --ink:#2b2b2b; --muted:#6b6f76;
+  --brand:#7c3aed; --accent:#8b5cf6; --gold:#7a542c;
+  --radius:18px; --shadow:0 20px 40px rgba(0,0,0,.06);
+}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;}
+.site-header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,0.8);backdrop-filter:blur(8px);border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;padding:10px 16px;}
+.brand{display:flex;gap:10px;align-items:center;font-size:14px}
+.logo{font-size:20px}
+.topnav{display:flex;gap:8px;align-items:center}
+.btn{padding:8px 12px;border-radius:999px;text-decoration:none;color:var(--ink);border:1px solid transparent}
+.btn.ghost{background:transparent;border-color:#e8e8e8}
+.btn.ghost:hover{background:#f3f3f3}
+.btn.outline{border-color:#ddd;background:#fff}
+.lang select{padding:8px;border-radius:999px;border:1px solid #e5e5e5;background:#fff}
+.container{max-width:1120px;margin:0 auto;padding:20px}
+.card{background:var(--card);border:1px solid #eee;border-radius:var(--radius);box-shadow:var(--shadow)}
+.pill{border-radius:999px;padding:.5rem 1rem;border:1px solid #e9e9e9}
+.chip{border:1px solid rgba(124,58,237,.15);background:rgba(124,58,237,.08);border-radius:12px;padding:10px 12px;cursor:pointer}
+.primary{background:linear-gradient(90deg,var(--brand),var(--accent));border:0;color:#fff}
+.primary:disabled{opacity:.6}
+.round{border-radius:999px}
+.round.big{width:180px;height:180px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;box-shadow:0 18px 40px rgba(0,0,0,.1);background:radial-gradient(75% 75% at 50% 30%, #a78bfa, #7c3aed);color:#fff;border:0}
+.round.big.pulse{animation:pulse 1.6s infinite ease-in-out}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
+.muted{color:var(--muted)}
+.input{width:100%;padding:10px 12px;border-radius:12px;border:1px solid #e5e5e5;background:#fff}
+.grid{display:grid;gap:16px}
+.grid.two{grid-template-columns:1fr 1fr}
+@media(max-width:920px){ .grid.two{grid-template-columns:1fr} }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
+<script src="lang.js"></script>
+<script>
+  // boot language UI
+  const sel = document.getElementById('langSel');
+  if (sel) { sel.value = getLang(); sel.onchange = e => setLang(e.target.value); }
+  // set Login->Logout dynamic
+  (async ()=>{
+    const sb = supabase.createClient(
+      "https://jrjqciywlijhhcxfxywh.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak",
+      { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:false } }
+    );
+    const { data:{session} } = await sb.auth.getSession();
+    const link = document.getElementById('loginLink');
+    if (session && link) {
+      link.textContent = "Logout";
+      link.onclick = async (e)=>{ e.preventDefault(); await sb.auth.signOut(); location.href="landing.html"; };
+    }
+    applyI18N();
+  })();
+</script>
