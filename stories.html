@@ -8,191 +8,275 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
 <style>
   .wrap{max-width:1120px;margin:0 auto;padding:16px}
-  .stats{
-    display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:8px 0 14px
-  }
-  @media (max-width:900px){ .stats{grid-template-columns:1fr 1fr} }
-  @media (max-width:620px){ .stats{grid-template-columns:1fr} }
-  .stat{display:flex;flex-direction:column;gap:4px}
-  .stat .big{font-size:26px;font-weight:800;color:var(--mk-brand)}
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-  @media (max-width:1100px){ .grid{grid-template-columns:repeat(2,1fr)} }
-  @media (max-width:700px){ .grid{grid-template-columns:1fr} }
-  .card-h{display:flex;gap:10px}
-  .thumb{width:84px;height:84px;border-radius:12px;border:1px solid var(--mk-line);object-fit:cover;background:#e5dccd}
+  .toprow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .count{color:var(--mk-sub);font-size:14px}
+  .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px}
+  @media (max-width:1100px){ .grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+  @media (max-width:720px){ .grid{grid-template-columns:1fr} }
+  .card{background:var(--mk-card);border:1px solid var(--mk-line);border-radius:16px;padding:12px;display:grid;gap:10px}
+  .row{display:flex;gap:10px;align-items:flex-start}
+  .thumb{width:92px;height:92px;border-radius:12px;border:1px solid var(--mk-line);object-fit:cover;background:#e5dccd;flex:0 0 92px}
+  .meta{min-width:0}
+  .title{font-weight:800;margin:0 0 4px 0}
+  .muted{color:var(--mk-sub);font-size:13px}
+  .excerpt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--mk-fg);font-size:14px}
+  .status{padding:4px 8px;border-radius:999px;font-size:12px;border:1px solid var(--mk-line)}
+  .st-pending{background:#fff7e6;color:#805600;border-color:#f3d19e}
+  .st-processing{background:#eaf4ff;color:#0b4a8a;border-color:#b7d5ff}
+  .st-done{background:#eaf7ea;color:#1c6b2a;border-color:#bfe2c4}
+  .st-error{background:#ffe9ea;color:#8a1c2b;border-color:#f7c2c7}
   .actions{display:flex;gap:8px;flex-wrap:wrap}
-  .notice{margin:8px 0 0;color:var(--mk-sub);font-size:13px}
-  .toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center;margin:6px 0 10px}
+  .btn{padding:8px 10px;border-radius:10px;border:1px solid var(--mk-line);background:var(--mk-card);cursor:pointer}
+  .btn.primary{background:var(--mk-primary-grad);color:#fff;border:0}
+  .center{display:flex;justify-content:center;margin:14px 0}
+  .empty{background:var(--mk-card);border:1px solid var(--mk-line);border-radius:16px;padding:16px;text-align:center;color:var(--mk-sub)}
 </style>
 </head>
 <body>
+  <!-- Shared header -->
   <div id="header-placeholder"></div>
 
   <main class="wrap">
-    <h1 class="h1">My Stories</h1>
-
-    <div class="toolbar">
-      <div class="muted" id="loginState">Checking session…</div>
-      <div style="display:flex;gap:8px">
-        <button id="syncBtn" class="mk-btn" title="Sync local drafts to cloud">Sync drafts</button>
-        <button id="newBtn" class="mk-btn mk-primary" onclick="location.href='/record.html'">+ New story</button>
-      </div>
+    <div class="toprow">
+      <h1 class="h1">My Stories</h1>
+      <div class="count"><span id="count">0</span> stories</div>
     </div>
 
-    <section class="stats">
-      <div class="mk-card stat">
-        <div class="label">Total stories</div>
-        <div id="countStories" class="big">–</div>
-      </div>
-      <div class="mk-card stat">
-        <div class="label">Last updated</div>
-        <div id="lastUpdated" class="big">–</div>
-      </div>
-      <div class="mk-card stat">
-        <div class="label">Shared with</div>
-        <div id="sharedWith" class="big">0</div>
-      </div>
-    </section>
+    <div id="list" class="grid"></div>
+    <div id="empty" class="empty" style="display:none">No stories yet. Start recording from the Record page.</div>
 
-    <section class="mk-card" style="margin-bottom:12px">
-      <div class="label">Library</div>
-      <div id="modeMsg" class="notice"></div>
-      <div id="list" class="grid"></div>
-    </section>
+    <div class="center">
+      <button id="loadMore" class="btn">Load more</button>
+    </div>
   </main>
 
 <script>
-/* ---------- Shared header & i18n ---------- */
-fetch('/header.html').then(r=>r.text()).then(html=>{
-  document.getElementById('header-placeholder').innerHTML = html;
-  window.i18n && i18n.apply(document);
-});
+/* Shared header */
+fetch('/header.html').then(r=>r.text()).then(h=>{document.getElementById('header-placeholder').innerHTML=h;});
 
-/* ---------- Supabase client ---------- */
-const SUPABASE_URL = window.ENV?.SUPABASE_URL || "https://jrjqciywlijhhcxfxywh.supabase.co";
-const SUPABASE_ANON_KEY = window.ENV?.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
+/* Supabase */
+const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {auth:{persistSession:true}});
 
-const loginState = document.getElementById('loginState');
-const modeMsg = document.getElementById('modeMsg');
-const list = document.getElementById('list');
-const countStories = document.getElementById('countStories');
-const lastUpdated = document.getElementById('lastUpdated');
-const sharedWith = document.getElementById('sharedWith');
-const syncBtn = document.getElementById('syncBtn');
+/* UI refs */
+const listEl = document.getElementById('list');
+const emptyEl = document.getElementById('empty');
+const countEl = document.getElementById('count');
+const loadMoreBtn = document.getElementById('loadMore');
 
-const LS = 'memoir.stories';
+/* Paging */
+const PAGE_SIZE = 12;
+let from = 0, to = PAGE_SIZE - 1;
+let more = true;
+let polling = null;
 
-function esc(s){ return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])) }
-function fmtDate(d){ try{ return new Date(d).toLocaleString(); }catch{ return d || '–'; } }
+let userId = null;
 
-/* Signed image URL if present */
-async function signedImage(key){
-  if(!key) return null;
-  try{
-    const { data, error } = await sb.storage.from('memoir-images').createSignedUrl(key, 3600);
-    if(error) return null;
-    return data.signedUrl;
-  }catch{ return null; }
+/* Helpers */
+function esc(s){ return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function statusBadge(st){
+  const map = { pending:'st-pending', processing:'st-processing', done:'st-done', error:'st-error' };
+  const cls = map[st] || 'st-pending';
+  return `<span class="status ${cls}">${esc(st||'pending')}</span>`;
+}
+function whenText(s){
+  if(s.happened_label) return s.happened_label;
+  if(s.happened_sort) return new Date(s.happened_sort).toDateString();
+  return new Date(s.created_at || s.created || Date.now()).toLocaleString();
+}
+function excerpt(txt){
+  const t = (txt||'').replace(/\s+/g,' ').trim();
+  return t.length>160 ? t.slice(0,160)+'…' : t || '—';
 }
 
-function card(story, thumbUrl){
-  const d = document.createElement('div'); d.className='mk-card';
-  const head = document.createElement('div'); head.className='card-h';
-  const img = document.createElement('img'); img.className='thumb'; if(thumbUrl){ img.src=thumbUrl; } else { img.style.visibility='hidden'; }
-  const meta = document.createElement('div'); meta.style.minWidth='0';
-  const h = document.createElement('div'); h.style.fontWeight='700'; h.style.marginBottom='4px'; h.textContent = story.title || 'Story';
-  const sub = document.createElement('div'); sub.className='muted'; sub.textContent = story.happened_label || (story.happened_sort? new Date(story.happened_sort).toDateString(): '') || fmtDate(story.created_at);
-  meta.appendChild(h); meta.appendChild(sub);
-  head.appendChild(img); head.appendChild(meta);
-
-  const actions = document.createElement('div'); actions.className='actions';
-  const view = document.createElement('button'); view.className='mk-btn'; view.textContent='View';
-  view.onclick = ()=> {
-    const dlg=document.createElement('dialog');
-    dlg.style.border='none'; dlg.style.borderRadius='14px'; dlg.style.maxWidth='min(820px,92vw)';
-    dlg.innerHTML = `<form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--mk-line)"><strong>${esc(story.title||'Story')}</strong><button autofocus class="mk-btn">Close</button></form><div style="padding:16px"><div class="muted" style="margin-bottom:6px">${esc(sub.textContent)}</div><div style="white-space:pre-wrap">${esc(story.transcript||'')}</div></div>`;
-    document.body.appendChild(dlg); dlg.addEventListener('close',()=>dlg.remove()); dlg.showModal();
-  };
-  const del = document.createElement('button'); del.className='mk-btn'; del.textContent='Delete';
-  del.onclick = async ()=>{
-    if(!confirm('Delete this story?')) return;
-    if(story.id){
-      const { error } = await sb.from('stories').delete().eq('id', story.id);
-      if(error){ alert('Delete failed: '+error.message); return; }
-    } else {
-      // local only
-      const local = JSON.parse(localStorage.getItem(LS)||'[]');
-      const idx = local.findIndex(s=>s.created===story.created);
-      if(idx>-1){ local.splice(idx,1); localStorage.setItem(LS, JSON.stringify(local)); }
-    }
-    load();
-  };
-
-  actions.appendChild(view);
-  actions.appendChild(del);
-
-  d.appendChild(head);
-  const p = document.createElement('p'); p.className='muted'; p.style.margin='10px 0'; p.textContent = (story.transcript||'').slice(0,180) + ((story.transcript||'').length>180?'…':'');
-  d.appendChild(p);
-  d.appendChild(actions);
-  return d;
+/* Signed image helper */
+async function signedImage(path){
+  if(!path) return null;
+  const { data, error } = await sb.storage.from('memoir-images').createSignedUrl(path, 600);
+  if(error) return null;
+  return data.signedUrl;
 }
 
-async function load(){
-  list.innerHTML=''; countStories.textContent='–'; lastUpdated.textContent='–';
-  const { data:{ session } } = await sb.auth.getSession();
+/* Render one card */
+async function renderCard(s){
+  const wrapper = document.createElement('div');
+  wrapper.className = 'card';
 
-  if(!session){
-    loginState.textContent='Not signed in';
-    modeMsg.textContent='Viewing stories saved on this device (sign in to see your cloud library).';
-    const local = JSON.parse(localStorage.getItem(LS)||'[]');
-    local.forEach(s=> list.appendChild(card(s,null)));
-    countStories.textContent = local.length;
-    lastUpdated.textContent = local[0]?.created ? fmtDate(local[0].created) : '–';
-    return;
-  }
+  const row = document.createElement('div');
+  row.className = 'row';
 
-  loginState.textContent = 'Signed in';
-  modeMsg.textContent = 'Cloud library (synced across your devices).';
-
-  // Fetch from Supabase
-  const { data, error } = await sb.from('stories')
-    .select('id,title,transcript,happened_label,happened_sort,created_at,image_path')
-    .order('created_at',{ascending:false});
-  if(error){ modeMsg.textContent='Failed to load cloud stories; showing local if available.'; }
-
-  const rows = data||[];
-  countStories.textContent = rows.length;
-  lastUpdated.textContent = rows[0]?.created_at ? fmtDate(rows[0].created_at) : '–';
-
-  for(const s of rows){
+  const img = document.createElement('img');
+  img.className = 'thumb';
+  img.alt = '';
+  if(s.image_path){
     const url = await signedImage(s.image_path);
-    list.appendChild(card(s, url));
+    if(url) img.src = url;
+  } else {
+    img.style.visibility='hidden';
+  }
+
+  const meta = document.createElement('div');
+  meta.className='meta';
+  meta.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;justify-content:space-between">
+      <h3 class="title">${esc(s.title||'Story')}</h3>
+      ${statusBadge(s.transcription_status||'pending')}
+    </div>
+    <div class="muted">${esc(whenText(s))}</div>
+    <div class="excerpt">${esc(excerpt(s.transcript))}</div>
+  `;
+
+  row.appendChild(img);
+  row.appendChild(meta);
+  wrapper.appendChild(row);
+
+  const actions = document.createElement('div');
+  actions.className='actions';
+
+  // View
+  const btnView = document.createElement('button');
+  btnView.className='btn';
+  btnView.textContent='View';
+  btnView.onclick=()=>viewStory(s);
+  actions.appendChild(btnView);
+
+  // Replace photo
+  const btnPhoto = document.createElement('button');
+  btnPhoto.className='btn';
+  btnPhoto.textContent='Replace Photo';
+  btnPhoto.onclick=()=>replacePhoto(s);
+  actions.appendChild(btnPhoto);
+
+  // Download .docx (zip with txt for now)
+  const btnDoc = document.createElement('button');
+  btnDoc.className='btn';
+  btnDoc.textContent='Download .docx';
+  btnDoc.onclick=()=>downloadDocx(s);
+  actions.appendChild(btnDoc);
+
+  // Delete
+  const btnDel = document.createElement('button');
+  btnDel.className='btn';
+  btnDel.textContent='Delete';
+  btnDel.onclick=()=>delStory(s);
+  actions.appendChild(btnDel);
+
+  wrapper.appendChild(actions);
+  return wrapper;
+}
+
+/* View modal */
+function viewStory(s){
+  const dlg=document.createElement('dialog');
+  dlg.style.border='none'; dlg.style.borderRadius='16px';
+  dlg.innerHTML = `
+    <form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--mk-line)">
+      <strong>${esc(s.title||'Story')}</strong>
+      <button class="btn">Close</button>
+    </form>
+    <div style="padding:16px;max-width:min(90vw,780px)">
+      <div class="muted" style="margin-bottom:8px">${esc(whenText(s))} · ${esc(s.language||'')}</div>
+      <div style="white-space:pre-wrap;font-size:15px">${esc(s.transcript||'')}</div>
+    </div>`;
+  document.body.appendChild(dlg);
+  dlg.addEventListener('close',()=>dlg.remove());
+  dlg.showModal();
+}
+
+/* Replace Photo */
+async function replacePhoto(s){
+  const input=document.createElement('input');
+  input.type='file'; input.accept='image/*';
+  input.onchange = async ()=>{
+    const f=input.files[0]; if(!f) return;
+    const key = `${userId}/${crypto.randomUUID()}-${f.name}`;
+    const up = await sb.storage.from('memoir-images').upload(key, f, { upsert:false });
+    if(up.error){ alert(up.error.message); return; }
+    const upd = await sb.from('stories').update({ image_path:key }).eq('id', s.id);
+    if(upd.error){ alert(upd.error.message); return; }
+    await refresh(true);
+  };
+  input.click();
+}
+
+/* Download .docx placeholder (zip txt) */
+async function downloadDocx(s){
+  const { default: JSZip } = await import('https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm');
+  const zip=new JSZip();
+  const meta=`Title: ${s.title||'Story'}\nWhen: ${whenText(s)}\n\n`;
+  zip.file('story.txt', meta + (s.transcript||''));
+  const blob=await zip.generateAsync({type:'blob'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(s.title||'story')+'.zip'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+/* Delete */
+async function delStory(s){
+  if(!confirm('Delete this story?')) return;
+  const del = await sb.from('stories').delete().eq('id', s.id);
+  if(del.error){ alert(del.error.message); return; }
+  await refresh(true);
+}
+
+/* Load page */
+async function loadPage(){
+  const { data:{ user } } = await sb.auth.getUser();
+  if(!user){ window.location.replace('/login.html'); return; }
+  userId = user.id;
+
+  const { data: rows, error, count } = await sb
+    .from('stories')
+    .select('id,title,transcript,happened_label,happened_sort,created_at,image_path,language,transcription_status', { count:'exact' })
+    .eq('user_id', userId)
+    .order('created_at', { ascending:false })
+    .range(from, to);
+
+  if(error){ console.error(error); return; }
+
+  if(from===0){ listEl.innerHTML=''; }
+  countEl.textContent = count ?? 0;
+
+  if((rows||[]).length===0 && from===0){
+    emptyEl.style.display='block';
+    more=false; loadMoreBtn.style.display='none';
+    return;
+  } else {
+    emptyEl.style.display='none';
+  }
+
+  // Are there any not-done?
+  let hasPending = false;
+
+  for(const s of rows||[]){
+    if(s.transcription_status && s.transcription_status!=='done') hasPending = true;
+    const card = await renderCard(s);
+    listEl.appendChild(card);
+  }
+
+  // pagination toggle
+  more = (to + 1) < (count ?? 0);
+  loadMoreBtn.style.display = more ? 'inline-flex' : 'none';
+
+  // polling if needed
+  if(hasPending && !polling){
+    polling = setInterval(()=>refresh(false), 10000); // 10s
   }
 }
 
-syncBtn.onclick = async ()=>{
-  const { data:{ session } } = await sb.auth.getSession();
-  if(!session){ alert('Sign in to sync.'); return; }
-  const local = JSON.parse(localStorage.getItem(LS)||'[]');
-  if(!local.length){ alert('No local drafts to sync.'); return; }
-  for(const s of local){
-    await sb.from('stories').insert({
-      title: s.title || 'Story',
-      transcript: s.transcript || '',
-      original_transcript: s.original_transcript || null,
-      happened_label: s.happened_label || null,
-      happened_sort: s.happened_sort || null,
-      created_at: s.created || new Date().toISOString()
-    });
-  }
-  localStorage.removeItem(LS);
-  alert('Synced your local drafts to cloud!');
-  load();
+/* Refresh list */
+async function refresh(reset){
+  if(reset){ from=0; to=PAGE_SIZE-1; polling && clearInterval(polling); polling=null; }
+  await loadPage();
+}
+
+/* Init */
+loadMoreBtn.onclick = async ()=>{
+  from = to + 1;
+  to   = from + PAGE_SIZE - 1;
+  await loadPage();
 };
 
-load();
+refresh(true);
 </script>
 </body>
 </html>
