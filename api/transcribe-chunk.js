@@ -1,52 +1,57 @@
-export const config = { runtime: 'edge' };
+// api/transcribe-chunk.js
+export const config = { api: { bodyParser: false } }; // we expect multipart form
 
-export default async function handler(req) {
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
+export default async function handler(req,res){
+  try{
+    if(req.method!=='POST') return res.status(405).end();
 
-  try {
-    const url = new URL(req.url);
-    const ext = url.searchParams.get('ext') || 'webm';
-    const form = await req.formData();
+    // Read multipart form
+    const formData = await readFormData(req);
+    const language = formData.get('language') || 'en';
+    const audioFile = formData.get('audio');
+    if(!audioFile) return res.status(400).json({ error:'missing audio' });
 
-    // Incoming blob and hints
-    const audio = form.get('audio'); // Blob/File
-    const prompt = form.get('prompt') || '';
-    const lang   = form.get('lang') || ''; // 'en','fr','es','nl'
-
-    if (!audio) {
-      return new Response(JSON.stringify({ error: 'Missing audio' }), { status: 400 });
-    }
-
-    // Build multipart for OpenAI Whisper
-    const fd = new FormData();
-    fd.append('file', audio, `chunk.${ext}`);
-    fd.append('model', 'whisper-1');          // or gpt-4o-mini-transcribe
-    if (lang)   fd.append('language', lang);  // helps accuracy
-    if (prompt) fd.append('prompt', prompt);  // brief context tail to improve continuity
-    // You can also tweak:
-    // fd.append('temperature', '0');
-
+    // Call OpenAI for a quick partial
+    // For very low latency you can choose a faster transcribe model if enabled in your account.
     const r = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-      body: fd
+      method:'POST',
+      headers:{ 'Authorization':`Bearer ${process.env.OPENAI_API_KEY}` },
+      body: formDataForOpenAI(audioFile, language)
     });
-
-    if (!r.ok) {
-      const err = await r.text().catch(()=>'');
-      return new Response(JSON.stringify({ error: 'whisper_failed', details: err }), { status: 502 });
+    if(!r.ok){
+      const t = await r.text();
+      return res.status(400).json({ error:'chunk_failed', detail: t });
     }
-
-    const json = await r.json();
-    // The "text" field contains Whisper output
-    return new Response(JSON.stringify({ text: json.text || '' }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
-
-  } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), { status: 500 });
+    const out = await r.json(); // { text: "..." }
+    res.json({ partial: out.text || '' });
+  }catch(e){
+    console.error(e);
+    res.status(500).json({ error:String(e) });
   }
+}
+
+/* Helpers */
+async function readFormData(req){
+  // Node 18+ native parser via Web APIs
+  const buff = await streamToBuffer(req);
+  const ct = req.headers['content-type'] || '';
+  const boundary = ct.split('boundary=')[1];
+  if(!boundary) throw new Error('No multipart boundary');
+  return new FormData(await new Response(buff, { headers:{ 'Content-Type': ct } }).formData());
+}
+
+function formDataForOpenAI(file, language){
+  const fd = new FormData();
+  fd.append('model', 'whisper-1'); // or a streaming-capable variant if/when available
+  fd.append('file', file, 'chunk.webm');
+  fd.append('language', language);
+  return fd;
+}
+
+function streamToBuffer(req){
+  return new Promise((resolve,reject)=>{
+    const chunks=[]; req.on('data',c=>chunks.push(c));
+    req.on('end',()=>resolve(Buffer.concat(chunks)));
+    req.on('error',reject);
+  });
 }
