@@ -8,106 +8,191 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
 <style>
   .wrap{max-width:1120px;margin:0 auto;padding:16px}
-  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-  .card{background:#fff;border:1px solid var(--mk-line);border-radius:18px;padding:16px;box-shadow:var(--mk-shadow)}
-  .list{display:grid;gap:10px;margin-top:14px}
-  @media (max-width:900px){ .cards{grid-template-columns:1fr} }
+  .stats{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:8px 0 14px
+  }
+  @media (max-width:900px){ .stats{grid-template-columns:1fr 1fr} }
+  @media (max-width:620px){ .stats{grid-template-columns:1fr} }
+  .stat{display:flex;flex-direction:column;gap:4px}
+  .stat .big{font-size:26px;font-weight:800;color:var(--mk-brand)}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media (max-width:1100px){ .grid{grid-template-columns:repeat(2,1fr)} }
+  @media (max-width:700px){ .grid{grid-template-columns:1fr} }
+  .card-h{display:flex;gap:10px}
+  .thumb{width:84px;height:84px;border-radius:12px;border:1px solid var(--mk-line);object-fit:cover;background:#e5dccd}
+  .actions{display:flex;gap:8px;flex-wrap:wrap}
+  .notice{margin:8px 0 0;color:var(--mk-sub);font-size:13px}
+  .toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center;margin:6px 0 10px}
 </style>
 </head>
 <body>
   <div id="header-placeholder"></div>
 
   <main class="wrap">
-    <section class="cards">
-      <article class="card"><h3 style="margin:0 0 6px">Your Stats</h3>
-        <div>Stories: <strong id="stat-stories">—</strong></div>
-        <div>Family shared with: <strong id="stat-family">—</strong></div>
-      </article>
-      <article class="card"><h3 style="margin:0 0 6px">Share with Family</h3>
-        <p>Add a family reader (read-only).</p>
-        <div class="row" style="display:flex;gap:8px">
-          <input id="share-email" class="mk-input" placeholder="family@example.com" type="email">
-          <button id="share-btn" class="mk-btn">Share</button>
-        </div>
-        <div id="share-msg" class="mk-sub" style="margin-top:6px"></div>
-      </article>
-      <article id="upgrade" class="card"><h3 style="margin:0 0 6px">Upgrade</h3>
-        <p>Unlock AI rewrite & exports.</p>
-        <a class="mk-btn mk-primary" href="/api/stripe/checkout?plan=premium">Upgrade to Premium</a>
-        <a class="mk-btn" href="/api/stripe/checkout?plan=family" style="margin-left:8px">Family Plan</a>
-      </article>
+    <h1 class="h1">My Stories</h1>
+
+    <div class="toolbar">
+      <div class="muted" id="loginState">Checking session…</div>
+      <div style="display:flex;gap:8px">
+        <button id="syncBtn" class="mk-btn" title="Sync local drafts to cloud">Sync drafts</button>
+        <button id="newBtn" class="mk-btn mk-primary" onclick="location.href='/record.html'">+ New story</button>
+      </div>
+    </div>
+
+    <section class="stats">
+      <div class="mk-card stat">
+        <div class="label">Total stories</div>
+        <div id="countStories" class="big">–</div>
+      </div>
+      <div class="mk-card stat">
+        <div class="label">Last updated</div>
+        <div id="lastUpdated" class="big">–</div>
+      </div>
+      <div class="mk-card stat">
+        <div class="label">Shared with</div>
+        <div id="sharedWith" class="big">0</div>
+      </div>
     </section>
 
-    <section class="card" style="margin-top:16px">
-      <h3 style="margin:0 0 8px">Your Stories</h3>
-      <div id="stories" class="list"></div>
+    <section class="mk-card" style="margin-bottom:12px">
+      <div class="label">Library</div>
+      <div id="modeMsg" class="notice"></div>
+      <div id="list" class="grid"></div>
     </section>
   </main>
 
 <script>
-const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
-window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {auth:{persistSession:true}});
-
-// Inject header
+/* ---------- Shared header & i18n ---------- */
 fetch('/header.html').then(r=>r.text()).then(html=>{
   document.getElementById('header-placeholder').innerHTML = html;
+  window.i18n && i18n.apply(document);
 });
 
-// Load stats, hide upgrade if paid
-(async function(){
-  const { data:{session} } = await sb.auth.getSession();
-  if(!session){ location.href='/login.html'; return; }
-  const uid = session.user.id;
+/* ---------- Supabase client ---------- */
+const SUPABASE_URL = window.ENV?.SUPABASE_URL || "https://jrjqciywlijhhcxfxywh.supabase.co";
+const SUPABASE_ANON_KEY = window.ENV?.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {auth:{persistSession:true}});
 
-  // plan
+const loginState = document.getElementById('loginState');
+const modeMsg = document.getElementById('modeMsg');
+const list = document.getElementById('list');
+const countStories = document.getElementById('countStories');
+const lastUpdated = document.getElementById('lastUpdated');
+const sharedWith = document.getElementById('sharedWith');
+const syncBtn = document.getElementById('syncBtn');
+
+const LS = 'memoir.stories';
+
+function esc(s){ return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])) }
+function fmtDate(d){ try{ return new Date(d).toLocaleString(); }catch{ return d || '–'; } }
+
+/* Signed image URL if present */
+async function signedImage(key){
+  if(!key) return null;
   try{
-    const { data:prof } = await sb.from('profiles').select('plan').single();
-    if(prof?.plan === 'premium' || prof?.plan === 'family'){
-      document.getElementById('upgrade').style.display='none';
+    const { data, error } = await sb.storage.from('memoir-images').createSignedUrl(key, 3600);
+    if(error) return null;
+    return data.signedUrl;
+  }catch{ return null; }
+}
+
+function card(story, thumbUrl){
+  const d = document.createElement('div'); d.className='mk-card';
+  const head = document.createElement('div'); head.className='card-h';
+  const img = document.createElement('img'); img.className='thumb'; if(thumbUrl){ img.src=thumbUrl; } else { img.style.visibility='hidden'; }
+  const meta = document.createElement('div'); meta.style.minWidth='0';
+  const h = document.createElement('div'); h.style.fontWeight='700'; h.style.marginBottom='4px'; h.textContent = story.title || 'Story';
+  const sub = document.createElement('div'); sub.className='muted'; sub.textContent = story.happened_label || (story.happened_sort? new Date(story.happened_sort).toDateString(): '') || fmtDate(story.created_at);
+  meta.appendChild(h); meta.appendChild(sub);
+  head.appendChild(img); head.appendChild(meta);
+
+  const actions = document.createElement('div'); actions.className='actions';
+  const view = document.createElement('button'); view.className='mk-btn'; view.textContent='View';
+  view.onclick = ()=> {
+    const dlg=document.createElement('dialog');
+    dlg.style.border='none'; dlg.style.borderRadius='14px'; dlg.style.maxWidth='min(820px,92vw)';
+    dlg.innerHTML = `<form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--mk-line)"><strong>${esc(story.title||'Story')}</strong><button autofocus class="mk-btn">Close</button></form><div style="padding:16px"><div class="muted" style="margin-bottom:6px">${esc(sub.textContent)}</div><div style="white-space:pre-wrap">${esc(story.transcript||'')}</div></div>`;
+    document.body.appendChild(dlg); dlg.addEventListener('close',()=>dlg.remove()); dlg.showModal();
+  };
+  const del = document.createElement('button'); del.className='mk-btn'; del.textContent='Delete';
+  del.onclick = async ()=>{
+    if(!confirm('Delete this story?')) return;
+    if(story.id){
+      const { error } = await sb.from('stories').delete().eq('id', story.id);
+      if(error){ alert('Delete failed: '+error.message); return; }
+    } else {
+      // local only
+      const local = JSON.parse(localStorage.getItem(LS)||'[]');
+      const idx = local.findIndex(s=>s.created===story.created);
+      if(idx>-1){ local.splice(idx,1); localStorage.setItem(LS, JSON.stringify(local)); }
     }
-  }catch{}
+    load();
+  };
 
-  // stories count
-  try{
-    const { count } = await sb.from('stories').select('*', {count:'exact', head:true}).eq('user_id', uid);
-    document.getElementById('stat-stories').textContent = count ?? 0;
-  }catch{ document.getElementById('stat-stories').textContent = '0'; }
+  actions.appendChild(view);
+  actions.appendChild(del);
 
-  // family count
-  try{
-    const { count } = await sb.from('family_members').select('*',{count:'exact',head:true}).eq('user_id', uid);
-    document.getElementById('stat-family').textContent = count ?? 0;
-  }catch{ document.getElementById('stat-family').textContent = '0'; }
+  d.appendChild(head);
+  const p = document.createElement('p'); p.className='muted'; p.style.margin='10px 0'; p.textContent = (story.transcript||'').slice(0,180) + ((story.transcript||'').length>180?'…':'');
+  d.appendChild(p);
+  d.appendChild(actions);
+  return d;
+}
 
-  // list recent stories
-  try{
-    const { data } = await sb.from('stories').select('id,title,created_at,audio_url').eq('user_id', uid).order('created_at',{ascending:false}).limit(50);
-    const box=document.getElementById('stories'); box.innerHTML='';
-    (data||[]).forEach(s=>{
-      const row=document.createElement('div'); row.className='row';
-      row.innerHTML=`<div class="story-row"><div style="min-width:0">
-        <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.title||'Story'}</div>
-        <div class="mk-sub" style="font-size:12px">${new Date(s.created_at).toLocaleString()}</div>
-      </div>
-      <div class="row"><a class="mk-btn" href="${s.audio_url||'#'}" target="_blank">Audio</a></div></div>`;
-      box.appendChild(row.firstChild);
+async function load(){
+  list.innerHTML=''; countStories.textContent='–'; lastUpdated.textContent='–';
+  const { data:{ session } } = await sb.auth.getSession();
+
+  if(!session){
+    loginState.textContent='Not signed in';
+    modeMsg.textContent='Viewing stories saved on this device (sign in to see your cloud library).';
+    const local = JSON.parse(localStorage.getItem(LS)||'[]');
+    local.forEach(s=> list.appendChild(card(s,null)));
+    countStories.textContent = local.length;
+    lastUpdated.textContent = local[0]?.created ? fmtDate(local[0].created) : '–';
+    return;
+  }
+
+  loginState.textContent = 'Signed in';
+  modeMsg.textContent = 'Cloud library (synced across your devices).';
+
+  // Fetch from Supabase
+  const { data, error } = await sb.from('stories')
+    .select('id,title,transcript,happened_label,happened_sort,created_at,image_path')
+    .order('created_at',{ascending:false});
+  if(error){ modeMsg.textContent='Failed to load cloud stories; showing local if available.'; }
+
+  const rows = data||[];
+  countStories.textContent = rows.length;
+  lastUpdated.textContent = rows[0]?.created_at ? fmtDate(rows[0].created_at) : '–';
+
+  for(const s of rows){
+    const url = await signedImage(s.image_path);
+    list.appendChild(card(s, url));
+  }
+}
+
+syncBtn.onclick = async ()=>{
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session){ alert('Sign in to sync.'); return; }
+  const local = JSON.parse(localStorage.getItem(LS)||'[]');
+  if(!local.length){ alert('No local drafts to sync.'); return; }
+  for(const s of local){
+    await sb.from('stories').insert({
+      title: s.title || 'Story',
+      transcript: s.transcript || '',
+      original_transcript: s.original_transcript || null,
+      happened_label: s.happened_label || null,
+      happened_sort: s.happened_sort || null,
+      created_at: s.created || new Date().toISOString()
     });
-  }catch{}
-})();
-
-// Share (store as family_members row)
-document.getElementById('share-btn').onclick = async ()=>{
-  const email = document.getElementById('share-email').value.trim();
-  const msg = document.getElementById('share-msg');
-  if(!email) return msg.textContent='Enter an email.';
-  const { data:{session} } = await sb.auth.getSession(); if(!session) return location.href='/login.html';
-  try{
-    // You can send an email invite outside; here we just record the intent row
-    await sb.from('family_members').insert({ user_id: session.user.id, family_id: null, role:'member' });
-    msg.textContent='Added (placeholder). Actual invite flow can be extended.';
-  }catch(e){ msg.textContent = 'Failed: '+(e.message||''); }
+  }
+  localStorage.removeItem(LS);
+  alert('Synced your local drafts to cloud!');
+  load();
 };
+
+load();
 </script>
 </body>
 </html>
