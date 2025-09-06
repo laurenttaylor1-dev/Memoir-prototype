@@ -3,118 +3,83 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Memoir — My Stories</title>
+  <title>My Stories — Memoir</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
 </head>
 <body>
-  <!-- shared header -->
-  <!-- paste the SHARED HEADER block here -->
+  <div id="site-header"></div>
+  <script src="/js/header.js"></script>
 
-  <div class="container">
-    <section class="card" style="padding:16px">
-      <h2 data-i18n="my_stories">My Stories</h2>
-      <div id="stats" class="muted" style="margin-bottom:12px"></div>
-
-      <div class="grid two">
-        <div class="card" style="padding:12px">
-          <strong data-i18n="invite_family">Invite a family member</strong>
-          <div style="display:flex;gap:8px;margin-top:8px">
-            <input id="invEmail" class="input" placeholder="name@family.com" data-i18n-placeholder="invite_email_ph">
-            <button id="invBtn" class="btn" data-i18n="send_invite">Send invite</button>
-          </div>
-          <div id="invMsg" class="muted" style="margin-top:6px"></div>
-        </div>
-        <div></div>
+  <main class="mk-container mk-grid cols-2">
+    <section class="mk-card" style="padding:18px">
+      <h2 class="mk-h2">Your stats</h2>
+      <div class="mk-grid cols-3">
+        <div><div class="mk-badge">Stories</div><h3 id="countStories" class="mk-h2">—</h3></div>
+        <div><div class="mk-badge">Family members</div><h3 id="countMembers" class="mk-h2">—</h3></div>
+        <div><div class="mk-badge">Plan</div><h3 id="planName" class="mk-h2">—</h3></div>
       </div>
 
-      <div id="list" style="margin-top:16px"></div>
+      <div style="margin-top:14px">
+        <label class="mk-muted">Share read-only with a family email</label>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px">
+          <input id="shareEmail" placeholder="family@example.com" style="flex:1; padding:10px; border:1px solid var(--mk-border); border-radius:12px">
+          <button id="btnShare" class="mk-cta outline">Share</button>
+        </div>
+        <div id="shareMsg" class="mk-muted" style="margin-top:6px"></div>
+      </div>
     </section>
-  </div>
 
-<script>
-const supabaseClient = window.supabase.createClient(
-  "https://jrjqciywlijhhcxfxywh.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak",
-  { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:false } }
-);
+    <aside class="mk-card" style="padding:18px">
+      <h2 class="mk-h2">Library</h2>
+      <div id="library">Loading…</div>
+    </aside>
+  </main>
 
-let userId=null;
-(async()=>{
-  const { data:{session} } = await supabaseClient.auth.getSession();
-  if(!session){ location.replace('login.html'); return; }
-  userId = session.user.id;
-  applyI18N();
-  await loadCountsAndList();
-})();
+  <script>
+    const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{persistSession:true,detectSessionInUrl:false} });
 
-async function loadCountsAndList(){
-  // Count stories
-  const { count } = await supabaseClient
-    .from('stories')
-    .select('id', { count:'exact', head:true })
-    .eq('user_id', userId);
+    async function load(){
+      const { data:{ user } } = await sb.auth.getUser();
+      if(!user){ location.href='/login.html'; return; }
 
-  document.getElementById('stats').textContent = t('you_have_x_stories', count||0);
+      // Count stories
+      const { count } = await sb.from('stories').select('id', { count:'exact', head:true }).eq('user_id', user.id);
+      document.getElementById('countStories').textContent = count ?? 0;
 
-  // List stories
-  const { data } = await supabaseClient
-    .from('stories')
-    .select('id,title,created_at,photo_url,transcript')
-    .eq('user_id', userId)
-    .order('created_at',{ascending:false});
+      // Plan + members (simple placeholders unless you’ve wired family tables)
+      const { data: prof } = await sb.from('profiles').select('plan').single();
+      document.getElementById('planName').textContent = prof?.plan || 'free';
 
-  const list = document.getElementById('list'); list.innerHTML='';
-  if(!data?.length){ list.innerHTML='<div class="muted">No stories yet.</div>'; return; }
+      // If you created family_members earlier, you can count them here. Otherwise show 0.
+      document.getElementById('countMembers').textContent = 0;
 
-  data.forEach(s=>{
-    const row = document.createElement('div');
-    row.className='card'; row.style.padding='12px'; row.style.margin='10px 0';
-    row.innerHTML = `
-      <div style="display:flex; gap:12px; align-items:center">
-        <img src="${s.photo_url||'assets/book-2.jpg'}" style="width:64px;height:64px;object-fit:cover;border-radius:12px;border:1px solid #eee"/>
-        <div style="flex:1">
-          <div style="font-weight:700">${s.title||'Story'}</div>
-          <div class="muted" style="font-size:12px">${new Date(s.created_at).toLocaleString()}</div>
-        </div>
-        <div style="display:flex; gap:8px">
-          <button class="btn" onclick="view(${JSON.stringify(s.id)})">View</button>
-          <label class="btn">
-            Change photo
-            <input type="file" accept="image/*" style="display:none" onchange="changePhoto('${s.id}', this.files[0])">
-          </label>
-          <button class="btn" onclick="delStory('${s.id}')">Delete</button>
-        </div>
-      </div>
-    `;
-    list.appendChild(row);
-  });
-}
+      // List stories
+      const { data: list } = await sb.from('stories')
+        .select('id,title,created_at,happened_label')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending:false });
 
-function view(id){ location.href=`/story.html?id=${encodeURIComponent(id)}`; }
+      const wrap = document.getElementById('library');
+      wrap.innerHTML = '';
+      (list||[]).forEach(s=>{
+        const row=document.createElement('div');
+        row.className='mk-card'; row.style.padding='10px'; row.style.marginBottom='8px';
+        row.innerHTML = `<div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+          <div><strong>${s.title}</strong><div class="mk-muted">${s.happened_label||new Date(s.created_at).toLocaleString()}</div></div>
+          <a class="mk-chip" href="/record.html">Open</a>
+        </div>`;
+        wrap.appendChild(row);
+      });
 
-async function changePhoto(id, file){
-  try{
-    const path = `${userId}/${Date.now()}-${file.name||'photo.jpg'}`;
-    const up = await supabaseClient.storage.from('memoir-images').upload(path, file, { upsert:false });
-    if(up.error) throw up.error;
-    const { data:pub } = supabaseClient.storage.from('memoir-images').getPublicUrl(path);
-    const { error } = await supabaseClient.from('stories').update({ photo_url: pub.publicUrl }).eq('id', id).eq('user_id', userId);
-    if(error) throw error;
-    await loadCountsAndList();
-  }catch(e){ alert('Photo update failed: '+(e.message||e)); }
-}
-
-async function delStory(id){
-  if(!confirm('Delete this story?')) return;
-  const { error } = await supabaseClient.from('stories').delete().eq('id', id).eq('user_id', userId);
-  if(error){ alert(error.message); return; }
-  await loadCountsAndList();
-}
-
-// simple invite placeholder (wire to your families table later)
-document.getElementById('invBtn').onclick = ()=>{
-  const email = (document.getElementById('invEmail').value||'').trim();
-  document.getElementById('invMsg').textContent = email ? `Invite sent to ${email}.` : 'Enter an email.';
-};
-</script>
+      document.getElementById('btnShare').onclick = ()=>{
+        const email = document.getElementById('shareEmail').value.trim();
+        document.getElementById('shareMsg').textContent = email ? `Invite queued for: ${email}` : 'Enter an email first.';
+      };
+    }
+    load();
+  </script>
 </body>
 </html>
