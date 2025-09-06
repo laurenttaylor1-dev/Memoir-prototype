@@ -4,30 +4,17 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Memoir — Home</title>
-<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="/styles.css"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
 <style>
-  body{background:var(--mk-bg,#f7f6f4);color:var(--mk-fg,#2b2b2b)}
-  .wrap{max-width:1120px;margin:0 auto;padding:16px}
-  .hero{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;margin-top:14px}
+  /* Page-specific tweaks; theme variables come from styles.css */
+  .hero{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;margin-top:14px}
   .hero .pic{background:#ddd;border-radius:22px;overflow:hidden;box-shadow:var(--mk-shadow);min-height:420px}
-  .hero .pic img{display:block;width:100%;height:100%;object-fit:cover}
-  .hero .copy{background:#fff;border:1px solid var(--mk-line);border-radius:22px;box-shadow:var(--mk-shadow);padding:18px}
-  .h1{font-size:40px;line-height:1.05;margin:4px 0 10px}
-  .h1 strong{color:var(--mk-brand)}
-  .lead{color:var(--mk-sub)}
-  .row2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:16px}
-  .card{background:#fff;border:1px solid var(--mk-line);border-radius:20px;padding:16px;box-shadow:var(--mk-shadow)}
-  .card h3{margin:6px 0 8px}
-  .mk-btn.lg{padding:14px 18px;font-size:16px}
+  .hero .pic img{display:block;width:100%;height:100%;object-fit:cover;filter:contrast(1.02) saturate(.96)}
+  .actions{display:grid;gap:14px}
+  .card-title{margin:2px 0 6px}
   .features{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0}
-  .feature{background:#fff;border:1px solid var(--mk-line);border-radius:18px;padding:16px}
-  .pricing, .faq{background:#fff;border:1px solid var(--mk-line);border-radius:18px;padding:16px;margin:18px 0}
-  .price-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  .price{border:1px dashed var(--mk-line);border-radius:16px;padding:14px}
-  .footnote{text-align:center;color:var(--mk-sub);font-size:12px;margin:12px 0 30px}
-  @media (max-width:900px){ .hero{grid-template-columns:1fr}.row2{grid-template-columns:1fr}.features{grid-template-columns:1fr} .price-cols{grid-template-columns:1fr} }
+  @media (max-width:960px){ .hero{grid-template-columns:1fr} }
 </style>
 </head>
 <body>
@@ -37,101 +24,62 @@
   <main class="wrap">
     <!-- HERO -->
     <section class="hero">
-      <div class="pic">
+      <div class="pic mk-card" style="padding:0">
         <img id="hero-img" src="/assets/book-1.jpg" alt="Open book">
       </div>
-      <div class="copy">
-        <div class="h1"><strong>Preserve</strong> Your Memories Forever</div>
-        <p class="lead">Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.</p>
-        <div style="display:flex;gap:10px;margin-top:12px">
-          <a href="/record.html" class="mk-btn mk-primary lg">Start Recording</a>
-          <a href="/stories.html" class="mk-btn lg">My Stories</a>
+
+      <div class="actions">
+        <div class="mk-card">
+          <h2 class="h1" data-i18n="landing.title">Preserve Your Memories Forever</h2>
+          <p class="lead" data-i18n="landing.lead">Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.</p>
         </div>
+
+        <article class="mk-card">
+          <h3 class="card-title" data-i18n="cards.start.title">Start Recording</h3>
+          <p class="lead" data-i18n="cards.start.body">One tap to begin. Add a title and “when it happened” later.</p>
+          <a href="/record.html" class="mk-btn mk-primary lg" data-i18n="cards.start.cta">Start Recording</a>
+        </article>
+
+        <article class="mk-card">
+          <h3 class="card-title" data-i18n="cards.stories.title">View My Stories</h3>
+          <p class="lead" data-i18n="cards.stories.body">Browse, rewrite with AI, export, and share with your family.</p>
+          <a href="/stories.html" class="mk-btn lg" data-i18n="cards.stories.cta">My Stories</a>
+        </article>
       </div>
     </section>
 
-    <!-- TWO ACTION CARDS -->
-    <section class="row2">
-      <article class="card">
-        <h3>Start Recording</h3>
-        <p>One tap to begin. Add a title and “when it happened” later.</p>
-        <a href="/record.html" class="mk-btn mk-primary">Start Recording</a>
-      </article>
-      <article class="card">
-        <h3>View My Stories</h3>
-        <p>Browse, rewrite with AI, export, and share with your family.</p>
-        <a href="/stories.html" class="mk-btn">My Stories</a>
-      </article>
-    </section>
-
-    <!-- FEATURES (soft, subtle) -->
+    <!-- FEATURES -->
     <section class="features">
-      <div class="feature">
-        <h4>Smart Transcription</h4>
-        <p>Server-side Whisper for accurate EN/FR/NL/ES. Robust to poor connections.</p>
+      <div class="mk-card">
+        <h4 data-i18n="feat.smart.t">Smart Transcription</h4>
+        <p class="lead" data-i18n="feat.smart.b">Server-side Whisper for accurate EN/FR/NL/ES.</p>
       </div>
-      <div class="feature">
-        <h4>Guided or Free</h4>
-        <p>Use gentle prompts or speak freely. Add an approximate date like “early 1970s”.</p>
+      <div class="mk-card">
+        <h4 data-i18n="feat.guided.t">Guided or Free</h4>
+        <p class="lead" data-i18n="feat.guided.b">Use gentle prompts or speak freely.</p>
       </div>
-      <div class="feature">
-        <h4>Private Library</h4>
-        <p>Stories and media saved in your private account. Export when you’re ready.</p>
+      <div class="mk-card">
+        <h4 data-i18n="feat.private.t">Private Library</h4>
+        <p class="lead" data-i18n="feat.private.b">Your stories and media stay in your account.</p>
       </div>
-    </section>
-
-    <!-- PRICING -->
-    <section id="pricing" class="pricing">
-      <h3 style="margin:0 0 8px">Pricing</h3>
-      <div class="price-cols">
-        <div class="price">
-          <h4>Premium</h4>
-          <div><strong>€4.99 / month</strong></div>
-          <ul>
-            <li>Record & transcribe</li>
-            <li>AI Rewrite</li>
-            <li>Export book / CSV</li>
-            <li>Full library</li>
-          </ul>
-          <a href="/stories.html#upgrade" class="mk-btn mk-primary">Upgrade to Premium</a>
-        </div>
-        <div class="price">
-          <h4>Family</h4>
-          <div><strong>€7.99 / month</strong></div>
-          <ul>
-            <li>Everything in Premium</li>
-            <li>Share with up to 4 family readers</li>
-            <li>Readers can listen & read</li>
-          </ul>
-          <a href="/stories.html#upgrade" class="mk-btn">Upgrade to Family</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- FAQ -->
-    <section id="faq" class="faq">
-      <h3 style="margin:0 0 8px">FAQ</h3>
-      <details><summary>How do I start?</summary><p>Tap “Start Recording”, speak, then save. Add a title and when it happened.</p></details>
-      <details><summary>Can I use AI rewrite?</summary><p>Yes, on Premium & Family plans.</p></details>
-      <details><summary>Exports?</summary><p>Download CSV and (coming) polished book export.</p></details>
-      <details><summary>Free trial?</summary><p>We support invite codes and Stripe trials. See My Stories → Upgrade.</p></details>
     </section>
 
     <div class="footnote">© Memoir App — built for families</div>
   </main>
 
 <script>
-// Create global Supabase client for header usage
+/* Supabase client for header auth banner */
 const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
 window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {auth:{persistSession:true}});
 
-// Inject shared header
+/* Inject shared header and apply language */
 fetch('/header.html').then(r=>r.text()).then(html=>{
   document.getElementById('header-placeholder').innerHTML = html;
+  window.i18n && i18n.apply(document);
 });
 
-// Hero image rotation
+/* Hero image rotation (every 30s) */
 const imgs = ['/assets/book-1.jpg','/assets/book-2.jpg','/assets/book-3.jpg'];
 let ix = 0;
 setInterval(()=>{
@@ -139,6 +87,9 @@ setInterval(()=>{
   const el = document.getElementById('hero-img');
   if(el) el.src = imgs[ix];
 }, 30000);
+
+/* Re-apply translations on change */
+document.addEventListener('memoir:lang', ()=> window.i18n && i18n.apply(document));
 </script>
 </body>
 </html>
