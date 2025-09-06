@@ -1,147 +1,185 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Record — Memoir</title>
-  <link rel="stylesheet" href="/styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Memoir — Record</title>
+<link rel="stylesheet" href="/styles.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
+<style>
+  .wrap{max-width:1120px;margin:0 auto;padding:16px}
+  .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}
+  @media (max-width:900px){ .grid{grid-template-columns:1fr} }
+  .panel{background:#fff;border:1px solid var(--mk-line);border-radius:20px;padding:16px;box-shadow:var(--mk-shadow)}
+  .record-box{display:flex;flex-direction:column;align-items:center;gap:12px}
+  .rec-btn{width:200px;height:200px;border-radius:999px;border:0;background:radial-gradient(70% 70% at 50% 30%, #ff6868,#b02562);color:#fff;font-weight:800;font-size:18px;box-shadow:0 18px 40px rgba(176,37,98,.35);cursor:pointer}
+  .rec-btn.pulse{animation:pulse 1.6s infinite ease-in-out}
+  @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
+  .transcript{min-height:180px;border:1px dashed var(--mk-line);border-radius:14px;padding:12px;background:#fafafa}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{padding:8px 12px;border-radius:999px;border:1px solid #e6e3dc;background:#fbf9f6;cursor:pointer}
+  .tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .side .list{display:grid;gap:10px}
+  .story-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;border:1px solid var(--mk-line);border-radius:12px;background:#fafafa}
+</style>
 </head>
 <body>
-  <div id="site-header"></div>
-  <script src="/js/header.js"></script>
+  <div id="header-placeholder"></div>
 
-  <main class="mk-container mk-grid cols-2">
-    <section class="mk-card" style="padding:18px">
-      <h2 class="mk-h2">Record</h2>
+  <main class="wrap">
+    <div class="grid">
+      <section class="panel">
+        <div class="record-box">
+          <button id="rec" class="rec-btn" aria-pressed="false">Record</button>
 
-      <!-- Big round record -->
-      <div style="display:flex;justify-content:center;margin:12px 0 8px">
-        <button id="btnRec" class="mk-cta" style="width:180px;height:180px;border-radius:9999px;font-size:18px">Record</button>
-      </div>
+          <div class="tools">
+            <input id="title" class="mk-input" placeholder="Story title"/>
+            <input id="when" class="mk-input" placeholder='When it happened (e.g. "early 1970s", or 1972-02-15)'/>
+            <label class="mk-btn">
+              Add photo
+              <input id="photo" type="file" accept="image/*" hidden>
+            </label>
+            <button id="save" class="mk-btn mk-primary" disabled>Save story</button>
+          </div>
 
-      <!-- Transcript under the button -->
-      <div class="mk-card" style="padding:12px; margin-top:10px">
-        <div class="mk-muted" style="margin-bottom:6px">Transcript</div>
-        <div id="transcript" style="min-height:120px; white-space:pre-wrap">Your words will appear here…</div>
-      </div>
-
-      <div class="mk-grid cols-2" style="margin-top:12px">
-        <div>
-          <label class="mk-muted">Title</label>
-          <input id="title" style="width:100%; padding:10px; border:1px solid var(--mk-border); border-radius:12px; background:#fff">
+          <div id="transcript" class="transcript">Your words will appear here…</div>
         </div>
-        <div>
-          <label class="mk-muted">When did it happen?</label>
-          <input id="when" placeholder='e.g. "spring 1974" or 1988-05-10' style="width:100%; padding:10px; border:1px solid var(--mk-border); border-radius:12px; background:#fff">
+      </section>
+
+      <aside class="panel side">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <h3 style="margin:0">Today's suggested prompts</h3>
+          <button id="refresh" class="mk-btn">Suggest other prompts</button>
         </div>
-      </div>
+        <div id="prompts" class="row" style="margin-bottom:10px"></div>
 
-      <!-- Photo attach -->
-      <div style="margin-top:12px">
-        <label class="mk-muted">Attach a photo (optional)</label><br/>
-        <input id="photo" type="file" accept="image/*">
-      </div>
-
-      <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap">
-        <button id="save" class="mk-cta">Save story</button>
-        <button id="clear" class="mk-cta outline">Clear</button>
-      </div>
-    </section>
-
-    <aside class="mk-card" style="padding:18px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <h3 class="mk-h2" style="margin:0">Today’s suggested prompts</h3>
-        <button id="refreshPrompts" class="mk-chip">Suggest other prompts</button>
-      </div>
-      <div id="prompts" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px"></div>
-
-      <div style="margin-top:16px">
-        <h3 class="mk-h2">Library</h3>
-        <div id="library" class="mk-muted">No items yet.</div>
-      </div>
-    </aside>
+        <h4>Library (this device)</h4>
+        <div id="library" class="list"></div>
+      </aside>
+    </div>
   </main>
 
-  <script>
-    // ====== Supabase client (replace with your project values if not already present elsewhere) ======
-    const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{persistSession:true,detectSessionInUrl:false} });
+<script>
+const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
+window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {auth:{persistSession:true}});
 
-    // ====== Guided prompts (4 at a time) ======
-    const STOCK = {
-      en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
-      fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
-      nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"],
-      es:["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"]
-    };
-    function pick4(list){ const arr=[...list]; arr.sort(()=>Math.random()-0.5); return arr.slice(0,4); }
-    function renderPrompts(){
-      const lang = localStorage.getItem('mk.lang') || 'en';
-      const wrap = document.getElementById('prompts'); wrap.innerHTML='';
-      pick4(STOCK[lang]||STOCK.en).forEach(word=>{
-        const b=document.createElement('button'); b.className='mk-chip'; b.textContent=word;
-        b.onclick=()=>{ document.getElementById('title').value = word; };
-        wrap.appendChild(b);
-      });
-    }
-    document.getElementById('refreshPrompts').onclick = renderPrompts;
-    renderPrompts();
+// Inject shared header
+fetch('/header.html').then(r=>r.text()).then(html=>{
+  document.getElementById('header-placeholder').innerHTML = html;
+});
 
-    // ====== Recording UX (placeholder) ======
-    const recBtn = document.getElementById('btnRec');
-    const transcriptEl = document.getElementById('transcript');
-    let recOn = false;
-    recBtn.onclick = () => {
-      recOn = !recOn;
-      recBtn.textContent = recOn ? 'Stop' : 'Record';
-      // You already wired Whisper chunking server-side; here we just show a note.
-      if (recOn) transcriptEl.textContent = 'Listening… (audio is being chunked to server Whisper)';
-    };
+// ===== Guided topics (4 at a time) =====
+const TOPICS = {
+  en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
+  fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
+  nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"],
+  es:["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"]
+};
+function pick4(list){
+  const pool=[...list], out=[];
+  while(out.length<4 && pool.length){ out.push(...pool.splice(Math.floor(Math.random()*pool.length),1));}
+  return out.slice(0,4);
+}
+function renderPrompts(){
+  const code = localStorage.getItem('memoir.lang') || 'en';
+  const four = pick4(TOPICS[code]||TOPICS.en);
+  const box = document.getElementById('prompts'); box.innerHTML='';
+  four.forEach(word=>{
+    const b=document.createElement('button'); b.className='chip'; b.textContent=word;
+    b.onclick=()=>{ document.getElementById('title').value=word; };
+    box.appendChild(b);
+  });
+}
+renderPrompts();
+document.getElementById('refresh').onclick=renderPrompts;
 
-    // ====== Save story (DB + optional photo to Storage) ======
-    function parseApproxDate(input){
-      if(!input) return { label:'', sort:null };
-      const s=input.trim().toLowerCase();
-      const iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); if(iso){const d=new Date(+iso[1],+iso[2]-1,+iso[3]);return{label:input,sort:d.toISOString().slice(0,10)};}
-      const year=s.match(/(\d{4})/); if(year){const d=new Date(+year[1],0,1);return{label:input,sort:d.toISOString().slice(0,10)};}
-      return { label:input, sort:null };
-    }
+// ===== Very small in-browser recorder (placeholder). If you already wired chunked Whisper, keep that. =====
+let media, rec, chunks=[], recording=false;
+const recBtn = document.getElementById('rec');
+const transcriptEl = document.getElementById('transcript');
+async function start(){
+  if (!navigator.mediaDevices?.getUserMedia) return alert('Mic not supported here.');
+  media = await navigator.mediaDevices.getUserMedia({audio:true});
+  rec = new MediaRecorder(media, {mimeType:'audio/webm'});
+  chunks=[];
+  rec.ondataavailable = e => { if(e.data.size>0) chunks.push(e.data); };
+  rec.onstop = async ()=>{
+    // store blob locally; you can POST to your /api/transcribe for Whisper
+    const blob = new Blob(chunks,{type:'audio/webm'});
+    transcriptEl.textContent = '(Audio captured. If server chunking is enabled, it will transcribe after save.)';
+    document.getElementById('save').disabled=false;
+    window._lastBlob = blob; // keep for save
+  };
+  rec.start();
+  recBtn.textContent='Stop'; recBtn.classList.add('pulse'); recording=true;
+}
+function stop(){
+  rec.stop(); media.getTracks().forEach(t=>t.stop());
+  recBtn.textContent='Record'; recBtn.classList.remove('pulse'); recording=false;
+}
+recBtn.onclick=()=> recording?stop():start();
 
-    async function uploadPhoto(file, userId){
-      if(!file) return null;
-      const path = `${userId}/${Date.now()}_${file.name}`;
-      const { data, error } = await sb.storage.from('memoir-images').upload(path, file, { upsert:false });
-      if(error){ console.warn(error); return null; }
-      const { data: pub } = sb.storage.from('memoir-images').getPublicUrl(path);
-      return pub.publicUrl || null;
-    }
+// ===== Save story (to Supabase tables + storage) =====
+const LSKEY='memoir.localStories';
+function loadLocal(){ try{return JSON.parse(localStorage.getItem(LSKEY)||'[]')}catch{return[]} }
+function saveLocal(a){ localStorage.setItem(LSKEY, JSON.stringify(a)); }
+function addRow(s,idx){
+  const row=document.createElement('div'); row.className='story-row';
+  row.innerHTML = `<div style="min-width:0">
+    <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.title||'Story'}</div>
+    <div class="mk-sub" style="font-size:12px">${s.when||''}</div>
+  </div>
+  <div class="row"><a class="mk-btn" href="${s.audioUrl||'#'}" target="_blank">Audio</a></div>`;
+  return row;
+}
+function renderLib(){
+  const box=document.getElementById('library'); box.innerHTML='';
+  loadLocal().forEach((s,i)=>box.appendChild(addRow(s,i)));
+}
+renderLib();
 
-    async function saveStory(){
-      const { data:{ user } } = await sb.auth.getUser();
-      if(!user){ alert('Please sign in.'); return; }
+document.getElementById('save').onclick = async ()=>{
+  const { data:{session} } = await sb.auth.getSession();
+  if(!session){ alert('Please login first.'); return; }
 
-      const title = document.getElementById('title').value.trim() || 'Story';
-      const when = parseApproxDate(document.getElementById('when').value);
-      const text = transcriptEl.textContent.replace('Your words will appear here…','').trim();
-      const photoFile = document.getElementById('photo').files[0];
-      const photoUrl = await uploadPhoto(photoFile, user.id);
+  const t = document.getElementById('title').value.trim() || 'Story';
+  const w = document.getElementById('when').value.trim();
+  const photo = document.getElementById('photo').files?.[0] || null;
+  const audio = window._lastBlob || null;
 
-      const { error } = await sb.from('stories').insert({
-        user_id: user.id,
-        title,
-        transcript: text || '(audio-only)',
-        original_transcript: text || null,
-        happened_label: when.label,
-        happened_sort: when.sort,
-        created_at: new Date().toISOString()
-      });
-      if(error){ alert('Save failed'); console.error(error); return; }
-      alert('Saved!');
-    }
-    document.getElementById('save').onclick = saveStory;
-    document.getElementById('clear').onclick = ()=>{ transcriptEl.textContent='Your words will appear here…'; };
-  </script>
+  // Upload media to storage (paths: user_id/<ts>.ext)
+  const uid = session.user.id;
+  const ts = Date.now();
+  let audioUrl=null, imageUrl=null;
+
+  if(audio){
+    const { data, error } = await sb.storage.from('memoir-audio').upload(`${uid}/${ts}.webm`, audio, {upsert:false, contentType:'audio/webm'});
+    if(!error){ const { data:pub } = sb.storage.from('memoir-audio').getPublicUrl(data.path); audioUrl = pub?.publicUrl||null; }
+  }
+  if(photo){
+    const { data, error } = await sb.storage.from('memoir-images').upload(`${uid}/${ts}.jpg`, photo, {upsert:false, contentType:photo.type||'image/jpeg'});
+    if(!error){ const { data:pub } = sb.storage.from('memoir-images').getPublicUrl(data.path); imageUrl = pub?.publicUrl||null; }
+  }
+
+  // Insert into stories (if table exists)
+  try{
+    await sb.from('stories').insert({
+      user_id: uid,
+      title: t,
+      transcript: transcriptEl.textContent || '',
+      audio_url: audioUrl,
+      created_at: new Date().toISOString(),
+      happened_label: w || null
+    });
+  }catch{}
+
+  const local = loadLocal();
+  local.unshift({title:t, when:w, audioUrl, imageUrl, created:new Date().toISOString()});
+  saveLocal(local); renderLib();
+  document.getElementById('save').disabled=true;
+  alert('Saved!');
+};
+</script>
 </body>
 </html>
