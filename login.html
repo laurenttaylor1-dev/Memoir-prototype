@@ -3,52 +3,42 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Memoir — Login</title>
+  <title>Login — Memoir</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
 </head>
 <body>
-  <!-- shared header -->
-  <!-- paste the SHARED HEADER block here -->
+  <div id="site-header"></div>
+  <script src="/js/header.js"></script>
 
-  <div class="container">
-    <section class="card" style="padding:16px;max-width:560px;margin:20px auto">
-      <h2 data-i18n="sign_in">Sign in</h2>
-      <div style="display:grid;gap:10px;margin-top:10px">
-        <label class="muted" for="email" data-i18n="email">Email</label>
-        <input id="email" class="input" type="email" placeholder="you@example.com"/>
-
-        <label class="muted" for="password" data-i18n="password">Password</label>
-        <input id="password" class="input" type="password" placeholder="••••••••"/>
-
-        <button id="signin" class="btn primary" data-i18n="sign_in">Sign in</button>
-      </div>
-      <div id="msg" class="muted" style="margin-top:10px"></div>
+  <main class="mk-container">
+    <section class="mk-card" style="padding:18px; max-width:560px; margin:0 auto">
+      <h2 class="mk-h2">Sign in</h2>
+      <form id="loginForm">
+        <div style="display:grid; gap:10px">
+          <input id="email" type="email" placeholder="Email" required style="padding:10px; border:1px solid var(--mk-border); border-radius:12px">
+          <input id="password" type="password" placeholder="Password" required style="padding:10px; border:1px solid var(--mk-border); border-radius:12px">
+          <button class="mk-cta" type="submit">Sign in</button>
+        </div>
+      </form>
+      <div id="msg" class="mk-muted" style="margin-top:8px"></div>
     </section>
-  </div>
+  </main>
 
-<script>
-const sb = window.supabase.createClient(
-  "https://jrjqciywlijhhcxfxywh.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak",
-  { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:false } }
-);
+  <script>
+    const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{persistSession:true,detectSessionInUrl:false} });
 
-(async()=>{
-  const { data:{ session } } = await sb.auth.getSession();
-  if(session){ location.replace('stories.html'); return; } // already logged
-  applyI18N();
-})();
-
-async function doLogin(){
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
-  const msg = document.getElementById('msg'); msg.textContent='';
-  const { error } = await sb.auth.signInWithPassword({ email, password });
-  if(error){ msg.textContent = error.message; return; }
-  location.replace('stories.html');
-}
-
-document.getElementById('signin').onclick = doLogin;
-document.getElementById('password').addEventListener('keypress',(e)=>{ if(e.key==='Enter') doLogin(); });
-</script>
+    document.getElementById('loginForm').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if(error){ document.getElementById('msg').textContent = error.message; return; }
+      // If already logged in, go to My Stories
+      location.href = '/stories.html';
+    });
+  </script>
 </body>
 </html>
