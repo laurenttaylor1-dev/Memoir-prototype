@@ -1,91 +1,59 @@
-/* =========================
-   Memoir App – Global Styles
-   ========================= */
+/* styles.css — Vintage / sepia theme for the whole app */
 
 :root{
-  --mk-bg:#faf9f7;
-  --mk-card:#ffffff;
-  --mk-fg:#262626;
-  --mk-muted:#6b7280;
-  --mk-accent:#8b5cf6;   /* soft purple */
-  --mk-brown:#7a5731;    /* warm brown */
-  --mk-border:#e9e5e1;
-  --mk-radius:18px;
-  --mk-shadow:0 10px 30px rgba(0,0,0,.06);
+  /* Palette */
+  --mk-bg:        #F2ECE4;   /* paper beige */
+  --mk-card:      #FFFCF7;   /* cream */
+  --mk-fg:        #2C2620;   /* deep cocoa */
+  --mk-sub:       #6E6257;   /* muted brown */
+  --mk-brand:     #8B5E34;   /* warm brown */
+  --mk-accent:    #C08A5B;   /* honey gold */
+  --mk-line:      #E6D9C9;   /* parchment line */
+  --mk-radius:    18px;
+  --mk-shadow:    0 12px 30px rgba(44,38,32,.08);
+
+  /* Buttons */
+  --mk-btn-bg:    #fff;
+  --mk-btn-fg:    var(--mk-fg);
+  --mk-btn-border: var(--mk-line);
+  --mk-primary-grad: linear-gradient(90deg, var(--mk-brand), var(--mk-accent));
+  --mk-primary-fg: #fff;
 }
 
+@media (prefers-color-scheme: dark){
+  :root{
+    --mk-bg:#1F1A16; --mk-card:#26201B; --mk-fg:#EFE8DF; --mk-sub:#BBAE9F;
+    --mk-line:#3A3128; --mk-shadow:0 14px 32px rgba(0,0,0,.35);
+    --mk-btn-bg:#2B241F; --mk-btn-fg:#EFE8DF; --mk-btn-border:#3A3128;
+  }
+}
+
+/* Base */
 *{box-sizing:border-box}
-html,body{
-  margin:0; padding:0;
-  background:var(--mk-bg); color:var(--mk-fg);
-  font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
-}
-a{color:inherit; text-decoration:none}
+html,body{margin:0;padding:0}
+body{background:var(--mk-bg);color:var(--mk-fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
 
-/* ----- Header (shared) ----- */
-.mk-header{
-  position:sticky; top:0; z-index:50;
-  background:var(--mk-card);
-  border-bottom:1px solid var(--mk-border);
-  display:flex; justify-content:space-between; align-items:center; gap:16px;
-  padding:10px 14px;
-  flex-wrap:wrap; /* wrap on smaller screens */
+/* Generic elements reused across pages */
+.h1{font-size:clamp(26px,3.4vw,38px);line-height:1.1;margin:6px 0 10px}
+.lead{color:var(--mk-sub)}
+
+.mk-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:10px 16px;border-radius:999px;border:1px solid var(--mk-btn-border);
+  background:var(--mk-btn-bg);color:var(--mk-btn-fg);text-decoration:none;
+  font-weight:700;letter-spacing:.01em;cursor:pointer;user-select:none
 }
-.mk-brand{display:flex; align-items:center; gap:10px; min-width:260px}
-.mk-logo{font-size:22px}
-.mk-title{display:flex; gap:6px; flex-wrap:wrap; font-size:14px}
-.mk-title strong{font-weight:800}
-.mk-sub{color:var(--mk-muted)}
-.mk-nav{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
-.mk-chip{
-  display:inline-flex; align-items:center; justify-content:center;
-  padding:10px 16px; background:#fff; border:1px solid var(--mk-border);
-  border-radius:9999px; box-shadow:0 1px 0 rgba(0,0,0,.02);
-}
-.mk-chip:hover{border-color:#dedad6}
-.mk-lang select{
-  padding:10px 14px; border:1px solid var(--mk-border); border-radius:9999px; background:#fff;
+.mk-btn:hover,.mk-btn:focus{outline:none;box-shadow:0 0 0 2px rgba(139,94,52,.15)}
+.mk-btn.mk-primary{background:var(--mk-primary-grad);border-color:transparent;color:var(--mk-primary-fg)}
+.mk-btn.lg{padding:14px 18px;font-size:16px}
+
+.mk-card{
+  background:var(--mk-card);border:1px solid var(--mk-line);border-radius:20px;
+  box-shadow:var(--mk-shadow);padding:16px
 }
 
-@media (max-width: 768px){
-  .mk-header{flex-direction:column; align-items:stretch}
-  .mk-nav{justify-content:center}
-}
+.mk-grid{display:grid;gap:16px}
+.wrap{max-width:1120px;margin:0 auto;padding:16px}
 
-/* ----- Layout helpers ----- */
-.mk-container{max-width:1080px; margin:0 auto; padding:18px}
-.mk-card{background:var(--mk-card); border:1px solid var(--mk-border); border-radius:var(--mk-radius); box-shadow:var(--mk-shadow)}
-.mk-grid{display:grid; gap:16px}
-@media (min-width:900px){
-  .mk-grid.cols-2{grid-template-columns:1fr 1fr}
-  .mk-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
-}
-
-/* ----- Typography ----- */
-.mk-h1{font-size:42px; line-height:1.1; margin:0 0 6px}
-.mk-h2{font-size:22px; margin:0 0 6px}
-.mk-muted{color:var(--mk-muted)}
-.mk-badge{display:inline-block; padding:6px 10px; border:1px solid var(--mk-border); border-radius:9999px; background:#fff; font-size:12px}
-
-/* ----- Hero ----- */
-.mk-hero{overflow:hidden}
-.mk-hero img{width:100%; height:auto; display:block; border-radius:14px}
-.mk-hero-pane{padding:16px}
-
-/* ----- Buttons ----- */
-.mk-cta{
-  display:flex; align-items:center; justify-content:center; gap:8px;
-  padding:14px 20px; border-radius:9999px; border:none; cursor:pointer;
-  background:var(--mk-brown); color:#fff; font-weight:700; transition:transform .02s ease;
-}
-.mk-cta:active{transform:translateY(1px)}
-.mk-cta.outline{background:#fff; color:var(--mk-fg); border:1px solid var(--mk-border)}
-
-/* ----- Feature cards ----- */
-.mk-feature{padding:18px}
-
-/* ----- Inputs ----- */
-input,select,textarea{
-  font:inherit; color:inherit;
-}
+/* Utility for section footnote */
+.footnote{color:var(--mk-sub);font-size:12px;text-align:center;margin:12px 0 30px}
