@@ -5,17 +5,18 @@
       <span class="mk-dot" aria-hidden="true"></span>
       <div class="mk-titles">
         <div class="mk-app">MEMOIR APP</div>
-        <div class="mk-tag">Preserve your memories forever</div>
+        <div class="mk-tag" data-i18n="header.tagline">Preserve your memories forever</div>
       </div>
     </div>
 
     <nav class="mk-nav">
-      <a href="/landing.html" data-nav="home" class="mk-btn">Home</a>
-      <a href="/login.html" data-nav="login" class="mk-btn">Login</a>
-      <a href="/record.html" data-nav="record" class="mk-btn">Record</a>
-      <a href="/stories.html" data-nav="stories" class="mk-btn">My Stories</a>
+      <a href="/landing.html" data-nav="home" class="mk-btn" data-i18n="nav.home">Home</a>
+      <a href="/login.html" data-nav="login" class="mk-btn" data-i18n="nav.login">Login</a>
+      <a href="/record.html" data-nav="record" class="mk-btn" data-i18n="nav.record">Record</a>
+      <a href="/stories.html" data-nav="stories" class="mk-btn" data-i18n="nav.stories">My Stories</a>
+
       <div class="mk-lang">
-        <button class="mk-btn mk-ghost" id="mk-lang-btn">🇬🇧 English</button>
+        <button class="mk-btn" id="mk-lang-btn">🇬🇧 English</button>
         <div class="mk-menu" id="mk-lang-menu" hidden>
           <button data-lang="en">🇬🇧 English</button>
           <button data-lang="fr">🇫🇷 Français</button>
@@ -27,90 +28,143 @@
   </div>
 
   <div id="mk-upgrade" class="mk-upgrade" hidden>
-    <div>You're on <strong>Free</strong>. Unlock Premium or Family (read-only for 4 relatives).</div>
-    <div class="mk-actions">
-      <a class="mk-btn mk-primary" href="/stories.html#upgrade">Upgrade</a>
+    <div class="mk-upg-inner">
+      <span data-i18n="banner.free">You're on <strong>Free</strong>. Unlock Premium or Family (read-only for 4 relatives).</span>
+      <a class="mk-btn mk-primary" href="/stories.html#upgrade" data-i18n="banner.cta">Upgrade</a>
     </div>
   </div>
 </header>
 
 <style>
-  :root{
-    --mk-bg:#f7f6f4;--mk-card:#fff;--mk-fg:#2b2b2b;--mk-sub:#6b7280;
-    --mk-brand:#5b3df5;--mk-accent:#8f63ff;--mk-gold:#8b6a3b;
-    --mk-line:#ece8e2;--mk-radius:18px;--mk-shadow:0 12px 30px rgba(0,0,0,.06)
-  }
-  .mk-header{position:sticky;top:0;z-index:20;background:var(--mk-card);border-bottom:1px solid var(--mk-line)}
+  .mk-header{position:sticky;top:0;z-index:40;background:var(--mk-card);border-bottom:1px solid var(--mk-line)}
   .mk-top{max-width:1120px;margin:0 auto;padding:12px 16px;display:flex;gap:16px;align-items:center;justify-content:space-between}
-  .mk-brand{display:flex;gap:12px;align-items:center}
-  .mk-dot{width:28px;height:28px;border-radius:10px;background:linear-gradient(135deg,#5b3df5,#c47dff)}
-  .mk-titles{line-height:1.1}
-  .mk-app{font-weight:700;letter-spacing:.02em}
+  .mk-brand{display:flex;gap:12px;align-items:center;min-width:0}
+  .mk-dot{width:28px;height:28px;border-radius:10px;background:linear-gradient(135deg,var(--mk-brand),var(--mk-accent))}
+  .mk-titles{line-height:1.1;white-space:nowrap}
+  .mk-app{font-weight:800;letter-spacing:.02em}
   .mk-tag{font-size:12px;color:var(--mk-sub)}
   .mk-nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .mk-btn{padding:10px 16px;border:1px solid var(--mk-line);border-radius:999px;background:#fff;color:var(--mk-fg);text-decoration:none;font-weight:600;white-space:nowrap}
-  .mk-btn:is(:hover,:focus){outline:none;box-shadow:0 0 0 2px rgba(91,61,245,.12)}
-  .mk-btn.active{border-color:var(--mk-brand);color:var(--mk-brand)}
-  .mk-btn.mk-primary{background:linear-gradient(90deg,var(--mk-brand),var(--mk-accent));border-color:transparent;color:#fff}
-  .mk-btn.mk-ghost{background:#fff}
+  .mk-nav .mk-btn.active{border-color:var(--mk-brand);color:var(--mk-brand)}
   .mk-lang{position:relative}
-  .mk-menu{position:absolute;right:0;top:44px;background:#fff;border:1px solid var(--mk-line);border-radius:14px;box-shadow:var(--mk-shadow);display:flex;flex-direction:column;min-width:180px;overflow:hidden}
-  .mk-menu button{background:none;border:0;padding:10px 12px;text-align:left;cursor:pointer}
-  .mk-upgrade{border-top:1px solid var(--mk-line);background:#fff}
-  .mk-upgrade>div{max-width:1120px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
-  @media (max-width:740px){
-    .mk-top{flex-direction:column;align-items:flex-start}
-    .mk-nav{width:100%;overflow:auto}
-  }
+  .mk-menu{position:absolute;right:0;top:44px;background:var(--mk-card);border:1px solid var(--mk-line);border-radius:14px;box-shadow:var(--mk-shadow);display:flex;flex-direction:column;min-width:180px;overflow:hidden}
+  .mk-menu button{background:none;border:0;padding:10px 12px;text-align:left;cursor:pointer;color:var(--mk-fg)}
+  .mk-upgrade{border-top:1px solid var(--mk-line);background:var(--mk-card)}
+  .mk-upg-inner{max-width:1120px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between}
+  @media (max-width:740px){ .mk-top{flex-direction:column;align-items:flex-start} .mk-nav{width:100%;overflow:auto} }
 </style>
 
 <script>
+/* ---------- tiny i18n (same as before) ---------- */
+window.i18n = window.i18n || {};
+i18n.dict = {
+  en:{
+    "header.tagline":"Preserve your memories forever",
+    "nav.home":"Home","nav.login":"Login","nav.record":"Record","nav.stories":"My Stories",
+    "landing.title":"Preserve Your Memories Forever",
+    "landing.lead":"Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.",
+    "cards.start.title":"Start Recording","cards.start.body":"One tap to begin. Add a title and “when it happened” later.","cards.start.cta":"Start Recording",
+    "cards.stories.title":"View My Stories","cards.stories.body":"Browse, rewrite with AI, export, and share with your family.","cards.stories.cta":"My Stories",
+    "feat.smart.t":"Smart Transcription","feat.smart.b":"Server-side Whisper for accurate EN/FR/NL/ES.",
+    "feat.guided.t":"Guided or Free","feat.guided.b":"Use gentle prompts or speak freely.",
+    "feat.private.t":"Private Library","feat.private.b":"Your stories and media stay in your account.",
+    "banner.free":"You're on <strong>Free</strong>. Unlock Premium or Family (read-only for 4 relatives).",
+    "banner.cta":"Upgrade"
+  },
+  fr:{
+    "header.tagline":"Préservez vos souvenirs pour toujours",
+    "nav.home":"Accueil","nav.login":"Connexion","nav.record":"Enregistrer","nav.stories":"Mes histoires",
+    "landing.title":"Préservez vos souvenirs pour toujours",
+    "landing.lead":"Enregistrez une fois, gardez pour des générations. Démarrez en un geste, ajoutez un titre et « quand c’est arrivé », puis partagez en toute sécurité avec votre famille.",
+    "cards.start.title":"Commencer l’enregistrement","cards.start.body":"Un geste pour démarrer. Ajoutez le titre et « quand » plus tard.","cards.start.cta":"Commencer",
+    "cards.stories.title":"Voir mes histoires","cards.stories.body":"Parcourez, réécrivez avec l’IA, exportez et partagez.","cards.stories.cta":"Mes histoires",
+    "feat.smart.t":"Transcription fiable","feat.smart.b":"Whisper côté serveur pour EN/FR/NL/ES.",
+    "feat.guided.t":"Guidée ou libre","feat.guided.b":"Utilisez des invites douces ou parlez librement.",
+    "feat.private.t":"Bibliothèque privée","feat.private.b":"Vos histoires restent dans votre compte.",
+    "banner.free":"Vous êtes sur <strong>Gratuit</strong>. Débloquez Premium ou Famille (lecture seule pour 4 proches).",
+    "banner.cta":"Mettre à niveau"
+  },
+  nl:{
+    "header.tagline":"Bewaar je herinneringen voor altijd",
+    "nav.home":"Home","nav.login":"Inloggen","nav.record":"Opnemen","nav.stories":"Mijn verhalen",
+    "landing.title":"Bewaar je herinneringen voor altijd",
+    "landing.lead":"Neem één keer op, bewaar voor generaties. Start met één tik, voeg een titel en “wanneer het gebeurde” toe en deel veilig met je familie.",
+    "cards.start.title":"Opname starten","cards.start.body":"Met één tik beginnen. Titel en datum later toevoegen.","cards.start.cta":"Opnemen",
+    "cards.stories.title":"Mijn verhalen bekijken","cards.stories.body":"Blader, herschrijf met AI, exporteer en deel.","cards.stories.cta":"Mijn verhalen",
+    "feat.smart.t":"Slimme transcriptie","feat.smart.b":"Whisper op de server voor EN/FR/NL/ES.",
+    "feat.guided.t":"Begeleid of vrij","feat.guided.b":"Gebruik zachte prompts of spreek vrijuit.",
+    "feat.private.t":"Privébibliotheek","feat.private.b":"Je verhalen en media blijven in je account.",
+    "banner.free":"Je gebruikt <strong>Gratis</strong>. Ontgrendel Premium of Family (alleen-lezen voor 4 familieleden).",
+    "banner.cta":"Upgrade"
+  },
+  es:{
+    "header.tagline":"Conserva tus recuerdos para siempre",
+    "nav.home":"Inicio","nav.login":"Acceder","nav.record":"Grabar","nav.stories":"Mis historias",
+    "landing.title":"Conserva tus recuerdos para siempre",
+    "landing.lead":"Graba una vez y guárdalo para generaciones. Empieza con un toque, añade título y “cuándo ocurrió”, y comparte con tu familia.",
+    "cards.start.title":"Empezar a grabar","cards.start.body":"Un toque para empezar. Añade título y fecha después.","cards.start.cta":"Grabar",
+    "cards.stories.title":"Ver mis historias","cards.stories.body":"Explora, reescribe con IA, exporta y comparte.","cards.stories.cta":"Mis historias",
+    "feat.smart.t":"Transcripción inteligente","feat.smart.b":"Whisper en servidor para EN/FR/NL/ES.",
+    "feat.guided.t":"Guiado o libre","feat.guided.b":"Usa sugerencias suaves o habla libremente.",
+    "feat.private.t":"Biblioteca privada","feat.private.b":"Tus historias y medios quedan en tu cuenta.",
+    "banner.free":"Estás en <strong>Gratis</strong>. Desbloquea Premium o Familiar (solo lectura para 4 familiares).",
+    "banner.cta":"Mejorar"
+  }
+};
+i18n.apply = function(root=document){
+  const code = localStorage.getItem('memoir.lang') || 'en';
+  const d = i18n.dict[code] || i18n.dict.en;
+  root.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k = el.getAttribute('data-i18n');
+    if(d[k]) el.innerHTML = d[k];
+  });
+};
+i18n.set = function(code){
+  localStorage.setItem('memoir.lang', code);
+  document.dispatchEvent(new CustomEvent('memoir:lang', {detail:{code}}));
+  i18n.apply(document);
+};
+/* ---------- end i18n ---------- */
+
 (function(){
-  // Highlight active
   const map = { '/':'home','/landing.html':'home','/index.html':'home','/login.html':'login','/record.html':'record','/stories.html':'stories' };
   const key = map[location.pathname] || '';
-  document.querySelectorAll('.mk-nav a').forEach(a=>{
-    if(a.dataset.nav===key) a.classList.add('active');
-  });
+  document.querySelectorAll('.mk-nav a').forEach(a=>{ if(a.dataset.nav===key) a.classList.add('active'); });
 
-  // Language menu
+  // Lang menu behavior
+  const labels = {en:'🇬🇧 English',fr:'🇫🇷 Français',nl:'🇧🇪 Nederlands',es:'🇪🇸 Español'};
   const btn = document.getElementById('mk-lang-btn');
   const menu = document.getElementById('mk-lang-menu');
-  btn?.addEventListener('click',()=>menu.hidden = !menu.hidden);
-  menu?.addEventListener('click',e=>{
+  const code = localStorage.getItem('memoir.lang') || 'en';
+  if(btn) btn.textContent = labels[code] || labels.en;
+  i18n.apply(document);
+
+  function closeMenu(){ if(menu) menu.hidden = true; }
+  btn?.addEventListener('click', (e)=>{ e.stopPropagation(); menu.hidden = !menu.hidden; });
+  document.addEventListener('click', ()=>closeMenu());
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeMenu(); });
+  menu?.addEventListener('click', e=>{
     if(e.target.matches('button[data-lang]')){
-      const code = e.target.dataset.lang;
-      localStorage.setItem('memoir.lang', code);
-      const labels = {en:'🇬🇧 English',fr:'🇫🇷 Français',nl:'🇧🇪 Nederlands',es:'🇪🇸 Español'};
-      btn.textContent = labels[code] || labels.en;
-      menu.hidden = true;
-      document.dispatchEvent(new CustomEvent('memoir:lang', {detail:{code}}));
+      const v = e.target.dataset.lang;
+      btn.textContent = labels[v] || labels.en;
+      closeMenu();
+      i18n.set(v);
     }
   });
-  // Initialize button with stored lang
-  (function(){
-    const code = localStorage.getItem('memoir.lang') || 'en';
-    const labels = {en:'🇬🇧 English',fr:'🇫🇷 Français',nl:'🇧🇪 Nederlands',es:'🇪🇸 Español'};
-    btn && (btn.textContent = labels[code] || labels.en);
-  })();
 
-  // Show/Hide Login when already signed in, show plan banner (Free only)
+  // Plan banner (hides on paid)
   async function wireAuth(){
     if(!window.sb) return;
-    const loginLink = document.querySelector('a[data-nav="login"]');
     const { data:{ session } } = await sb.auth.getSession();
     if(session){
-      // fetch plan
       try{
         const { data:prof } = await sb.from('profiles').select('plan').single();
-        const isPaid = prof?.plan === 'premium' || prof?.plan === 'family';
-        if(isPaid) document.getElementById('mk-upgrade').hidden = true;
-        else document.getElementById('mk-upgrade').hidden = false;
+        const paid = prof?.plan==='premium'||prof?.plan==='family';
+        document.getElementById('mk-upgrade').hidden = !!paid;
       }catch{ document.getElementById('mk-upgrade').hidden = true; }
-      if(loginLink){ loginLink.textContent = 'Logout'; loginLink.href = '#logout'; loginLink.addEventListener('click', async (e)=>{ e.preventDefault(); await sb.auth.signOut(); location.href='/landing.html'; }); }
+      const loginLink = document.querySelector('a[data-nav="login"]');
+      if(loginLink){ loginLink.textContent='Logout'; loginLink.href='#logout'; loginLink.onclick=async (e)=>{ e.preventDefault(); await sb.auth.signOut(); location.href='/landing.html'; }; }
     }else{
       document.getElementById('mk-upgrade').hidden = true;
-      if(loginLink){ loginLink.textContent = 'Login'; loginLink.href = '/login.html'; }
     }
   }
   wireAuth();
