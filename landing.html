@@ -2,99 +2,197 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Memoir App — Home</title>
-  <link rel="stylesheet" href="/styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Memoir App — Preserve your memories forever</title>
+  <link rel="stylesheet" href="/styles.css"/>
 </head>
 <body>
-  <!-- Shared header -->
-  <div id="site-header"></div>
-  <script src="/js/header.js"></script>
-
-  <main class="mk-container mk-grid cols-2" style="margin-top:12px">
-    <!-- Left: large hero image -->
-    <section class="mk-card mk-hero">
-      <img id="hero" src="/assets/book-1.jpg" alt="Open book">
-    </section>
-
-    <!-- Right: headline + two buttons (these replace the earlier small buttons) -->
-    <section class="mk-card mk-hero-pane">
-      <div class="mk-badge">Center the words or make them fill the entire line</div>
-      <h1 class="mk-h1" style="margin-top:8px">
-        Preserve Your<br/>Memories Forever
-      </h1>
-      <p class="mk-muted" style="margin:6px 0 14px">
-        Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.
-      </p>
-
-      <div class="mk-grid cols-2">
-        <button class="mk-cta" onclick="location.href='/record.html'">Start Recording</button>
-        <button class="mk-cta outline" onclick="location.href='/stories.html'">My Stories</button>
+  <!-- Header (paste the whole header.html block here) -->
+  <!-- START HEADER -->
+  <header class="mk-header">
+    <div class="mk-brand">
+      <div class="mk-logo">📖</div>
+      <div>
+        <div class="mk-title"><strong>MEMOIR APP</strong> — Preserve your memories forever</div>
+        <div class="mk-sub">Record · Transcribe · Share privately with family</div>
       </div>
-    </section>
+    </div>
+    <nav class="mk-nav">
+      <a class="mk-chip" href="/landing.html">Home</a>
+      <a class="mk-chip" href="/login.html" id="navLogin">Login</a>
+      <a class="mk-chip" href="/record.html">Record</a>
+      <a class="mk-chip" href="/stories.html">My Stories</a>
+      <span class="mk-chip mk-lang">
+        <select id="langSelect">
+          <option value="en">🇺🇸 English</option>
+          <option value="fr">🇫🇷 Français</option>
+          <option value="nl">🇳🇱 Nederlands</option>
+          <option value="es">🇪🇸 Español</option>
+        </select>
+      </span>
+      <span id="planBadge" class="mk-badge">Plan: …</span>
+      <button id="upgradeBtn" class="mk-chip">⬆️ Upgrade</button>
+    </nav>
+  </header>
+  <!-- END HEADER -->
+
+  <main class="mk-container mk-grid cols-2 mk-hero" style="margin-top:16px">
+    <div class="mk-card" style="overflow:hidden">
+      <img id="heroImg" src="/assets/book-1.jpg" alt="Open book"/>
+    </div>
+
+    <div class="mk-card mk-hero-pane">
+      <h1 class="mk-h1">Preserve <span style="color:var(--mk-accent)">Your</span><br/>Memories Forever</h1>
+      <p class="mk-muted" style="max-width:42ch">
+        Record once, keep for generations. Start a recording in one tap, add a title
+        and “when it happened”, then share safely with your family.
+      </p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin:10px 0 6px">
+        <a class="mk-cta" href="/record.html">Start Recording</a>
+        <a class="mk-cta outline" href="/stories.html">View My Stories</a>
+      </div>
+
+      <!-- two framed tiles below the hero copy -->
+      <div class="mk-grid cols-2" style="margin-top:12px">
+        <div class="mk-card mk-feature">
+          <h3 class="mk-h2">Start Recording</h3>
+          <p class="mk-muted">One tap to begin. Add a title and “when it happened” later.</p>
+          <a class="mk-cta" href="/record.html">Start Recording</a>
+        </div>
+        <div class="mk-card mk-feature">
+          <h3 class="mk-h2">View My Stories</h3>
+          <p class="mk-muted">Browse, rewrite with AI, export, and share with your family.</p>
+          <a class="mk-cta outline" href="/stories.html">My Stories</a>
+        </div>
+      </div>
+    </div>
   </main>
 
-  <!-- Two equal frames under the hero, as requested -->
-  <section class="mk-container mk-grid cols-2">
-    <article class="mk-card mk-feature">
-      <h2 class="mk-h2">Start Recording</h2>
-      <p class="mk-muted">One tap to begin. Add a title and “when it happened” later.</p>
-      <button class="mk-cta" onclick="location.href='/record.html'">Start Recording</button>
-    </article>
-    <article class="mk-card mk-feature">
-      <h2 class="mk-h2">View My Stories</h2>
-      <p class="mk-muted">Browse, rewrite with AI, export, and share with your family.</p>
-      <button class="mk-cta outline" onclick="location.href='/stories.html'">My Stories</button>
-    </article>
-  </section>
-
-  <!-- 3 features centered and identical sizing -->
-  <section class="mk-container mk-grid cols-3">
-    <article class="mk-card mk-feature">
+  <!-- Features row -->
+  <section class="mk-container mk-grid cols-3" style="margin-top:16px">
+    <div class="mk-card mk-feature">
       <h3 class="mk-h2">Smart Transcription</h3>
-      <p class="mk-muted">Server-side Whisper for accurate EN/FR/NL/ES.</p>
-    </article>
-    <article class="mk-card mk-feature">
+      <p class="mk-muted">Server-side Whisper for accurate EN/FR/NL/ES—even on spotty connections.</p>
+    </div>
+    <div class="mk-card mk-feature">
       <h3 class="mk-h2">Guided or Free</h3>
-      <p class="mk-muted">Use gentle prompts or speak freely. Add a date like “early 1970s”.</p>
-    </article>
-    <article class="mk-card mk-feature">
+      <p class="mk-muted">Use gentle prompts or speak freely. Add a date or period like “early 1970s”.</p>
+    </div>
+    <div class="mk-card mk-feature">
       <h3 class="mk-h2">Private Library</h3>
       <p class="mk-muted">Stories and media saved in your private account. Export when you’re ready.</p>
-    </article>
+    </div>
   </section>
 
   <!-- Pricing -->
-  <section class="mk-container mk-card mk-feature">
-    <h2 class="mk-h2" style="margin-bottom:8px">Pricing</h2>
-    <div class="mk-grid cols-2">
-      <div>
-        <div class="mk-badge">Individual</div>
-        <h3 class="mk-h2" style="margin:8px 0">€4.99 / month</h3>
-        <p class="mk-muted">1 user. Record, rewrite, export.</p>
-      </div>
-      <div>
-        <div class="mk-badge">Family</div>
-        <h3 class="mk-h2" style="margin:8px 0">€7.99 / month</h3>
-        <p class="mk-muted">Share with up to 4 family members <em>(read & listen only)</em>.</p>
+  <section class="mk-container" id="pricing" style="margin-top:18px">
+    <div class="mk-card mk-feature">
+      <h2 class="mk-h2" style="font-size:28px">Pricing</h2>
+      <div class="mk-grid cols-2" style="margin-top:8px">
+        <div class="mk-card mk-feature">
+          <h3 class="mk-h2">Premium — €4.99/month</h3>
+          <ul class="mk-muted" style="margin-top:6px">
+            <li>All features for a single user</li>
+            <li>AI rewrite, export, library</li>
+            <li>5-day free trial</li>
+          </ul>
+          <button class="mk-cta" id="buyPremium">Start 5-day trial</button>
+        </div>
+        <div class="mk-card mk-feature">
+          <h3 class="mk-h2">Family — €7.99/month</h3>
+          <ul class="mk-muted" style="margin-top:6px">
+            <li>Share with up to 4 family readers</li>
+            <li>Everything in Premium</li>
+            <li>5-day free trial</li>
+          </ul>
+          <button class="mk-cta" id="buyFamily">Start 5-day trial</button>
+        </div>
       </div>
     </div>
   </section>
 
   <!-- FAQ -->
-  <section class="mk-container mk-card mk-feature">
-    <h2 class="mk-h2">FAQ</h2>
-    <details><summary>How do I start?</summary><p class="mk-muted">Tap “Start Recording” and follow the prompt.</p></details>
-    <details><summary>What languages?</summary><p class="mk-muted">English, Français, Nederlands, Español.</p></details>
-    <details><summary>How does Premium work?</summary><p class="mk-muted">Premium unlocks AI rewrite and exports. Family plan lets 4 readers follow your stories.</p></details>
+  <section class="mk-container" id="faq" style="margin:18px 0 24px">
+    <div class="mk-card mk-feature">
+      <h2 class="mk-h2" style="font-size:28px">FAQ</h2>
+      <details style="margin-top:8px"><summary><strong>How do trials work?</strong></summary>
+        <p class="mk-muted">You’ll get full access for 5 days. Cancel anytime in that window to avoid charges.</p>
+      </details>
+      <details><summary><strong>What happens to my stories if I cancel?</strong></summary>
+        <p class="mk-muted">Your stories remain in your account. Premium features are disabled until you re-activate.</p>
+      </details>
+      <details><summary><strong>How is my data stored?</strong></summary>
+        <p class="mk-muted">We use Supabase with row-level security. Only you (and invited readers on Family) can access your stories.</p>
+      </details>
+    </div>
   </section>
 
-  <footer class="mk-container mk-muted" style="text-align:center; padding:18px">© Memoir App — built for families</footer>
+  <footer class="mk-container mk-muted" style="text-align:center; padding:10px 0 24px">
+    © Memoir App — built for families
+  </footer>
 
-  <script>
-    // Simple 30s rotation among /assets/book-1.jpg…-3.jpg
-    const imgs = ["/assets/book-1.jpg","/assets/book-2.jpg","/assets/book-3.jpg"];
-    let i = 0; setInterval(()=>{ i=(i+1)%imgs.length; document.getElementById('hero').src = imgs[i]; }, 30000);
+  <!-- Hero rotation + Upgrade buttons -->
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
+    const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Rotate images every 30s
+    const imgs = ['/assets/book-1.jpg','/assets/book-2.jpg','/assets/book-3.jpg'];
+    let i = 0;
+    setInterval(()=>{
+      i = (i+1) % imgs.length;
+      document.getElementById('heroImg').src = imgs[i];
+    }, 30000);
+
+    // Plan badge + upgrade visibility
+    async function wirePlan() {
+      const { data:{ session } } = await sb.auth.getSession();
+      const badge = document.getElementById('planBadge');
+      const up = document.getElementById('upgradeBtn');
+      const login = document.getElementById('navLogin');
+
+      if (!session) {
+        badge.textContent = 'Plan: Free (guest)';
+        up.style.display = 'inline-flex';
+        return;
+      }
+      login.textContent = 'Account';
+
+      const { data: prof } = await sb.from('profiles').select('plan, trial_end, seats, role').single();
+      const trial = prof?.trial_end ? new Date(prof.trial_end) : null;
+      const trialActive = trial && Date.now() < trial.getTime();
+
+      let label = 'Free';
+      if (prof?.plan === 'premium') label = 'Premium';
+      if (prof?.plan === 'family') label = `Family (${prof?.seats||4})`;
+      if (trialActive) label += ` (trial until ${trial.toLocaleDateString()})`;
+      if (prof?.role === 'admin') label = 'Admin';
+
+      badge.textContent = `Plan: ${label}`;
+      up.style.display = (prof?.plan === 'premium' || prof?.plan === 'family' || prof?.role === 'admin')
+        ? 'none' : 'inline-flex';
+    }
+    wirePlan();
+
+    async function start(plan){
+      const { data:{ user } } = await sb.auth.getUser();
+      if(!user){ location.href='/login.html'; return; }
+      const r = await fetch('/api/create-checkout-session', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ plan, user_id:user.id })
+      });
+      const j = await r.json();
+      if (j.url) location.href = j.url; else alert('Checkout failed');
+    }
+    document.getElementById('buyPremium')?.addEventListener('click', ()=>start('premium'));
+    document.getElementById('buyFamily')?.addEventListener('click', ()=>start('family'));
+    document.getElementById('upgradeBtn')?.addEventListener('click', async ()=>{
+      const plan = confirm('Choose OK for Premium (€4.99/mo), Cancel for Family (€7.99/mo).')
+        ? 'premium' : 'family';
+      start(plan);
+    });
   </script>
 </body>
 </html>
