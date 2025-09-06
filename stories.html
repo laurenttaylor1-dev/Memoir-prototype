@@ -1,85 +1,113 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>My Stories — Memoir</title>
-  <link rel="stylesheet" href="/styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Memoir — My Stories</title>
+<link rel="stylesheet" href="/styles.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
+<style>
+  .wrap{max-width:1120px;margin:0 auto;padding:16px}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .card{background:#fff;border:1px solid var(--mk-line);border-radius:18px;padding:16px;box-shadow:var(--mk-shadow)}
+  .list{display:grid;gap:10px;margin-top:14px}
+  @media (max-width:900px){ .cards{grid-template-columns:1fr} }
+</style>
 </head>
 <body>
-  <div id="site-header"></div>
-  <script src="/js/header.js"></script>
+  <div id="header-placeholder"></div>
 
-  <main class="mk-container mk-grid cols-2">
-    <section class="mk-card" style="padding:18px">
-      <h2 class="mk-h2">Your stats</h2>
-      <div class="mk-grid cols-3">
-        <div><div class="mk-badge">Stories</div><h3 id="countStories" class="mk-h2">—</h3></div>
-        <div><div class="mk-badge">Family members</div><h3 id="countMembers" class="mk-h2">—</h3></div>
-        <div><div class="mk-badge">Plan</div><h3 id="planName" class="mk-h2">—</h3></div>
-      </div>
-
-      <div style="margin-top:14px">
-        <label class="mk-muted">Share read-only with a family email</label>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px">
-          <input id="shareEmail" placeholder="family@example.com" style="flex:1; padding:10px; border:1px solid var(--mk-border); border-radius:12px">
-          <button id="btnShare" class="mk-cta outline">Share</button>
+  <main class="wrap">
+    <section class="cards">
+      <article class="card"><h3 style="margin:0 0 6px">Your Stats</h3>
+        <div>Stories: <strong id="stat-stories">—</strong></div>
+        <div>Family shared with: <strong id="stat-family">—</strong></div>
+      </article>
+      <article class="card"><h3 style="margin:0 0 6px">Share with Family</h3>
+        <p>Add a family reader (read-only).</p>
+        <div class="row" style="display:flex;gap:8px">
+          <input id="share-email" class="mk-input" placeholder="family@example.com" type="email">
+          <button id="share-btn" class="mk-btn">Share</button>
         </div>
-        <div id="shareMsg" class="mk-muted" style="margin-top:6px"></div>
-      </div>
+        <div id="share-msg" class="mk-sub" style="margin-top:6px"></div>
+      </article>
+      <article id="upgrade" class="card"><h3 style="margin:0 0 6px">Upgrade</h3>
+        <p>Unlock AI rewrite & exports.</p>
+        <a class="mk-btn mk-primary" href="/api/stripe/checkout?plan=premium">Upgrade to Premium</a>
+        <a class="mk-btn" href="/api/stripe/checkout?plan=family" style="margin-left:8px">Family Plan</a>
+      </article>
     </section>
 
-    <aside class="mk-card" style="padding:18px">
-      <h2 class="mk-h2">Library</h2>
-      <div id="library">Loading…</div>
-    </aside>
+    <section class="card" style="margin-top:16px">
+      <h3 style="margin:0 0 8px">Your Stories</h3>
+      <div id="stories" class="list"></div>
+    </section>
   </main>
 
-  <script>
-    const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{persistSession:true,detectSessionInUrl:false} });
+<script>
+const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
+window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {auth:{persistSession:true}});
 
-    async function load(){
-      const { data:{ user } } = await sb.auth.getUser();
-      if(!user){ location.href='/login.html'; return; }
+// Inject header
+fetch('/header.html').then(r=>r.text()).then(html=>{
+  document.getElementById('header-placeholder').innerHTML = html;
+});
 
-      // Count stories
-      const { count } = await sb.from('stories').select('id', { count:'exact', head:true }).eq('user_id', user.id);
-      document.getElementById('countStories').textContent = count ?? 0;
+// Load stats, hide upgrade if paid
+(async function(){
+  const { data:{session} } = await sb.auth.getSession();
+  if(!session){ location.href='/login.html'; return; }
+  const uid = session.user.id;
 
-      // Plan + members (simple placeholders unless you’ve wired family tables)
-      const { data: prof } = await sb.from('profiles').select('plan').single();
-      document.getElementById('planName').textContent = prof?.plan || 'free';
-
-      // If you created family_members earlier, you can count them here. Otherwise show 0.
-      document.getElementById('countMembers').textContent = 0;
-
-      // List stories
-      const { data: list } = await sb.from('stories')
-        .select('id,title,created_at,happened_label')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending:false });
-
-      const wrap = document.getElementById('library');
-      wrap.innerHTML = '';
-      (list||[]).forEach(s=>{
-        const row=document.createElement('div');
-        row.className='mk-card'; row.style.padding='10px'; row.style.marginBottom='8px';
-        row.innerHTML = `<div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
-          <div><strong>${s.title}</strong><div class="mk-muted">${s.happened_label||new Date(s.created_at).toLocaleString()}</div></div>
-          <a class="mk-chip" href="/record.html">Open</a>
-        </div>`;
-        wrap.appendChild(row);
-      });
-
-      document.getElementById('btnShare').onclick = ()=>{
-        const email = document.getElementById('shareEmail').value.trim();
-        document.getElementById('shareMsg').textContent = email ? `Invite queued for: ${email}` : 'Enter an email first.';
-      };
+  // plan
+  try{
+    const { data:prof } = await sb.from('profiles').select('plan').single();
+    if(prof?.plan === 'premium' || prof?.plan === 'family'){
+      document.getElementById('upgrade').style.display='none';
     }
-    load();
-  </script>
+  }catch{}
+
+  // stories count
+  try{
+    const { count } = await sb.from('stories').select('*', {count:'exact', head:true}).eq('user_id', uid);
+    document.getElementById('stat-stories').textContent = count ?? 0;
+  }catch{ document.getElementById('stat-stories').textContent = '0'; }
+
+  // family count
+  try{
+    const { count } = await sb.from('family_members').select('*',{count:'exact',head:true}).eq('user_id', uid);
+    document.getElementById('stat-family').textContent = count ?? 0;
+  }catch{ document.getElementById('stat-family').textContent = '0'; }
+
+  // list recent stories
+  try{
+    const { data } = await sb.from('stories').select('id,title,created_at,audio_url').eq('user_id', uid).order('created_at',{ascending:false}).limit(50);
+    const box=document.getElementById('stories'); box.innerHTML='';
+    (data||[]).forEach(s=>{
+      const row=document.createElement('div'); row.className='row';
+      row.innerHTML=`<div class="story-row"><div style="min-width:0">
+        <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.title||'Story'}</div>
+        <div class="mk-sub" style="font-size:12px">${new Date(s.created_at).toLocaleString()}</div>
+      </div>
+      <div class="row"><a class="mk-btn" href="${s.audio_url||'#'}" target="_blank">Audio</a></div></div>`;
+      box.appendChild(row.firstChild);
+    });
+  }catch{}
+})();
+
+// Share (store as family_members row)
+document.getElementById('share-btn').onclick = async ()=>{
+  const email = document.getElementById('share-email').value.trim();
+  const msg = document.getElementById('share-msg');
+  if(!email) return msg.textContent='Enter an email.';
+  const { data:{session} } = await sb.auth.getSession(); if(!session) return location.href='/login.html';
+  try{
+    // You can send an email invite outside; here we just record the intent row
+    await sb.from('family_members').insert({ user_id: session.user.id, family_id: null, role:'member' });
+    msg.textContent='Added (placeholder). Actual invite flow can be extended.';
+  }catch(e){ msg.textContent = 'Failed: '+(e.message||''); }
+};
+</script>
 </body>
 </html>
