@@ -6,121 +6,80 @@
 <title>Memoir — Record</title>
 <link rel="stylesheet" href="/styles.css"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
-
 <style>
-  /* --- Page layout (uses theme vars from styles.css) --- */
   .rec-wrap{max-width:1120px;margin:0 auto;padding:16px}
-  .rec-grid{
-    display:grid;grid-template-columns:1.15fr .85fr;gap:18px;margin-top:14px
-  }
+  .rec-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;margin-top:14px}
   @media (max-width:980px){ .rec-grid{grid-template-columns:1fr} }
-
-  /* Record panel (left) */
-  .rec-panel{display:grid;gap:14px}
-  .rec-top{
-    display:flex;gap:16px;align-items:center;flex-wrap:wrap
-  }
-  .record-btn{
-    width:160px;height:160px;border-radius:999px;border:8px solid var(--mk-line);
-    background:var(--mk-primary-grad);color:#fff;font-weight:800;
-    font-size:18px;cursor:pointer;box-shadow:var(--mk-shadow)
-  }
-  .record-btn.rec{animation:pulse 1.3s ease-in-out infinite}
+  .mic{width:180px;height:180px;border-radius:999px;border:8px solid var(--mk-line);
+       background:var(--mk-primary-grad);color:#fff;font-weight:800;font-size:18px;cursor:pointer;box-shadow:var(--mk-shadow)}
+  .mic.pulse{animation:pulse 1.3s ease-in-out infinite}
   @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.03)}100%{transform:scale(1)}}
-
-  .rec-meta{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-  .timer{font-weight:700;color:var(--mk-brand)}
   .lang{padding:8px 10px;border-radius:12px;border:1px solid var(--mk-line);background:var(--mk-card);color:var(--mk-fg)}
-
-  /* Suggested prompts */
-  .suggest{
-    display:flex;flex-direction:column;gap:8px
-  }
-  .chips{display:flex;gap:8px;flex-wrap:wrap}
-  .chip{
-    padding:8px 12px;border:1px solid var(--mk-line);border-radius:999px;background:var(--mk-card);
-    cursor:pointer;font-weight:600
-  }
-  .chip:hover{border-color:var(--mk-brand)}
-  .suggest .row{display:flex;justify-content:space-between;align-items:center;gap:10px}
-
-  /* Story details (right) */
-  .form{display:grid;gap:12px}
-  .input, .select, .textarea{
-    padding:12px;border-radius:14px;border:1px solid var(--mk-line);background:var(--mk-card);color:var(--mk-fg);width:100%
-  }
   .label{font-size:12px;color:var(--mk-sub);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
-
-  .photo-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .thumb{width:64px;height:64px;border-radius:12px;border:1px solid var(--mk-line);object-fit:cover;background:#ddd}
-
-  /* Transcript area (full width) */
-  .transcript{margin-top:16px}
-  .area{min-height:220px}
+  .input,.textarea{padding:12px;border-radius:14px;border:1px solid var(--mk-line);background:var(--mk-card);color:var(--mk-fg);width:100%}
+  .chip{padding:8px 12px;border:1px solid var(--mk-line);border-radius:999px;background:var(--mk-card);cursor:pointer;font-weight:600}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .mk-card{background:var(--mk-card);border:1px solid var(--mk-line);border-radius:16px;padding:14px}
+  .thumb{width:68px;height:68px;border-radius:12px;border:1px solid var(--mk-line);object-fit:cover;background:#e5dccd}
+  .banner{background:#fdecc8;color:#6b4c1b;border:1px solid #e3caa1;border-radius:10px;padding:10px 12px;font-size:14px}
+  .timer{font-weight:800;color:var(--mk-brand);margin-left:10px}
   .muted{color:var(--mk-sub)}
+  .area{min-height:220px;white-space:pre-wrap}
 </style>
 </head>
 <body>
-  <!-- Shared header -->
   <div id="header-placeholder"></div>
 
   <main class="rec-wrap">
-    <h1 class="h1" data-i18n="nav.record">Record</h1>
+    <h1 class="h1">Record</h1>
 
     <section class="rec-grid">
-      <!-- LEFT: Record panel -->
-      <div class="rec-panel">
-        <div class="mk-card">
-          <div class="rec-top">
-            <button id="recordBtn" class="record-btn" aria-pressed="false">Record</button>
-            <div class="rec-meta">
-              <select id="recLang" class="lang">
-                <option value="en">English</option>
-                <option value="fr">Français</option>
-                <option value="nl">Nederlands</option>
-                <option value="es">Español</option>
-              </select>
-              <span id="timer" class="timer">00:00</span>
-              <span id="recState" class="muted">Idle</span>
-            </div>
-          </div>
-
-          <div class="suggest">
-            <div class="row">
-              <div class="label">Today’s suggested prompts</div>
-              <button id="refreshPrompts" class="mk-btn" type="button">Suggest other prompts</button>
-            </div>
-            <div id="chips" class="chips"></div>
-          </div>
+      <!-- LEFT -->
+      <div class="mk-card">
+        <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+          <button id="mic" class="mic" aria-pressed="false">Record</button>
+          <select id="lang" class="lang">
+            <option value="en">English</option>
+            <option value="fr">Français</option>
+            <option value="nl">Nederlands</option>
+            <option value="es">Español</option>
+          </select>
+          <span id="timer" class="timer">00:00</span>
+          <span id="state" class="muted">Idle</span>
         </div>
 
-        <div class="mk-card">
+        <div id="offlineBanner" class="banner" style="display:none"></div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:10px 0 8px">
+          <div class="label">Today’s suggested prompts</div>
+          <button id="refreshPrompts" class="mk-btn" type="button">Suggest other prompts</button>
+        </div>
+        <div id="chips" class="chips"></div>
+
+        <div style="margin-top:12px">
           <div class="label">Notes (optional)</div>
-          <textarea id="notes" class="textarea" rows="3" placeholder="Add a quick note before or during recording…"></textarea>
+          <textarea id="notes" class="textarea" rows="3" placeholder="Add a quick note…"></textarea>
         </div>
       </div>
 
-      <!-- RIGHT: Story details -->
+      <!-- RIGHT -->
       <div class="mk-card">
-        <div class="form">
+        <div style="display:grid;gap:12px">
           <div>
             <div class="label">Title</div>
             <input id="title" class="input" placeholder="Story title"/>
           </div>
-
           <div>
             <div class="label">When did this happen?</div>
             <input id="when" class="input" placeholder='e.g. "summer 1945", "early 2018", "15 Feb 1972"'/>
           </div>
-
           <div>
             <div class="label">Add photo (optional)</div>
-            <div class="photo-row">
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
               <img id="thumb" class="thumb" alt="" hidden>
               <input id="photo" type="file" accept="image/*" class="input" style="max-width:340px"/>
             </div>
           </div>
-
           <div style="display:flex;gap:10px;flex-wrap:wrap">
             <button id="saveStory" class="mk-btn mk-primary">Save story</button>
             <button id="clearForm" class="mk-btn">Clear</button>
@@ -129,204 +88,254 @@
       </div>
     </section>
 
-    <!-- Transcript (full width) -->
-    <section class="transcript mk-card">
-      <div class="label">Transcript</div>
+    <section class="mk-card" style="margin-top:14px">
+      <div class="label">Transcript (live while online; final replaces after stop)</div>
       <div id="transcript" class="area">Your words will appear here…</div>
     </section>
 
-    <div class="footnote">Whisper server connection can be enabled later; in-browser recognition is used as a fallback.</div>
+    <div class="footnote">Whisper chunked partials online; offline audio is queued & transcribed later.</div>
   </main>
 
 <script>
-/* ---------- Inject header + i18n ---------- */
-fetch('/header.html').then(r=>r.text()).then(html=>{
-  document.getElementById('header-placeholder').innerHTML = html;
-  window.i18n && i18n.apply(document);
-});
-document.addEventListener('memoir:lang', ()=>{
-  window.i18n && i18n.apply(document);
-});
+/* Header */
+fetch('/header.html').then(r=>r.text()).then(h=>{document.getElementById('header-placeholder').innerHTML=h;});
 
-/* ---------- Supabase (optional, for Save) ---------- */
+/* Supabase client */
 const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {auth:{persistSession:true}});
 
-/* ---------- Prompts data ---------- */
-const TOPIC_WORDS = {
-  en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning points"],
-  fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
-  nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"],
-  es:["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos clave"]
-};
-const PROMPT_SENTENCES = {
-  en:{Childhood:"Tell me something about your youth.",Family:"Tell me about your family.",School:"What was school like for you?",Work:"Tell me about your first job.",Love:"How did you meet your partner?",War:"What big events did you live through?",Travel:"A trip that left a mark?",Traditions:"Which family traditions mattered most?",Holidays:"Describe a holiday you remember.",Lessons:"A life lesson learned the hard way?",Advice:"What advice would you give your younger self?","Turning points":"What event changed your path?"},
-  fr:{Enfance:"Parlez-moi de votre jeunesse.",Famille:"Parlez-moi de votre famille.",École:"Comment était l’école pour vous ?",Travail:"Votre premier travail ?",Amour:"Comment avez-vous rencontré votre partenaire ?",Guerre:"Quels grands événements avez-vous vécus ?",Voyages:"Un voyage marquant ?",Traditions:"Quelles traditions comptaient le plus ?",Fêtes:"Une fête dont vous vous souvenez ?",Leçons:"Une leçon apprise à la dure ?",Conseils:"Quel conseil donneriez-vous à votre jeune vous ?",Déclics:"Quel déclic a changé votre trajectoire ?"},
-  nl:{Jeugd:"Vertel iets over je jeugd.",Familie:"Vertel over je familie.",School:"Hoe was school voor jou?",Werk:"Je eerste baan?",Liefde:"Hoe leerde je je partner kennen?",Oorlog:"Welke grote gebeurtenissen maakte je mee?",Reizen:"Een reis die indruk maakte?",Tradities:"Welke tradities waren belangrijk?",Feestdagen:"Een bijzondere feestdag?",Lessen:"Welke levensles leerde je?",Advies:"Welk advies aan je jongere zelf?",Keerpunt:"Wat was een keerpunt?"},
-  es:{Infancia:"Cuéntame algo de tu juventud.",Familia:"Háblame de tu familia.",Escuela:"¿Cómo era la escuela para ti?",Trabajo:"Tu primer trabajo?",Amor:"¿Cómo conociste a tu pareja?",Guerra:"¿Qué grandes eventos viviste?",Viajes:"¿Un viaje que te marcó?",Tradiciones:"¿Qué tradiciones importaban?",Fiestas:"¿Una fiesta que recuerdes?",Lecciones:"¿Una lección de vida dura?",Consejos:"¿Qué consejo a tu yo joven?","Puntos clave":"¿Cuál fue un punto de inflexión?"}
-};
-
-/* ---------- UI wiring ---------- */
-const recordBtn = document.getElementById('recordBtn');
-const recLang = document.getElementById('recLang');
-const timerEl  = document.getElementById('timer');
-const stateEl  = document.getElementById('recState');
-const chipsEl  = document.getElementById('chips');
-const refreshPrompts = document.getElementById('refreshPrompts');
+/* UI refs */
+const micBtn = document.getElementById('mic');
 const transcriptEl = document.getElementById('transcript');
 const titleEl = document.getElementById('title');
-const whenEl  = document.getElementById('when');
+const whenEl = document.getElementById('when');
 const photoIn = document.getElementById('photo');
-const thumb   = document.getElementById('thumb');
+const thumb = document.getElementById('thumb');
 const saveBtn = document.getElementById('saveStory');
-const clearBtn= document.getElementById('clearForm');
+const clearBtn = document.getElementById('clearForm');
+const langSel = document.getElementById('lang');
+const timerEl = document.getElementById('timer');
+const stateEl = document.getElementById('state');
+const offlineBanner = document.getElementById('offlineBanner');
 
-let recog=null, ticking=null, secs=0, fullText='';
-
-function setTimer(s){
-  const m = String(Math.floor(s/60)).padStart(2,'0');
-  const ss= String(s%60).padStart(2,'0');
-  timerEl.textContent = `${m}:${ss}`;
-}
-
+/* Prompts */
+const TOPIC_WORDS = {
+  en:["Childhood","Family","School","Work"], fr:["Enfance","Famille","École","Travail"],
+  nl:["Jeugd","Familie","School","Werk"], es:["Infancia","Familia","Escuela","Trabajo"]
+};
+const PROMPT_SENTENCES = {
+  en:{Childhood:"Tell me something about your youth.",Family:"Tell me about your family.",
+      School:"What was school like for you?",Work:"Tell me about your first job."},
+  fr:{Enfance:"Parlez-moi de votre jeunesse.",Famille:"Parlez-moi de votre famille.",
+      École:"Comment était l’école pour vous ?",Travail:"Votre premier travail ?"},
+  nl:{Jeugd:"Vertel iets over je jeugd.",Familie:"Vertel over je familie.",
+      School:"Hoe was school voor jou?",Werk:"Je eerste baan?"},
+  es:{Infancia:"Cuéntame algo de tu juventud.",Familia:"Háblame de tu familia.",
+      Escuela:"¿Cómo era la escuela para ti?",Trabajo:"¿Tu primer trabajo?"}
+};
+const chipsWrap = document.getElementById('chips');
 function renderPrompts(){
-  const code = recLang.value || 'en';
-  const pool = Array.from(TOPIC_WORDS[code]||TOPIC_WORDS.en);
-  // pick 4 random unique
-  const chosen = [];
-  while (chosen.length<4 && pool.length){
-    const i = Math.floor(Math.random()*pool.length);
-    chosen.push(pool.splice(i,1)[0]);
-  }
-  chipsEl.innerHTML='';
-  chosen.forEach(word=>{
-    const b = document.createElement('button');
-    b.className='chip';
-    b.textContent = word;
-    b.onclick = ()=> {
-      titleEl.value = word;
-      const sentence = (PROMPT_SENTENCES[code]||{})[word] || word;
-      // optional TTS via system
-      if('speechSynthesis' in window){
-        const u=new SpeechSynthesisUtterance(sentence);
-        const map={en:'en-US',fr:'fr-FR',nl:'nl-NL',es:'es-ES'};
-        u.lang = map[code] || 'en-US';
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(u);
-      }
+  const code=langSel.value||'en';
+  chipsWrap.innerHTML='';
+  (TOPIC_WORDS[code]||TOPIC_WORDS.en).forEach(word=>{
+    const b=document.createElement('button'); b.className='chip'; b.textContent=word;
+    b.onclick=()=>{
+      titleEl.value=word;
+      const sentence=(PROMPT_SENTENCES[code]||{})[word]||word;
+      if('speechSynthesis'in window){const u=new SpeechSynthesisUtterance(sentence);const map={en:'en-US',fr:'fr-FR',nl:'nl-NL',es:'es-ES'};u.lang=map[code]||'en-US';speechSynthesis.cancel();speechSynthesis.speak(u);}
     };
-    chipsEl.appendChild(b);
+    chipsWrap.appendChild(b);
   });
 }
-refreshPrompts.onclick = renderPrompts;
-recLang.onchange = renderPrompts;
+document.getElementById('refreshPrompts').onclick=renderPrompts;
+langSel.onchange=renderPrompts;
+renderPrompts();
+
+/* Recording & chunked transcription */
+const AUDIO_BUCKET='memoir-audio';
+const LOCAL_QUEUE='memoir.offlineQueue';
+let mediaRec=null, chunks=[], ticking=null, secs=0, isRec=false, liveActive=false;
+
+function setTimer(s){ const m=String(Math.floor(s/60)).padStart(2,'0'); const ss=String(s%60).padStart(2,'0'); timerEl.textContent=`${m}:${ss}`; }
+function showOffline(msg){ offlineBanner.style.display='block'; offlineBanner.textContent=msg; }
+function hideOffline(){ offlineBanner.style.display='none'; }
+function appendPartial(text){
+  const base = (transcriptEl.textContent==='Your words will appear here…') ? '' : transcriptEl.textContent;
+  transcriptEl.textContent = (base + (base? ' ' : '') + text).trim();
+}
+
+micBtn.onclick = ()=> isRec ? stopRec() : startRec();
+
+async function startRec(){
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({ audio:true });
+    mediaRec = new MediaRecorder(stream, { mimeType:'audio/webm' });
+    chunks=[];
+
+    // Live chunking (2s) only if online; otherwise skip
+    liveActive = navigator.onLine;
+    transcriptEl.textContent = 'Your words will appear here…';
+    if(liveActive){
+      stateEl.textContent='Recording… (live transcription)';
+    }else{
+      stateEl.textContent='Recording (offline — will transcribe later)';
+      showOffline('Offline: audio will be saved locally and transcribed when you reconnect.');
+    }
+
+    mediaRec.ondataavailable = async (e)=>{
+      if(e.data?.size){
+        chunks.push(e.data);
+        if(liveActive){
+          try{
+            const fd = new FormData();
+            fd.append('language', langSel.value||'en');
+            fd.append('audio', e.data, 'chunk.webm');
+            const r = await fetch('/api/transcribe-chunk', { method:'POST', body: fd });
+            if(r.ok){
+              const js = await r.json();
+              if(js?.partial) appendPartial(js.partial);
+            }else{
+              // If chunk endpoint fails mid-call, stop live but keep recording
+              liveActive=false;
+              stateEl.textContent='Recording… (live transcription paused)';
+            }
+          }catch{
+            liveActive=false;
+            stateEl.textContent='Recording… (live transcription paused)';
+          }
+        }
+      }
+    };
+
+    mediaRec.start(2000); // 2s chunks for smoother visuals
+    isRec=true; secs=0; setTimer(0);
+    ticking=setInterval(()=>{ secs++; setTimer(secs); },1000);
+    micBtn.classList.add('pulse'); micBtn.setAttribute('aria-pressed','true'); micBtn.textContent='Stop';
+  }catch(e){
+    alert('Microphone permission is required.');
+  }
+}
+
+async function stopRec(){
+  isRec=false;
+  try{ mediaRec?.stop(); }catch{}
+  clearInterval(ticking); micBtn.classList.remove('pulse'); micBtn.setAttribute('aria-pressed','false'); micBtn.textContent='Record';
+
+  // Build full blob for storage + final pass
+  const fullBlob = new Blob(chunks, { type:'audio/webm' }); chunks=[];
+
+  // If offline → queue
+  if(!navigator.onLine){
+    await queueLocal(fullBlob, buildStoryMeta());
+    stateEl.textContent='Saved locally. Will upload & transcribe when back online.';
+    showOffline('Saved locally. We’ll upload & transcribe automatically when your connection returns.');
+    return;
+  }
+  await saveOnline(fullBlob, buildStoryMeta(), /*triggerFinal=*/true);
+}
+
+function buildStoryMeta(){
+  const when=parseApproxDate(whenEl.value);
+  return {
+    title: titleEl.value || 'Story',
+    transcript: (transcriptEl.textContent==='Your words will appear here…') ? '' : transcriptEl.textContent,
+    happened_label: when.label || null,
+    happened_sort: when.sort || null,
+    language: (langSel.value || 'en')
+  };
+}
+
+async function queueLocal(blob, meta){
+  const url = URL.createObjectURL(blob);
+  const q = JSON.parse(localStorage.getItem(LOCAL_QUEUE)||'[]');
+  q.push({ blobUrl:url, meta, created:new Date().toISOString(), photoName: photoIn.files?.[0]?.name || null });
+  localStorage.setItem(LOCAL_QUEUE, JSON.stringify(q));
+}
+
+window.addEventListener('online', flushQueue);
+async function flushQueue(){
+  const q = JSON.parse(localStorage.getItem(LOCAL_QUEUE)||'[]');
+  if(!q.length) return;
+  const remained=[];
+  for(const item of q){
+    try{
+      const res = await fetch(item.blobUrl); const blob = await res.blob();
+      await saveOnline(blob, item.meta, /*triggerFinal=*/true);
+      URL.revokeObjectURL(item.blobUrl);
+    }catch(e){ remained.push(item); }
+  }
+  localStorage.setItem(LOCAL_QUEUE, JSON.stringify(remained));
+  if(!remained.length){ hideOffline(); stateEl.textContent='Queued stories uploaded. Transcription in progress.'; }
+}
+
+/* Upload + insert + (optional) trigger final pass */
+async function saveOnline(audioBlob, meta, triggerFinal){
+  stateEl.textContent='Saving to cloud…';
+  const { data:{ user } } = await sb.auth.getUser();
+  if(!user){ alert('Please sign in first.'); stateEl.textContent='Not signed in.'; return; }
+
+  // Optional image upload first
+  let image_path=null;
+  if(photoIn.files && photoIn.files[0]){
+    const imgKey=`${user.id}/${crypto.randomUUID()}-${photoIn.files[0].name}`;
+    const upImg = await sb.storage.from('memoir-images').upload(imgKey, photoIn.files[0], { upsert:false });
+    if(!upImg.error) image_path=imgKey;
+  }
+
+  // Audio upload
+  const audioKey = `${user.id}/${crypto.randomUUID()}.webm`;
+  const up = await sb.storage.from('memoir-audio').upload(audioKey, audioBlob, { contentType:'audio/webm', upsert:false });
+  if(up.error){ alert('Upload failed: '+up.error.message); stateEl.textContent='Upload failed.'; return; }
+
+  // Insert story row with current (partial) transcript and status pending
+  const ins = await sb.from('stories').insert([{
+    title: meta.title,
+    transcript: meta.transcript || '',
+    happened_label: meta.happened_label,
+    happened_sort: meta.happened_sort,
+    language: meta.language,
+    audio_path: audioKey,
+    image_path: image_path,
+    transcription_status: 'pending'
+  }]).select('id').single();
+  if(ins.error){ alert('Save failed: '+ins.error.message); stateEl.textContent='Save failed.'; return; }
+
+  if(triggerFinal){
+    try{
+      await fetch('/api/transcribe-story', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ story_id: ins.data.id })
+      });
+      stateEl.textContent='Saved. Final transcription running…';
+    }catch{
+      stateEl.textContent='Saved. Will finalize transcription shortly.';
+    }
+  }else{
+    stateEl.textContent='Saved.';
+  }
+
+  // Reset UI
+  transcriptEl.textContent='Your words will appear here…';
+  titleEl.value=''; whenEl.value=''; photoIn.value=''; thumb.hidden=true;
+}
 
 /* Photo preview */
 photoIn.addEventListener('change', ()=>{
-  const f = photoIn.files?.[0];
-  if(!f){ thumb.hidden=true; return; }
-  const url = URL.createObjectURL(f);
-  thumb.src = url; thumb.hidden=false;
+  const f=photoIn.files?.[0]; if(!f){ thumb.hidden=true; return; }
+  const url=URL.createObjectURL(f); thumb.src=url; thumb.hidden=false;
 });
 
-/* Recording (in-browser fallback) */
-function startRec(){
-  const SR = window.webkitSpeechRecognition || window.SpeechRecognition;
-  if(!SR){ stateEl.textContent='Speech recognition not available in this browser.'; return; }
-  recog = new SR();
-  const map={en:'en-US',fr:'fr-FR',nl:'nl-NL',es:'es-ES'};
-  recog.lang = map[recLang.value] || 'en-US';
-  recog.continuous = true; recog.interimResults = true;
-  fullText=''; transcriptEl.textContent='Listening…';
-  recog.onresult = (e)=>{
-    let inter=''; 
-    for(let i=e.resultIndex;i<e.results.length;i++){
-      const r=e.results[i];
-      if(r.isFinal){ fullText += r[0].transcript + ' '; }
-      else { inter += r[0].transcript; }
-    }
-    transcriptEl.textContent = (fullText + inter).trim();
-  };
-  recog.onend = () => stopRec(true);
-  try{ recog.start(); }catch{}
-  secs=0; setTimer(0);
-  ticking = setInterval(()=>{ secs++; setTimer(secs); },1000);
-  recordBtn.classList.add('rec'); recordBtn.textContent='Stop'; recordBtn.setAttribute('aria-pressed','true');
-  stateEl.textContent='Recording…';
-}
-function stopRec(fromEnd=false){
-  try{ recog && recog.stop(); }catch{}
-  clearInterval(ticking); ticking=null;
-  recordBtn.classList.remove('rec'); recordBtn.textContent='Record'; recordBtn.setAttribute('aria-pressed','false');
-  stateEl.textContent = fromEnd ? 'Stopped' : 'Stopped';
-}
-recordBtn.onclick = ()=> recordBtn.classList.contains('rec') ? stopRec(false) : startRec();
-
-/* Save story (Supabase if available, fallback to localStorage) */
+/* Minimal approx date parser */
 function parseApproxDate(input){
-  if(!input) return {label:'', sort:null};
+  if(!input) return {label:'',sort:null};
   const s=input.trim().toLowerCase();
   const iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-  if(iso){const d=new Date(+iso[1],+iso[2]-1,+iso[3]);return{label:input,sort:d.toISOString().slice(0,10)};}
-  const yOnly=s.match(/(\d{4})/);
-  if(yOnly){const d=new Date(+yOnly[1],0,1);return{label:input,sort:d.toISOString().slice(0,10)};}
-  return {label:input, sort:null};
+  if(iso){ const d=new Date(+iso[1],+iso[2]-1,+iso[3]); return{label:input,sort:d.toISOString().slice(0,10)}; }
+  const y=s.match(/(\d{4})/); if(y){ const d=new Date(+y[1],0,1); return{label:input,sort:d.toISOString().slice(0,10)}; }
+  return {label:input,sort:null};
 }
-async function saveToSupabase(story, file){
-  try{
-    const { data:{ session } } = await sb.auth.getSession();
-    if(!session) return { ok:false, error:'not_logged_in' };
-
-    // Optionally upload image to storage (memoir-images/<uid>/<uuid>.jpg)
-    if(file){
-      const uid = session.user.id;
-      const key = `${uid}/${crypto.randomUUID()}-${file.name}`;
-      await sb.storage.from('memoir-images').upload(key, file, {upsert:false});
-      story.image_path = key;
-    }
-
-    const { data, error } = await sb.from('stories').insert(story).select().single();
-    if(error) return { ok:false, error:error.message };
-    return { ok:true, data };
-  }catch(e){ return { ok:false, error:String(e) }; }
-}
-function saveLocal(story){
-  const LS='memoir.stories';
-  const items = JSON.parse(localStorage.getItem(LS)||'[]');
-  items.unshift(story); localStorage.setItem(LS, JSON.stringify(items));
-}
-
-saveBtn.onclick = async ()=>{
-  const story = {
-    title: titleEl.value || 'Story',
-    transcript: transcriptEl.textContent.trim(),
-    original_transcript: transcriptEl.textContent.trim(),
-    created_at: new Date().toISOString(),
-    happened_label: parseApproxDate(whenEl.value).label,
-    happened_sort: parseApproxDate(whenEl.value).sort
-  };
-  if(!story.transcript){ alert('No transcript yet. Record first.'); return; }
-  const file = photoIn.files?.[0] || null;
-
-  const trySb = await saveToSupabase(story, file);
-  if(!trySb.ok){
-    saveLocal(story);
-    alert('Saved locally (offline or not logged in). You can sync later from My Stories.');
-  }else{
-    alert('Saved to your library!');
-  }
-
-  // reset
-  titleEl.value=''; whenEl.value=''; photoIn.value=''; thumb.hidden=true; transcriptEl.textContent='Your words will appear here…';
-};
-
-clearBtn.onclick = ()=>{
-  titleEl.value=''; whenEl.value=''; photoIn.value=''; thumb.hidden=true; transcriptEl.textContent='Your words will appear here…';
-};
-
-/* init */
-renderPrompts();
 </script>
 </body>
 </html>
