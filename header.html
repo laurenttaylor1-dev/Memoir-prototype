@@ -1,43 +1,33 @@
+<!-- Shared header inserted on every page -->
 <header class="mk-header">
   <div class="mk-header__inner">
-    <a href="landing.html" class="mk-brand">
-      <div class="mk-logo"></div>
-      <span class="mk-brand-text">Memoir</span>
+    <a href="/landing.html" class="mk-brand">
+      <span class="mk-logo"></span>
+      <span class="mk-brand-text" data-i18n="brand">MEMOIR APP</span>
     </a>
+
     <nav class="mk-nav">
-      <a href="landing.html" class="mk-nav-btn">Home</a>
-      <a href="record.html" class="mk-nav-btn">Record</a>
-      <a href="stories.html" class="mk-nav-btn">My Stories</a>
-      <a href="login.html" class="mk-nav-btn">Login</a>
-      <div class="mk-lang">
-        <button id="langToggle" class="mk-nav-btn mk-lang-btn">🌐 Language ▾</button>
-        <div id="langMenu" class="mk-lang-menu">
-          <button data-lang="en">🇬🇧 English</button>
-          <button data-lang="fr">🇫🇷 Français</button>
-          <button data-lang="nl">🇳🇱 Nederlands</button>
-          <button data-lang="es">🇪🇸 Español</button>
-        </div>
+      <a href="/landing.html"              class="mk-nav-btn" data-i18n="nav.home">Home</a>
+      <a href="/record.html"               class="mk-nav-btn" data-i18n="nav.record">Record</a>
+      <a href="/stories.html"              class="mk-nav-btn" data-i18n="nav.stories">My Stories</a>
+      <a href="/login.html"                class="mk-nav-btn" data-i18n="nav.login">Login</a>
+      <a href="/landing.html#pricing"      class="mk-nav-btn" data-i18n="nav.pricing">Pricing</a>
+      <a href="/landing.html#faq"          class="mk-nav-btn" data-i18n="nav.faq">FAQ</a>
+
+      <button class="mk-nav-btn mk-lang-btn" type="button" data-lang-button>
+        🇬🇧 English
+      </button>
+      <div class="mk-lang-menu" data-lang-menu>
+        <button type="button" data-lang="en">🇬🇧 English</button>
+        <button type="button" data-lang="fr">🇫🇷 Français</button>
+        <button type="button" data-lang="nl">🇳🇱 Nederlands</button>
+        <button type="button" data-lang="es">🇪🇸 Español</button>
       </div>
     </nav>
   </div>
+
   <div class="mk-subline">
-    <span class="mk-tagline">MEMOIR APP — Preserve your memories forever</span>
-    <span id="planBadge" class="mk-plan-badge">Plan: Free</span>
+    <span class="mk-tagline" data-i18n="tagline">Preserve your memories forever</span>
+    <span id="planBadge" class="mk-plan-badge"></span>
   </div>
 </header>
-
-<script>
-const langToggle = document.getElementById('langToggle');
-const langMenu = document.getElementById('langMenu');
-
-if (langToggle && langMenu) {
-  langToggle.addEventListener('click', () => {
-    langMenu.classList.toggle('show');
-  });
-  document.addEventListener('click', (e) => {
-    if (!langMenu.contains(e.target) && !langToggle.contains(e.target)) {
-      langMenu.classList.remove('show');
-    }
-  });
-}
-</script>
