@@ -1,17 +1,19 @@
-// /header-loader.js
-(async function injectHeader(){
-  const slot = document.getElementById('header-slot');
-  if (!slot) return;
+// Injects /header.html into #site-header, then wires language & i18n
+(async () => {
+  const host = document.getElementById('site-header');
+  if (!host) return;
+
   try {
     const res = await fetch('/header.html', { cache: 'no-store' });
     const html = await res.text();
-    slot.innerHTML = html;
+    host.innerHTML = html;
 
-    // After injection, bind header interactions and apply current language
-    if (typeof window.initHeaderBindings === 'function') window.initHeaderBindings();
+    // Ensure our shared runtime is present
+    if (window.initHeaderBindings) window.initHeaderBindings();
+
     const lang = localStorage.getItem('memoir.lang') || 'en';
-    if (typeof window.applyTranslations === 'function') window.applyTranslations(lang);
+    if (window.applyTranslations) window.applyTranslations(lang);
   } catch (e) {
-    console.error('Failed to load header.html', e);
+    console.error('Header load failed:', e);
   }
 })();
