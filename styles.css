@@ -1,59 +1,86 @@
-/* styles.css — Vintage / sepia theme for the whole app */
-
+/* styles.css */
+/* Vintage sand/brown palette */
 :root{
-  /* Palette */
-  --mk-bg:        #F2ECE4;   /* paper beige */
-  --mk-card:      #FFFCF7;   /* cream */
-  --mk-fg:        #2C2620;   /* deep cocoa */
-  --mk-sub:       #6E6257;   /* muted brown */
-  --mk-brand:     #8B5E34;   /* warm brown */
-  --mk-accent:    #C08A5B;   /* honey gold */
-  --mk-line:      #E6D9C9;   /* parchment line */
-  --mk-radius:    18px;
-  --mk-shadow:    0 12px 30px rgba(44,38,32,.08);
-
-  /* Buttons */
-  --mk-btn-bg:    #fff;
-  --mk-btn-fg:    var(--mk-fg);
-  --mk-btn-border: var(--mk-line);
-  --mk-primary-grad: linear-gradient(90deg, var(--mk-brand), var(--mk-accent));
-  --mk-primary-fg: #fff;
+  --bg:#f6f1ea;
+  --card:#fbf8f3;
+  --ink:#2b2320;
+  --muted:#7b6f69;
+  --brand:#7b4b26;
+  --brand2:#b17f4a;
+  --pill:#efe6dd;
+  --ring:#e6d9cd;
+  --border:#eadfd6;
+  --shadow: 0 12px 30px rgba(82,56,32,.10), 0 2px 8px rgba(82,56,32,.08);
 }
 
-@media (prefers-color-scheme: dark){
-  :root{
-    --mk-bg:#1F1A16; --mk-card:#26201B; --mk-fg:#EFE8DF; --mk-sub:#BBAE9F;
-    --mk-line:#3A3128; --mk-shadow:0 14px 32px rgba(0,0,0,.35);
-    --mk-btn-bg:#2B241F; --mk-btn-fg:#EFE8DF; --mk-btn-border:#3A3128;
-  }
-}
-
-/* Base */
 *{box-sizing:border-box}
-html,body{margin:0;padding:0}
-body{background:var(--mk-bg);color:var(--mk-fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+a{color:inherit;text-decoration:none}
 
-/* Generic elements reused across pages */
-.h1{font-size:clamp(26px,3.4vw,38px);line-height:1.1;margin:6px 0 10px}
-.lead{color:var(--mk-sub)}
+.mk-container{max-width:1100px;margin:0 auto;padding:16px}
 
-.mk-btn{
-  display:inline-flex;align-items:center;justify-content:center;
-  padding:10px 16px;border-radius:999px;border:1px solid var(--mk-btn-border);
-  background:var(--mk-btn-bg);color:var(--mk-btn-fg);text-decoration:none;
-  font-weight:700;letter-spacing:.01em;cursor:pointer;user-select:none
+.mk-header{position:sticky;top:0;z-index:50;background:var(--bg);backdrop-filter:saturate(110%) blur(6px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:8px 16px}
+.mk-brand{display:flex;align-items:center;gap:10px}
+.mk-logo{width:32px;height:32px;border-radius:10px;background:radial-gradient(70% 70% at 50% 30%, var(--brand2), var(--brand))}
+.mk-title small{color:var(--muted);display:block;line-height:1}
+
+.mk-nav{display:flex;gap:10px;align-items:center}
+.mk-pill{background:var(--pill);border:1px solid var(--border);padding:10px 16px;border-radius:999px}
+.mk-pill:hover{filter:brightness(.98)}
+.mk-active{outline:2px solid var(--ring)}
+
+.mk-lang{position:relative}
+.mk-lang-menu{position:absolute;right:0;top:110%;display:none;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:6px}
+.mk-lang-menu.show{display:block}
+.mk-lang-menu button{display:block;width:100%;text-align:left;background:transparent;border:0;padding:8px 12px;border-radius:8px}
+.mk-lang-menu button:hover{background:var(--pill)}
+
+.mk-hero-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:18px;margin-top:12px}
+.mk-hero-img{width:100%;border-radius:18px;box-shadow:var(--shadow);object-fit:cover;aspect-ratio:16/10}
+.mk-hero-copy{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:18px}
+.mk-lead{color:var(--muted)}
+.mk-cta-row{display:flex;gap:10px;margin-top:8px}
+.mk-btn{padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:var(--pill)}
+.mk-btn-primary{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;border:0}
+
+.mk-two-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0}
+.mk-card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:16px}
+.mk-card-cta .mk-btn{margin-top:6px}
+
+.mk-features{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:10px 0 30px}
+.mk-feature{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:16px}
+.mk-muted{color:var(--muted)}
+
+.mk-page{margin:12px 2px}
+
+.mk-record-grid{display:grid;grid-template-columns:420px 1fr;gap:16px}
+.mk-rec-left,.mk-rec-right{min-height:100px}
+.mk-rec-meta{display:flex;gap:12px;margin:8px 0}
+#timer{font-weight:700}
+.mk-prompts{margin:10px 0}
+.mk-prompts-top{display:flex;justify-content:space-between;align-items:center}
+.mk-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.mk-chip{padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:var(--pill)}
+.mk-label{display:block;margin:10px 0 6px;color:var(--muted);font-weight:700;letter-spacing:.02em}
+.mk-input{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:#fff}
+.mk-file{display:block;margin-top:4px}
+.mk-actions{margin-top:12px}
+
+.mk-record-btn{width:220px;height:220px;border-radius:999px;border:0;background:radial-gradient(70% 70% at 50% 30%, var(--brand2), var(--brand));color:#fff;font-size:20px;font-weight:800;box-shadow:var(--shadow);cursor:pointer}
+.mk-recording{animation: mk-pulse 1.5s infinite ease-in-out}
+@keyframes mk-pulse{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
+
+.mk-transcript{min-height:140px;border:1px solid var(--border);background:#fff;border-radius:12px;padding:12px;white-space:pre-wrap}
+
+.mk-stats{display:flex;gap:16px;margin:12px 0}
+.mk-stat{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px 16px;box-shadow:var(--shadow)}
+.mk-stat strong{font-size:18px;display:block}
+
+.mk-list .mk-row{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;margin-bottom:8px}
+
+@media (max-width:1024px){
+  .mk-hero-grid{grid-template-columns:1fr}
+  .mk-two-cards{grid-template-columns:1fr}
+  .mk-features{grid-template-columns:1fr}
+  .mk-record-grid{grid-template-columns:1fr}
 }
-.mk-btn:hover,.mk-btn:focus{outline:none;box-shadow:0 0 0 2px rgba(139,94,52,.15)}
-.mk-btn.mk-primary{background:var(--mk-primary-grad);border-color:transparent;color:var(--mk-primary-fg)}
-.mk-btn.lg{padding:14px 18px;font-size:16px}
-
-.mk-card{
-  background:var(--mk-card);border:1px solid var(--mk-line);border-radius:20px;
-  box-shadow:var(--mk-shadow);padding:16px
-}
-
-.mk-grid{display:grid;gap:16px}
-.wrap{max-width:1120px;margin:0 auto;padding:16px}
-
-/* Utility for section footnote */
-.footnote{color:var(--mk-sub);font-size:12px;text-align:center;margin:12px 0 30px}
