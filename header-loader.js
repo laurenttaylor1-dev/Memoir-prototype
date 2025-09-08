@@ -1,11 +1,13 @@
-(async ()=>{
-  const target = document.getElementById("site-header");
-  if (!target) return;
+// /header-loader.js
+(async () => {
+  const host = document.getElementById("site-header");
+  if (!host) return;
 
-  const resp = await fetch("/header.html");
+  // Cache-bust so you always get the newest header.html
+  const resp = await fetch(`/header.html?v=${Date.now()}`, { cache: "no-store" });
   const html = await resp.text();
-  target.innerHTML = html;
+  host.innerHTML = html;
 
-  // Now re-bind header events (language menu, etc.)
+  // Bind header interactions after injection
   if (window.initHeaderBindings) window.initHeaderBindings();
 })();
