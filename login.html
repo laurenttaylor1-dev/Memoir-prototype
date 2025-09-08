@@ -1,57 +1,51 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Memoir — Login</title>
-<link rel="stylesheet" href="/styles.css"/>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
-<style>
-  .wrap{max-width:520px;margin:0 auto;padding:16px}
-  .card{background:#fff;border:1px solid var(--mk-line);border-radius:18px;padding:16px;box-shadow:var(--mk-shadow)}
-  .stack{display:grid;gap:10px}
-</style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Login — Memoir</title>
+  <link rel="stylesheet" href="/styles.css"/>
 </head>
-<body>
-  <div id="header-placeholder"></div>
+<body class="mk-theme-vintage">
+  <div id="site-header"></div>
 
-  <main class="wrap">
-    <section class="card">
-      <h2 style="margin:0 0 8px">Sign in to Memoir</h2>
-      <div class="stack">
-        <input id="email" type="email" class="mk-input" placeholder="you@email.com" autocomplete="email">
-        <input id="pass" type="password" class="mk-input" placeholder="Password" autocomplete="current-password">
-        <button id="login" class="mk-btn mk-primary">Sign in</button>
-        <div id="msg" class="mk-sub"></div>
-      </div>
+  <main class="mk-container">
+    <section class="mk-auth">
+      <h1 data-i18n="nav.login">Login</h1>
+      <form id="loginForm" class="mk-auth__form">
+        <input id="email" type="email" class="mk-input" placeholder="you@example.com" required/>
+        <input id="password" type="password" class="mk-input" placeholder="********" required/>
+        <button class="mk-btn mk-btn-primary" type="submit" data-i18n="nav.login">Login</button>
+      </form>
     </section>
   </main>
 
-<script>
-const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
-window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {auth:{persistSession:true}});
+  <script>
+    // window.SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
+    // window.SUPABASE_ANON_KEY = "YOUR_PUBLIC_ANON_KEY";
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/header-loader.js"></script>
+  <script src="/app.js"></script>
 
-// Header
-fetch('/header.html').then(r=>r.text()).then(html=>{
-  document.getElementById('header-placeholder').innerHTML = html;
-});
-
-(async function(){
-  const { data:{ session } } = await sb.auth.getSession();
-  if(session){ location.href='/stories.html'; return; }
-})();
-
-async function doLogin(){
-  const email = document.getElementById('email').value.trim();
-  const pass = document.getElementById('pass').value;
-  const msg = document.getElementById('msg'); msg.textContent='';
-  if(!email || !pass){ msg.textContent='Enter email and password.'; return; }
-  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
-  if(error){ msg.textContent = error.message; } else { location.href='/stories.html'; }
-}
-document.getElementById('login').onclick = doLogin;
-document.addEventListener('keydown', (e)=>{ if(e.key==='Enter') doLogin(); });
-</script>
+  <script>
+    // Optional: simple email/password flow
+    (function(){
+      if (!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY) return;
+      const sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+      const form = document.getElementById('loginForm');
+      form?.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        try{
+          const { data, error } = await sb.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          // Redirect to My Stories if already logged in
+          location.href = '/stories.html';
+        }catch(err){ alert(err.message || String(err)); }
+      });
+    })();
+  </script>
 </body>
 </html>
