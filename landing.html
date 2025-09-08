@@ -3,60 +3,73 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Memoir — Home</title>
-  <link rel="stylesheet" href="/styles.css"/>
+  <title>Memoir App — Preserve Your Memories</title>
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 <body class="mk-theme-vintage">
-  <!-- Shared header will be injected here -->
-  <div id="site-header"></div>
+
+  <!-- Shared Header -->
+  <div id="header-container"></div>
+  <script>fetch("header.html").then(r=>r.text()).then(html=>{document.getElementById("header-container").innerHTML=html});</script>
 
   <main class="mk-container">
 
-    <!-- Hero: image + actions column -->
+    <!-- Hero -->
     <section class="mk-hero">
       <div class="mk-hero__image">
-        <img src="/assets/book-1.jpg" alt="Open book" loading="eager"/>
+        <img src="assets/book1.jpg" alt="Memoir book"/>
       </div>
-
       <div class="mk-hero__content">
-        <h1 data-i18n="hero.title">Preserve Your Memories Forever</h1>
-        <p class="mk-hero__lede" data-i18n="hero.lede">
-          Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.
-        </p>
-
+        <h1>Preserve Your Memories Forever</h1>
+        <p class="mk-hero__lede">Memoir helps you record, transcribe, and share life stories with family — across devices, safely stored in the cloud.</p>
         <div class="mk-hero__actions">
-          <a href="/record.html"  class="mk-btn mk-btn-primary" data-i18n="cta.startRecording">Start Recording</a>
-          <a href="/stories.html" class="mk-btn mk-btn-ghost"   data-i18n="cta.myStories">My Stories</a>
+          <a href="record.html" class="mk-btn mk-btn-primary">Start Recording</a>
+          <a href="stories.html" class="mk-btn">View My Stories</a>
         </div>
       </div>
     </section>
 
-    <!-- Features (3 cards) -->
+    <!-- Features -->
     <section class="mk-features">
-      <article class="mk-card">
-        <h3 data-i18n="feat.1.title">Smart Transcription</h3>
-        <p data-i18n="feat.1.text">Server-side Whisper for accurate EN/FR/NL/ES.</p>
-      </article>
-      <article class="mk-card">
-        <h3 data-i18n="feat.2.title">Guided or Free</h3>
-        <p data-i18n="feat.2.text">Use gentle prompts or speak freely. Add a date or period like “early 1970s”.</p>
-      </article>
-      <article class="mk-card">
-        <h3 data-i18n="feat.3.title">Private Library</h3>
-        <p data-i18n="feat.3.text">Stories and media saved in your private account. Export when you’re ready.</p>
-      </article>
+      <div class="mk-card">
+        <h3>🎙️ Easy Recording</h3>
+        <p>Capture memories with one tap, guided prompts, and automatic transcription.</p>
+      </div>
+      <div class="mk-card">
+        <h3>📖 Share With Family</h3>
+        <p>Invite family to read or listen to your stories — privately and securely.</p>
+      </div>
+      <div class="mk-card">
+        <h3>🌍 Multilingual</h3>
+        <p>Supports English, French, Dutch, and Spanish for global families.</p>
+      </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="mk-features" style="margin-top:40px;">
+      <div class="mk-card">
+        <h3>Free</h3>
+        <p>Always free: record and save your memories, up to 2 minutes per story.</p>
+      </div>
+      <div class="mk-card">
+        <h3>Premium — €4.99/month</h3>
+        <p>15-minute stories, AI rewrites, export to PDF/Canva, and cloud sync.</p>
+      </div>
+      <div class="mk-card">
+        <h3>Family — €7.99/month</h3>
+        <p>All Premium features, plus sharing with up to 4 family members (read/listen only).</p>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section style="margin-top:40px;">
+      <h2>FAQ</h2>
+      <details><summary>How do I record a story?</summary><p>Go to <strong>Record</strong>, tap the round button, and start speaking. Your words are transcribed automatically.</p></details>
+      <details><summary>What is AI rewrite?</summary><p>Premium users can enhance their stories with smoother language, while keeping their authentic voice.</p></details>
+      <details><summary>How do I share with family?</summary><p>On the My Stories page, you can invite family members by email (Family plan required).</p></details>
+      <details><summary>How do subscriptions work?</summary><p>Subscriptions are managed via Stripe. You can cancel anytime in your account.</p></details>
     </section>
 
   </main>
-
-  <!-- Optional: set your public Supabase keys for plan badge / counts -->
-  <script>
-    // Fill if you want plan badge / counts to work on client:
-    // window.SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
-    // window.SUPABASE_ANON_KEY = "YOUR_PUBLIC_ANON_KEY";
-  </script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/header-loader.js"></script>
-  <script src="/app.js"></script>
 </body>
 </html>
