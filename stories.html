@@ -1,282 +1,91 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Memoir — My Stories</title>
-<link rel="stylesheet" href="/styles.css"/>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
-<style>
-  .wrap{max-width:1120px;margin:0 auto;padding:16px}
-  .toprow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-  .count{color:var(--mk-sub);font-size:14px}
-  .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px}
-  @media (max-width:1100px){ .grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
-  @media (max-width:720px){ .grid{grid-template-columns:1fr} }
-  .card{background:var(--mk-card);border:1px solid var(--mk-line);border-radius:16px;padding:12px;display:grid;gap:10px}
-  .row{display:flex;gap:10px;align-items:flex-start}
-  .thumb{width:92px;height:92px;border-radius:12px;border:1px solid var(--mk-line);object-fit:cover;background:#e5dccd;flex:0 0 92px}
-  .meta{min-width:0}
-  .title{font-weight:800;margin:0 0 4px 0}
-  .muted{color:var(--mk-sub);font-size:13px}
-  .excerpt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--mk-fg);font-size:14px}
-  .status{padding:4px 8px;border-radius:999px;font-size:12px;border:1px solid var(--mk-line)}
-  .st-pending{background:#fff7e6;color:#805600;border-color:#f3d19e}
-  .st-processing{background:#eaf4ff;color:#0b4a8a;border-color:#b7d5ff}
-  .st-done{background:#eaf7ea;color:#1c6b2a;border-color:#bfe2c4}
-  .st-error{background:#ffe9ea;color:#8a1c2b;border-color:#f7c2c7}
-  .actions{display:flex;gap:8px;flex-wrap:wrap}
-  .btn{padding:8px 10px;border-radius:10px;border:1px solid var(--mk-line);background:var(--mk-card);cursor:pointer}
-  .btn.primary{background:var(--mk-primary-grad);color:#fff;border:0}
-  .center{display:flex;justify-content:center;margin:14px 0}
-  .empty{background:var(--mk-card);border:1px solid var(--mk-line);border-radius:16px;padding:16px;text-align:center;color:var(--mk-sub)}
-</style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Memoir — My Stories</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
+  <script defer src="/app.js"></script>
 </head>
-<body>
-  <!-- Shared header -->
-  <div id="header-placeholder"></div>
+<body class="mk">
+  <!-- HEADER -->
+  <div id="header-slot">
+    <header class="mk-header">
+      <a href="/landing.html" class="mk-brand">
+        <span class="mk-logo"></span>
+        <div class="mk-title">
+          <strong data-i18n="brand">MEMOIR APP</strong>
+          <small data-i18n="tagline">Preserve your memories forever</small>
+        </div>
+      </a>
+      <nav class="mk-nav">
+        <a href="/landing.html" class="mk-pill" data-i18n="nav.home">Home</a>
+        <a href="/login.html" class="mk-pill" data-i18n="nav.login">Login</a>
+        <a href="/record.html" class="mk-pill" data-i18n="nav.record">Record</a>
+        <a href="/stories.html" class="mk-pill mk-active" data-i18n="nav.stories">My Stories</a>
+        <div class="mk-lang">
+          <button class="mk-pill" data-lang-button id="langButton">🇬🇧 English</button>
+          <div class="mk-lang-menu" data-lang-menu id="langMenu">
+            <button data-lang="en">🇬🇧 English</button>
+            <button data-lang="fr">🇫🇷 Français</button>
+            <button data-lang="nl">🇳🇱 Nederlands</button>
+            <button data-lang="es">🇪🇸 Español</button>
+          </div>
+        </div>
+      </nav>
+    </header>
+  </div>
 
-  <main class="wrap">
-    <div class="toprow">
-      <h1 class="h1">My Stories</h1>
-      <div class="count"><span id="count">0</span> stories</div>
-    </div>
+  <main class="mk-container">
+    <section class="mk-stats">
+      <div class="mk-stat"><strong id="countCloud">0</strong><span data-i18n="onCloud">In your account</span></div>
+      <div class="mk-stat"><strong id="countDevice">0</strong><span data-i18n="onDevice">On this device</span></div>
+    </section>
 
-    <div id="list" class="grid"></div>
-    <div id="empty" class="empty" style="display:none">No stories yet. Start recording from the Record page.</div>
-
-    <div class="center">
-      <button id="loadMore" class="btn">Load more</button>
-    </div>
+    <section class="mk-two-cards">
+      <div class="mk-card">
+        <h3>Cloud</h3>
+        <div id="cloudList" class="mk-list"></div>
+      </div>
+      <div class="mk-card">
+        <h3>Device</h3>
+        <div id="devList" class="mk-list"></div>
+      </div>
+    </section>
   </main>
 
-<script>
-/* Shared header */
-fetch('/header.html').then(r=>r.text()).then(h=>{document.getElementById('header-placeholder').innerHTML=h;});
+  <script>
+    const LSKEY='memoir.stories';
+    const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 
-/* Supabase */
-const SUPABASE_URL = "https://jrjqciywlijhhcxfxywh.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {auth:{persistSession:true}});
+    function loadLocal(){ try{return JSON.parse(localStorage.getItem(LSKEY)||'[]')}catch{return[]} }
 
-/* UI refs */
-const listEl = document.getElementById('list');
-const emptyEl = document.getElementById('empty');
-const countEl = document.getElementById('count');
-const loadMoreBtn = document.getElementById('loadMore');
+    function row(s){
+      const div=document.createElement('div'); div.className='mk-row';
+      div.innerHTML = `<div class="mk-row-main">
+        <strong>${esc(s.title||'Story')}</strong>
+        <div class="mk-muted">${esc(s.happened_label||s.happened_sort||'')}</div>
+      </div>`;
+      return div;
+    }
 
-/* Paging */
-const PAGE_SIZE = 12;
-let from = 0, to = PAGE_SIZE - 1;
-let more = true;
-let polling = null;
+    async function refresh(){
+      // Device
+      const dev=loadLocal(); document.getElementById('countDevice').textContent=dev.length;
+      const devList=document.getElementById('devList'); devList.innerHTML=''; dev.forEach(s=>devList.appendChild(row(s)));
 
-let userId = null;
+      // Cloud (logged-in only)
+      const { data:{session} } = await supabase.auth.getSession();
+      const cloudList=document.getElementById('cloudList'); cloudList.innerHTML='';
+      if(!session){ document.getElementById('countCloud').textContent='0'; return; }
 
-/* Helpers */
-function esc(s){ return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
-function statusBadge(st){
-  const map = { pending:'st-pending', processing:'st-processing', done:'st-done', error:'st-error' };
-  const cls = map[st] || 'st-pending';
-  return `<span class="status ${cls}">${esc(st||'pending')}</span>`;
-}
-function whenText(s){
-  if(s.happened_label) return s.happened_label;
-  if(s.happened_sort) return new Date(s.happened_sort).toDateString();
-  return new Date(s.created_at || s.created || Date.now()).toLocaleString();
-}
-function excerpt(txt){
-  const t = (txt||'').replace(/\s+/g,' ').trim();
-  return t.length>160 ? t.slice(0,160)+'…' : t || '—';
-}
-
-/* Signed image helper */
-async function signedImage(path){
-  if(!path) return null;
-  const { data, error } = await sb.storage.from('memoir-images').createSignedUrl(path, 600);
-  if(error) return null;
-  return data.signedUrl;
-}
-
-/* Render one card */
-async function renderCard(s){
-  const wrapper = document.createElement('div');
-  wrapper.className = 'card';
-
-  const row = document.createElement('div');
-  row.className = 'row';
-
-  const img = document.createElement('img');
-  img.className = 'thumb';
-  img.alt = '';
-  if(s.image_path){
-    const url = await signedImage(s.image_path);
-    if(url) img.src = url;
-  } else {
-    img.style.visibility='hidden';
-  }
-
-  const meta = document.createElement('div');
-  meta.className='meta';
-  meta.innerHTML = `
-    <div style="display:flex;align-items:center;gap:8px;justify-content:space-between">
-      <h3 class="title">${esc(s.title||'Story')}</h3>
-      ${statusBadge(s.transcription_status||'pending')}
-    </div>
-    <div class="muted">${esc(whenText(s))}</div>
-    <div class="excerpt">${esc(excerpt(s.transcript))}</div>
-  `;
-
-  row.appendChild(img);
-  row.appendChild(meta);
-  wrapper.appendChild(row);
-
-  const actions = document.createElement('div');
-  actions.className='actions';
-
-  // View
-  const btnView = document.createElement('button');
-  btnView.className='btn';
-  btnView.textContent='View';
-  btnView.onclick=()=>viewStory(s);
-  actions.appendChild(btnView);
-
-  // Replace photo
-  const btnPhoto = document.createElement('button');
-  btnPhoto.className='btn';
-  btnPhoto.textContent='Replace Photo';
-  btnPhoto.onclick=()=>replacePhoto(s);
-  actions.appendChild(btnPhoto);
-
-  // Download .docx (zip with txt for now)
-  const btnDoc = document.createElement('button');
-  btnDoc.className='btn';
-  btnDoc.textContent='Download .docx';
-  btnDoc.onclick=()=>downloadDocx(s);
-  actions.appendChild(btnDoc);
-
-  // Delete
-  const btnDel = document.createElement('button');
-  btnDel.className='btn';
-  btnDel.textContent='Delete';
-  btnDel.onclick=()=>delStory(s);
-  actions.appendChild(btnDel);
-
-  wrapper.appendChild(actions);
-  return wrapper;
-}
-
-/* View modal */
-function viewStory(s){
-  const dlg=document.createElement('dialog');
-  dlg.style.border='none'; dlg.style.borderRadius='16px';
-  dlg.innerHTML = `
-    <form method="dialog" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--mk-line)">
-      <strong>${esc(s.title||'Story')}</strong>
-      <button class="btn">Close</button>
-    </form>
-    <div style="padding:16px;max-width:min(90vw,780px)">
-      <div class="muted" style="margin-bottom:8px">${esc(whenText(s))} · ${esc(s.language||'')}</div>
-      <div style="white-space:pre-wrap;font-size:15px">${esc(s.transcript||'')}</div>
-    </div>`;
-  document.body.appendChild(dlg);
-  dlg.addEventListener('close',()=>dlg.remove());
-  dlg.showModal();
-}
-
-/* Replace Photo */
-async function replacePhoto(s){
-  const input=document.createElement('input');
-  input.type='file'; input.accept='image/*';
-  input.onchange = async ()=>{
-    const f=input.files[0]; if(!f) return;
-    const key = `${userId}/${crypto.randomUUID()}-${f.name}`;
-    const up = await sb.storage.from('memoir-images').upload(key, f, { upsert:false });
-    if(up.error){ alert(up.error.message); return; }
-    const upd = await sb.from('stories').update({ image_path:key }).eq('id', s.id);
-    if(upd.error){ alert(upd.error.message); return; }
-    await refresh(true);
-  };
-  input.click();
-}
-
-/* Download .docx placeholder (zip txt) */
-async function downloadDocx(s){
-  const { default: JSZip } = await import('https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm');
-  const zip=new JSZip();
-  const meta=`Title: ${s.title||'Story'}\nWhen: ${whenText(s)}\n\n`;
-  zip.file('story.txt', meta + (s.transcript||''));
-  const blob=await zip.generateAsync({type:'blob'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(s.title||'story')+'.zip'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-}
-
-/* Delete */
-async function delStory(s){
-  if(!confirm('Delete this story?')) return;
-  const del = await sb.from('stories').delete().eq('id', s.id);
-  if(del.error){ alert(del.error.message); return; }
-  await refresh(true);
-}
-
-/* Load page */
-async function loadPage(){
-  const { data:{ user } } = await sb.auth.getUser();
-  if(!user){ window.location.replace('/login.html'); return; }
-  userId = user.id;
-
-  const { data: rows, error, count } = await sb
-    .from('stories')
-    .select('id,title,transcript,happened_label,happened_sort,created_at,image_path,language,transcription_status', { count:'exact' })
-    .eq('user_id', userId)
-    .order('created_at', { ascending:false })
-    .range(from, to);
-
-  if(error){ console.error(error); return; }
-
-  if(from===0){ listEl.innerHTML=''; }
-  countEl.textContent = count ?? 0;
-
-  if((rows||[]).length===0 && from===0){
-    emptyEl.style.display='block';
-    more=false; loadMoreBtn.style.display='none';
-    return;
-  } else {
-    emptyEl.style.display='none';
-  }
-
-  // Are there any not-done?
-  let hasPending = false;
-
-  for(const s of rows||[]){
-    if(s.transcription_status && s.transcription_status!=='done') hasPending = true;
-    const card = await renderCard(s);
-    listEl.appendChild(card);
-  }
-
-  // pagination toggle
-  more = (to + 1) < (count ?? 0);
-  loadMoreBtn.style.display = more ? 'inline-flex' : 'none';
-
-  // polling if needed
-  if(hasPending && !polling){
-    polling = setInterval(()=>refresh(false), 10000); // 10s
-  }
-}
-
-/* Refresh list */
-async function refresh(reset){
-  if(reset){ from=0; to=PAGE_SIZE-1; polling && clearInterval(polling); polling=null; }
-  await loadPage();
-}
-
-/* Init */
-loadMoreBtn.onclick = async ()=>{
-  from = to + 1;
-  to   = from + PAGE_SIZE - 1;
-  await loadPage();
-};
-
-refresh(true);
-</script>
+      const { data, error } = await supabase.from('stories').select('id,title,happened_label,happened_sort,created_at').order('created_at',{ascending:false}).limit(50);
+      if(error){ console.error(error); document.getElementById('countCloud').textContent='0'; return; }
+      document.getElementById('countCloud').textContent = data.length;
+      data.forEach(s=>cloudList.appendChild(row(s)));
+    }
+    refresh();
+  </script>
 </body>
 </html>
