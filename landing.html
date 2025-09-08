@@ -5,84 +5,58 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — Home</title>
   <link rel="stylesheet" href="/styles.css"/>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
-  <script defer src="/app.js"></script>
 </head>
-<body class="mk">
-  <!-- Shared header -->
-  <?php /* If you deploy on Vercel static, copy/paste header.html here instead of PHP include. */ ?>
-  <div id="header-slot">
-    <!-- Paste header.html here if your host doesn't support includes -->
-    <!-- BEGIN HEADER -->
-    <header class="mk-header">
-      <a href="/landing.html" class="mk-brand">
-        <span class="mk-logo"></span>
-        <div class="mk-title">
-          <strong data-i18n="brand">MEMOIR APP</strong>
-          <small data-i18n="tagline">Preserve your memories forever</small>
-        </div>
-      </a>
-      <nav class="mk-nav">
-        <a href="/landing.html" class="mk-pill" data-i18n="nav.home">Home</a>
-        <a href="/login.html" class="mk-pill" data-i18n="nav.login">Login</a>
-        <a href="/record.html" class="mk-pill" data-i18n="nav.record">Record</a>
-        <a href="/stories.html" class="mk-pill" data-i18n="nav.stories">My Stories</a>
-        <div class="mk-lang">
-          <button class="mk-pill" data-lang-button id="langButton">🇬🇧 English</button>
-          <div class="mk-lang-menu" data-lang-menu id="langMenu">
-            <button data-lang="en">🇬🇧 English</button>
-            <button data-lang="fr">🇫🇷 Français</button>
-            <button data-lang="nl">🇳🇱 Nederlands</button>
-            <button data-lang="es">🇪🇸 Español</button>
-          </div>
-        </div>
-      </nav>
-    </header>
-    <!-- END HEADER -->
-  </div>
+<body class="mk-theme-vintage">
+  <!-- Shared header will be injected here -->
+  <div id="site-header"></div>
 
   <main class="mk-container">
-    <section class="mk-hero-grid">
-      <img src="/assets/book-1.jpg" alt="Open book" class="mk-hero-img" />
-      <div class="mk-hero-copy">
-        <h1 data-i18n="heroTitle">Preserve Your Memories Forever</h1>
-        <p class="mk-lead" data-i18n="heroLead">
-          Record once, keep for generations…
+
+    <!-- Hero: image + actions column -->
+    <section class="mk-hero">
+      <div class="mk-hero__image">
+        <img src="/assets/book-1.jpg" alt="Open book" loading="eager"/>
+      </div>
+
+      <div class="mk-hero__content">
+        <h1 data-i18n="hero.title">Preserve Your Memories Forever</h1>
+        <p class="mk-hero__lede" data-i18n="hero.lede">
+          Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.
         </p>
-        <div class="mk-cta-row">
-          <a href="/record.html" class="mk-btn mk-btn-primary" data-i18n="ctaRecord">Start Recording</a>
-          <a href="/stories.html" class="mk-btn" data-i18n="ctaStories">My Stories</a>
+
+        <div class="mk-hero__actions">
+          <a href="/record.html"  class="mk-btn mk-btn-primary" data-i18n="cta.startRecording">Start Recording</a>
+          <a href="/stories.html" class="mk-btn mk-btn-ghost"   data-i18n="cta.myStories">My Stories</a>
         </div>
       </div>
     </section>
 
-    <section class="mk-two-cards">
-      <div class="mk-card mk-card-cta">
-        <h3 data-i18n="qaTitle1">Start Recording</h3>
-        <p data-i18n="qaBody1">One tap to begin…</p>
-        <a class="mk-btn mk-btn-primary" href="/record.html" data-i18n="ctaRecord">Start Recording</a>
-      </div>
-      <div class="mk-card mk-card-cta">
-        <h3 data-i18n="qaTitle2">View My Stories</h3>
-        <p data-i18n="qaBody2">Browse, rewrite with AI…</p>
-        <a class="mk-btn" href="/stories.html" data-i18n="ctaStories">My Stories</a>
-      </div>
+    <!-- Features (3 cards) -->
+    <section class="mk-features">
+      <article class="mk-card">
+        <h3 data-i18n="feat.1.title">Smart Transcription</h3>
+        <p data-i18n="feat.1.text">Server-side Whisper for accurate EN/FR/NL/ES.</p>
+      </article>
+      <article class="mk-card">
+        <h3 data-i18n="feat.2.title">Guided or Free</h3>
+        <p data-i18n="feat.2.text">Use gentle prompts or speak freely. Add a date or period like “early 1970s”.</p>
+      </article>
+      <article class="mk-card">
+        <h3 data-i18n="feat.3.title">Private Library</h3>
+        <p data-i18n="feat.3.text">Stories and media saved in your private account. Export when you’re ready.</p>
+      </article>
     </section>
 
-    <section class="mk-features">
-      <div class="mk-feature">
-        <h4 data-i18n="feat1t">Smart Transcription</h4>
-        <p data-i18n="feat1d">Server-side Whisper…</p>
-      </div>
-      <div class="mk-feature">
-        <h4 data-i18n="feat2t">Guided or Free</h4>
-        <p data-i18n="feat2d">Use gentle prompts…</p>
-      </div>
-      <div class="mk-feature">
-        <h4 data-i18n="feat3t">Private Library</h4>
-        <p data-i18n="feat3d">Stories and media saved…</p>
-      </div>
-    </section>
   </main>
+
+  <!-- Optional: set your public Supabase keys for plan badge / counts -->
+  <script>
+    // Fill if you want plan badge / counts to work on client:
+    // window.SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
+    // window.SUPABASE_ANON_KEY = "YOUR_PUBLIC_ANON_KEY";
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/header-loader.js"></script>
+  <script src="/app.js"></script>
 </body>
 </html>
