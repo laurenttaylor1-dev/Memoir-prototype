@@ -1,19 +1,11 @@
-// Injects /header.html into #site-header, then wires language & i18n
-(async () => {
-  const host = document.getElementById('site-header');
-  if (!host) return;
+(async ()=>{
+  const target = document.getElementById("site-header");
+  if (!target) return;
 
-  try {
-    const res = await fetch('/header.html', { cache: 'no-store' });
-    const html = await res.text();
-    host.innerHTML = html;
+  const resp = await fetch("/header.html");
+  const html = await resp.text();
+  target.innerHTML = html;
 
-    // Ensure our shared runtime is present
-    if (window.initHeaderBindings) window.initHeaderBindings();
-
-    const lang = localStorage.getItem('memoir.lang') || 'en';
-    if (window.applyTranslations) window.applyTranslations(lang);
-  } catch (e) {
-    console.error('Header load failed:', e);
-  }
+  // Now re-bind header events (language menu, etc.)
+  if (window.initHeaderBindings) window.initHeaderBindings();
 })();
