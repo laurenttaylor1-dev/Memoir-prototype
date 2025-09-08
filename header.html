@@ -1,33 +1,31 @@
-<!-- Shared header inserted on every page -->
-<header class="mk-header">
-  <div class="mk-header__inner">
+<!-- /header.html -->
+<header class="mk-header" data-header>
+  <div class="mk-header-inner">
     <a href="/landing.html" class="mk-brand">
       <span class="mk-logo"></span>
-      <span class="mk-brand-text" data-i18n="brand">MEMOIR APP</span>
+      <div class="mk-brand-text">
+        <strong>MEMOIR APP</strong>
+        <small data-i18n="tagline">Preserve your memories forever</small>
+      </div>
     </a>
 
-    <nav class="mk-nav">
-      <a href="/landing.html"              class="mk-nav-btn" data-i18n="nav.home">Home</a>
-      <a href="/record.html"               class="mk-nav-btn" data-i18n="nav.record">Record</a>
-      <a href="/stories.html"              class="mk-nav-btn" data-i18n="nav.stories">My Stories</a>
-      <a href="/login.html"                class="mk-nav-btn" data-i18n="nav.login">Login</a>
-      <a href="/landing.html#pricing"      class="mk-nav-btn" data-i18n="nav.pricing">Pricing</a>
-      <a href="/landing.html#faq"          class="mk-nav-btn" data-i18n="nav.faq">FAQ</a>
+    <nav class="mk-nav" aria-label="Main">
+      <a href="/landing.html" class="mk-pill" data-i18n="nav.home">Home</a>
+      <a href="/login.html" class="mk-pill" data-i18n="nav.login">Login</a>
+      <a href="/record.html" class="mk-pill" data-i18n="nav.record">Record</a>
+      <a href="/stories.html" class="mk-pill" data-i18n="nav.stories">My Stories</a>
 
-      <button class="mk-nav-btn mk-lang-btn" type="button" data-lang-button>
-        🇬🇧 English
+      <button class="mk-pill mk-lang-btn" type="button" data-lang-button aria-haspopup="true" aria-expanded="false">
+        <span class="mk-flag" data-lang-flag>🇬🇧</span>
+        <span data-lang-label>English</span>
       </button>
-      <div class="mk-lang-menu" data-lang-menu>
-        <button type="button" data-lang="en">🇬🇧 English</button>
-        <button type="button" data-lang="fr">🇫🇷 Français</button>
-        <button type="button" data-lang="nl">🇳🇱 Nederlands</button>
-        <button type="button" data-lang="es">🇪🇸 Español</button>
+
+      <div class="mk-lang-menu" data-lang-menu hidden>
+        <button type="button" class="mk-lang-item" data-set-lang="en"><span>🇬🇧</span> English</button>
+        <button type="button" class="mk-lang-item" data-set-lang="fr"><span>🇫🇷</span> Français</button>
+        <button type="button" class="mk-lang-item" data-set-lang="nl"><span>🇧🇪</span> Nederlands</button>
+        <button type="button" class="mk-lang-item" data-set-lang="es"><span>🇪🇸</span> Español</button>
       </div>
     </nav>
-  </div>
-
-  <div class="mk-subline">
-    <span class="mk-tagline" data-i18n="tagline">Preserve your memories forever</span>
-    <span id="planBadge" class="mk-plan-badge"></span>
   </div>
 </header>
