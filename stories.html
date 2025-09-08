@@ -3,89 +3,40 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Memoir — My Stories</title>
+  <title data-i18n="stories.title">My Stories</title>
   <link rel="stylesheet" href="/styles.css"/>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
-  <script defer src="/app.js"></script>
 </head>
-<body class="mk">
-  <!-- HEADER -->
-  <div id="header-slot">
-    <header class="mk-header">
-      <a href="/landing.html" class="mk-brand">
-        <span class="mk-logo"></span>
-        <div class="mk-title">
-          <strong data-i18n="brand">MEMOIR APP</strong>
-          <small data-i18n="tagline">Preserve your memories forever</small>
-        </div>
-      </a>
-      <nav class="mk-nav">
-        <a href="/landing.html" class="mk-pill" data-i18n="nav.home">Home</a>
-        <a href="/login.html" class="mk-pill" data-i18n="nav.login">Login</a>
-        <a href="/record.html" class="mk-pill" data-i18n="nav.record">Record</a>
-        <a href="/stories.html" class="mk-pill mk-active" data-i18n="nav.stories">My Stories</a>
-        <div class="mk-lang">
-          <button class="mk-pill" data-lang-button id="langButton">🇬🇧 English</button>
-          <div class="mk-lang-menu" data-lang-menu id="langMenu">
-            <button data-lang="en">🇬🇧 English</button>
-            <button data-lang="fr">🇫🇷 Français</button>
-            <button data-lang="nl">🇳🇱 Nederlands</button>
-            <button data-lang="es">🇪🇸 Español</button>
-          </div>
-        </div>
-      </nav>
-    </header>
-  </div>
+<body class="mk-theme-vintage">
+  <div id="site-header"></div>
 
   <main class="mk-container">
-    <section class="mk-stats">
-      <div class="mk-stat"><strong id="countCloud">0</strong><span data-i18n="onCloud">In your account</span></div>
-      <div class="mk-stat"><strong id="countDevice">0</strong><span data-i18n="onDevice">On this device</span></div>
-    </section>
+    <header class="mk-stories-header">
+      <h1 data-i18n="stories.title">My Stories</h1>
+      <div class="mk-stats">
+        <div class="mk-stat">
+          <div id="storyCount" class="mk-stat__num">0</div>
+          <div class="mk-stat__label" data-i18n="stories.count">Stories</div>
+        </div>
+        <div class="mk-stat">
+          <div id="sharedCount" class="mk-stat__num">—</div>
+          <div class="mk-stat__label" data-i18n="stories.shared">Shared with family</div>
+        </div>
+      </div>
+    </header>
 
-    <section class="mk-two-cards">
-      <div class="mk-card">
-        <h3>Cloud</h3>
-        <div id="cloudList" class="mk-list"></div>
-      </div>
-      <div class="mk-card">
-        <h3>Device</h3>
-        <div id="devList" class="mk-list"></div>
-      </div>
+    <!-- Your stories grid/list (feel free to wire with Supabase). -->
+    <section id="storiesList" class="mk-stories-list">
+      <!-- placeholder -->
+      <div class="mk-card">Your stories will appear here.</div>
     </section>
   </main>
 
   <script>
-    const LSKEY='memoir.stories';
-    const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-
-    function loadLocal(){ try{return JSON.parse(localStorage.getItem(LSKEY)||'[]')}catch{return[]} }
-
-    function row(s){
-      const div=document.createElement('div'); div.className='mk-row';
-      div.innerHTML = `<div class="mk-row-main">
-        <strong>${esc(s.title||'Story')}</strong>
-        <div class="mk-muted">${esc(s.happened_label||s.happened_sort||'')}</div>
-      </div>`;
-      return div;
-    }
-
-    async function refresh(){
-      // Device
-      const dev=loadLocal(); document.getElementById('countDevice').textContent=dev.length;
-      const devList=document.getElementById('devList'); devList.innerHTML=''; dev.forEach(s=>devList.appendChild(row(s)));
-
-      // Cloud (logged-in only)
-      const { data:{session} } = await supabase.auth.getSession();
-      const cloudList=document.getElementById('cloudList'); cloudList.innerHTML='';
-      if(!session){ document.getElementById('countCloud').textContent='0'; return; }
-
-      const { data, error } = await supabase.from('stories').select('id,title,happened_label,happened_sort,created_at').order('created_at',{ascending:false}).limit(50);
-      if(error){ console.error(error); document.getElementById('countCloud').textContent='0'; return; }
-      document.getElementById('countCloud').textContent = data.length;
-      data.forEach(s=>cloudList.appendChild(row(s)));
-    }
-    refresh();
+    // window.SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
+    // window.SUPABASE_ANON_KEY = "YOUR_PUBLIC_ANON_KEY";
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/header-loader.js"></script>
+  <script src="/app.js"></script>
 </body>
 </html>
