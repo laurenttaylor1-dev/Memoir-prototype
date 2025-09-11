@@ -1,98 +1,87 @@
-// /js/header-loader.js
-(async function () {
-  // 1) Inject header
-  const headerSlot = document.getElementById('site-header');
-  if (headerSlot) {
+// Loads /partials/header.html into #site-header and wires the language dropdown
+(function () {
+  async function loadHeader() {
+    const slot = document.getElementById('site-header');
+    if (!slot) return;
+
     try {
-      const r = await fetch('/partials/header.html', { cache: 'no-cache' });
-      headerSlot.innerHTML = await r.text();
+      const res = await fetch('/partials/header.html', { cache: 'no-store' });
+      const html = await res.text();
+      slot.innerHTML = html;
+      wireHeader(slot);
     } catch (e) {
-      console.warn('Header fetch failed:', e);
+      console.error('Header load failed:', e);
     }
   }
 
-  // 2) Inject footer (optional)
-  const footerSlot = document.getElementById('site-footer');
-  if (footerSlot) {
-    try {
-      const rf = await fetch('/partials/footer.html', { cache: 'no-cache' });
-      footerSlot.innerHTML = await rf.text();
-    } catch (e) {
-      console.warn('Footer fetch failed:', e);
-    }
-  }
+  function wireHeader(root) {
+    // --- Language dropdown toggle ---
+    const wrap   = root.querySelector('#lang-menu');
+    const button = root.querySelector('#lang-toggle');
+    const menu   = root.querySelector('#lang-dropdown');
 
-  // 3) Wire up language dropdown (self-contained)
-  function initLang() {
-    const btn  = document.getElementById('mkLangBtn');
-    const menu = document.getElementById('mkLangMenu');
-    const flag = document.getElementById('mkLangCurrentFlag');
-    const text = document.getElementById('mkLangCurrentText');
-    if (!btn || !menu || !flag || !text) return;
+    if (!wrap || !button || !menu) return;
 
-    const map = {
-      en: { flag: '🇬🇧', name: 'English' },
-      fr: { flag: '🇫🇷', name: 'Français' },
-      nl: { flag: '🇧🇪', name: 'Nederlands' },
-      es: { flag: '🇪🇸', name: 'Español' },
+    const open = () => {
+      wrap.classList.add('open');
+      menu.hidden = false;
+      button.setAttribute('aria-expanded', 'true');
     };
-
-    const apply = (code) => {
-      const item = map[code] || map.en;
-      flag.textContent = item.flag;
-      text.textContent = item.name;
-      try { document.documentElement.setAttribute('lang', code); } catch {}
-      window.dispatchEvent(new CustomEvent('memoir:lang', { detail: { code } }));
+    const close = () => {
+      wrap.classList.remove('open');
+      menu.hidden = true;
+      button.setAttribute('aria-expanded', 'false');
     };
-
-    // restore saved (default en)
-    const saved = localStorage.getItem('memoir.lang') || 'en';
-    apply(saved);
-
-    const open = () => { btn.setAttribute('aria-expanded', 'true'); menu.classList.add('open'); };
-    const close = () => { btn.setAttribute('aria-expanded', 'false'); menu.classList.remove('open'); };
-    const isOpen = () => menu.classList.contains('open');
-
-    btn.addEventListener('click', (e) => {
+    const toggle = (e) => {
       e.stopPropagation();
-      isOpen() ? close() : open();
-    });
+      if (wrap.classList.contains('open')) close(); else open();
+    };
 
-    // close on outside click / ESC
+    button.addEventListener('click', toggle);
+
+    // Close on outside click
     document.addEventListener('click', (e) => {
-      if (!isOpen()) return;
-      if (!menu.contains(e.target) && e.target !== btn) close();
-    });
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && isOpen()) close();
+      if (!wrap.contains(e.target)) close();
     });
 
-    // pick a language
-    menu.querySelectorAll('button[data-lang]').forEach((b) => {
-      b.addEventListener('click', () => {
-        const code = b.getAttribute('data-lang');
-        localStorage.setItem('memoir.lang', code);
-        apply(code);
-        close();
-      });
+    // Close on Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') close();
     });
-  }
-    // pick a language
-    menu.querySelectorAll('button[data-lang]').forEach((b) => {
-      b.addEventListener('click', () => {
-        const code = b.getAttribute('data-lang');
-        // Save + apply via global i18n (preferred)
-        if (window.MEMOIR_I18N && typeof window.MEMOIR_I18N.setLang === 'function') {
+
+    // Persisted language → show current flag/label
+    const current = (window.MEMOIR_I18N?.getLang?.() || localStorage.getItem('memoir.lang') || 'en');
+    setLangVisual(current);
+
+    // Handle picks
+    menu.querySelectorAll('[data-lang]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const code = btn.getAttribute('data-lang');
+        // Set + apply using the i18n helper if present
+        if (window.MEMOIR_I18N?.setLang) {
           window.MEMOIR_I18N.setLang(code);
         } else {
-          // Fallback: basic dispatch if lang.js hasn't loaded yet
           localStorage.setItem('memoir.lang', code);
           window.dispatchEvent(new CustomEvent('memoir:lang', { detail: { code } }));
         }
+        setLangVisual(code);
         close();
       });
     });
-  
-  // Give the browser a tick to paint the injected HTML, then init
-  requestAnimationFrame(initLang);
+
+    // Update button label/flag
+    function setLangVisual(code) {
+      const flagEl = root.querySelector('#lang-current-flag');
+      const labelEl = root.querySelector('#lang-current-label');
+      const MAP = { en: ['🇬🇧','English'], fr: ['🇫🇷','Français'], nl: ['🇧🇪','Nederlands'], es: ['🇪🇸','Español'] };
+      const [flag, label] = MAP[code] || MAP.en;
+      if (flagEl) flagEl.textContent = flag;
+      if (labelEl) labelEl.textContent = label;
+    }
+
+    // If i18n changes elsewhere, keep the chip in sync
+    window.addEventListener('memoir:lang', (e) => setLangVisual(e.detail.code));
+  }
+
+  document.addEventListener('DOMContentLoaded', loadHeader);
 })();
