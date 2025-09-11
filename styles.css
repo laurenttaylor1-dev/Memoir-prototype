@@ -91,3 +91,8 @@ input, select, textarea{box-sizing:border-box;max-width:100%}
   top: calc(100% + 8px);
   z-index: 1000;
 }
+
+/* Ensure the language dropdown is clickable and above other content */
+.site-header .lang { position: relative; z-index: 20; }
+.site-header .lang-menu { position: absolute; right: 0; top: 100%; }
+.site-header .lang-toggle { position: relative; z-index: 21; }
