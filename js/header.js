@@ -1,68 +1,62 @@
 // /js/header.js
-(function () {
-  const root = document;
-  const btn  = root.getElementById('mkLangBtn');
-  const menu = root.getElementById('mkLangMenu');
-  const label = root.getElementById('mkLangLabel');
+(function(){
+  const API = {
+    init(){
+      const btn  = document.getElementById('mkLangBtn');
+      const menu = document.getElementById('mkLangMenu');
+      const flag = document.getElementById('mkLangCurrentFlag');
+      const text = document.getElementById('mkLangCurrentText');
+      if(!btn || !menu) return;
 
-  if (!btn || !menu) return;
+      // restore saved choice (default: en)
+      const saved = (localStorage.getItem('memoir.lang') || 'en');
+      API.applyLang(saved, {flag, text});
 
-  const I18N = window.MEMOIR_I18N;
+      // open/close
+      const toggle = (open) => {
+        const willOpen = (typeof open === 'boolean') ? open : menu.classList.contains('open') === false;
+        btn.setAttribute('aria-expanded', String(willOpen));
+        menu.classList.toggle('open', willOpen);
+      };
 
-  // --- helpers
-  const open = () => {
-    menu.classList.add('open');
-    btn.setAttribute('aria-expanded', 'true');
-    // move focus for keyboard users
-    setTimeout(() => menu.focus(), 0);
+      btn.addEventListener('click', (e)=>{ e.stopPropagation(); toggle(); });
+      document.addEventListener('click', (e)=>{
+        if(!menu.classList.contains('open')) return;
+        // close when clicking outside
+        if(!menu.contains(e.target) && e.target !== btn) toggle(false);
+      });
+      document.addEventListener('keydown', (e)=>{
+        if(e.key === 'Escape' && menu.classList.contains('open')) toggle(false);
+      });
+
+      // choose language
+      menu.querySelectorAll('button[data-lang]').forEach(b=>{
+        b.addEventListener('click', ()=>{
+          const code = b.getAttribute('data-lang');
+          localStorage.setItem('memoir.lang', code);
+          API.applyLang(code, {flag, text});
+          toggle(false);
+          // broadcast change
+          window.dispatchEvent(new CustomEvent('memoir:lang', { detail: { code } }));
+        });
+      });
+    },
+
+    applyLang(code, els){
+      const map = {
+        en: {flag:'🇬🇧', name:'English'},
+        fr: {flag:'🇫🇷', name:'Français'},
+        nl: {flag:'🇧🇪', name:'Nederlands'},
+        es: {flag:'🇪🇸', name:'Español'},
+      };
+      const item = map[code] || map.en;
+      if(els?.flag) els.flag.textContent = item.flag;
+      if(els?.text) els.text.textContent = item.name;
+      // also set document lang attribute for a11y/SEO
+      try{ document.documentElement.setAttribute('lang', code); }catch{}
+    }
   };
-  const close = () => {
-    menu.classList.remove('open');
-    btn.setAttribute('aria-expanded', 'false');
-  };
-  const toggle = () => (menu.classList.contains('open') ? close() : open());
 
-  // click the button
-  btn.addEventListener('click', (e) => {
-    e.preventDefault();
-    toggle();
-  });
-
-  // choose a language
-  menu.addEventListener('click', (e) => {
-    const b = e.target.closest('button[data-lang]');
-    if (!b) return;
-    const code = b.getAttribute('data-lang');
-    I18N?.setLang?.(code);               // persist + dispatch global event
-    // reflect in the button
-    const map = { en: '🇬🇧 English', fr: '🇫🇷 Français', nl: '🇧🇪 Nederlands', es: '🇪🇸 Español' };
-    label.textContent = (map[code] || 'English').replace(/^[^\s]+\s/, '');
-    btn.querySelector('.mk-flag').textContent = (map[code] || '🇬🇧 English').split(' ')[0];
-
-    close();
-  });
-
-  // close on outside click
-  document.addEventListener('click', (e) => {
-    if (!menu.classList.contains('open')) return;
-    if (e.target.closest('.mk-lang')) return;
-    close();
-  });
-
-  // close on ESC / focusout
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') close();
-  });
-  menu.addEventListener('blur', (e) => {
-    // if focus leaves the menu entirely
-    setTimeout(() => {
-      if (!document.activeElement || !menu.contains(document.activeElement)) close();
-    }, 0);
-  });
-
-  // initialize label from saved lang
-  const code = I18N?.getLang?.() || 'en';
-  const map = { en: '🇬🇧 English', fr: '🇫🇷 Français', nl: '🇧🇪 Nederlands', es: '🇪🇸 Español' };
-  label.textContent = (map[code] || 'English').replace(/^[^\s]+\s/, '');
-  btn.querySelector('.mk-flag').textContent = (map[code] || '🇬🇧 English').split(' ')[0];
+  // expose for loader
+  window.MEMOIR_HEADER = API;
 })();
