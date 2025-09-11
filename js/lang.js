@@ -1,49 +1,52 @@
 // /js/lang.js
 (function () {
-  const DEFAULT = "en";
-  const storeKey = "memoir.lang";
-
+  const STORAGE_KEY = 'memoir.lang';
   const strings = {
     en: {
-      navHome: "Home", navLogin: "Login", navRecord: "Record", navStories: "My Stories",
-      startRecording: "Start Recording", viewStories: "My Stories",
-      heroTitleA: "Preserve Your", heroTitleB: "Memories Forever",
-      heroBlurb:
-        "Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family."
+      home: 'Home', login: 'Login', record: 'Record', myStories: 'My Stories',
+      heroTitleA: 'Preserve Your', heroTitleB: 'Memories Forever',
+      heroBlurb: 'Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.',
+      startRecording: 'Start Recording', viewStories: 'My Stories',
     },
     fr: {
-      navHome: "Accueil", navLogin: "Connexion", navRecord: "Enregistrer", navStories: "Mes histoires",
-      startRecording: "Commencer l’enregistrement", viewStories: "Mes histoires",
-      heroTitleA: "Préservez vos", heroTitleB: "Souvenirs pour toujours",
-      heroBlurb:
-        "Enregistrez une fois pour des générations. Commencez en un geste, ajoutez un titre et « quand c’est arrivé », puis partagez en toute sécurité avec votre famille."
+      home: 'Accueil', login: 'Connexion', record: 'Enregistrer', myStories: 'Mes histoires',
+      heroTitleA: 'Préservez vos', heroTitleB: 'souvenirs pour toujours',
+      heroBlurb: 'Enregistrez une fois, gardez pour des générations. Lancez un enregistrement en un geste, ajoutez un titre et « quand cela s’est passé », puis partagez en toute sécurité avec votre famille.',
+      startRecording: 'Commencer', viewStories: 'Mes histoires',
     },
     nl: {
-      navHome: "Home", navLogin: "Inloggen", navRecord: "Opnemen", navStories: "Mijn verhalen",
-      startRecording: "Opname starten", viewStories: "Mijn verhalen",
-      heroTitleA: "Bewaar je", heroTitleB: "Herinneringen voor altijd",
-      heroBlurb:
-        "Neem één keer op voor generaties. Start met één tik, voeg een titel en “wanneer het gebeurde” toe en deel veilig met je familie."
+      home: 'Home', login: 'Inloggen', record: 'Opnemen', myStories: 'Mijn verhalen',
+      heroTitleA: 'Bewaar je', heroTitleB: 'herinneringen voor altijd',
+      heroBlurb: 'Neem één keer op, bewaar voor generaties. Start met één tik, voeg een titel en “wanneer het gebeurde” toe en deel veilig met je familie.',
+      startRecording: 'Start opname', viewStories: 'Mijn verhalen',
     },
     es: {
-      navHome: "Inicio", navLogin: "Entrar", navRecord: "Grabar", navStories: "Mis historias",
-      startRecording: "Comenzar a grabar", viewStories: "Mis historias",
-      heroTitleA: "Conserva tus", heroTitleB: "Recuerdos para siempre",
-      heroBlurb:
-        "Graba una vez para generaciones. Empieza con un toque, añade un título y “cuándo ocurrió”, y comparte de forma segura con tu familia."
-    }
+      home: 'Inicio', login: 'Entrar', record: 'Grabar', myStories: 'Mis historias',
+      heroTitleA: 'Conserva tus', heroTitleB: 'recuerdos para siempre',
+      heroBlurb: 'Graba una vez y consérvalo por generaciones. Comienza con un toque, añade un título y “cuándo ocurrió” y comparte con tu familia de forma segura.',
+      startRecording: 'Empezar a grabar', viewStories: 'Mis historias',
+    },
   };
 
   function getLang() {
-    return localStorage.getItem(storeKey) || DEFAULT;
+    return localStorage.getItem(STORAGE_KEY) || 'en';
   }
   function setLang(code) {
-    localStorage.setItem(storeKey, code);
-    document.documentElement.setAttribute("lang", code);
-    // tell every page section to re-render
-    window.dispatchEvent(new CustomEvent("memoir:lang", { detail: { code } }));
+    const c = ['en','fr','nl','es'].includes(code) ? code : 'en';
+    localStorage.setItem(STORAGE_KEY, c);
+    // update any header labels that used data-i18n
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const k = el.getAttribute('data-i18n');
+      if (strings[c][k]) el.textContent = strings[c][k];
+    });
+    // broadcast to pages
+    const ev = new CustomEvent('memoir:lang', { detail: { code: c } });
+    window.dispatchEvent(ev);
   }
 
   // expose
   window.MEMOIR_I18N = { strings, getLang, setLang };
+
+  // apply once at load (English default)
+  document.addEventListener('DOMContentLoaded', () => setLang(getLang()));
 })();
