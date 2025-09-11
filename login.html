@@ -3,49 +3,113 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Login — Memoir</title>
-  <link rel="stylesheet" href="/styles.css"/>
+  <title>Memoir — Login</title>
+
+  <!-- Global stylesheet (optional) -->
+  <link rel="stylesheet" href="/styles.css">
+
+  <!-- Page-scoped fallback styles -->
+  <style>
+    :root{
+      --bg:#f6f1ea; --card:#fffaf5; --ink:#3b2f2a; --muted:#7b6a62;
+      --accent:#8c5a3c; --accent2:#b17d55; --radius:18px;
+      --shadow:0 18px 40px rgba(59,47,42,.10), 0 2px 8px rgba(59,47,42,.06);
+    }
+    body{background:var(--bg);color:var(--ink);margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    .container{max-width:900px;margin:0 auto;padding:20px 16px 28px}
+    .grid{display:grid;grid-template-columns:1fr 420px;gap:24px;align-items:start}
+    @media (max-width:980px){ .grid{grid-template-columns:1fr} }
+    .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+    .h1{font-size:clamp(26px,3vw,38px);margin:8px 0 12px}
+    .muted{color:var(--muted)}
+    .field{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+    .label{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.04em}
+    input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(0,0,0,.15);background:#fff;color:inherit}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;color:var(--ink);text-decoration:none;font-weight:700}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:0}
+    .helper{font-size:13px}
+  </style>
 </head>
-<body class="mk-theme-vintage">
+<body>
+  <!-- Shared header -->
   <div id="site-header"></div>
 
-  <main class="mk-container">
-    <section class="mk-auth">
-      <h1 data-i18n="nav.login">Login</h1>
-      <form id="loginForm" class="mk-auth__form">
-        <input id="email" type="email" class="mk-input" placeholder="you@example.com" required/>
-        <input id="password" type="password" class="mk-input" placeholder="********" required/>
-        <button class="mk-btn mk-btn-primary" type="submit" data-i18n="nav.login">Login</button>
-      </form>
-    </section>
+  <main class="container">
+    <div class="grid">
+      <section class="card">
+        <h1 class="h1">Login</h1>
+        <p class="muted helper">Sign in to access your private library across all devices.</p>
+
+        <form id="loginForm" class="form" onsubmit="return false;">
+          <div class="field">
+            <label class="label" for="email">Email</label>
+            <input id="email" type="email" placeholder="you@example.com" autocomplete="email" required />
+          </div>
+          <div class="field">
+            <label class="label" for="password">Password</label>
+            <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" required />
+          </div>
+          <div class="row" style="margin-top:8px">
+            <button id="loginBtn" class="btn primary">Sign in</button>
+            <a class="btn" href="/landing.html">Cancel</a>
+          </div>
+          <div id="loginMsg" class="muted" style="margin-top:10px"></div>
+        </form>
+      </section>
+
+      <aside class="card">
+        <h3 style="margin:6px 0 10px">Why sign in?</h3>
+        <ul class="muted" style="padding-left:18px;margin:0">
+          <li>Sync your stories and media across phone, tablet, and computer.</li>
+          <li>Invite family to read (Family plan).</li>
+          <li>Keep your library safe and private.</li>
+        </ul>
+      </aside>
+    </div>
   </main>
 
-  <script>
-    // window.SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
-    // window.SUPABASE_ANON_KEY = "YOUR_PUBLIC_ANON_KEY";
-  </script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/header-loader.js"></script>
-  <script src="/app.js"></script>
+  <!-- Shared footer -->
+  <div id="site-footer"></div>
 
+  <!-- Scripts -->
+  <script src="/js/header-loader.js" defer></script>
+  <script src="/js/lang.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js"></script>
   <script>
-    // Optional: simple email/password flow
-    (function(){
-      if (!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY) return;
-      const sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-      const form = document.getElementById('loginForm');
-      form?.addEventListener('submit', async (e)=>{
-        e.preventDefault();
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value;
-        try{
-          const { data, error } = await sb.auth.signInWithPassword({ email, password });
-          if (error) throw error;
-          // Redirect to My Stories if already logged in
-          location.href = '/stories.html';
-        }catch(err){ alert(err.message || String(err)); }
-      });
-    })();
+    // Supabase client (uses env vars injected in app.js if you have them)
+    const SUPABASE_URL = window.MEMOIR?.SUPABASE_URL || (window.ENV_SUPABASE_URL || '');
+    const SUPABASE_ANON_KEY = window.MEMOIR?.SUPABASE_ANON || (window.ENV_SUPABASE_ANON_KEY || '');
+    const supabase = (SUPABASE_URL && SUPABASE_ANON_KEY)
+      ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{ persistSession:true, autoRefreshToken:true } })
+      : null;
+
+    const email = document.getElementById('email');
+    const password = document.getElementById('password');
+    const loginBtn = document.getElementById('loginBtn');
+    const loginMsg = document.getElementById('loginMsg');
+
+    function setMsg(t){ loginMsg.textContent = t || ''; }
+
+    // Submit via Enter
+    document.getElementById('loginForm').addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter') { e.preventDefault(); loginBtn.click(); }
+    });
+
+    loginBtn.addEventListener('click', async ()=>{
+      setMsg('');
+      if (!supabase) { setMsg('App is not configured (Supabase keys missing).'); return; }
+      try{
+        loginBtn.disabled = true;
+        const { error } = await supabase.auth.signInWithPassword({ email: email.value.trim(), password: password.value });
+        if (error) throw error;
+        window.location.replace('/stories.html');
+      }catch(e){
+        setMsg(e.message || 'Login failed.');
+      }finally{
+        loginBtn.disabled = false;
+      }
+    });
   </script>
 </body>
 </html>
