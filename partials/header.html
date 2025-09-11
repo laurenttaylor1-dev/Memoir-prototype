@@ -1,31 +1,31 @@
 <!-- /partials/header.html -->
-<header class="site-header">
-  <div class="wrap">
-    <a class="brand" href="/landing.html">
-      <span class="logo"></span>
-      <span class="brand-text">
+<header class="mk-header" role="banner">
+  <div class="mk-header-inner">
+    <a class="mk-brand" href="/landing.html">
+      <span class="mk-logo" aria-hidden="true"></span>
+      <div class="mk-brand-text">
         <strong>MEMOIR APP</strong>
-        <em>Preserve your memories forever</em>
-      </span>
+        <small>Preserve your memories forever</small>
+      </div>
     </a>
 
-    <nav class="main-nav">
-      <a class="pill" href="/landing.html" data-i18n="navHome">Home</a>
-      <a class="pill" href="/login.html"   data-i18n="navLogin">Login</a>
-      <a class="pill" href="/record.html"  data-i18n="navRecord">Record</a>
-      <a class="pill" href="/stories.html" data-i18n="navStories">My Stories</a>
+    <nav class="mk-nav" aria-label="Primary">
+      <a class="mk-chip" href="/landing.html" data-i18n="home">Home</a>
+      <a class="mk-chip" href="/login.html" data-i18n="login">Login</a>
+      <a class="mk-chip" href="/record.html" data-i18n="record">Record</a>
+      <a class="mk-chip" href="/stories.html" data-i18n="myStories">My Stories</a>
 
-      <!-- language -->
-      <div class="lang">
-        <button id="langBtn" class="pill lang-btn">
-          <span class="flag">🇬🇧</span> <span id="langLabel">English</span>
-          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 6l4 4 4-4z"></path></svg>
+      <!-- Language -->
+      <div class="mk-lang">
+        <button id="mkLangBtn" class="mk-chip mk-lang-btn" aria-expanded="false" aria-haspopup="listbox">
+          <span class="mk-flag">🇬🇧</span><span id="mkLangLabel">English</span>
+          <svg class="mk-caret" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
         </button>
-        <ul id="langMenu" class="lang-menu" hidden>
-          <li><button data-lang="en">🇬🇧 English</button></li>
-          <li><button data-lang="fr">🇫🇷 Français</button></li>
-          <li><button data-lang="nl">🇧🇪 Nederlands</button></li>
-          <li><button data-lang="es">🇪🇸 Español</button></li>
+        <ul id="mkLangMenu" class="mk-lang-menu" role="listbox" tabindex="-1" aria-label="Language">
+          <li><button type="button" role="option" data-lang="en">🇬🇧 English</button></li>
+          <li><button type="button" role="option" data-lang="fr">🇫🇷 Français</button></li>
+          <li><button type="button" role="option" data-lang="nl">🇧🇪 Nederlands</button></li>
+          <li><button type="button" role="option" data-lang="es">🇪🇸 Español</button></li>
         </ul>
       </div>
     </nav>
