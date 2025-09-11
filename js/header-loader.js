@@ -1,105 +1,94 @@
-// /js/header-loader.js  (PURE JS — no <script> tags)
-(function(){
-  const HEADER_SLOT = 'site-header';
-  const FOOTER_SLOT = 'site-footer';
+// js/header-loader.js
+// Loads /partials/header.html and /partials/footer.html, wires language menu
 
-  async function fetchText(url){
-    const r = await fetch(url, { cache:'no-store' });
-    if(!r.ok) throw new Error(url+' '+r.status);
-    return await r.text();
-  }
-  function setHTML(id, html){
-    const el = document.getElementById(id);
-    if(el) el.innerHTML = html;
-  }
+(async function () {
+  const headerHost = document.getElementById('site-header');
+  const footerHost = document.getElementById('site-footer');
 
-  function fallbackHeader(){
-    return `
-<header style="position:sticky;top:0;z-index:50;background:#fffaf5;border-bottom:1px solid rgba(0,0,0,.08)">
-  <div style="max-width:1200px;margin:0 auto;padding:10px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-    <a href="/landing.html" style="display:flex;gap:10px;align-items:center;text-decoration:none;color:#3b2f2a;font-weight:700">
-      <span style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#8c5a3c,#b17d55);display:inline-block"></span>
-      MEMOIR APP
-    </a>
-    <nav style="display:flex;gap:8px;flex-wrap:wrap;margin-left:auto">
-      <a href="/landing.html" class="btn">Home</a>
-      <a href="/login.html" class="btn">Login</a>
-      <a href="/record.html" class="btn">Record</a>
-      <a href="/stories.html" class="btn">My Stories</a>
-    </nav>
-  </div>
-</header>`;
-  }
-
-  function bindLangMenu(){
-    const btn  = document.querySelector('[data-lang-btn],[data-lang-trigger]');
-    const menu = document.querySelector('[data-lang-menu]');
-    if (!btn || !menu) return;
-
-    function close(){
-      menu.classList.add('hidden');
-      menu.setAttribute('hidden','');
-      btn.setAttribute('aria-expanded','false');
-      document.removeEventListener('click', onDoc);
-    }
-    function onDoc(e){
-      if (!menu.contains(e.target) && !btn.contains(e.target)) close();
-    }
-    btn.addEventListener('click', (e)=>{
-      e.stopPropagation();
-      menu.classList.toggle('hidden');
-      if (menu.classList.contains('hidden')) {
-        menu.setAttribute('hidden','');
-        btn.setAttribute('aria-expanded','false');
-        document.removeEventListener('click', onDoc);
-      } else {
-        menu.removeAttribute('hidden');
-        btn.setAttribute('aria-expanded','true');
-        setTimeout(()=>document.addEventListener('click', onDoc), 0);
-      }
-    });
-    // Close after picking a language
-    menu.addEventListener('click', (e)=>{
-      const opt = e.target.closest('[data-set-lang]');
-      if (opt) close();
-    });
-  }
-
-  async function loadHeader(){
+  async function inject(target, url) {
+    if (!target) return null;
     try {
-      setHTML(HEADER_SLOT, await fetchText('/partials/header.html'));
-    } catch(e1){
-      try {
-        setHTML(HEADER_SLOT, await fetchText('/header.html'));
-      } catch(e2){
-        setHTML(HEADER_SLOT, fallbackHeader());
-        console.warn('Header partial failed, used fallback', e1, e2);
-      }
+      const r = await fetch(url, { cache: 'no-store' });
+      if (!r.ok) throw new Error(`${url} failed`);
+      const html = await r.text();
+      target.innerHTML = html;
+      return target;
+    } catch (e) {
+      console.warn('Partial load failed:', url, e);
+      return null;
     }
-    // optional init hook if your header defines it
-    if (typeof window.MEMOIR_headerInit === 'function') {
-      try { window.MEMOIR_headerInit(); } catch(_) {}
-    }
-    bindLangMenu();
-    window.dispatchEvent(new CustomEvent('memoir:header:loaded'));
   }
 
-  async function loadFooter(){
-    try {
-      setHTML(FOOTER_SLOT, await fetchText('/partials/footer.html'));
-    } catch(e1){
-      try {
-        setHTML(FOOTER_SLOT, await fetchText('/footer.html'));
-      } catch(e2){
-        // footer is optional; safe to ignore
-        console.warn('Footer partial failed', e1, e2);
-      }
-    }
-    window.dispatchEvent(new CustomEvent('memoir:footer:loaded'));
+  // Inject header/footer
+  await inject(headerHost, '/partials/header.html');
+  await inject(footerHost, '/partials/footer.html');
+
+  // --- After header is in the DOM, wire language control
+  // Elements in header.html:
+  //   .lang-button (toggle)   #memoir-lang-menu (menu)
+  //   [data-lang="en|fr|es|nl"] buttons inside menu
+  const btn = document.querySelector('.lang-button');
+  const menu = document.getElementById('memoir-lang-menu');
+
+  function closeMenu() {
+    menu?.classList.remove('open');
+    btn?.setAttribute('aria-expanded', 'false');
+  }
+  function openMenu() {
+    menu?.classList.add('open');
+    btn?.setAttribute('aria-expanded', 'true');
   }
 
-  document.addEventListener('DOMContentLoaded', ()=>{
-    loadHeader();
-    loadFooter();
+  // Toggle click
+  btn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    menu?.classList.toggle('open');
+    btn.setAttribute(
+      'aria-expanded',
+      menu.classList.contains('open') ? 'true' : 'false'
+    );
   });
+
+  // Click outside closes
+  document.addEventListener('click', (e) => {
+    if (!menu) return;
+    if (!menu.contains(e.target) && !btn?.contains(e.target)) closeMenu();
+  });
+
+  // Select a language
+  menu?.querySelectorAll('[data-lang]').forEach((el) => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      const code = el.getAttribute('data-lang');
+      if (window.MEMOIR_I18N?.setLang) {
+        window.MEMOIR_I18N.setLang(code);
+      }
+      // Visually mark current
+      menu.querySelectorAll('[data-lang]').forEach((a) =>
+        a.classList.toggle('active', a === el)
+      );
+      // Reflect on button label (if you show current language there)
+      const label = el.textContent.trim();
+      const current = document.querySelector('.lang-button .current-lang');
+      if (current) current.textContent = label;
+      closeMenu();
+    });
+  });
+
+  // Initialize button label + active state from stored language
+  function paintCurrentLang() {
+    const code = window.MEMOIR_I18N?.getLang?.() || 'en';
+    const item = menu?.querySelector(`[data-lang="${code}"]`);
+    if (item) {
+      menu.querySelectorAll('[data-lang]').forEach((a) =>
+        a.classList.toggle('active', a === item)
+      );
+      const current = document.querySelector('.lang-button .current-lang');
+      if (current) current.textContent = item.textContent.trim();
+    }
+  }
+  paintCurrentLang();
+
+  // If another page module changes language, mirror in header.
+  window.addEventListener('memoir:lang', paintCurrentLang);
 })();
