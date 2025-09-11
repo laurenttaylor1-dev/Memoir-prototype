@@ -1,87 +1,73 @@
-// Loads /partials/header.html into #site-header and wires the language dropdown
-(function () {
-  async function loadHeader() {
-    const slot = document.getElementById('site-header');
+<script>
+/* header-loader.js — loads partials + wires language dropdown */
+(async function () {
+  async function inject(id, url) {
+    const slot = document.getElementById(id);
     if (!slot) return;
-
     try {
-      const res = await fetch('/partials/header.html', { cache: 'no-store' });
-      const html = await res.text();
-      slot.innerHTML = html;
-      wireHeader(slot);
-    } catch (e) {
-      console.error('Header load failed:', e);
+      const res = await fetch(url, { cache: 'no-store' });
+      slot.innerHTML = await res.text();
+    } catch {
+      // minimal fallback to keep layout usable
+      if (id === 'site-header') {
+        slot.innerHTML = `
+          <header class="site-header-fallback">
+            <a href="/landing.html" class="brand">MEMOIR APP</a>
+            <nav class="nav">
+              <a id="hHome" href="/landing.html"></a>
+              <a id="hLogin" href="/login.html"></a>
+              <a id="hRecord" href="/record.html"></a>
+              <a id="hStories" href="/stories.html"></a>
+              <button id="langBtn" class="lang-btn">English ▾</button>
+              <div id="langMenu" class="lang-menu hidden">
+                <button data-code="en">🇬🇧 English</button>
+                <button data-code="fr">🇫🇷 Français</button>
+                <button data-code="nl">🇧🇪 Nederlands</button>
+                <button data-code="es">🇪🇸 Español</button>
+              </div>
+            </nav>
+          </header>`;
+      }
     }
   }
 
-  function wireHeader(root) {
-    // --- Language dropdown toggle ---
-    const wrap   = root.querySelector('#lang-menu');
-    const button = root.querySelector('#lang-toggle');
-    const menu   = root.querySelector('#lang-dropdown');
+  await inject('site-header', '/partials/header.html');
+  await inject('site-footer', '/partials/footer.html');
 
-    if (!wrap || !button || !menu) return;
+  // ---- language wiring (works for both real partial and fallback) ----
+  function applyHeaderLang(code){
+    const t = (window.MEMOIR_I18N?.strings?.[code]) || window.MEMOIR_I18N.strings.en;
+    const set = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+    set('hHome', t.nav_home); set('hLogin', t.nav_login);
+    set('hRecord', t.nav_record); set('hStories', t.nav_stories);
+    const btn = document.getElementById('langBtn');
+    if (btn) btn.textContent = (code==='fr'?'Français':code==='nl'?'Nederlands':code==='es'?'Español':'English') + ' ▾';
+  }
 
-    const open = () => {
-      wrap.classList.add('open');
-      menu.hidden = false;
-      button.setAttribute('aria-expanded', 'true');
-    };
-    const close = () => {
-      wrap.classList.remove('open');
-      menu.hidden = true;
-      button.setAttribute('aria-expanded', 'false');
-    };
-    const toggle = (e) => {
-      e.stopPropagation();
-      if (wrap.classList.contains('open')) close(); else open();
-    };
+  function bindDropdown(){
+    const btn = document.getElementById('langBtn');
+    const menu = document.getElementById('langMenu');
+    if (!btn || !menu) return;
+    const open = ()=> menu.classList.remove('hidden');
+    const close= ()=> menu.classList.add('hidden');
 
-    button.addEventListener('click', toggle);
-
-    // Close on outside click
-    document.addEventListener('click', (e) => {
-      if (!wrap.contains(e.target)) close();
-    });
-
-    // Close on Escape
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') close();
-    });
-
-    // Persisted language → show current flag/label
-    const current = (window.MEMOIR_I18N?.getLang?.() || localStorage.getItem('memoir.lang') || 'en');
-    setLangVisual(current);
-
-    // Handle picks
-    menu.querySelectorAll('[data-lang]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const code = btn.getAttribute('data-lang');
-        // Set + apply using the i18n helper if present
-        if (window.MEMOIR_I18N?.setLang) {
-          window.MEMOIR_I18N.setLang(code);
-        } else {
-          localStorage.setItem('memoir.lang', code);
-          window.dispatchEvent(new CustomEvent('memoir:lang', { detail: { code } }));
-        }
-        setLangVisual(code);
+    btn.addEventListener('click', (e)=>{ e.stopPropagation(); menu.classList.toggle('hidden'); });
+    document.addEventListener('click', close);
+    menu.querySelectorAll('[data-code]').forEach(b=>{
+      b.addEventListener('click', (e)=>{
+        const code = b.getAttribute('data-code');
+        window.MEMOIR_I18N?.setLang(code);
         close();
       });
     });
-
-    // Update button label/flag
-    function setLangVisual(code) {
-      const flagEl = root.querySelector('#lang-current-flag');
-      const labelEl = root.querySelector('#lang-current-label');
-      const MAP = { en: ['🇬🇧','English'], fr: ['🇫🇷','Français'], nl: ['🇧🇪','Nederlands'], es: ['🇪🇸','Español'] };
-      const [flag, label] = MAP[code] || MAP.en;
-      if (flagEl) flagEl.textContent = flag;
-      if (labelEl) labelEl.textContent = label;
-    }
-
-    // If i18n changes elsewhere, keep the chip in sync
-    window.addEventListener('memoir:lang', (e) => setLangVisual(e.detail.code));
   }
 
-  document.addEventListener('DOMContentLoaded', loadHeader);
+  // initial render + bindings
+  const start = window.MEMOIR_I18N?.getLang?.() || 'en';
+  applyHeaderLang(start);
+  bindDropdown();
+
+  // react to bus
+  window.addEventListener('memoir:lang', e=>applyHeaderLang(e.detail.code));
 })();
+</script>
