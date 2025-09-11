@@ -1,103 +1,81 @@
-<script>
-// Tiny i18n + prompts. Default to English on first visit.
-(function(){
-  const DEFAULT = 'en';
-  const FLAGS = { en:'🇬🇧', fr:'🇫🇷', nl:'🇧🇪', es:'🇪🇸' };
+// js/lang.js
+// Global i18n util for Memoir
 
-  const STRINGS = {
+(function () {
+  const STORAGE_KEY = 'memoir.lang';
+  const defaultLang = 'en';
+
+  // ---- Strings used across pages (expand anytime) ----
+  const STR = {
     en: {
-      startRecording: 'Start Recording',
-      viewStories: 'My Stories',
-      todayPrompts: "Today's suggested prompts",
-      refreshPrompts: 'Suggest other prompts',
-      prompts: ['Childhood','Family','School','Work','Love','Travel','Traditions','Holidays','Lessons','Advice','Turning points'],
       heroTitleA: 'Preserve Your',
       heroTitleB: 'Memories Forever',
-      heroBlurb: 'Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.'
+      heroBlurb:
+        'Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.',
+      startRecording: 'Start Recording',
+      viewStories: 'My Stories',
     },
     fr: {
+      heroTitleA: 'Préservez vos',
+      heroTitleB: 'Souvenirs pour toujours',
+      heroBlurb:
+        'Enregistrez une fois, transmettez aux générations. Lancez un enregistrement en un geste, ajoutez un titre et “quand cela s’est passé”, puis partagez en toute sécurité avec votre famille.',
       startRecording: 'Commencer',
       viewStories: 'Mes histoires',
-      todayPrompts: 'Suggestions du jour',
-      refreshPrompts: 'Autres suggestions',
-      prompts: ['Enfance','Famille','École','Travail','Amour','Voyages','Traditions','Fêtes','Leçons','Conseils','Déclics'],
-      heroTitleA: 'Préservez Vos',
-      heroTitleB: 'Souvenirs Pour Toujours',
-      heroBlurb: 'Enregistrez une fois, gardez pour des générations…'
-    },
-    nl: {
-      startRecording: 'Opnemen',
-      viewStories: 'Mijn verhalen',
-      todayPrompts: 'Suggesties van vandaag',
-      refreshPrompts: 'Meer suggesties',
-      prompts: ['Jeugd','Familie','School','Werk','Liefde','Reizen','Tradities','Feestdagen','Lessen','Advies','Keerpunt'],
-      heroTitleA: 'Bewaar Je',
-      heroTitleB: 'Herinneringen Voor Altijd',
-      heroBlurb: 'Neem één keer op, bewaar voor generaties…'
     },
     es: {
-      startRecording: 'Grabar',
+      heroTitleA: 'Conserva tus',
+      heroTitleB: 'Recuerdos para siempre',
+      heroBlurb:
+        'Graba una vez y conserva por generaciones. Empieza con un toque, añade un título y “cuándo ocurrió”, y compártelo con tu familia de forma segura.',
+      startRecording: 'Empezar a grabar',
       viewStories: 'Mis historias',
-      todayPrompts: 'Sugerencias de hoy',
-      refreshPrompts: 'Otras sugerencias',
-      prompts: ['Infancia','Familia','Escuela','Trabajo','Amor','Viajes','Tradiciones','Fiestas','Lecciones','Consejos','Puntos clave'],
-      heroTitleA: 'Conserva Tus',
-      heroTitleB: 'Recuerdos Para Siempre',
-      heroBlurb: 'Graba una vez, guarda para generaciones…'
+    },
+    nl: {
+      heroTitleA: 'Bewaar je',
+      heroTitleB: 'Herinneringen voor altijd',
+      heroBlurb:
+        'Neem één keer op en bewaar het voor generaties. Start met één tik, voeg een titel en “wanneer het gebeurde” toe, en deel veilig met je familie.',
+      startRecording: 'Opname starten',
+      viewStories: 'Mijn verhalen',
     }
   };
 
   function getLang() {
-    try {
-      const saved = localStorage.getItem('memoir.lang');
-      if (saved) return saved;
-      localStorage.setItem('memoir.lang', DEFAULT);
-      return DEFAULT;
-    } catch {
-      return DEFAULT;
-    }
+    // 1) explicit choice -> 2) existing storage -> 3) browser -> 4) default
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved && STR[saved]) return saved;
+
+    const nav =
+      (navigator.languages && navigator.languages[0]) ||
+      navigator.language ||
+      defaultLang;
+    const short = String(nav).slice(0, 2).toLowerCase();
+    return STR[short] ? short : defaultLang;
   }
 
   function setLang(code) {
-    const c = STRINGS[code] ? code : DEFAULT;
-    try { localStorage.setItem('memoir.lang', c); } catch {}
-    window.dispatchEvent(new CustomEvent('memoir:lang', { detail:{ code:c }}));
+    const lang = STR[code] ? code : defaultLang;
+    localStorage.setItem(STORAGE_KEY, lang);
+    // Broadcast to all pages/components
+    const ev = new CustomEvent('memoir:lang', { detail: { code: lang } });
+    window.dispatchEvent(ev);
   }
 
-  // Update header label/flag if present
-  function applyHeader(code){
-    const flag = document.getElementById('langFlag');
-    const label = document.getElementById('langLabel');
-    if (flag)  flag.textContent  = FLAGS[code] || FLAGS.en;
-    if (label) label.textContent = (
-      {en:'English',fr:'Français',nl:'Nederlands',es:'Español'}[code] || 'English'
-    );
-  }
-
-  // public API
+  // Expose on window
   window.MEMOIR_I18N = {
-    strings: STRINGS,
-    flags: FLAGS,
+    strings: STR,
     getLang,
     setLang,
-    getPrompts(code, n=4){
-      const pool = STRINGS[code || getLang()]?.prompts || STRINGS.en.prompts;
-      // return random N
-      const arr = [...pool].sort(()=>Math.random()-0.5).slice(0,n);
-      return arr;
-    }
   };
 
-  // react to menu selection (from header-loader)
-  window.addEventListener('memoir:set-lang', (e)=> setLang(e.detail.code));
-
-  // first paint
-  const initial = getLang();
-  applyHeader(initial);
-  // notify pages
-  setTimeout(()=>window.dispatchEvent(new CustomEvent('memoir:lang', { detail:{ code: initial } })), 0);
-
-  // keep header labels in sync
-  window.addEventListener('memoir:lang', (e)=> applyHeader(e.detail.code));
+  // Make sure first paint uses a consistent language
+  // Defer so page listeners can attach first.
+  window.addEventListener('DOMContentLoaded', () => {
+    const lang = getLang();
+    setTimeout(() => {
+      const ev = new CustomEvent('memoir:lang', { detail: { code: lang } });
+      window.dispatchEvent(ev);
+    }, 0);
+  });
 })();
-</script>
