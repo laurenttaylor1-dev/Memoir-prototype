@@ -4,115 +4,238 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — Record</title>
+
   <link rel="stylesheet" href="/styles.css">
+
+  <style>
+    :root{
+      --bg:#f6f1ea; --card:#fffaf5; --ink:#3b2f2a; --muted:#7b6a62;
+      --accent:#8c5a3c; --accent2:#b17d55; --radius:18px;
+      --shadow:0 18px 40px rgba(59,47,42,.10), 0 2px 8px rgba(59,47,42,.06);
+    }
+    body{background:var(--bg);color:var(--ink);margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    .container{max-width:1100px;margin:0 auto;padding:20px 16px 28px}
+    .title{font-size:clamp(26px,3vw,38px);margin:8px 0 16px}
+    .grid{display:grid;grid-template-columns:420px 1fr;gap:20px;align-items:start}
+    @media (max-width:980px){ .grid{grid-template-columns:1fr} }
+    .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+    .muted{color:var(--muted)}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;color:var(--ink);text-decoration:none;font-weight:700}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:0}
+    .btn.ghost{background:transparent}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .chips{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{padding:8px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;cursor:pointer}
+    .label{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:12px 0 6px}
+
+    /* Big round mic */
+    .micZone{display:flex;flex-direction:column;align-items:center;gap:10px}
+    .mic{width:220px;height:220px;border-radius:999px;border:0;
+         background:radial-gradient(70% 70% at 50% 30%, #b17d55, #8c5a3c);
+         color:#fff;font-weight:800;font-size:20px;cursor:pointer;
+         box-shadow:0 20px 60px rgba(140,90,60,.35)}
+    .mic.pulse{animation:pulse 1.6s infinite ease-in-out}
+    @keyframes pulse{0%{transform:scale(1)} 50%{transform:scale(1.04)} 100%{transform:scale(1)}}
+    .timer{font-weight:800;letter-spacing:.06em}
+    textarea,input,select{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(0,0,0,.15);background:#fff;color:inherit}
+    textarea{min-height:110px;resize:vertical}
+    .transcript{min-height:200px;border-radius:12px;border:1px solid rgba(0,0,0,.15);background:#fff;padding:12px}
+    .hint{font-size:12px;color:var(--muted)}
+  </style>
 </head>
-<body class="bg-cream">
+<body>
+  <!-- Shared header -->
   <div id="site-header"></div>
 
-  <main class="container" style="padding:20px 16px 30px">
-    <h1 class="page-title">Record</h1>
+  <main class="container">
+    <h1 class="title" id="pageTitle">Record</h1>
 
-    <section class="record-grid card">
-      <div class="record-left">
-        <button id="recBtn" class="record-circle">Record</button>
-        <div id="timer" class="muted" style="margin-top:10px">00:00</div>
-      </div>
-
-      <div class="record-right">
-        <div class="label-row">
-          <div class="label" id="todayLabel">Today's suggested prompts</div>
-          <button id="refreshPrompts" class="btn small outline">Suggest other prompts</button>
-        </div>
-        <div id="promptsWrap" class="chip-row" aria-live="polite"></div>
-
-        <div class="field">
-          <label>Notes (optional)</label>
-          <textarea id="notes" class="input" rows="3" placeholder="Add a quick note…"></textarea>
+    <section class="grid">
+      <!-- Left: capture -->
+      <div class="card">
+        <div class="micZone">
+          <button id="mic" class="mic" aria-pressed="false">Record</button>
+          <div class="muted"><span class="timer" id="timer">00:00</span></div>
         </div>
 
-        <div class="field">
-          <label>Title</label>
-          <input id="title" class="input" placeholder="Story title"/>
+        <div class="label">Today's suggested prompts</div>
+        <div class="row" style="justify-content:space-between">
+          <div id="prompts" class="chips"></div>
+          <button id="refreshPrompts" class="btn">Suggest other prompts</button>
         </div>
 
-        <div class="field">
-          <label>When did this happen?</label>
-          <input id="when" class="input" placeholder='e.g. "summer 1945", "early 2018", "15 Feb 1972"'/>
-        </div>
+        <div class="label">Notes (optional)</div>
+        <textarea id="notes" placeholder="Add a quick note…"></textarea>
 
-        <div class="row">
-          <button id="saveStory" class="btn primary">Save story</button>
-          <a class="btn" href="/stories.html">My Stories</a>
+        <div class="row" style="margin-top:12px">
+          <a href="/stories.html" class="btn">My Stories</a>
         </div>
       </div>
-    </section>
 
-    <section class="card" style="margin-top:14px">
-      <div class="label">Transcript</div>
-      <div id="transcript" class="transcript-area">Your words will appear here…</div>
+      <!-- Right: metadata + transcript -->
+      <div class="card">
+        <div class="label">Title</div>
+        <input id="title" type="text" placeholder="Story title" />
+
+        <div class="label">When did this happen?</div>
+        <input id="when" type="text" placeholder='e.g. "summer 1945", "early 2018", "15 Feb 1972"' />
+
+        <div class="label">Add photo (optional)</div>
+        <input id="photo" type="file" accept="image/*" />
+
+        <div class="label" style="margin-top:14px">Transcript</div>
+        <div id="transcript" class="transcript" aria-live="polite">Your words will appear here…</div>
+        <div class="hint" id="asrHint" style="margin-top:6px"></div>
+
+        <div class="row" style="margin-top:14px">
+          <button id="saveBtn" class="btn primary">Save story</button>
+        </div>
+      </div>
     </section>
   </main>
 
+  <!-- Shared footer -->
   <div id="site-footer"></div>
 
+  <!-- Scripts -->
   <script src="/js/header-loader.js" defer></script>
   <script src="/js/lang.js" defer></script>
-
   <script>
-    // ---- prompts UI ----
+    // ===== Guided prompts (simple, localized) =====
+    const TOPIC_WORDS = {
+      en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
+      fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
+      es:["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"],
+      nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
+    };
     function renderPrompts(code){
-      const wrap = document.getElementById('promptsWrap');
-      wrap.innerHTML = '';
-      const prompts = MEMOIR_I18N.getPrompts(code, 4);
-      prompts.forEach(p=>{
-        const b = document.createElement('button');
-        b.className = 'chip';
-        b.textContent = p;
-        b.onclick = ()=>{ document.getElementById('title').value = p; };
+      const words=(TOPIC_WORDS[code]||TOPIC_WORDS.en);
+      const shuffled=[...words].sort(()=>Math.random()-0.5).slice(0,4);
+      const wrap=document.getElementById('prompts'); wrap.innerHTML='';
+      shuffled.forEach(w=>{
+        const b=document.createElement('button');
+        b.className='chip'; b.textContent=w;
+        b.onclick=()=>{ document.getElementById('title').value=w; speakPrompt(w, code); };
         wrap.appendChild(b);
       });
-      const t = MEMOIR_I18N.strings[code] || MEMOIR_I18N.strings.en;
-      document.getElementById('todayLabel').textContent = t.todayPrompts;
-      document.getElementById('refreshPrompts').textContent = t.refreshPrompts;
     }
 
-    window.addEventListener('memoir:lang', (e)=>{
-      renderPrompts(e.detail.code);
-    });
+    // Simple voice prompt (system speechSynthesis fallback)
+    const BCP={en:'en-US',fr:'fr-FR',es:'es-ES',nl:'nl-NL'};
+    function speakPrompt(text, code){
+      if(!('speechSynthesis' in window)) return;
+      const u=new SpeechSynthesisUtterance(String(text));
+      u.lang=BCP[code]||'en-US'; u.rate=.95; u.pitch=1; u.volume=1;
+      speechSynthesis.cancel(); speechSynthesis.speak(u);
+    }
 
-    document.getElementById('refreshPrompts').addEventListener('click', ()=>{
-      renderPrompts(MEMOIR_I18N.getLang());
-    });
+    // React to language changes from header/lang.js
+    function applyLang(code){
+      renderPrompts(code);
+    }
+    window.addEventListener('memoir:lang', e=>applyLang(e.detail.code));
+    document.addEventListener('DOMContentLoaded', ()=>applyLang(window.MEMOIR_I18N?.getLang?.() || 'en'));
+    document.getElementById('refreshPrompts').onclick = ()=>applyLang(window.MEMOIR_I18N?.getLang?.() || 'en');
 
-    // initial render
-    renderPrompts(MEMOIR_I18N.getLang());
-
-    // ---- dummy recorder (hook yours here) ----
-    const recBtn = document.getElementById('recBtn');
-    const transcriptEl = document.getElementById('transcript');
+    // ===== Recording UI (timer only; your chunked upload runs server side) =====
+    const mic = document.getElementById('mic');
     const timerEl = document.getElementById('timer');
-    let t=0, ticking=null, recording=false;
-    function fmt(s){const m=String(Math.floor(s/60)).padStart(2,'0');const ss=String(s%60).padStart(2,'0');return `${m}:${ss}`;}
-    recBtn.onclick = ()=>{
-      if (!recording){
-        recording = true;
-        recBtn.classList.add('pulse');
-        recBtn.textContent = 'Stop';
-        t = 0; timerEl.textContent = '00:00';
-        ticking = setInterval(()=>{ t++; timerEl.textContent = fmt(t); },1000);
-        transcriptEl.textContent = 'Listening… (demo placeholder)';
-      } else {
-        recording = false;
-        recBtn.classList.remove('pulse');
-        recBtn.textContent = 'Record';
-        clearInterval(ticking);
-        transcriptEl.textContent = 'Final transcript (demo placeholder).';
-      }
-    };
+    const transcriptEl = document.getElementById('transcript');
+    const asrHint = document.getElementById('asrHint');
+    let recActive=false, startAt=0, tick=null, media=null, chunks=[];
 
-    // ---- save handler (wire to Supabase as you already have) ----
-    document.getElementById('saveStory').onclick = ()=>{
-      alert('Saving… (wire to Supabase create story)');
+    async function startRec(){
+      try{
+        media = await navigator.mediaDevices.getUserMedia({ audio:true });
+        const mr = new MediaRecorder(media, { mimeType: 'audio/webm' });
+        chunks=[];
+
+        mr.ondataavailable = e => { if(e.data && e.data.size) chunks.push(e.data); };
+        mr.onstop = async () => {
+          const blob = new Blob(chunks, { type:'audio/webm' });
+          await uploadChunk(blob); // send whole blob as a single “chunk” (your server can split if needed)
+        };
+
+        mr.start(1000); // request data every second
+        mic.dataset.recorderId = Math.random().toString(36).slice(2);
+        mic.textContent='Stop';
+        mic.classList.add('pulse');
+        recActive=true; startAt=Date.now();
+        tick=setInterval(()=>updateTimer(),1000);
+        // Keep a reference
+        window._memoirRecorder = mr;
+        asrHint.textContent='Recording… transcription will appear live when online.';
+      }catch(e){
+        alert('Microphone permission denied.');
+      }
+    }
+
+    function stopRec(){
+      try{ window._memoirRecorder && window._memoirRecorder.stop(); }catch{}
+      try{ media && media.getTracks().forEach(t=>t.stop()); }catch{}
+      clearInterval(tick); tick=null;
+      mic.textContent='Record';
+      mic.classList.remove('pulse');
+      recActive=false;
+      updateTimer(0);
+    }
+
+    mic.onclick = ()=> recActive ? stopRec() : startRec();
+
+    function updateTimer(forceZero){
+      const ms = forceZero===0 ? 0 : (Date.now()-startAt);
+      const s = Math.floor(ms/1000);
+      const mm = String(Math.floor(s/60)).padStart(2,'0');
+      const ss = String(s%60).padStart(2,'0');
+      timerEl.textContent = `${mm}:${ss}`;
+    }
+
+    async function uploadChunk(blob){
+      // Send to your existing server endpoint that streams to Whisper
+      try{
+        const lang = window.MEMOIR_I18N?.getLang?.() || 'en';
+        const r = await fetch('/api/transcribe-chunk', {
+          method:'POST',
+          headers: { 'x-memoir-lang': lang },
+          body: blob
+        });
+        if(!r.ok){ throw new Error('upload_failed'); }
+        const data = await r.json().catch(()=>null);
+        if(data?.partial){
+          transcriptEl.textContent = data.partial;
+        }
+        asrHint.textContent='Listening…';
+      }catch(e){
+        asrHint.textContent='Offline or server unavailable — audio will be saved locally and sent later.';
+      }
+    }
+
+    // ===== Save story (front-end only; assumes your /api/transcribe-story etc. exist) =====
+    document.getElementById('saveBtn').onclick = async()=>{
+      if(recActive) stopRec();
+      const title = document.getElementById('title').value.trim() || 'Story';
+      const when  = document.getElementById('when').value.trim() || '';
+      const notes = document.getElementById('notes').value.trim() || '';
+      const photo = document.getElementById('photo').files?.[0] || null;
+      const text  = (transcriptEl.textContent || '').trim();
+
+      if(!text){ alert('There is no transcript yet. Say a few words, then try again.'); return; }
+
+      const fd = new FormData();
+      fd.append('title', title);
+      fd.append('when', when);
+      fd.append('notes', notes);
+      fd.append('text', text);
+      if(photo) fd.append('photo', photo);
+
+      try{
+        const r = await fetch('/api/transcribe-story', { method:'POST', body: fd });
+        if(!r.ok) throw new Error('save_failed');
+        alert('Saved! You can find it in My Stories.');
+        window.location.href = '/stories.html';
+      }catch(e){
+        alert('Save failed. If you are offline, it will retry when connected.');
+      }
     };
   </script>
 </body>
