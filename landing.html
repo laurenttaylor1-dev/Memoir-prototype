@@ -19,52 +19,33 @@
       --shadow:0 18px 40px rgba(59,47,42,.10), 0 2px 8px rgba(59,47,42,.06);
     }
     body{background:var(--bg); color:var(--ink); margin:0; font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;}
-
     .container{max-width:1200px; margin:0 auto; padding:20px 16px 28px;}
 
-    /* Top grid: image left, content right */
-    .hero-shell{
-      display:grid; grid-template-columns: 1.05fr .95fr; gap:22px; align-items:stretch;
-    }
-    @media (max-width: 980px){
-      .hero-shell{grid-template-columns: 1fr;}
-    }
+    /* IMAGE LEFT / CONTENT RIGHT */
+    .hero-shell{display:grid; grid-template-columns: 1.05fr .95fr; gap:22px; align-items:start;}
+    @media (max-width: 980px){ .hero-shell{grid-template-columns: 1fr;} }
 
-    .hero-img{
-      background:var(--card);
-      border:1px solid rgba(0,0,0,.06);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      overflow:hidden;
-    }
+    .hero-img{background:var(--card); border:1px solid rgba(0,0,0,.06); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden;}
     .hero-img img{display:block; width:100%; height:100%; object-fit:cover;}
 
-    .card{
-      background:var(--card);
-      border:1px solid rgba(0,0,0,.08);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:18px;
-    }
-
-    .hero-card .eyebrow{font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:6px}
+    .card{background:var(--card); border:1px solid rgba(0,0,0,.08); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px;}
+    .eyebrow{font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:6px}
     .h1{font-size:clamp(30px, 3.6vw, 48px); line-height:1.08; margin:8px 0 12px; letter-spacing:.2px;}
     .gradient{background:linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip:text; background-clip:text; color:transparent;}
     .muted{color:var(--muted)}
-    .spacer-10{height:10px}
-
-    /* Right column below the hero card: two action cards stacked */
-    .actions-stack{display:grid; grid-template-columns:1fr; gap:16px; margin-top:16px}
-
     .label{font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:6px}
     .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
     .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 16px; border-radius:999px; border:1px solid rgba(0,0,0,.12); background:#fff; color:var(--ink); text-decoration:none; font-weight:700}
     .btn.primary{background:linear-gradient(90deg, var(--accent), var(--accent2)); color:#fff; border:0;}
 
-    /* Features & lower sections */
+    /* right column stack */
+    .right-stack{display:grid; grid-template-columns:1fr; gap:16px;}
+
+    /* three features */
     .features{display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-top:22px}
     @media (max-width: 960px){ .features{grid-template-columns:1fr} }
 
+    /* pricing + faq */
     .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px}
     @media (max-width: 960px){ .grid-2{grid-template-columns:1fr} }
 
@@ -72,66 +53,70 @@
     .faq .faq-item + .faq-item{margin-top:12px}
     .faq h4{margin:0 0 4px}
 
-    /* Prevent header CLS while partial loads */
+    /* note block (your blue text area style) */
+    .note{
+      background:#eef6ff; border:1px solid #cfe5ff; color:#0b4a9e;
+      padding:10px 12px; border-radius:12px; font-size:14px; line-height:1.35;
+    }
+
+    /* guard to prevent CLS while header loads */
     #site-header:empty{min-height:68px; display:block}
   </style>
 </head>
 <body>
-  <!-- Shared header slot -->
+  <!-- Shared header -->
   <div id="site-header"></div>
 
   <main class="container">
-    <!-- IMAGE LEFT / CONTENT RIGHT -->
+
+    <!-- IMAGE LEFT / RIGHT COLUMN WITH 2 FULL CARDS -->
     <section class="hero-shell">
-      <!-- Left: big image -->
+      <!-- Left: image -->
       <div class="hero-img">
         <img src="/assets/book-1.jpg" alt="Open memory book">
       </div>
 
-      <!-- Right: hero + two stacked action cards -->
-      <div>
-        <div class="card hero-card">
+      <!-- Right: hero text + two ACTION cards (full content) -->
+      <div class="right-stack">
+        <!-- Hero text card -->
+        <div class="card">
           <div class="eyebrow" data-i18n="brandEyebrow">MEMOIR APP</div>
           <h1 class="h1">
-            <span class="gradient" data-i18n="heroTitleA">Preserve Your</span><br/>
-            <span data-i18n="heroTitleB">Memories Forever</span>
+            <span data-i18n="heroTitleA">Preserve Your</span><br/>
+            <span class="gradient" data-i18n="heroTitleB">Memories Forever</span>
           </h1>
           <p class="muted" style="max-width:60ch" data-i18n="heroBlurb">
             Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.
           </p>
-          <!-- (INTENTIONALLY NO chip CTA row here per your request) -->
         </div>
 
-        <!-- Two frames stacked (desktop: to the right of image; mobile: below image) -->
-        <div class="actions-stack">
-          <!-- Start Recording -->
-          <div class="card">
-            <div class="label" data-i18n="startRecording">Start Recording</div>
-            <h3 style="margin:6px 0 8px" data-i18n="startRecording">Start Recording</h3>
-            <p class="muted" data-i18n="startCopy">
-              One tap to begin. Add a title and “when it happened” later.
-            </p>
-            <div class="row">
-              <a class="btn primary" href="/record.html" data-i18n="startRecording">Start Recording</a>
-            </div>
+        <!-- Start Recording card -->
+        <div class="card">
+          <div class="label" data-i18n="startRecording">Start Recording</div>
+          <h3 style="margin:6px 0 8px" data-i18n="startRecording">Start Recording</h3>
+          <p class="muted" data-i18n="startCopy">
+            One tap to begin. Add a title and “when it happened” later.
+          </p>
+          <div class="row">
+            <a class="btn primary" href="/record.html" data-i18n="startRecording">Start Recording</a>
           </div>
+        </div>
 
-          <!-- View My Stories -->
-          <div class="card">
-            <div class="label" data-i18n="viewStories">View My Stories</div>
-            <h3 style="margin:6px 0 8px" data-i18n="viewStories">View My Stories</h3>
-            <p class="muted" data-i18n="viewCopy">
-              Browse, rewrite with AI, export, and share with your family.
-            </p>
-            <div class="row">
-              <a class="btn" href="/stories.html" data-i18n="viewStories">My Stories</a>
-            </div>
+        <!-- View My Stories card -->
+        <div class="card">
+          <div class="label" data-i18n="viewStories">View My Stories</div>
+          <h3 style="margin:6px 0 8px" data-i18n="viewStories">View My Stories</h3>
+          <p class="muted" data-i18n="viewCopy">
+            Browse, rewrite with AI, export, and share with your family.
+          </p>
+          <div class="row">
+            <a class="btn" href="/stories.html" data-i18n="viewStories">My Stories</a>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Features -->
+    <!-- Three main points (exactly like your screenshot) -->
     <section class="features">
       <div class="card">
         <h3 class="section-title" data-i18n="feat1Title">Smart Transcription</h3>
@@ -139,25 +124,40 @@
       </div>
       <div class="card">
         <h3 class="section-title" data-i18n="feat2Title">Multi-language Support</h3>
-        <p class="muted" data-i18n="feat2Copy">Record and transcribe in multiple languages.</p>
+        <p class="muted" data-i18n="feat2Copy">Record and transcribe in multiple languages — and share your stories worldwide.</p>
       </div>
       <div class="card">
         <h3 class="section-title" data-i18n="feat3Title">Private Library</h3>
-        <p class="muted" data-i18n="feat3Copy">Organize and share securely with your family.</p>
+        <p class="muted" data-i18n="feat3Copy">Your stories are stored in your private library, available across your devices.</p>
       </div>
     </section>
 
     <!-- Pricing + FAQ -->
     <section class="grid-2">
+      <!-- Pricing -->
       <div class="card">
         <h3 class="section-title" data-i18n="pricing">Pricing</h3>
         <ul class="muted" style="margin:0 0 12px 18px">
           <li><strong data-i18n="planPremium">Premium</strong> — <span data-i18n="pricePremium">€4.99/month</span></li>
           <li><strong data-i18n="planFamily">Family</strong> — <span data-i18n="priceFamily">€7.99/month</span> <span class="muted" data-i18n="familyNote">(up to 4 read-only family members)</span></li>
         </ul>
-        <a class="btn" href="/api/checkout" data-i18n="upgrade">Upgrade</a>
+
+        <!-- Your “Please note…” block from the screenshot -->
+        <div class="note" aria-label="Upcoming changes">
+          <strong>Please note — we’re planning changes:</strong><br/>
+          Free: up to 10 stories of max 2 minutes transcription each.<br/>
+          Premium: <strong>€6.99</strong>/month for up to <strong>2.5 hours</strong>/month of AI transcription & rewriting.<br/>
+          Family: <strong>€8.99</strong>/month for Premium + sharing your library with up to 4 family members.<br/>
+          Exclusive: <strong>€11.99</strong>/month for up to <strong>5 hours</strong>/month of AI transcription & rewriting + sharing (up to 4 read-only family members).
+        </div>
+
+        <div class="row" style="margin-top:12px">
+          <a class="btn" href="/api/checkout?plan=premium" data-i18n="upgradePremium">Upgrade to Premium</a>
+          <a class="btn" href="/api/checkout?plan=family"  data-i18n="upgradeFamily">Upgrade to Family</a>
+        </div>
       </div>
 
+      <!-- FAQ -->
       <div class="card faq">
         <h3 class="section-title" data-i18n="faq">FAQ</h3>
 
@@ -182,61 +182,59 @@
   <!-- Shared footer -->
   <div id="site-footer"></div>
 
-  <!-- Scripts: lang first, then header loader (so header starts with correct locale) -->
+  <!-- Scripts: lang first, then header loader -->
   <script src="/js/lang.js" defer></script>
   <script src="/js/header-loader.js" defer></script>
 
   <script>
-    // Localize landing content using lang.js (strings in MEMOIR_I18N.strings)
-    function applyLanding(code){
-      const t = (window.MEMOIR_I18N?.strings?.[code]) || window.MEMOIR_I18N.strings.en;
+    /* Apply translations to this page (uses your existing MEMOIR_I18N) */
+    function txt(code, key, fallback){
+      const dict = (window.MEMOIR_I18N?.strings?.[code]) || window.MEMOIR_I18N?.strings?.en || {};
+      return dict[key] || fallback || '';
+    }
+    function set(key, sel, fallback){ const el=document.querySelector(sel); if(el) el.textContent = txt(window.MEMOIR_I18N?.getLang?.()||'en', key, fallback); }
+    function setAll(key, sel){ document.querySelectorAll(sel).forEach(n => n.textContent = txt(window.MEMOIR_I18N?.getLang?.()||'en', key, n.textContent)); }
 
-      const setText = (key, sel) => {
-        const el = document.querySelector(sel);
-        if (el && t[key]) el.textContent = t[key];
-      };
+    function applyLanding(){
+      const lang = window.MEMOIR_I18N?.getLang?.() || 'en';
+      set('brandEyebrow','[data-i18n="brandEyebrow"]','MEMOIR APP');
+      set('heroTitleA','[data-i18n="heroTitleA"]','Preserve Your');
+      set('heroTitleB','[data-i18n="heroTitleB"]','Memories Forever');
+      set('heroBlurb','[data-i18n="heroBlurb"]','Record once, keep for generations...');
 
-      setText('brandEyebrow', '[data-i18n="brandEyebrow"]');
-      setText('heroTitleA',    '[data-i18n="heroTitleA"]');
-      setText('heroTitleB',    '[data-i18n="heroTitleB"]');
-      setText('heroBlurb',     '[data-i18n="heroBlurb"]');
+      setAll('startRecording','[data-i18n="startRecording"]');
+      set('startCopy','[data-i18n="startCopy"]','One tap to begin. Add a title and “when it happened” later.');
 
-      // Action cards
-      document.querySelectorAll('[data-i18n="startRecording"]').forEach(n => n.textContent = t.startRecording);
-      document.querySelectorAll('[data-i18n="viewStories"]').forEach(n => n.textContent = t.viewStories);
-      setText('startCopy',     '[data-i18n="startCopy"]');
-      setText('viewCopy',      '[data-i18n="viewCopy"]');
+      setAll('viewStories','[data-i18n="viewStories"]');
+      set('viewCopy','[data-i18n="viewCopy"]','Browse, rewrite with AI, export, and share with your family.');
 
-      // Features
-      setText('feat1Title',    '[data-i18n="feat1Title"]');
-      setText('feat1Copy',     '[data-i18n="feat1Copy"]');
-      setText('feat2Title',    '[data-i18n="feat2Title"]');
-      setText('feat2Copy',     '[data-i18n="feat2Copy"]');
-      setText('feat3Title',    '[data-i18n="feat3Title"]');
-      setText('feat3Copy',     '[data-i18n="feat3Copy"]');
+      set('feat1Title','[data-i18n="feat1Title"]','Smart Transcription');
+      set('feat1Copy','[data-i18n="feat1Copy"]','AI-powered voice-to-text conversion.');
+      set('feat2Title','[data-i18n="feat2Title"]','Multi-language Support');
+      set('feat2Copy','[data-i18n="feat2Copy"]','Record and transcribe in multiple languages — and share your stories worldwide.');
+      set('feat3Title','[data-i18n="feat3Title"]','Private Library');
+      set('feat3Copy','[data-i18n="feat3Copy"]','Your stories are stored in your private library, available across your devices.');
 
-      // Pricing & FAQ
-      setText('pricing',       '[data-i18n="pricing"]');
-      setText('planPremium',   '[data-i18n="planPremium"]');
-      setText('pricePremium',  '[data-i18n="pricePremium"]');
-      setText('planFamily',    '[data-i18n="planFamily"]');
-      setText('priceFamily',   '[data-i18n="priceFamily"]');
-      setText('familyNote',    '[data-i18n="familyNote"]');
-      setText('upgrade',       '[data-i18n="upgrade"]');
+      set('pricing','[data-i18n="pricing"]','Pricing');
+      set('planPremium','[data-i18n="planPremium"]','Premium');
+      set('planFamily','[data-i18n="planFamily"]','Family');
+      set('pricePremium','[data-i18n="pricePremium"]','€4.99/month');
+      set('priceFamily','[data-i18n="priceFamily"]','€7.99/month');
+      set('familyNote','[data-i18n="familyNote"]','(up to 4 read-only family members)');
+      set('upgradePremium','[data-i18n="upgradePremium"]','Upgrade to Premium');
+      set('upgradeFamily','[data-i18n="upgradeFamily"]','Upgrade to Family');
 
-      setText('faq',           '[data-i18n="faq"]');
-      setText('qFree',         '[data-i18n="qFree"]');
-      setText('aFree',         '[data-i18n="aFree"]');
-      setText('qLangs',        '[data-i18n="qLangs"]');
-      setText('aLangs',        '[data-i18n="aLangs"]');
-      setText('qTransc',       '[data-i18n="qTransc"]');
-      setText('aTransc',       '[data-i18n="aTransc"]');
+      set('faq','[data-i18n="faq"]','FAQ');
+      set('qFree','[data-i18n="qFree"]','Is there a free plan?');
+      set('aFree','[data-i18n="aFree"]','Yes, you can try the app for free before upgrading.');
+      set('qLangs','[data-i18n="qLangs"]','Which languages are supported?');
+      set('aLangs','[data-i18n="aLangs"]','English, Français, Nederlands, Español (more coming).');
+      set('qTransc','[data-i18n="qTransc"]','How is transcription done?');
+      set('aTransc','[data-i18n="aTransc"]','Server-side Whisper for high accuracy; works offline then syncs later.');
     }
 
-    window.addEventListener('memoir:lang', e => applyLanding(e.detail.code));
-    document.addEventListener('DOMContentLoaded', () => {
-      applyLanding(window.MEMOIR_I18N?.getLang?.() || 'en');
-    });
+    window.addEventListener('memoir:lang', applyLanding);
+    document.addEventListener('DOMContentLoaded', applyLanding);
   </script>
 </body>
 </html>
