@@ -4,9 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — My Stories</title>
-
   <link rel="stylesheet" href="/styles.css">
-
   <style>
     :root{
       --bg:#f6f1ea; --card:#fffaf5; --ink:#3b2f2a; --muted:#7b6a62;
@@ -15,142 +13,71 @@
     }
     body{background:var(--bg);color:var(--ink);margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
     .container{max-width:1100px;margin:0 auto;padding:20px 16px 28px}
-    .title{font-size:clamp(26px,3vw,38px);margin:8px 0 16px}
-    .grid{display:grid;grid-template-columns:1fr;gap:16px}
-    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
-    .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+    .title{font-size:clamp(26px,3vw,38px);margin:8px 0 6px}
     .muted{color:var(--muted)}
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;color:var(--ink);text-decoration:none;font-weight:700}
+    .grid{display:grid;grid-template-columns:320px 1fr;gap:20px;align-items:start}
+    @media (max-width:980px){ .grid{grid-template-columns:1fr} }
+    .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+    .stat{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:12px;background:#fff;border:1px solid rgba(0,0,0,.06);margin-bottom:8px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;color:var(--ink);text-decoration:none;font-weight:600}
     .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:0}
-    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-    .stat{display:flex;flex-direction:column;gap:2px}
-    .stat .num{font-weight:800}
-    .item{padding:12px;border:1px solid rgba(0,0,0,.08);border-radius:14px;background:#fff}
-    .item h4{margin:0 0 4px; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+    .story{padding:12px;border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;margin-bottom:10px}
+    .row{display:flex;gap:8px;flex-wrap:wrap}
   </style>
 </head>
 <body>
-  <!-- Shared header -->
   <div id="site-header"></div>
 
   <main class="container">
     <h1 class="title" id="storiesTitle">My Stories</h1>
-    <p class="muted" id="storiesBlurb" style="margin-top:-6px">Record once, keep for generations.</p>
+    <div class="muted" id="storiesSub">Your library in the cloud</div>
 
-    <!-- Quick stats + invite -->
-    <section class="grid">
-      <div class="card" style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap">
+    <section class="grid" style="margin-top:12px">
+      <!-- Left: stats + share -->
+      <div class="card">
+        <div class="stat"><span id="statsStories">Stories</span><strong id="countStories">0</strong></div>
+        <div class="stat"><span id="statsShared">Family members shared</span><strong id="countShared">0</strong></div>
+        <div class="label" style="margin-top:10px" id="shareWith">Share with a family member</div>
         <div class="row">
-          <div class="stat">
-            <span class="muted" id="storiesCountLabel">Stories</span>
-            <span class="num" id="storiesCount">0</span>
-          </div>
-          <div class="stat">
-            <span class="muted" id="familyCountLabel">Family Members</span>
-            <span class="num" id="familyCount">0</span>
-          </div>
-        </div>
-
-        <div class="row">
-          <label for="inviteEmail" class="muted" id="inviteLabel" style="font-weight:600;">Invite Family Member</label>
-          <input id="inviteEmail" type="email" placeholder="email@example.com"
-                 style="padding:10px 12px;border-radius:12px;border:1px solid rgba(0,0,0,.15);background:#fff;color:inherit"/>
-          <button id="inviteBtn" class="btn primary">Invite</button>
+          <input id="shareEmail" type="email" placeholder="" style="flex:1;padding:12px 14px;border-radius:12px;border:1px solid rgba(0,0,0,.15);background:#fff;color:inherit">
+          <button id="shareSend" class="btn primary">Send invite</button>
         </div>
       </div>
 
-      <!-- list -->
-      <div class="card">
-        <h3 id="listHeader" style="margin:6px 0 8px">My Stories</h3>
-        <div id="list" class="cards">
-          <!-- story cards inserted here -->
-        </div>
-        <p id="emptyMsg" class="muted" style="display:none">No stories yet.</p>
+      <!-- Right: list -->
+      <div class="card" id="listWrap">
+        <div id="storiesList"></div>
       </div>
     </section>
   </main>
 
-  <!-- Shared footer -->
   <div id="site-footer"></div>
 
-  <!-- Scripts -->
   <script src="/js/lang.js" defer></script>
   <script src="/js/header-loader.js" defer></script>
   <script>
-    // ===== Language binding =====
-    function pack(code){ return (window.MEMOIR_I18N?.strings?.[code]) || window.MEMOIR_I18N.strings.en; }
-    function applyStoriesLang(code){
-      const s=pack(code);
-      storiesTitle.textContent  = s.stories.title;
-      storiesBlurb.textContent  = s.stories.blurb;
-      storiesCountLabel.textContent = s.stories.storiesLabel;
-      familyCountLabel.textContent  = s.stories.familyLabel;
-      inviteLabel.textContent   = s.stories.inviteLabel;
-      inviteEmail.placeholder   = s.stories.invitePh;
-      inviteBtn.textContent     = s.stories.inviteBtn;
-      listHeader.textContent    = s.stories.listHeader;
-      emptyMsg.textContent      = s.stories.listEmpty;
+    function applyStories(code){
+      const t = MEMOIR_I18N.strings[code] || MEMOIR_I18N.strings.en;
+      storiesTitle.textContent = t.storiesTitle;
+      storiesSub.textContent   = t.storiesSub;
+      statsStories.textContent = t.statsStories;
+      statsShared.textContent  = t.statsShared;
+      shareWith.textContent    = t.shareWith;
+      shareEmail.placeholder   = t.shareEmailPH;
+      shareSend.textContent    = t.shareSend;
+      document.title = `Memoir — ${t.storiesTitle}`;
     }
-    function currentLang(){ return (window.MEMOIR_I18N?.getLang?.() || localStorage.getItem('memoir_lang') || 'en'); }
-    function applyNow(){ applyStoriesLang(currentLang()); }
-
-    window.addEventListener('memoir:lang', e=>applyStoriesLang(e.detail.code));
-    window.addEventListener('storage', e=>{ if(e.key==='memoir_lang') applyNow(); });
-    document.addEventListener('DOMContentLoaded', applyNow);
-    setTimeout(applyNow, 0);
-
-    // ===== Load stories (placeholder — wire to Supabase in your API) =====
-    async function loadStories(){
-      try{
-        const r = await fetch('/api/stories'); // your API should return { items:[{id,title,when,created_at,...}], count, family_count }
-        if(!r.ok) throw new Error('fetch_failed');
-        const data = await r.json();
-
-        const items = Array.isArray(data.items) ? data.items : [];
-        document.getElementById('storiesCount').textContent = data.count ?? items.length;
-        document.getElementById('familyCount').textContent  = data.family_count ?? 0;
-
-        const list = document.getElementById('list');
-        list.innerHTML = '';
-        if(!items.length){
-          document.getElementById('emptyMsg').style.display='block';
-          return;
-        }
-        document.getElementById('emptyMsg').style.display='none';
-
-        items.forEach(s=>{
-          const card=document.createElement('div');
-          card.className='item';
-          const h4=document.createElement('h4');
-          h4.textContent = s.title || 'Story';
-          const meta=document.createElement('div');
-          meta.className='muted';
-          meta.textContent = s.happened_label || (s.created_at ? new Date(s.created_at).toLocaleString() : '');
-          const row=document.createElement('div');
-          row.className='row';
-          const view=document.createElement('a'); view.href=`/api/story?id=${encodeURIComponent(s.id)}`; view.className='btn'; view.textContent='View';
-          const dl=document.createElement('a'); dl.href=`/api/story-docx?id=${encodeURIComponent(s.id)}`; dl.className='btn'; dl.textContent='Download .docx';
-          row.appendChild(view); row.appendChild(dl);
-          card.appendChild(h4); card.appendChild(meta); card.appendChild(row);
-          list.appendChild(card);
-        });
-      }catch(e){
-        // basic fallback
-        document.getElementById('emptyMsg').style.display='block';
-      }
-    }
-    document.addEventListener('DOMContentLoaded', loadStories);
-
-    // Invite button (placeholder)
-    document.getElementById('inviteBtn').onclick = async()=>{
-      const email = document.getElementById('inviteEmail').value.trim();
-      if(!email) return;
-      try{
-        const r = await fetch('/api/invite-family', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email }) });
-        if(!r.ok) throw new Error('invite_failed');
-        alert('Invite sent.');
-      }catch(e){ alert('Failed to send invite.'); }
-    };
+    window.addEventListener('memoir:lang', e=>applyStories(e.detail.code));
+    document.addEventListener('DOMContentLoaded', ()=>{
+      applyStories(MEMOIR_I18N.getLang());
+      // TODO: fetch stories from Supabase (count + list)
+      // For now, show empty state if none:
+      const empty = document.createElement('p');
+      empty.className='muted';
+      empty.id='emptyMsg';
+      empty.textContent = MEMOIR_I18N.t('listEmpty');
+      document.getElementById('storiesList').appendChild(empty);
+    });
   </script>
 </body>
 </html>
