@@ -5,201 +5,129 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — Home</title>
   <link rel="stylesheet" href="/styles.css">
-  <style>
-    /* page-scoped helpers (safe to keep here) */
-    :root{
-      --bg:#f6f1ea; --card:#fffaf5; --ink:#3b2f2a; --muted:#7b6a62;
-      --accent:#8c5a3c; --accent2:#b17d55; --radius:18px;
-      --shadow:0 18px 40px rgba(59,47,42,.10), 0 2px 8px rgba(59,47,42,.06);
-    }
-    body{background:var(--bg);color:var(--ink)}
-    .container{max-width:1200px;margin:0 auto;padding:20px 16px 40px}
-
-    /* HERO */
-    .hero{
-      display:grid; grid-template-columns: 1.1fr .9fr; gap:22px; align-items:stretch;
-    }
-    @media (max-width: 980px){ .hero{ grid-template-columns:1fr } }
-    .hero-img{
-      background:var(--card); border:1px solid rgba(0,0,0,.06);
-      border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden;
-    }
-    .hero-img img{ display:block; width:100%; height:100%; object-fit:cover }
-
-    .hero-right{
-      display:flex; flex-direction:column; gap:16px;
-      background:var(--card); border:1px solid rgba(0,0,0,.08);
-      border-radius:var(--radius); box-shadow:var(--shadow); padding:18px;
-    }
-    .kicker{ font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted) }
-    .hero-title{
-      font-size:clamp(28px,3.4vw,44px); font-weight:800; line-height:1.1; margin:4px 0 6px;
-      text-wrap:balance;                  /* balances lines */
-      min-height:calc(1.1em * 2);         /* reserves 2 lines so the cards align with the photo bottom */
-    }
-    .hero-title .accent{ color:transparent; background:linear-gradient(90deg,var(--accent),var(--accent2));
-                         -webkit-background-clip:text; background-clip:text; }
-    .hero-blurb{ color:var(--muted); max-width:60ch }
-
-    .hero-actions{
-      display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px;
-    }
-    @media (max-width:720px){ .hero-actions{ grid-template-columns:1fr } }
-    .mini-card{
-      background:#fff; border:1px solid rgba(0,0,0,.07); border-radius:16px; padding:16px;
-      display:flex; flex-direction:column; gap:10px;
-    }
-    .mini-card h4{ margin:0; font-size:14px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted) }
-    .mini-card p{ margin:0; color:var(--ink) }
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;
-         border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;color:var(--ink);
-         text-decoration:none;font-weight:700}
-    .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:0}
-
-    /* Why Memoir (3 features) */
-    .section-title{font-size:22px;margin:26px 0 12px}
-    .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-    @media (max-width:900px){ .feat-grid{grid-template-columns:1fr} }
-    .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
-    .card h3{margin:0 0 6px}
-    .muted{color:var(--muted)}
-
-    /* Pricing */
-    .pricing{margin-top:18px}
-    .pricing .card h3{margin-bottom:14px}
-    .plan-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-    @media (max-width:1100px){ .plan-grid{grid-template-columns:repeat(2,1fr)} }
-    @media (max-width:600px){ .plan-grid{grid-template-columns:1fr} }
-    .plan{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:6px}
-    .plan h4{margin:0}
-    .plan ul{margin:6px 0 0 18px}
-    .plan .price{font-weight:800}
-
-    /* Footer layout (centered, 3 columns) */
-    .site-footer-wrap{max-width:1200px;margin:0 auto;padding:22px 16px}
-    .foot-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
-    @media (max-width:900px){ .foot-grid{grid-template-columns:1fr} }
-  </style>
 </head>
 <body>
-  <!-- Header (injected) -->
   <div id="site-header"></div>
 
   <main class="container">
     <!-- HERO -->
-    <section class="hero">
-      <figure class="hero-img">
-        <img src="/assets/book-1.jpg" alt="Open book"/>
-      </figure>
+    <section class="hero-grid">
+      <div class="hero-img"><img src="/assets/book-1.jpg" alt="Open book"></div>
 
-      <div class="hero-right">
-        <div class="kicker" data-i18n="landing.kicker">MEMOIR APP</div>
-        <h1 class="hero-title">
-          <span data-i18n="landing.h1a">Preserve Your</span><br>
-          <span class="accent" data-i18n="landing.h1b">Memories Forever</span>
+      <div class="card hero-card">
+        <div class="label">MEMOIR APP</div>
+        <h1 class="h1">
+          <span id="heroA">Preserve Your</span>
+          <span id="heroB" class="line2 gradient">Memories Forever</span>
         </h1>
-        <p class="hero-blurb" data-i18n="landing.blurb">
-          Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.
-        </p>
+        <p id="heroBlurb" class="muted no-clamp">…</p>
 
+        <!-- Bigger action cards (side-by-side) -->
         <div class="hero-actions">
-          <article class="mini-card">
-            <h4 data-i18n="landing.startLabel">Start Recording</h4>
-            <p class="no-clamp" data-i18n="landing.startCopy">One tap to begin. Add a title and “when it happened” later.</p>
-            <a class="btn primary" href="/record.html" data-i18n="landing.startBtn">Start Recording</a>
-          </article>
-
-          <article class="mini-card">
-            <h4 data-i18n="landing.viewLabel">My Stories</h4>
-            <p class="no-clamp" data-i18n="landing.viewCopy">Browse, rewrite with AI, export, and share with your family.</p>
-            <a class="btn" href="/stories.html" data-i18n="landing.viewBtn">My Stories</a>
-          </article>
+          <div class="mini-card">
+            <div class="label" id="actionStartTitle">Start Recording</div>
+            <p id="actionStartBody" class="no-clamp">One tap to begin…</p>
+            <a class="btn primary" href="/record.html" id="ctaStart">Start Recording</a>
+          </div>
+          <div class="mini-card">
+            <div class="label" id="actionStoriesTitle">View My Stories</div>
+            <p id="actionStoriesBody" class="no-clamp">Browse, rewrite with AI…</p>
+            <a class="btn" href="/stories.html" id="ctaStories">My Stories</a>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- WHY MEMOIR -->
-    <h2 class="section-title" data-i18n="landing.whyTitle">Why Memoir</h2>
-    <section class="feat-grid">
-      <article class="card">
-        <h3 data-i18n="landing.f1.title">Capture in one tap</h3>
-        <p class="muted no-clamp" data-i18n="landing.f1.body">
-          Pick a gentle prompt or speak freely — Memoir records your voice in high quality and keeps everything organized as a story.
-        </p>
-      </article>
-      <article class="card">
-        <h3 data-i18n="landing.f2.title">Ready for a family book</h3>
-        <p class="muted no-clamp" data-i18n="landing.f2.body">
-          Whisper-based transcription turns your words into clean text; you can fix little typos and add a time or season later.
-        </p>
-      </article>
-      <article class="card">
-        <h3 data-i18n="landing.f3.title">Private by default</h3>
-        <p class="muted no-clamp" data-i18n="landing.f3.body">
-          Your stories stay in your private library. Share read-only access with family when you’re ready – across all devices.
-        </p>
-      </article>
+    <!-- FEATURES -->
+    <h2 class="section-title" id="whyTitle">Why Memoir</h2>
+    <section class="features">
+      <div class="card">
+        <h3 id="feat1T">Capture in one tap</h3>
+        <p id="feat1B" class="no-clamp">…</p>
+      </div>
+      <div class="card">
+        <h3 id="feat2T">Ready for a family book</h3>
+        <p id="feat2B" class="no-clamp">…</p>
+      </div>
+      <div class="card">
+        <h3 id="feat3T">Private by default</h3>
+        <p id="feat3B" class="no-clamp">…</p>
+      </div>
     </section>
 
-    <!-- PRICING -->
-    <section class="pricing">
-      <article class="card">
-        <h3 data-i18n="landing.pricingTitle">Pricing</h3>
-
+    <!-- PRICING (one big frame that holds 4 plans) -->
+    <section class="pricing-wrap">
+      <h2 class="section-title" id="pricingTitle">Pricing</h2>
+      <div class="pricing-board">
         <div class="plan-grid">
           <div class="plan">
-            <h4 data-i18n="landing.p.free.title">Free</h4>
-            <div class="price" data-i18n="landing.p.free.price">€0</div>
-            <ul>
-              <li data-i18n="landing.p.free.l1">Up to 10 stories</li>
-              <li data-i18n="landing.p.free.l2">Max 2 minutes of transcription each</li>
-              <li data-i18n="landing.p.free.l3">Private library on all your devices</li>
-            </ul>
+            <h4 id="planFreeT">Free</h4>
+            <div class="price" id="planFreePrice">€0</div>
+            <ul id="planFreeList"></ul>
           </div>
 
           <div class="plan">
-            <h4 data-i18n="landing.p.premium.title">Premium — €4.99/month</h4>
-            <div class="price" data-i18n="landing.p.premium.price">€4.99 / mo</div>
-            <ul>
-              <li data-i18n="landing.p.premium.l1">Up to 2.5 hours / month of AI transcription</li>
-              <li data-i18n="landing.p.premium.l2">Smart rewrite, export to PDF/CSV</li>
-              <li data-i18n="landing.p.premium.l3">Priority processing</li>
-            </ul>
+            <h4 id="planPremiumT">Premium — €4.99/month</h4>
+            <div class="price" id="planPremiumPrice">€4.99 / mo</div>
+            <ul id="planPremiumList"></ul>
           </div>
 
           <div class="plan">
-            <h4 data-i18n="landing.p.family.title">Family — €7.99/month</h4>
-            <div class="price" data-i18n="landing.p.family.price">€7.99 / mo</div>
-            <ul>
-              <li data-i18n="landing.p.family.l1">Everything in Premium</li>
-              <li data-i18n="landing.p.family.l2">Share your library with up to 4 read-only family members</li>
-              <li data-i18n="landing.p.family.l3">Invite with email; revoke anytime</li>
-            </ul>
+            <h4 id="planFamilyT">Family — €7.99/month</h4>
+            <div class="price" id="planFamilyPrice">€7.99 / mo</div>
+            <ul id="planFamilyList"></ul>
           </div>
 
           <div class="plan">
-            <h4 data-i18n="landing.p.exclusive.title">Exclusive — €11.99/month</h4>
-            <div class="price" data-i18n="landing.p.exclusive.price">€11.99 / mo</div>
-            <ul>
-              <li data-i18n="landing.p.exclusive.l1">Up to 5 hours / month of AI transcription + rewrite</li>
-              <li data-i18n="landing.p.exclusive.l2">Family sharing (up to 4)</li>
-              <li data-i18n="landing.p.exclusive.l3">Best for active storytellers</li>
-            </ul>
+            <h4 id="planExclusiveT">Exclusive — €11.99/month</h4>
+            <div class="price" id="planExclusivePrice">€11.99 / mo</div>
+            <ul id="planExclusiveList"></ul>
           </div>
         </div>
 
-        <div style="margin-top:14px">
-          <a class="btn primary" href="/pricing.html" data-i18n="landing.upgradeBtn">Upgrade</a>
+        <div style="margin-top:12px">
+          <a id="btnUpgradeTop" class="btn primary" href="/checkout.html">Upgrade</a>
         </div>
-      </article>
+      </div>
     </section>
   </main>
 
-  <!-- FOOTER (injected) -->
   <div id="site-footer"></div>
 
-  <!-- Scripts: lang FIRST, then header/foot loader -->
+  <!-- Scripts: lang BEFORE header-loader -->
   <script src="/js/lang.js" defer></script>
   <script src="/js/header-loader.js" defer></script>
+  <script>
+    function fillList(ul, arr){ ul.innerHTML = arr.map(x=>`<li>${x}</li>`).join(''); }
+
+    function applyLanding(code){
+      const t = (window.MEMOIR_I18N?.strings?.[code]) || window.MEMOIR_I18N.strings.en;
+      heroA.textContent = t.heroA;
+      heroB.textContent = t.heroB;
+      heroBlurb.textContent = t.heroBlurb;
+
+      actionStartTitle.textContent = t.actionStartTitle;
+      actionStartBody.textContent  = t.actionStartBody;
+      actionStoriesTitle.textContent = t.actionStoriesTitle;
+      actionStoriesBody.textContent  = t.actionStoriesBody;
+      ctaStart.textContent = t.actionStartTitle;
+      ctaStories.textContent = t.myStories || "My Stories";
+
+      whyTitle.textContent = "Why Memoir"; // short section title stays English-like in all locales or set per-locale if desired
+      feat1T.textContent = t.feat1T; feat1B.textContent = t.feat1B;
+      feat2T.textContent = t.feat2T; feat2B.textContent = t.feat2B;
+      feat3T.textContent = t.feat3T; feat3B.textContent = t.feat3B;
+
+      pricingTitle.textContent = t.pricingTitle;
+      planFreeT.textContent = t.planFreeT; planFreePrice.textContent = t.planFreePrice; fillList(planFreeList, t.planFreeList);
+      planPremiumT.textContent = t.planPremiumT; planPremiumPrice.textContent = t.planPremiumPrice; fillList(planPremiumList, t.planPremiumList);
+      planFamilyT.textContent = t.planFamilyT; planFamilyPrice.textContent = t.planFamilyPrice; fillList(planFamilyList, t.planFamilyList);
+      planExclusiveT.textContent = t.planExclusiveT; planExclusivePrice.textContent = t.planExclusivePrice; fillList(planExclusiveList, t.planExclusiveList);
+      btnUpgradeTop.textContent = t.upgrade;
+    }
+
+    window.addEventListener('memoir:lang', e => applyLanding(e.detail.code));
+    document.addEventListener('DOMContentLoaded', () => applyLanding(window.MEMOIR_I18N?.getLang?.() || 'en'));
+  </script>
 </body>
 </html>
