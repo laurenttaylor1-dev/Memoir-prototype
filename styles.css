@@ -19,3 +19,40 @@
 /* ====== Global cards/inputs fix ====== */
 .mk-card{background:#fffaf5;border:1px solid rgba(0,0,0,.08);border-radius:18px;box-shadow:0 18px 40px rgba(59,47,42,.10),0 2px 8px rgba(59,47,42,.06);padding:18px}
 input, select, textarea{box-sizing:border-box;max-width:100%}
+
+/* Header basics */
+.site-header { background: #f3eadf; border-bottom: 1px solid rgba(0,0,0,.06); }
+.site-header .wrap { max-width: 1200px; margin: 0 auto; padding: 12px 16px; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.brand { display:flex; align-items:center; gap:10px; color:#3b2f2a; text-decoration:none; }
+.logo { width:28px; height:28px; border-radius:8px; background: linear-gradient(135deg,#8c5a3c,#b17d55); }
+.brand-text small{ display:block; font-size:12px; color:#7b6a62; }
+
+/* Pills */
+.pill { display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:999px; border:1px solid rgba(0,0,0,.12); background:#fff; color:#3b2f2a; text-decoration:none; font-weight:600; }
+
+/* Language dropdown */
+.lang { position: relative; }
+.lang-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  min-width: 180px;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.12);
+  border-radius: 12px;
+  box-shadow: 0 18px 36px rgba(0,0,0,.08);
+  padding: 6px;
+  z-index: 1000;
+}
+.lang-menu[hidden] { display: none; }
+.lang-item {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.lang-item:hover { background: #f6efe8; }
+.lang-toggle .chev { margin-left: 6px; }
