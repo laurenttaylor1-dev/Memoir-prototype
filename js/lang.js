@@ -1,105 +1,172 @@
-<script>
-/* lang.js — shared i18n bus + strings */
+/* /js/lang.js  —  central i18n + header wiring */
+
 (function () {
-  const LS_KEY = 'memoir.lang';
+  const KEY = "memoir_lang";
+  const FLAGS = { en:"🇬🇧", fr:"🇫🇷", nl:"🇧🇪", es:"🇪🇸" };
 
-  const strings = {
+  // Minimal strings (extend as needed)
+  const STRINGS = {
     en: {
-      /* nav */
-      nav_home:'Home', nav_login:'Login', nav_record:'Record', nav_stories:'My Stories',
-      /* landing */
-      heroTitleA:'Preserve Your', heroTitleB:'Memories Forever',
-      heroBlurb:'Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.',
-      startRecording:'Start Recording', viewStories:'My Stories',
-      /* record */
-      promptsHdr:"Today's suggested prompts", btnShuffle:'Suggest other prompts',
-      notesLabel:'Notes (optional)', notesPH:'Add a quick note…',
-      titleLabel:'Title', titlePH:'Story title',
-      whenLabel:'When did this happen?', whenPH:'e.g. "summer 1945", "early 2018", "15 Feb 1972"',
-      addPhotoLabel:'Add photo (optional)', transcriptLabel:'Transcript',
-      transcriptPH:'Your words will appear here…', saveStory:'Save story',
-      asrRecording:'Recording… transcription will appear live when online.',
-      asrListening:'Listening…', asrOffline:'Offline or server unavailable — audio will be saved and sent later.',
-      /* stories */
-      storiesLead:'Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.',
-      storiesCountLabel:'Stories', familyCountLabel:'Family Members',
-      inviteLabel:'Invite Family Member', invitePH:'email@example.com', inviteBtn:'Invite',
-      inviteHint:'They will receive a read-only link to view and listen.',
-      listLabel:'My Stories', emptyState:'No stories yet. Record your first one!'
+      nav: { home:"Home", login:"Login", record:"Record", stories:"My Stories" },
+      heroTitleA: "Preserve Your",
+      heroTitleB: "Memories Forever",
+      heroBlurb:
+        "Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.",
+      ctas: { start:"Start Recording", stories:"My Stories" }
     },
-
     fr: {
-      nav_home:'Accueil', nav_login:'Connexion', nav_record:'Enregistrer', nav_stories:'Mes histoires',
-      heroTitleA:'Préservez Vos', heroTitleB:'Souvenirs Pour Toujours',
-      heroBlurb:'Enregistrez une fois, gardez pour des générations. Lancez un enregistrement en un tap, ajoutez un titre et “quand c’est arrivé”, puis partagez en toute sécurité avec votre famille.',
-      startRecording:'Commencer', viewStories:'Mes histoires',
-      promptsHdr:'Suggestions du jour', btnShuffle:'Suggérer d’autres idées',
-      notesLabel:'Notes (optionnel)', notesPH:'Ajoutez une note rapide…',
-      titleLabel:'Titre', titlePH:'Titre de l’histoire',
-      whenLabel:'Quand cela est-il arrivé ?', whenPH:'ex. "été 1945", "début 2018", "15 fév 1972"',
-      addPhotoLabel:'Ajouter une photo (optionnel)', transcriptLabel:'Transcription',
-      transcriptPH:'Vos mots apparaîtront ici…', saveStory:'Enregistrer',
-      asrRecording:'En cours… la transcription apparaîtra en ligne.',
-      asrListening:'Écoute…', asrOffline:'Hors ligne — l’audio sera sauvegardé et envoyé plus tard.',
-      storiesLead:'Enregistrez une fois, gardez pour des générations…',
-      storiesCountLabel:'Histoires', familyCountLabel:'Membres de la famille',
-      inviteLabel:'Inviter un membre de la famille', invitePH:'email@exemple.com', inviteBtn:'Inviter',
-      inviteHint:'Ils recevront un lien en lecture seule.',
-      listLabel:'Mes histoires', emptyState:'Pas encore d’histoires. Enregistrez la première !'
+      nav: { home:"Accueil", login:"Connexion", record:"Enregistrer", stories:"Mes histoires" },
+      heroTitleA: "Préservez Vos",
+      heroTitleB: "Souvenirs Pour Toujours",
+      heroBlurb:
+        "Enregistrez une fois, gardez pour des générations. Lancez un enregistrement en un geste, ajoutez un titre et “quand cela s’est passé”, puis partagez en toute sécurité avec votre famille.",
+      ctas: { start:"Commencer", stories:"Mes histoires" }
     },
-
     nl: {
-      nav_home:'Home', nav_login:'Inloggen', nav_record:'Opnemen', nav_stories:'Mijn verhalen',
-      heroTitleA:'Bewaar Jouw', heroTitleB:'Herinneringen Voor Altijd',
-      heroBlurb:'Neem één keer op, bewaar voor generaties. Start met één tik, voeg een titel en “wanneer het gebeurde” toe en deel veilig met familie.',
-      startRecording:'Opname starten', viewStories:'Mijn verhalen',
-      promptsHdr:'Suggesties van vandaag', btnShuffle:'Andere suggesties',
-      notesLabel:'Notities (optioneel)', notesPH:'Snel een notitie…',
-      titleLabel:'Titel', titlePH:'Titel van het verhaal',
-      whenLabel:'Wanneer gebeurde dit?', whenPH:'bv. "zomer 1945", "begin 2018", "15 feb 1972"',
-      addPhotoLabel:'Foto toevoegen (optioneel)', transcriptLabel:'Transcriptie',
-      transcriptPH:'Je woorden verschijnen hier…', saveStory:'Verhaal opslaan',
-      asrRecording:'Opnemen… transcript verschijnt live zodra je online bent.',
-      asrListening:'Luisteren…', asrOffline:'Offline — audio wordt opgeslagen en later verzonden.',
-      storiesLead:'Neem één keer op, bewaar voor generaties…',
-      storiesCountLabel:'Verhalen', familyCountLabel:'Gezinsleden',
-      inviteLabel:'Gezinslid uitnodigen', invitePH:'email@voorbeeld.com', inviteBtn:'Uitnodigen',
-      inviteHint:'Ze ontvangen een link met alleen-lezen rechten.',
-      listLabel:'Mijn verhalen', emptyState:'Nog geen verhalen. Begin met opnemen!'
+      nav: { home:"Home", login:"Inloggen", record:"Opnemen", stories:"Mijn verhalen" },
+      heroTitleA: "Bewaar Je",
+      heroTitleB: "Herinneringen Voor Altijd",
+      heroBlurb:
+        "Neem één keer op en bewaar voor generaties. Start met één tik, voeg een titel en “wanneer het gebeurde” toe en deel veilig met je familie.",
+      ctas: { start:"Opnemen starten", stories:"Mijn verhalen" }
     },
-
     es: {
-      nav_home:'Inicio', nav_login:'Acceder', nav_record:'Grabar', nav_stories:'Mis historias',
-      heroTitleA:'Conserva Tus', heroTitleB:'Recuerdos Para Siempre',
-      heroBlurb:'Graba una vez y consérvalo para generaciones. Empieza en un toque, añade un título y “cuándo ocurrió”, y comparte de forma segura con tu familia.',
-      startRecording:'Empezar', viewStories:'Mis historias',
-      promptsHdr:'Sugerencias de hoy', btnShuffle:'Sugerir otras',
-      notesLabel:'Notas (opcional)', notesPH:'Añade una nota rápida…',
-      titleLabel:'Título', titlePH:'Título de la historia',
-      whenLabel:'¿Cuándo pasó?', whenPH:'p. ej. "verano de 1945", "inicios de 2018", "15 feb 1972"',
-      addPhotoLabel:'Añadir foto (opcional)', transcriptLabel:'Transcripción',
-      transcriptPH:'Tus palabras aparecerán aquí…', saveStory:'Guardar',
-      asrRecording:'Grabando… la transcripción aparecerá cuando estés en línea.',
-      asrListening:'Escuchando…', asrOffline:'Sin conexión — el audio se guardará y se enviará más tarde.',
-      storiesLead:'Graba una vez y consérvalo para generaciones…',
-      storiesCountLabel:'Historias', familyCountLabel:'Familiares',
-      inviteLabel:'Invitar familiar', invitePH:'correo@ejemplo.com', inviteBtn:'Invitar',
-      inviteHint:'Recibirá un enlace de solo lectura.',
-      listLabel:'Mis historias', emptyState:'Todavía no hay historias. ¡Graba la primera!'
+      nav: { home:"Inicio", login:"Entrar", record:"Grabar", stories:"Mis historias" },
+      heroTitleA: "Conserva Tus",
+      heroTitleB: "Recuerdos Para Siempre",
+      heroBlurb:
+        "Graba una vez, conserva para generaciones. Empieza con un toque, añade un título y “cuándo ocurrió”, y comparte con tu familia de forma segura.",
+      ctas: { start:"Empezar a grabar", stories:"Mis historias" }
     }
   };
 
   function getLang() {
-    return localStorage.getItem(LS_KEY) || 'en';
-  }
-  function setLang(code) {
-    const lang = strings[code] ? code : 'en';
-    localStorage.setItem(LS_KEY, lang);
-    const ev = new CustomEvent('memoir:lang', { detail: { code: lang }});
-    window.dispatchEvent(ev);
+    const saved = localStorage.getItem(KEY);
+    return saved && STRINGS[saved] ? saved : "en";
   }
 
-  // expose
-  window.MEMOIR_I18N = { strings, getLang, setLang };
+  function setLang(code) {
+    const lang = STRINGS[code] ? code : "en";
+    localStorage.setItem(KEY, lang);
+    updateHeader(lang);     // refresh header labels/flag
+    broadcast(lang);        // tell pages to localize
+    closeDropdown();        // UX polish
+  }
+
+  function broadcast(code) {
+    window.dispatchEvent(new CustomEvent("memoir:lang", { detail: { code } }));
+  }
+
+  // ---------- Header wiring ----------
+  let $toggle, $menu, outsideHandler, escHandler;
+
+  function openDropdown() {
+    if ($menu) $menu.hidden = false;
+    document.addEventListener("click", outsideHandler, true);
+    document.addEventListener("keydown", escHandler, true);
+    $toggle?.setAttribute("aria-expanded", "true");
+  }
+  function closeDropdown() {
+    if ($menu) $menu.hidden = true;
+    document.removeEventListener("click", outsideHandler, true);
+    document.removeEventListener("keydown", escHandler, true);
+    $toggle?.setAttribute("aria-expanded", "false");
+  }
+
+  function attachHeader() {
+    // Called after header is injected (header-loader triggers it)
+    const langCode = getLang();
+
+    // Elements inside header.html
+    const elFlag  = document.getElementById("lang-current-flag");
+    const elLabel = document.getElementById("lang-current-label");
+    $toggle       = document.getElementById("lang-toggle");
+    $menu         = document.getElementById("lang-dropdown");
+
+    // Nav labels
+    const navHome    = document.getElementById("navHome");
+    const navLogin   = document.getElementById("navLogin");
+    const navRecord  = document.getElementById("navRecord");
+    const navStories = document.getElementById("navStories");
+
+    // Apply current state
+    if (elFlag)  elFlag.textContent  = FLAGS[langCode] || "🇬🇧";
+    if (elLabel) elLabel.textContent = labelFor(langCode);
+    if (navHome)    navHome.textContent    = STRINGS[langCode].nav.home;
+    if (navLogin)   navLogin.textContent   = STRINGS[langCode].nav.login;
+    if (navRecord)  navRecord.textContent  = STRINGS[langCode].nav.record;
+    if (navStories) navStories.textContent = STRINGS[langCode].nav.stories;
+
+    // Toggle handlers (re-bind safely)
+    if ($toggle) {
+      $toggle.onclick = (e) => {
+        e.preventDefault();
+        if ($menu?.hidden) openDropdown();
+        else closeDropdown();
+      };
+    }
+    outsideHandler = (e) => {
+      if (!$menu || !$toggle) return;
+      if ($menu.contains(e.target) || $toggle.contains(e.target)) return;
+      closeDropdown();
+    };
+    escHandler = (e) => { if (e.key === "Escape") closeDropdown(); };
+
+    // Language item clicks
+    $menu?.querySelectorAll(".lang-item").forEach(btn => {
+      btn.onclick = (e) => {
+        e.preventDefault();
+        const code = btn.getAttribute("data-lang");
+        setLang(code);
+      };
+    });
+
+    // Make sure card/overlay doesn’t hide the menu
+    // (CSS still recommended; see note below)
+    $menu?.style?.setProperty("z-index", "1000");
+
+    // Tell pages what the current language is
+    broadcast(langCode);
+  }
+
+  function updateHeader(code) {
+    const elFlag  = document.getElementById("lang-current-flag");
+    const elLabel = document.getElementById("lang-current-label");
+    if (elFlag)  elFlag.textContent  = FLAGS[code] || "🇬🇧";
+    if (elLabel) elLabel.textContent = labelFor(code);
+
+    // Update nav too
+    const t = STRINGS[code] || STRINGS.en;
+    const navHome    = document.getElementById("navHome");
+    const navLogin   = document.getElementById("navLogin");
+    const navRecord  = document.getElementById("navRecord");
+    const navStories = document.getElementById("navStories");
+    if (navHome)    navHome.textContent    = t.nav.home;
+    if (navLogin)   navLogin.textContent   = t.nav.login;
+    if (navRecord)  navRecord.textContent  = t.nav.record;
+    if (navStories) navStories.textContent = t.nav.stories;
+  }
+
+  function labelFor(code) {
+    return { en:"English", fr:"Français", nl:"Nederlands", es:"Español" }[code] || "English";
+  }
+
+  // Expose a tiny API
+  window.MEMOIR_I18N = {
+    strings: STRINGS,
+    getLang,
+    setLang,
+    attachHeader, // header-loader calls this after injection
+  };
+
+  // If a header is already in the DOM (rare), wire it once DOM is ready
+  if (document.readyState === "complete" || document.readyState === "interactive") {
+    const hdr = document.getElementById("lang-toggle");
+    if (hdr) attachHeader();
+  } else {
+    document.addEventListener("DOMContentLoaded", () => {
+      const hdr = document.getElementById("lang-toggle");
+      if (hdr) attachHeader();
+    });
+  }
 })();
-</script>
