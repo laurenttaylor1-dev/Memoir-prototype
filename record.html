@@ -5,28 +5,33 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — Record</title>
 
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/styles.css"/>
+
   <style>
     :root{
       --bg:#f6f1ea; --card:#fffaf5; --ink:#3b2f2a; --muted:#7b6a62;
       --accent:#8c5a3c; --accent2:#b17d55; --radius:18px;
       --shadow:0 18px 40px rgba(59,47,42,.10), 0 2px 8px rgba(59,47,42,.06);
+      --pill:#fff;
     }
     body{background:var(--bg);color:var(--ink);margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
     .container{max-width:1100px;margin:0 auto;padding:20px 16px 28px}
-    .title{font-size:clamp(26px,3vw,38px);margin:8px 0 16px}
+    .title{font-size:clamp(26px,3vw,38px);margin:8px 0 16px;font-weight:800}
+
     .grid{display:grid;grid-template-columns:420px 1fr;gap:20px;align-items:start}
     @media (max-width:980px){ .grid{grid-template-columns:1fr} }
+
     .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
     .muted{color:var(--muted)}
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;color:var(--ink);text-decoration:none;font-weight:700;cursor:pointer}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:var(--pill);color:var(--ink);text-decoration:none;font-weight:700;cursor:pointer}
     .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:0}
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-    .chip{padding:8px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;cursor:pointer}
+    .btn.ghost{background:transparent}
+
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+
     .label{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:12px 0 6px}
 
-    /* Big round mic */
+    /* Mic */
     .micZone{display:flex;flex-direction:column;align-items:center;gap:10px}
     .mic{width:220px;height:220px;border-radius:999px;border:0;
          background:radial-gradient(70% 70% at 50% 30%, #b17d55, #8c5a3c);
@@ -35,9 +40,13 @@
     .mic.pulse{animation:pulse 1.6s infinite ease-in-out}
     @keyframes pulse{0%{transform:scale(1)} 50%{transform:scale(1.04)} 100%{transform:scale(1)}}
     .timer{font-weight:800;letter-spacing:.06em}
-    textarea,input,select{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(0,0,0,.15);background:#fff;color:inherit}
+
+    .chips{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{padding:8px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;cursor:pointer;font-weight:600}
+
+    textarea,input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(0,0,0,.15);background:#fff;color:inherit}
     textarea{min-height:110px;resize:vertical}
-    .transcript{min-height:200px;border-radius:12px;border:1px solid rgba(0,0,0,.15);background:#fff;padding:12px}
+    .transcript{min-height:220px;border-radius:12px;border:1px solid rgba(0,0,0,.15);background:#fff;padding:12px;white-space:pre-wrap}
     .hint{font-size:12px;color:var(--muted)}
   </style>
 </head>
@@ -46,47 +55,47 @@
   <div id="site-header"></div>
 
   <main class="container">
-    <h1 class="title" id="pageTitle"></h1>
+    <h1 class="title" id="recTitle">Record</h1>
 
     <section class="grid">
-      <!-- Left: mic + prompts -->
+      <!-- Left: capture + guided -->
       <div class="card">
         <div class="micZone">
           <button id="mic" class="mic" aria-pressed="false">Record</button>
           <div class="muted"><span class="timer" id="timer">00:00</span></div>
         </div>
 
-        <div class="label" id="promptsTitle"></div>
-        <div class="row" style="justify-content:space-between">
-          <div id="prompts" class="chips"></div>
-          <button id="refreshPrompts" class="btn"></button>
+        <div class="label" id="lblGuided">Today's suggested prompts</div>
+        <div class="row">
+          <div id="prompts" class="chips" aria-live="polite"></div>
+          <button id="refreshPrompts" class="btn" type="button">Suggest other prompts</button>
         </div>
 
-        <div class="label" id="notesLabel"></div>
-        <textarea id="notes" placeholder=""></textarea>
+        <div class="label" id="lblNotes">Notes (optional)</div>
+        <textarea id="notes" placeholder="Add a quick note…"></textarea>
 
         <div class="row" style="margin-top:12px">
-          <a href="/stories.html" class="btn" id="myStoriesBtn"></a>
+          <a href="/stories.html" class="btn" id="goStories">My Stories</a>
         </div>
       </div>
 
       <!-- Right: metadata + transcript -->
       <div class="card">
-        <div class="label" id="titleLabel"></div>
-        <input id="title" type="text" placeholder="" />
+        <div class="label" id="lblTitle">Title</div>
+        <input id="title" type="text" placeholder="Story title"/>
 
-        <div class="label" id="whenLabel"></div>
-        <input id="when" type="text" placeholder="" />
+        <div class="label" id="lblWhen">When did this happen?</div>
+        <input id="when" type="text" placeholder='e.g. "summer 1945", "early 2018", "15 Feb 1972"' />
 
-        <div class="label" id="addPhotoLabel"></div>
+        <div class="label" id="lblPhoto">Add photo (optional)</div>
         <input id="photo" type="file" accept="image/*" />
 
-        <div class="label" id="transcriptLabel" style="margin-top:14px"></div>
-        <div id="transcript" class="transcript" aria-live="polite"></div>
+        <div class="label" id="lblTranscript" style="margin-top:14px">Transcript</div>
+        <div id="transcript" class="transcript" aria-live="polite">Your words will appear here…</div>
         <div class="hint" id="asrHint" style="margin-top:6px"></div>
 
         <div class="row" style="margin-top:14px">
-          <button id="saveBtn" class="btn primary"></button>
+          <button id="saveBtn" class="btn primary" type="button">Save story</button>
         </div>
       </div>
     </section>
@@ -95,101 +104,275 @@
   <!-- Shared footer -->
   <div id="site-footer"></div>
 
-  <!-- Scripts -->
+  <!-- Scripts: i18n first, then header/loader -->
   <script src="/js/lang.js" defer></script>
   <script src="/js/header-loader.js" defer></script>
+
   <script>
-    // === Guided Prompts with voice ===
+    // ===== i18n bindings for this page =====
+    function applyRecordLang(code){
+      const t = (window.MEMOIR_I18N?.strings?.[code]) || window.MEMOIR_I18N.strings?.en || {};
+
+      // Page title
+      (document.getElementById('recTitle')||{}).textContent = t.recTitle || 'Record';
+
+      // Labels & placeholders
+      (document.getElementById('lblGuided')||{}).textContent   = t.lblGuided   || "Today's suggested prompts";
+      (document.getElementById('refreshPrompts')||{}).textContent = t.btnSuggestOther || "Suggest other prompts";
+
+      (document.getElementById('lblNotes')||{}).textContent     = t.lblNotes    || "Notes (optional)";
+      const notes = document.getElementById('notes');
+      if (notes) notes.placeholder = t.phNotes || "Add a quick note…";
+
+      (document.getElementById('lblTitle')||{}).textContent     = t.lblTitle    || "Title";
+      const title = document.getElementById('title');
+      if (title) title.placeholder = t.phTitle || "Story title";
+
+      (document.getElementById('lblWhen')||{}).textContent      = t.lblWhen     || "When did this happen?";
+      const when = document.getElementById('when');
+      if (when) when.placeholder = t.phWhen || 'e.g. "summer 1945", "early 2018", "15 Feb 1972"';
+
+      (document.getElementById('lblPhoto')||{}).textContent     = t.lblPhoto    || "Add photo (optional)";
+
+      (document.getElementById('lblTranscript')||{}).textContent= t.lblTranscript || "Transcript";
+
+      (document.getElementById('goStories')||{}).textContent    = t.navStories  || "My Stories";
+      (document.getElementById('saveBtn')||{}).textContent      = t.btnSave     || "Save story";
+
+      // Record button label (when idle)
+      const mic = document.getElementById('mic');
+      if (mic && !mic.classList.contains('pulse')) {
+        mic.textContent = t.btnRecord || "Record";
+      }
+
+      // Re-render prompts in selected language
+      renderPrompts(code);
+    }
+
+    window.addEventListener('memoir:lang', e => applyRecordLang(e.detail.code));
+    document.addEventListener('DOMContentLoaded', () => {
+      applyRecordLang(window.MEMOIR_I18N?.getLang?.() || 'en');
+    });
+
+    // ===== Guided prompts with spoken guidance (ElevenLabs → fallback to system TTS) =====
     const TOPIC_WORDS = {
       en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
       fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
-      nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"],
-      es:["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"]
+      es:["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"],
+      nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
     };
 
-    function sentence(topic, code){
-      return MEMOIR_I18N.t('guidePrefix') + ' ' + topic;
-    }
+    // longer, gentle sentences for buttons (matches earlier behavior)
+    const PROMPT_SENTENCES = {
+      en:{Childhood:"Tell me something about your youth.",
+          Family:"Tell me about your family and the people who raised you.",
+          School:"What was school like for you?",
+          Work:"Tell me about your first job or your career.",
+          Love:"How did you meet your partner, and what did love mean to you then?",
+          War:"What big world events or conflicts did you live through?",
+          Travel:"Where did you travel that left a mark on you?",
+          Traditions:"Which family traditions mattered most to you?",
+          Holidays:"Describe a holiday you remember vividly.",
+          Lessons:"What life lesson did you learn the hard way?",
+          Advice:"What advice would you give your younger self?",
+          "Turning-points":"What was a turning point that changed your path?"},
+      fr:{Enfance:"Parlez-moi de votre jeunesse, d’un souvenir marquant.",
+          Famille:"Parlez-moi de votre famille et des personnes qui vous ont élevé.",
+          École:"Comment était l’école pour vous ?",
+          Travail:"Racontez-moi votre premier travail ou votre carrière.",
+          Amour:"Comment avez-vous rencontré votre partenaire, et que signifiait l’amour pour vous ?",
+          Guerre:"Quels grands événements ou conflits avez-vous vécus ?",
+          Voyages:"Quels voyages vous ont marqué(e) ?",
+          Traditions:"Quelles traditions familiales comptaient le plus ?",
+          Fêtes:"Décrivez une fête dont vous vous souvenez clairement.",
+          Leçons:"Quelle leçon de vie avez-vous apprise à la dure ?",
+          Conseils:"Quel conseil donneriez-vous à votre jeune vous ?",
+          Déclics:"Quel déclic a changé votre trajectoire ?"},
+      es:{Infancia:"Cuéntame algo sobre tu juventud.",
+          Familia:"Háblame de tu familia y de quienes te criaron.",
+          Escuela:"¿Cómo era la escuela para ti?",
+          Trabajo:"Cuéntame sobre tu primer trabajo o tu carrera.",
+          Amor:"¿Cómo conociste a tu pareja y qué significaba el amor entonces?",
+          Guerra:"¿Qué grandes eventos o conflictos viviste?",
+          Viajes:"¿Qué viajes te marcaron?",
+          Tradiciones:"¿Qué tradiciones familiares eran importantes para ti?",
+          Fiestas:"Describe una fiesta que recuerdes con claridad.",
+          Lecciones:"¿Qué lección de vida aprendiste con dificultad?",
+          Consejos:"¿Qué consejo le darías a tu yo joven?",
+          "Puntos-clave":"¿Cuál fue un punto de inflexión en tu vida?"},
+      nl:{Jeugd:"Vertel me iets over je jeugd.",
+          Familie:"Vertel over je familie en de mensen die je hebben opgevoed.",
+          School:"Hoe was school voor jou?",
+          Werk:"Vertel over je eerste baan of je loopbaan.",
+          Liefde:"Hoe heb je je partner ontmoet, en wat betekende liefde toen?",
+          Oorlog:"Welke grote gebeurtenissen of conflicten heb je meegemaakt?",
+          Reizen:"Welke reizen hebben indruk op je gemaakt?",
+          Tradities:"Welke familietradities waren belangrijk voor je?",
+          Feestdagen:"Beschrijf een feestdag die je helder herinnert.",
+          Lessen:"Welke levensles heb je op de harde manier geleerd?",
+          Advies:"Welk advies zou je je jongere zelf geven?",
+          Keerpunt:"Wat was een keerpunt in je leven?"}
+    };
 
-    async function speak(text, code){
+    const BCP={en:'en-US',fr:'fr-FR',es:'es-ES',nl:'nl-NL'};
+
+    // Map to your ElevenLabs voices (you said you set these up earlier)
+    const VOICE_BY_LANG = {
+      en: 'KoVIHoyLDrQyd4pGalbs',
+      fr: 'TfGtrgcVrXWjJkeB51T1',
+      nl: 'yO6w2xlECAQRFP6pX7Hw',
+      es: 'ZpEtuMdTIlJXYXAhevhG'
+    };
+
+    async function speakViaElevenLabs(sentence, code){
       try{
         const r = await fetch('/api/voice', {
           method:'POST',
           headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({ text, lang:code })
+          body: JSON.stringify({ text: sentence, voiceId: VOICE_BY_LANG[code] || VOICE_BY_LANG.en })
         });
-        if(r.ok){
-          const blob=await r.blob(); new Audio(URL.createObjectURL(blob)).play(); return;
-        }
-      }catch{}
-      if('speechSynthesis' in window){
-        const u=new SpeechSynthesisUtterance(text);
-        u.lang=({en:'en-US',fr:'fr-FR',nl:'nl-NL',es:'es-ES'})[code]||'en-US';
-        speechSynthesis.cancel(); speechSynthesis.speak(u);
+        if(!r.ok) throw new Error('tts_failed');
+        const blob = await r.blob();
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        await audio.play();
+        setTimeout(()=>URL.revokeObjectURL(url), 60000);
+        return true;
+      }catch(e){
+        console.warn('ElevenLabs TTS failed → system fallback', e);
+        return false;
       }
     }
 
+    function speakSystem(sentence, code){
+      if(!('speechSynthesis' in window)) return;
+      const u=new SpeechSynthesisUtterance(String(sentence));
+      u.lang=BCP[code]||'en-US'; u.rate=.95; u.pitch=1; u.volume=1;
+      speechSynthesis.cancel(); speechSynthesis.speak(u);
+    }
+
+    async function speakPrompt(oneWord, code){
+      const sentence=(PROMPT_SENTENCES[code]||{})[oneWord] || oneWord;
+      const ok = await speakViaElevenLabs(sentence, code);
+      if(!ok) speakSystem(sentence, code);
+    }
+
     function renderPrompts(code){
-      const wrap=document.getElementById('prompts'); wrap.innerHTML='';
-      const chosen=[...(TOPIC_WORDS[code]||TOPIC_WORDS.en)].sort(()=>Math.random()-0.5).slice(0,4);
-      chosen.forEach(w=>{
-        const b=document.createElement('button'); b.className='chip'; b.textContent=w;
-        b.onclick=()=>{ document.getElementById('title').value=w; speak(sentence(w,code),code); };
+      const words=(TOPIC_WORDS[code]||TOPIC_WORDS.en);
+      const shuffled=[...words].sort(()=>Math.random()-0.5).slice(0,4);
+      const wrap=document.getElementById('prompts'); if(!wrap) return;
+      wrap.innerHTML='';
+      shuffled.forEach(w=>{
+        const b=document.createElement('button');
+        b.className='chip'; b.textContent=w;
+        b.onclick=()=>{ document.getElementById('title').value=w; speakPrompt(w, code); };
         wrap.appendChild(b);
       });
     }
 
-    function applyLang(code){
-      const t=MEMOIR_I18N.t;
-      document.getElementById('pageTitle').textContent=t('recordTitle');
-      document.getElementById('promptsTitle').textContent=t('promptsTitle');
-      document.getElementById('refreshPrompts').textContent=t('suggestOther');
-      document.getElementById('notesLabel').textContent=t('notesOptional');
-      document.getElementById('myStoriesBtn').textContent=t('myStoriesBtn');
-      document.getElementById('titleLabel').textContent=t('titleLabel');
-      document.getElementById('title').placeholder=t('storyTitlePh');
-      document.getElementById('whenLabel').textContent=t('whenLabel');
-      document.getElementById('when').placeholder=t('whenPh');
-      document.getElementById('addPhotoLabel').textContent=t('addPhotoLabel');
-      document.getElementById('transcriptLabel').textContent=t('transcriptLabel');
-      document.getElementById('saveBtn').textContent=t('saveStory');
-      renderPrompts(code);
-    }
-    window.addEventListener('memoir:lang',e=>applyLang(e.detail.code));
-    document.addEventListener('DOMContentLoaded',()=>applyLang(MEMOIR_I18N.getLang()));
-    document.getElementById('refreshPrompts').onclick=()=>applyLang(MEMOIR_I18N.getLang());
+    document.getElementById('refreshPrompts').onclick = ()=> {
+      renderPrompts(window.MEMOIR_I18N?.getLang?.() || 'en');
+    };
 
-    // === Recorder + Whisper chunk ===
-    const mic=document.getElementById('mic'); const timerEl=document.getElementById('timer');
-    const transcriptEl=document.getElementById('transcript'); const asrHint=document.getElementById('asrHint');
-    let rec=false,startAt=0,tick,media,chunks=[];
+    // ===== Recording (chunk upload to Whisper endpoint) =====
+    const mic = document.getElementById('mic');
+    const timerEl = document.getElementById('timer');
+    const transcriptEl = document.getElementById('transcript');
+    const asrHint = document.getElementById('asrHint');
+    let recActive=false, startAt=0, tick=null, media=null, chunks=[];
 
     async function startRec(){
       try{
-        media=await navigator.mediaDevices.getUserMedia({audio:true});
-        const mr=new MediaRecorder(media,{mimeType:'audio/webm'});
-        chunks=[]; mr.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
-        mr.onstop=async()=>{const blob=new Blob(chunks,{type:'audio/webm'}); await uploadChunk(blob);};
-        mr.start(1000); window._memoirRecorder=mr; mic.textContent='Stop'; mic.classList.add('pulse');
-        rec=true; startAt=Date.now(); tick=setInterval(updateTimer,1000); asrHint.textContent=MEMOIR_I18N.t('transcriptHintOnline');
-      }catch{alert('Microphone denied');}
+        media = await navigator.mediaDevices.getUserMedia({ audio:true });
+        const mr = new MediaRecorder(media, { mimeType: 'audio/webm' });
+        chunks=[];
+
+        mr.ondataavailable = e => { if(e.data && e.data.size) chunks.push(e.data); };
+        mr.onstop = async () => {
+          const blob = new Blob(chunks, { type:'audio/webm' });
+          await uploadChunk(blob); // whole blob; your server may split further
+        };
+
+        mr.start(1000); // data every second
+        mic.textContent = (window.MEMOIR_I18N?.t?.('btnStop') || 'Stop');
+        mic.classList.add('pulse');
+        recActive=true; startAt=Date.now();
+        tick=setInterval(()=>updateTimer(),1000);
+        window._memoirRecorder = mr;
+        asrHint.textContent = window.MEMOIR_I18N?.t?.('asrRecording') || 'Recording… transcription will appear live when online.';
+      }catch(e){
+        alert(window.MEMOIR_I18N?.t?.('errMic') || 'Microphone permission denied.');
+      }
     }
-    function stopRec(){try{window._memoirRecorder.stop();}catch{} try{media.getTracks().forEach(t=>t.stop());}catch{} clearInterval(tick); mic.textContent='Record'; mic.classList.remove('pulse'); rec=false; updateTimer(0);}
-    mic.onclick=()=>rec?stopRec():startRec();
-    function updateTimer(){const s=Math.floor((Date.now()-startAt)/1000); const mm=String(Math.floor(s/60)).padStart(2,'0'); const ss=String(s%60).padStart(2,'0'); timerEl.textContent=`${mm}:${ss}`;}
+
+    function stopRec(){
+      try{ window._memoirRecorder && window._memoirRecorder.stop(); }catch{}
+      try{ media && media.getTracks().forEach(t=>t.stop()); }catch{}
+      clearInterval(tick); tick=null;
+      mic.textContent = (window.MEMOIR_I18N?.t?.('btnRecord') || 'Record');
+      mic.classList.remove('pulse');
+      recActive=false;
+      updateTimer(0);
+    }
+
+    mic.onclick = ()=> recActive ? stopRec() : startRec();
+
+    function updateTimer(forceZero){
+      const ms = forceZero===0 ? 0 : (Date.now()-startAt);
+      const s = Math.floor(ms/1000);
+      const mm = String(Math.floor(s/60)).padStart(2,'0');
+      const ss = String(s%60).padStart(2,'0');
+      timerEl.textContent = `${mm}:${ss}`;
+    }
+
     async function uploadChunk(blob){
-      try{const lang=MEMOIR_I18N.getLang(); const r=await fetch('/api/transcribe-chunk',{method:'POST',headers:{'x-memoir-lang':lang},body:blob});
-        if(!r.ok) throw 0; const d=await r.json().catch(()=>null); if(d?.partial) transcriptEl.textContent=d.partial;
-        asrHint.textContent=MEMOIR_I18N.t('transcriptHintOnline');}
-      catch{asrHint.textContent=MEMOIR_I18N.t('transcriptHintOffline');}
+      try{
+        const lang = window.MEMOIR_I18N?.getLang?.() || 'en';
+        const r = await fetch('/api/transcribe-chunk', {
+          method:'POST',
+          headers: { 'x-memoir-lang': lang },
+          body: blob
+        });
+        if(!r.ok){ throw new Error('upload_failed'); }
+        const data = await r.json().catch(()=>null);
+        if(data?.partial){
+          transcriptEl.textContent = data.partial;
+        }
+        asrHint.textContent = window.MEMOIR_I18N?.t?.('asrListening') || 'Listening…';
+      }catch(e){
+        asrHint.textContent = window.MEMOIR_I18N?.t?.('asrOffline') || 'Offline or server unavailable — audio will be saved locally and sent later.';
+      }
     }
-    document.getElementById('saveBtn').onclick=async()=>{
-      if(rec) stopRec(); const title=document.getElementById('title').value||'Story';
-      const when=document.getElementById('when').value, notes=document.getElementById('notes').value, photo=document.getElementById('photo').files?.[0], text=transcriptEl.textContent;
-      if(!text){alert('No transcript yet');return;}
-      const fd=new FormData(); fd.append('title',title); fd.append('when',when); fd.append('notes',notes); fd.append('text',text); if(photo) fd.append('photo',photo);
-      try{const r=await fetch('/api/transcribe-story',{method:'POST',body:fd}); if(!r.ok) throw 0; alert('Saved!'); location.href='/stories.html';}
-      catch{alert('Save failed');}
+
+    // ===== Save story =====
+    document.getElementById('saveBtn').onclick = async()=>{
+      if(recActive) stopRec();
+      const title = document.getElementById('title').value.trim() || (window.MEMOIR_I18N?.t?.('defaultStory') || 'Story');
+      const when  = document.getElementById('when').value.trim() || '';
+      const notes = document.getElementById('notes').value.trim() || '';
+      const photo = document.getElementById('photo').files?.[0] || null;
+      const text  = (transcriptEl.textContent || '').trim();
+
+      if(!text){
+        alert(window.MEMOIR_I18N?.t?.('errNoTranscript') || 'There is no transcript yet. Say a few words, then try again.');
+        return;
+      }
+
+      const fd = new FormData();
+      fd.append('title', title);
+      fd.append('when', when);
+      fd.append('notes', notes);
+      fd.append('text', text);
+      if(photo) fd.append('photo', photo);
+
+      try{
+        const r = await fetch('/api/transcribe-story', { method:'POST', body: fd });
+        if(!r.ok) throw new Error('save_failed');
+        alert(window.MEMOIR_I18N?.t?.('okSaved') || 'Saved! You can find it in My Stories.');
+        window.location.href = '/stories.html';
+      }catch(e){
+        alert(window.MEMOIR_I18N?.t?.('errSave') || 'Save failed. If you are offline, it will retry when connected.');
+      }
     };
   </script>
 </body>
