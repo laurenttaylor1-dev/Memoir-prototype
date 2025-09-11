@@ -1,84 +1,33 @@
-<header class="site-header bg-cream border-b border-[rgba(0,0,0,.06)]">
-  <div class="container">
-    <div class="nav">
-      <a href="/landing.html" class="brand">
-        <span class="brand-logo"></span>
-        <div class="brand-text">
-          <strong>MEMOIR APP</strong>
-          <small>Preserve your memories forever</small>
-        </div>
-      </a>
+<!-- /partials/header.html -->
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="/landing.html">
+      <span class="logo"></span>
+      <span class="brand-text">
+        <strong>MEMOIR APP</strong>
+        <em>Preserve your memories forever</em>
+      </span>
+    </a>
 
-      <nav class="nav-links">
-        <a class="pill" href="/landing.html">Home</a>
-        <a class="pill" href="/login.html">Login</a>
-        <a class="pill" href="/record.html">Record</a>
-        <a class="pill" href="/stories.html">My Stories</a>
+    <nav class="main-nav">
+      <a class="pill" href="/landing.html" data-i18n="navHome">Home</a>
+      <a class="pill" href="/login.html"   data-i18n="navLogin">Login</a>
+      <a class="pill" href="/record.html"  data-i18n="navRecord">Record</a>
+      <a class="pill" href="/stories.html" data-i18n="navStories">My Stories</a>
 
-        <!-- Language -->
-        <div class="lang pill" data-lang>
-          <button class="lang-btn" data-lang-btn>
-            <span class="flag" id="langFlag">🇬🇧</span>
-            <span id="langLabel">English</span>
-            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 20 20"><path d="M5 7l5 6 5-6" fill="currentColor"/></svg>
-          </button>
-          <div class="lang-menu hidden" data-lang-menu>
-            <button data-set-lang="en">🇬🇧 English</button>
-            <button data-set-lang="fr">🇫🇷 Français</button>
-            <button data-set-lang="nl">🇧🇪 Nederlands</button>
-            <button data-set-lang="es">🇪🇸 Español</button>
-          </div>
-        </div>
-      </nav>
-    </div>
+      <!-- language -->
+      <div class="lang">
+        <button id="langBtn" class="pill lang-btn">
+          <span class="flag">🇬🇧</span> <span id="langLabel">English</span>
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 6l4 4 4-4z"></path></svg>
+        </button>
+        <ul id="langMenu" class="lang-menu" hidden>
+          <li><button data-lang="en">🇬🇧 English</button></li>
+          <li><button data-lang="fr">🇫🇷 Français</button></li>
+          <li><button data-lang="nl">🇧🇪 Nederlands</button></li>
+          <li><button data-lang="es">🇪🇸 Español</button></li>
+        </ul>
+      </div>
+    </nav>
   </div>
 </header>
-
-<style>
-  .container{max-width:1200px;margin:0 auto;padding:12px 16px}
-  .site-header{position:sticky;top:0;z-index:50;backdrop-filter:saturate(1.2) blur(4px)}
-  .nav{display:flex;align-items:center;justify-content:space-between;gap:16px}
-  .brand{display:flex;align-items:center;gap:10px;color:inherit;text-decoration:none}
-  .brand-logo{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#b98a5a,#6a4630)}
-  .brand-text small{display:block;opacity:.7;font-size:12px;margin-top:-2px}
-  .nav-links{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .pill{padding:10px 16px;border-radius:999px;border:1px solid rgba(0,0,0,.08);background:#fff;text-decoration:none}
-  .pill:hover{box-shadow:0 1px 0 rgba(0,0,0,.06)}
-  .lang{position:relative}
-  .lang-btn{display:flex;align-items:center;gap:8px;background:none;border:0}
-  .lang-menu{position:absolute;right:0;top:110%;background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.08);padding:8px;min-width:160px}
-  .lang-menu.hidden{display:none}
-  .lang-menu button{display:flex;gap:8px;align-items:center;width:100%;padding:8px 10px;border:0;background:transparent;text-align:left;border-radius:10px}
-  .lang-menu button:hover{background:rgba(0,0,0,.04)}
-  .flag{font-size:16px}
-</style>
-
-<script>
-// language behavior – relies on /js/lang.js if present, but also updates the label/flag
-(function(){
-  const label = document.getElementById('langLabel');
-  const flag  = document.getElementById('langFlag');
-  const map = { en:['English','🇬🇧'], fr:['Français','🇫🇷'], nl:['Nederlands','🇧🇪'], es:['Español','🇪🇸'] };
-
-  function apply(code){
-    const [name,emoji] = map[code] || map.en;
-    label && (label.textContent = name);
-    flag  && (flag.textContent  = emoji);
-    try {
-      localStorage.setItem('memoir.lang', code);
-      window.dispatchEvent(new CustomEvent('memoir:lang', { detail:{ code } }));
-    } catch {}
-  }
-
-  document.addEventListener('click',(e)=>{
-    const btn = e.target.closest('[data-set-lang]');
-    if(!btn) return;
-    apply(btn.getAttribute('data-set-lang'));
-  });
-
-  const saved = (()=>{
-    try { return localStorage.getItem('memoir.lang') || 'en'; } catch { return 'en'; }
-  })();
-  apply(saved);
-})();
-</script>
