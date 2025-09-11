@@ -1,35 +1,35 @@
 <footer class="site-footer">
-  <div class="container">
-    <div class="foot-grid">
-      <section>
-        <h4>FAQ</h4>
-        <details><summary>Is there a free plan?</summary><p>Yes — the Free plan lets you record and save stories. You can upgrade anytime.</p></details>
-        <details><summary>Which languages are supported?</summary><p>English, Français, Nederlands, Español (record + guided prompts).</p></details>
-        <details><summary>How is transcription done?</summary><p>We use Whisper on the server. If you’re offline we queue the audio and transcribe later.</p></details>
-      </section>
-      <section>
-        <h4>Pricing</h4>
-        <ul class="pricing">
-          <li><strong>Premium</strong> — €4.99/month</li>
-          <li><strong>Family</strong> — €7.99/month (up to 4 read-only family members)</li>
-        </ul>
-        <a class="pill" href="/checkout.html">Upgrade</a>
-      </section>
-      <section>
-        <h4>About</h4>
-        <p>Memoir helps families capture life stories with beautiful voice capture, AI transcription, and a private library.</p>
-      </section>
-    </div>
-    <div class="copy">© Memoir App</div>
+  <div class="wrap">
+    <section class="footer-col">
+      <h3 data-i18n="footerFaqTitle">FAQ</h3>
+      <details>
+        <summary data-i18n="footerQ1">Is there a free plan?</summary>
+        <p class="muted" data-i18n="footerA1">Yes, you can try the app for free before upgrading.</p>
+      </details>
+      <details>
+        <summary data-i18n="footerQ2">Which languages are supported?</summary>
+        <p class="muted" data-i18n="footerA2">English, Français, Nederlands, Español (more coming).</p>
+      </details>
+      <details>
+        <summary data-i18n="footerQ3">How is transcription done?</summary>
+        <p class="muted" data-i18n="footerA3">Server-side Whisper for high accuracy; works offline then syncs later.</p>
+      </details>
+    </section>
+
+    <section class="footer-col">
+      <h3 data-i18n="footerPricingTitle">Pricing</h3>
+      <ul class="muted">
+        <li><strong data-i18n="planPremiumT">Premium – €4.99/month</strong></li>
+        <li><strong data-i18n="planFamilyT">Family – €7.99/month</strong></li>
+      </ul>
+      <a href="/checkout.html" class="pill" data-i18n="footerUpgrade">Upgrade</a>
+    </section>
+
+    <section class="footer-col">
+      <h3 data-i18n="footerAboutTitle">About</h3>
+      <p class="muted" data-i18n="footerAboutCopy">
+        Memoir helps families capture life stories with beautiful voice capture, AI transcription, and a private library.
+      </p>
+    </section>
   </div>
 </footer>
-
-<style>
-.site-footer{margin-top:40px;padding:24px 0;border-top:1px solid rgba(0,0,0,.06);background:#f6f1ea}
-.foot-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
-.site-footer h4{margin:0 0 10px}
-.site-footer details{margin:6px 0}
-.pricing{margin:6px 0 12px;padding-left:16px}
-.copy{margin-top:14px;opacity:.6;font-size:13px}
-.pill{display:inline-block;padding:8px 14px;border-radius:999px;border:1px solid rgba(0,0,0,.1);background:#fff;text-decoration:none}
-</style>
