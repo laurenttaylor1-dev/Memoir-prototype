@@ -1,261 +1,361 @@
-<script>
-// Global i18n helper ---------------------------------------------------------
+/* Global i18n + header dropdown wiring */
 (function(){
   const LS_KEY = 'memoir_lang';
-  const getLang = () => localStorage.getItem(LS_KEY) || 'en';
-  const setLang = (code) => { localStorage.setItem(LS_KEY, code); };
 
-  // Strings used across pages/partials
   const STR = {
     en: {
-      // Header
-      navHome:"Home", navLogin:"Login", navRecord:"Record", navStories:"My Stories",
-      langEnglish:"English", langFrench:"Français", langDutch:"Nederlands", langSpanish:"Español",
+      brandTag: "Preserve your memories forever",
+      nav: { home:"Home", login:"Login", record:"Record", stories:"My Stories", settings:"Settings" },
+      langLabel: "English",
 
-      // Footer blocks
-      footerFaqTitle:"FAQ",
-      footerQ1:"Is there a free plan?",
-      footerA1:"Yes, you can try the app for free before upgrading.",
-      footerQ2:"Which languages are supported?",
-      footerA2:"English, Français, Nederlands, Español (more coming).",
-      footerQ3:"How is transcription done?",
-      footerA3:"Server-side Whisper for high accuracy; works offline then syncs later.",
-      footerPricingTitle:"Pricing",
-      footerAboutTitle:"About",
-      footerAboutCopy:"Memoir helps families capture life stories with beautiful voice capture, AI transcription, and a private library.",
-      footerUpgrade:"Upgrade",
+      // Landing hero
+      heroA: "Preserve Your",
+      heroB: "Memories Forever",
+      heroBlurb: "Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.",
 
-      // Landing
-      heroKicker:"MEMOIR APP",
-      heroA:"Preserve Your", heroB:"Memories Forever",
-      heroBlurb:"Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.",
-      ctaStart:"Start Recording", ctaStories:"My Stories",
+      actionStartTitle:"Start Recording",
+      actionStartBody:"One tap to begin. Add a title and “when it happened” later.",
+      actionStoriesTitle:"View My Stories",
+      actionStoriesBody:"Browse, rewrite with AI, export, and share with your family.",
 
-      whyTitle:"Why Memoir",
-      why1T:"Capture in one tap",
-      why1D:"Pick a gentle prompt or speak freely. We’ll keep things simple and warm.",
-      why2T:"Prepared for a book",
-      why2D:"Whisper-based transcription with optional AI rewrites that read like a memoir.",
-      why3T:"Private by default, share when you wish",
-      why3D:"Your stories sync across devices in your private library. Invite your family to listen.",
+      // Features (a bit more elaborated)
+      feat1T:"Capture in one tap",
+      feat1B:"Pick a gentle prompt or speak freely — Memoir records your voice in high quality and keeps everything organized as a story.",
+      feat2T:"Ready for a family book",
+      feat2B:"Whisper-based transcription turns your words into clean text; you can fix little typos and add a time or season later.",
+      feat3T:"Private by default",
+      feat3B:"Your stories stay in your private library. Share read-only access with family when you’re ready — across all devices.",
 
+      // Pricing board
       pricingTitle:"Pricing",
-      planFreeT:"Free", planFreeD:"Up to 10 stories, max 2 minutes of transcription each.",
-      planPremiumT:"Premium – €4.99/month",
-      planPremiumD:"Up to 2.5 hours / month of AI transcription + rewrite.",
-      planFamilyT:"Family – €7.99/month",
-      planFamilyD:"Premium features + share your library with up to 4 read-only family members.",
-      planExclusiveT:"Exclusive – €11.99/month",
-      planExclusiveD:"Up to 5 hours / month of AI transcription + rewrite + family sharing.",
+      planFreeT:"Free",            planFreePrice:"€0",
+      planFreeList:[
+        "Up to 10 stories",
+        "Max 2 minutes of transcription each",
+        "Private library on all your devices"
+      ],
+      planPremiumT:"Premium — €6.99/month", planPremiumPrice:"€6.99 / mo",
+      planPremiumList:[
+        "Up to 2.5 hours / month of AI transcription",
+        "Smart rewrite, export to PDF/CSV",
+        "Priority processing"
+      ],
+      planFamilyT:"Family — €8.99/month", planFamilyPrice:"€8.99 / mo",
+      planFamilyList:[
+        "Everything in Premium",
+        "Share your library with up to 4 read-only family members",
+        "Invite with email; revoke anytime"
+      ],
+      planExclusiveT:"Exclusive — €11.99/month", planExclusivePrice:"€10.99 / mo",
+      planExclusiveList:[
+        "Up to 5 hours / month of AI transcription + rewrite",
+        "Family sharing (up to 4)",
+        "Best for active storytellers"
+      ],
       upgrade:"Upgrade",
+
+      // Footer
+      faqTitle:"FAQ",
+      qFree:"Is there a free plan?",
+      aFree:"Yes, you can try the app for free before upgrading.",
+      qLangs:"Which languages are supported?",
+      aLangs:"English, Français, Nederlands, Español (more coming).",
+      qTrans:"How is transcription done?",
+      aTrans:"Server-side Whisper for high accuracy; works offline then syncs later.",
+      footPricingTitle:"Pricing",
+      aboutTitle:"About",
+      aboutBlurb:"Memoir helps families capture life stories with beautiful voice capture, AI transcription, and a private library.",
+
+      // Record
+      recTitle:"Record",
+      freeMode:"Free",
+      guidedMode:"Guided",
+      todays:"Today's suggested prompts",
+      other:"Other",
+      notes:"Notes (optional)",
+      titleLabel:"Title",
+      whenLabel:"When did this happen?",
+      photoLabel:"Add photo (optional)",
+      transcriptLabel:"Transcript",
+      transcriptHint:"Recording… transcription will appear live when online.",
+      save:"Save story",
+      myStories:"My Stories",
 
       // Stories page
       storiesTitle:"My Stories",
-      storiesBlurb:"Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.",
-      statStories:"Stories",
-      statFamily:"Family Members",
-      inviteLabel:"Invite Family Member",
-      invitePlaceholder:"name@example.com",
-      inviteBtn:"Invite",
-      listEmpty:"No stories yet — start your first one!",
-
-      // Common small items
-      month:"month"
+      statsStories:"Stories",
+      statsMembers:"Family Members",
+      invitePH:"Invite Family Member (email)"
     },
 
     fr: {
-      navHome:"Accueil", navLogin:"Se connecter", navRecord:"Enregistrer", navStories:"Mes histoires",
-      langEnglish:"English", langFrench:"Français", langDutch:"Nederlands", langSpanish:"Español",
+      brandTag: "Préservez vos souvenirs pour toujours",
+      nav: { home:"Accueil", login:"Connexion", record:"Enregistrer", stories:"Mes histoires", settings:"Réglages" },
+      langLabel: "Français",
 
-      footerFaqTitle:"FAQ",
-      footerQ1:"Y a-t-il une offre gratuite ?",
-      footerA1:"Oui, vous pouvez essayer gratuitement avant de passer à l’abonnement.",
-      footerQ2:"Quelles langues sont prises en charge ?",
-      footerA2:"Anglais, Français, Néerlandais, Espagnol (d’autres arrivent).",
-      footerQ3:"Comment se fait la transcription ?",
-      footerA3:"Whisper côté serveur pour une grande précision ; fonctionne hors ligne puis se synchronise.",
-      footerPricingTitle:"Tarifs",
-      footerAboutTitle:"À propos",
-      footerAboutCopy:"Memoir aide les familles à capturer leurs récits avec une belle prise de voix, une transcription IA et une bibliothèque privée.",
-      footerUpgrade:"Passer à l’offre supérieure",
+      heroA:"Préservez Vos",
+      heroB:"Souvenirs Pour Toujours",
+      heroBlurb:"Enregistrez une fois, gardez pour des générations. Lancez un enregistrement en un geste, ajoutez un titre et quand ça s'est passé, puis partagez en toute sécurité avec votre famille.",
 
-      heroKicker:"MEMOIR APP",
-      heroA:"Préservez vos", heroB:"souvenirs pour toujours",
-      heroBlurb:"Enregistrez une fois pour des générations. Lancez l’enregistrement d’un geste, ajoutez un titre et « quand c’est arrivé », puis partagez en toute sécurité avec votre famille.",
-      ctaStart:"Commencer", ctaStories:"Mes histoires",
+      actionStartTitle:"Démarrer l’enregistrement",
+      actionStartBody:"Un geste pour commencer. Ajoutez le titre et quand ça s'est passé plus tard.",
+      actionStoriesTitle:"Voir mes histoires",
+      actionStoriesBody:"Parcourez, réécrivez avec l’IA, exportez et partagez avec votre famille.",
 
-      whyTitle:"Pourquoi Memoir",
-      why1T:"Capture en un geste",
-      why1D:"Choisissez un petit thème ou parlez librement. Simple et chaleureux.",
-      why2T:"Prêt pour un livre",
-      why2D:"Transcription Whisper avec réécriture IA pour un style mémorial.",
-      why3T:"Privé par défaut, partage libre",
-      why3D:"Vos histoires se synchronisent sur vos appareils dans votre bibliothèque privée. Invitez votre famille à écouter.",
+      feat1T:"Capture en un geste",
+      feat1B:"Choisissez un petit sujet ou parlez librement — Memoir enregistre votre voix en haute qualité et organise tout en histoire.",
+      feat2T:"Prêt pour un livre de famille",
+      feat2B:"La transcription Whisper transforme vos mots en texte clair; vous pourrez corriger les petites fautes et ajouter une date plus tard.",
+      feat3T:"Privé par défaut",
+      feat3B:"Vos histoires restent dans votre bibliothèque privée. Partage en lecture seule quand vous voulez — sur tous vos appareils.",
 
       pricingTitle:"Tarifs",
-      planFreeT:"Gratuit", planFreeD:"Jusqu’à 10 histoires, 2 minutes de transcription chacune.",
-      planPremiumT:"Premium – 4,99 €/mois",
-      planPremiumD:"Jusqu’à 2,5 h / mois de transcription + réécriture IA.",
-      planFamilyT:"Famille – 7,99 €/mois",
-      planFamilyD:"Premium + partage avec 4 membres en lecture seule.",
-      planExclusiveT:"Exclusive – 11,99 €/mois",
-      planExclusiveD:"Jusqu’à 5 h / mois de transcription + réécriture IA + partage familial.",
-      upgrade:"Mettre à niveau",
+      planFreeT:"Gratuit", planFreePrice:"0 €",
+      planFreeList:[
+        "Jusqu’à 10 histoires",
+        "2 minutes de transcription par histoire",
+        "Bibliothèque privée sur tous vos appareils"
+      ],
+      planPremiumT:"Premium — 6,99 €/mois", planPremiumPrice:"6,99 € / mois",
+      planPremiumList:[
+        "Jusqu’à 2,5 h / mois de transcription IA",
+        "Réécriture intelligente, export PDF/CSV",
+        "Traitement prioritaire"
+      ],
+      planFamilyT:"Famille — 8,99 €/mois", planFamilyPrice:"8,99 € / mois",
+      planFamilyList:[
+        "Tout le Premium",
+        "Partage en lecture seule avec jusqu’à 4 proches",
+        "Invitation par email; révocation à tout moment"
+      ],
+      planExclusiveT:"Exclusive — 11,99 €/mois", planExclusivePrice:"11,99 € / mois",
+      planExclusiveList:[
+        "Jusqu’à 5 h / mois de transcription IA + réécriture",
+        "Partage familial (jusqu’à 4)",
+        "Idéal pour grands raconteurs"
+      ],
+      upgrade:"Passer en Premium",
+
+      faqTitle:"FAQ",
+      qFree:"Y a-t-il une formule gratuite ?",
+      aFree:"Oui, vous pouvez essayer gratuitement avant de passer à l’abonnement.",
+      qLangs:"Quelles langues sont prises en charge ?",
+      aLangs:"Anglais, Français, Néerlandais, Espagnol (d’autres arrivent).",
+      qTrans:"Comment fonctionne la transcription ?",
+      aTrans:"Whisper côté serveur pour une grande précision; fonctionne hors-ligne puis synchronise ensuite.",
+      footPricingTitle:"Tarifs",
+      aboutTitle:"À propos",
+      aboutBlurb:"Memoir aide les familles à capturer leurs histoires de vie avec une belle prise de voix, une transcription IA et une bibliothèque privée.",
+
+      recTitle:"Enregistrer",
+      freeMode:"Libre",
+      guidedMode:"Guidé",
+      todays:"Sujets suggérés du jour",
+      other:"Autre",
+      notes:"Notes (optionnel)",
+      titleLabel:"Titre",
+      whenLabel:"Quand cela s’est-il passé ?",
+      photoLabel:"Ajouter une photo (optionnel)",
+      transcriptLabel:"Transcription",
+      transcriptHint:"Enregistrement… la transcription apparaîtra en direct si vous êtes en ligne.",
+      save:"Enregistrer l’histoire",
+      myStories:"Mes histoires",
 
       storiesTitle:"Mes histoires",
-      storiesBlurb:"Enregistrez une fois pour des générations…",
-      statStories:"Histoires",
-      statFamily:"Membres de la famille",
-      inviteLabel:"Inviter un membre de la famille",
-      invitePlaceholder:"nom@exemple.com",
-      inviteBtn:"Inviter",
-      listEmpty:"Aucune histoire — commencez votre première !",
-
-      month:"mois"
+      statsStories:"Histoires",
+      statsMembers:"Membres de la famille",
+      invitePH:"Inviter un membre (email)"
     },
 
     nl: {
-      navHome:"Home", navLogin:"Inloggen", navRecord:"Opnemen", navStories:"Mijn verhalen",
-      langEnglish:"English", langFrench:"Français", langDutch:"Nederlands", langSpanish:"Español",
+      brandTag:"Bewaar je herinneringen voor altijd",
+      nav:{home:"Home",login:"Inloggen",record:"Opnemen",stories:"Mijn verhalen",settings:"Instellingen"},
+      langLabel:"Nederlands",
 
-      footerFaqTitle:"FAQ",
-      footerQ1:"Is er een gratis plan?",
-      footerA1:"Ja, je kunt gratis proberen voordat je overstapt.",
-      footerQ2:"Welke talen worden ondersteund?",
-      footerA2:"Engels, Frans, Nederlands, Spaans (meer volgt).",
-      footerQ3:"Hoe wordt er getranscribeerd?",
-      footerA3:"Whisper op de server voor hoge nauwkeurigheid; werkt offline en synchroniseert later.",
-      footerPricingTitle:"Prijzen",
-      footerAboutTitle:"Over",
-      footerAboutCopy:"Memoir helpt families levensverhalen vast te leggen met mooie spraakopname, AI-transcriptie en een privébibliotheek.",
-      footerUpgrade:"Upgraden",
+      heroA:"Bewaar Je",
+      heroB:"Herinneringen Voor Altijd",
+      heroBlurb:"Neem één keer op, bewaar voor generaties. Start met één klik, voeg een titel en wanneer het gebeurde toe en deel veilig met je familie.",
 
-      heroKicker:"MEMOIR APP",
-      heroA:"Bewaar je", heroB:"herinneringen voor altijd",
-      heroBlurb:"Neem één keer op voor generaties. Start met één tik, voeg een titel en “wanneer het gebeurde” toe en deel veilig met je familie.",
-      ctaStart:"Opnemen", ctaStories:"Mijn verhalen",
+      actionStartTitle:"Opname starten",
+      actionStartBody:"Eén klik om te beginnen. Voeg later een titel en wanneer het gebeurde toe.",
+      actionStoriesTitle:"Mijn verhalen bekijken",
+      actionStoriesBody:"Blader, herschrijf met AI, exporteer en deel met je familie.",
 
-      whyTitle:"Waarom Memoir",
-      why1T:"Vastleggen met één tik",
-      why1D:"Kies een zachte prompt of spreek vrijuit.",
-      why2T:"Klaar voor een boek",
-      why2D:"Whisper-transcriptie met optionele AI-herwerking.",
-      why3T:"Standaard privé, deel wanneer je wilt",
-      why3D:"Je verhalen synchroniseren over al je apparaten. Nodig familie uit om te luisteren.",
+      feat1T:"Opnemen met één klik",
+      feat1B:"Kies een onderwerp of spreek vrij — Memoir neemt je stem in hoge kwaliteit op en organiseert alles als verhaal.",
+      feat2T:"Klaar voor een familieboek",
+      feat2B:"Whisper-transcriptie maakt zuivere tekst en AI herschrijft je verhaal tot een echt boek.",
+      feat3T:"Standaard privé",
+      feat3B:"Je verhalen blijven in je privébibliotheek. Deel alleen-lezen toegang met familie — op al je apparaten.",
 
       pricingTitle:"Prijzen",
-      planFreeT:"Gratis", planFreeD:"Tot 10 verhalen, max. 2 minuten transcriptie per verhaal.",
-      planPremiumT:"Premium – €4,99/maand",
-      planPremiumD:"Tot 2,5 uur / maand AI-transcriptie + herschrijven.",
-      planFamilyT:"Family – €7,99/maand",
-      planFamilyD:"Premium + bibliotheek delen met max. 4 familieleden (alleen lezen).",
-      planExclusiveT:"Exclusive – €11,99/maand",
-      planExclusiveD:"Tot 5 uur / maand AI-transcriptie + herschrijven + familiedeling.",
+      planFreeT:"Gratis", planFreePrice:"€0",
+      planFreeList:["Tot 10 verhalen","Max 2 minuten transcriptie per verhaal","Privébibliotheek op al je apparaten"],
+      planPremiumT:"Premium — €6,99/maand", planPremiumPrice:"€6,99 / mnd",
+      planPremiumList:["Tot 2,5 uur / maand AI-transcriptie","Slim herschrijven, export naar PDF/CSV","Prioriteit"],
+      planFamilyT:"Family — €8,99/maand", planFamilyPrice:"€8,99 / mnd",
+      planFamilyList:["Alles van Premium","Deel met tot 4 familieleden (alleen-lezen)","Uitnodigen per e-mail; intrekken kan altijd"],
+      planExclusiveT:"Exclusive — €11,99/maand", planExclusivePrice:"€11,99 / mnd",
+      planExclusiveList:["Tot 5 uur / maand AI + herschrijven","Gezinsdeling (tot 4)","Beste keuze voor actieve vertellers"],
       upgrade:"Upgraden",
 
-      storiesTitle:"Mijn verhalen",
-      storiesBlurb:"Neem één keer op voor generaties…",
-      statStories:"Verhalen",
-      statFamily:"Familieleden",
-      inviteLabel:"Familielid uitnodigen",
-      invitePlaceholder:"naam@voorbeeld.com",
-      inviteBtn:"Uitnodigen",
-      listEmpty:"Nog geen verhalen — begin aan je eerste!",
+      faqTitle:"Veelgestelde vragen",
+      qFree:"Is er een gratis plan?",
+      aFree:"Ja, je kunt gratis proberen voordat je een abonnement neemt.",
+      qLangs:"Welke talen worden ondersteund?",
+      aLangs:"Engels, Frans, Nederlands, Spaans (meer volgt).",
+      qTrans:"Hoe werkt transcriptie?",
+      aTrans:"Whisper op de server voor hoge nauwkeurigheid; werkt offline en synchroniseert later.",
+      footPricingTitle:"Prijzen",
+      aboutTitle:"Over",
+      aboutBlurb:"Memoir helpt families levensverhalen vast te leggen met mooie stemopnames, AI-transcriptie en een privébibliotheek.",
 
-      month:"maand"
+      recTitle:"Opnemen",
+      freeMode:"Vrij",
+      guidedMode:"Geleid",
+      todays:"Suggesties van vandaag",
+      other:"Overig",
+      notes:"Notities (optioneel)",
+      titleLabel:"Titel",
+      whenLabel:"Wanneer gebeurde dit?",
+      photoLabel:"Foto toevoegen (optioneel)",
+      transcriptLabel:"Transcript",
+      transcriptHint:"Opnemen… transcript verschijnt live wanneer je online bent.",
+      save:"Verhaal opslaan",
+      myStories:"Mijn verhalen",
+
+      storiesTitle:"Mijn verhalen",
+      statsStories:"Verhalen",
+      statsMembers:"Familieleden",
+      invitePH:"Familielid uitnodigen (e-mail)"
     },
 
     es: {
-      navHome:"Inicio", navLogin:"Entrar", navRecord:"Grabar", navStories:"Mis historias",
-      langEnglish:"English", langFrench:"Français", langDutch:"Nederlands", langSpanish:"Español",
+      brandTag:"Conserva tus recuerdos para siempre",
+      nav:{home:"Inicio",login:"Entrar",record:"Grabar",stories:"Mis historias",settings:"Ajustes"},
+      langLabel:"Español",
 
-      footerFaqTitle:"Preguntas frecuentes",
-      footerQ1:"¿Hay un plan gratuito?",
-      footerA1:"Sí, puedes probar gratis antes de suscribirte.",
-      footerQ2:"¿Qué idiomas se admiten?",
-      footerA2:"Inglés, Francés, Neerlandés, Español (pronto habrá más).",
-      footerQ3:"¿Cómo se hace la transcripción?",
-      footerA3:"Whisper en el servidor para alta precisión; funciona sin conexión y se sincroniza después.",
-      footerPricingTitle:"Precios",
-      footerAboutTitle:"Acerca de",
-      footerAboutCopy:"Memoir ayuda a las familias a capturar historias de vida con una hermosa voz, transcripción con IA y una biblioteca privada.",
-      footerUpgrade:"Mejorar plan",
+      heroA:"Preserva Tus",
+      heroB:"Recuerdos Para Siempre",
+      heroBlurb:"Graba una vez y guárdalo por generaciones. Inicia una grabación con un toque, añade un título y “cuándo ocurrió”, y comparte de forma segura con tu familia.",
 
-      heroKicker:"MEMOIR APP",
-      heroA:"Preserve Your", heroB:"Memories Forever", /* Keep brand title style to force two lines the same way */
-      heroBlurb:"Graba una vez y guárdalo para generaciones. Empieza con un toque, añade un título y “cuándo ocurrió”, y comparte de forma segura con tu familia.",
-      ctaStart:"Empezar a grabar", ctaStories:"Mis historias",
+      actionStartTitle:"Empezar a grabar",
+      actionStartBody:"Un toque para empezar. Añade el título y “cuándo ocurrió” más tarde.",
+      actionStoriesTitle:"Ver mis historias",
+      actionStoriesBody:"Explora, reescribe con IA, exporta y comparte con tu familia.",
 
-      whyTitle:"Por qué Memoir",
-      why1T:"Captura con un toque",
-      why1D:"Elige un tema suave o habla libremente. Sencillo y cercano.",
-      why2T:"Listo para un libro",
-      why2D:"Transcripción con Whisper y reescritura opcional con estilo de memorias.",
-      why3T:"Privado por defecto, comparte cuando quieras",
-      why3D:"Tus historias se sincronizan en tus dispositivos. Invita a tu familia a escuchar.",
+      feat1T:"Captura con un toque",
+      feat1B:"Elige un pequeño tema o habla libremente — Memoir graba tu voz con alta calidad y lo organiza como una historia.",
+      feat2T:"Listo para un libro familiar",
+      feat2B:"La transcripción con Whisper convierte tus palabras en texto limpio; podrás corregir detalles y añadir fecha más tarde.",
+      feat3T:"Privado por defecto",
+      feat3B:"Tus historias permanecen en tu biblioteca privada. Comparte sólo lectura con tu familia — en todos tus dispositivos.",
 
       pricingTitle:"Precios",
-      planFreeT:"Gratis", planFreeD:"Hasta 10 historias, 2 minutos de transcripción por historia.",
-      planPremiumT:"Premium – 4,99 €/mes",
-      planPremiumD:"Hasta 2,5 h/mes de transcripción + reescritura con IA.",
-      planFamilyT:"Familiar – 7,99 €/mes",
-      planFamilyD:"Premium + compartir tu biblioteca con hasta 4 familiares (solo lectura).",
-      planExclusiveT:"Exclusivo – 11,99 €/mes",
-      planExclusiveD:"Hasta 5 h/mes de transcripción + reescritura + uso familiar.",
-      upgrade:"Mejorar plan",
+      planFreeT:"Gratis", planFreePrice:"0 €",
+      planFreeList:["Hasta 10 historias","Máx 2 min de transcripción por historia","Biblioteca privada en todos tus dispositivos"],
+      planPremiumT:"Premium — 6,99 €/mes", planPremiumPrice:"6,99 € / mes",
+      planPremiumList:["Hasta 2,5 h / mes de transcripción IA","Reescritura inteligente, exportar a PDF/CSV","Procesamiento prioritario"],
+      planFamilyT:"Familiar — 8,99 €/mes", planFamilyPrice:"8,99 € / mes",
+      planFamilyList:["Todo lo de Premium","Comparte con hasta 4 familiares (sólo lectura)","Invita por email; revoca cuando quieras"],
+      planExclusiveT:"Exclusive — 11,99 €/mes", planExclusivePrice:"11,99 € / mes",
+      planExclusiveList:["Hasta 5 h / mes de IA + reescritura","Uso familiar (hasta 4)","Mejor para narradores activos"],
+      upgrade:"Mejorar",
+
+      faqTitle:"FAQ",
+      qFree:"¿Hay un plan gratuito?",
+      aFree:"Sí, puedes probar gratis antes de suscribirte.",
+      qLangs:"¿Qué idiomas se admiten?",
+      aLangs:"Inglés, Francés, Neerlandés, Español (más en camino).",
+      qTrans:"¿Cómo se hace la transcripción?",
+      aTrans:"Whisper en el servidor para alta precisión; funciona sin conexión y sincroniza después.",
+      footPricingTitle:"Precios",
+      aboutTitle:"Acerca de",
+      aboutBlurb:"Memoir ayuda a las familias a capturar historias de vida con bella toma de voz, transcripción con IA y una biblioteca privada.",
+
+      recTitle:"Grabar",
+      freeMode:"Libre",
+      guidedMode:"Guiado",
+      todays:"Sugerencias de hoy",
+      other:"Otro",
+      notes:"Notas (opcional)",
+      titleLabel:"Título",
+      whenLabel:"¿Cuándo ocurrió?",
+      photoLabel:"Añadir foto (opcional)",
+      transcriptLabel:"Transcripción",
+      transcriptHint:"Grabando… la transcripción aparecerá en vivo cuando haya conexión.",
+      save:"Guardar historia",
+      myStories:"Mis historias",
 
       storiesTitle:"Mis historias",
-      storiesBlurb:"Graba una vez para generaciones…",
-      statStories:"Historias",
-      statFamily:"Miembros de la familia",
-      inviteLabel:"Invitar a familiar",
-      invitePlaceholder:"nombre@ejemplo.com",
-      inviteBtn:"Invitar",
-      listEmpty:"Aún no hay historias — ¡empieza la primera!",
-
-      month:"mes"
+      statsStories:"Historias",
+      statsMembers:"Miembros de familia",
+      invitePH:"Invitar familiar (email)"
     }
   };
 
-  // Attach globally
-  window.MEMOIR_I18N = {
-    strings: STR,
-    getLang,
-    setLang,
-    t(code, key){ return (STR[code] && STR[code][key]) || STR.en[key] || key; }
-  };
+  function setLang(code){
+    localStorage.setItem(LS_KEY, code);
+    document.dispatchEvent(new CustomEvent('memoir:lang', { detail:{ code } }));
+  }
+  function getLang(){ return localStorage.getItem(LS_KEY) || 'en'; }
 
-  // Apply translations to any element with data-i18n / data-i18n-placeholder
-  function applyTranslations(code){
-    const root = document;
-    root.querySelectorAll('[data-i18n]').forEach(el=>{
-      const key = el.getAttribute('data-i18n');
-      const txt = MEMOIR_I18N.t(code, key);
-      // allow minimal HTML (for bold/line breaks in pricing)
-      el.innerHTML = txt;
+  // Expose
+  window.MEMOIR_I18N = { strings:STR, setLang, getLang };
+
+  // Header dropdown wiring
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const code = getLang();
+    applyHeader(code);
+
+    const toggle = document.getElementById('lang-toggle');
+    const menu = document.getElementById('lang-dropdown');
+    toggle?.addEventListener('click', ()=>{
+      menu.hidden = !menu.hidden;
+      if(!menu.hidden) {
+        const close = (e)=>{ if(!menu.contains(e.target) && e.target!==toggle){ menu.hidden=true; document.removeEventListener('click', close); } };
+        setTimeout(()=>document.addEventListener('click', close),0);
+      }
     });
-    root.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
-      const key = el.getAttribute('data-i18n-placeholder');
-      const txt = MEMOIR_I18N.t(code, key);
-      el.setAttribute('placeholder', txt);
+
+    menu?.querySelectorAll('.lang-item').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        menu.hidden = true;
+        setLang(btn.dataset.lang);
+      });
     });
-    // let pages do their own extra hooks
-    window.dispatchEvent(new CustomEvent('memoir:lang-applied', { detail:{code} }));
+  });
+
+  // Apply header & footer text + nav
+  function applyHeader(code){
+    const t = STR[code] || STR.en;
+    const byId = id => document.getElementById(id);
+
+    byId('hdrTag')?.textContent = t.brandTag;
+    byId('navHome')?.textContent = t.nav.home;
+    byId('navLogin')?.textContent = t.nav.login;
+    byId('navRecord')?.textContent = t.nav.record;
+    byId('navStories')?.textContent = t.nav.stories;
+    byId('navSettings')?.textContent = t.nav.settings;
+    byId('lang-current-label')?.textContent = t.langLabel;
+
+    // Footer
+    byId('faqTitle')?.textContent = t.faqTitle;
+    byId('qFree')?.textContent = t.qFree;
+    byId('aFree')?.textContent = t.aFree;
+    byId('qLangs')?.textContent = t.qLangs;
+    byId('aLangs')?.textContent = t.aLangs;
+    byId('qTrans')?.textContent = t.qTrans;
+    byId('aTrans')?.textContent = t.aTrans;
+    byId('footPricingTitle')?.textContent = t.footPricingTitle;
+    byId('btnUpgradeFooter')?.textContent = t.upgrade;
+    byId('aboutTitle')?.textContent = t.aboutTitle;
+    byId('aboutBlurb')?.textContent = t.aboutBlurb;
   }
 
-  // Initial + whenever header changes it
-  document.addEventListener('DOMContentLoaded', ()=>{
-    applyTranslations(getLang());
-  });
-  window.addEventListener('memoir:lang', e=>{
-    const code = e.detail?.code || getLang();
-    setLang(code);
-    applyTranslations(code);
-  });
-
-  // If partials load later, run one more time
-  window.addEventListener('memoir:partials-loaded', ()=>{
-    applyTranslations(getLang());
+  // Listen globally
+  document.addEventListener('memoir:lang', e=>{
+    const code = e.detail.code;
+    applyHeader(code);
   });
 })();
-</script>
