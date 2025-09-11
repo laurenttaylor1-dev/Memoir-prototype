@@ -1,222 +1,381 @@
 // /js/lang.js
 (function(){
+  const LS_KEY = 'memoir_lang';
+
   const strings = {
-    en:{
-      common:{ start:"Start Recording", stories:"My Stories", view:"View My Stories", record:"Record" },
-      home:{
-        appLabel:"Memoir App",
-        heroA:"Preserve Your",
-        heroB:"Memories Forever",
-        heroBlurb:"Record once, keep for generations.",
-        startBlurb:"One tap to begin. Add a title and “when it happened” later.",
-        viewBlurb:"Browse, rewrite with AI, export, and share with your family."
-      },
-      features:{
-        f1Title:"Smart Transcription", f1Text:"AI-powered voice-to-text conversion.",
-        f2Title:"Multi-language Support", f2Text:"Record and transcribe in multiple languages.",
-        f3Title:"Private Library", f3Text:"Organize and share securely with your family."
-      },
-      pricing:{
-        title:"Pricing", premium:"Premium", premiumPrice:"€4.99/month",
-        family:"Family", familyPrice:"€7.99/month", familyNote:"up to 4 read-only family members",
-        upgrade:"Upgrade"
-      },
-      faq:{
-        title:"FAQ",
-        q1:"Is there a free plan?", a1:"Yes, you can try the app for free before upgrading.",
-        q2:"Which languages are supported?", a2:"English, Français, Nederlands, Español (more coming).",
-        q3:"How is transcription done?", a3:"Server-side Whisper for high accuracy; works offline then syncs later."
-      },
-      record:{
-        title:"Record",
-        suggested:"Today's suggested prompts",
-        refresh:"Suggest other prompts",
-        notes:"Notes (optional)",
-        titleLabel:"Title", titlePh:"Story title",
-        when:"When did this happen?", whenPh:'e.g. "summer 1945", "early 2018", "15 Feb 1972"',
-        photo:"Add photo (optional)",
-        transcript:"Transcript",
-        placeholder:"Your words will appear here…",
-        save:"Save story"
-      },
-      stories:{
-        title:"My Stories",
-        blurb:"Record once, keep for generations.",
-        storiesLabel:"Stories",
-        familyLabel:"Family Members",
-        inviteLabel:"Invite Family Member",
-        invitePh:"email@example.com",
-        inviteBtn:"Invite",
-        listHeader:"My Stories",
-        listEmpty:"No stories yet."
-      }
+    en: {
+      // Header
+      navHome: "Home",
+      navLogin: "Login",
+      navRecord: "Record",
+      navStories: "My Stories",
+      brandTitle: "MEMOIR APP",
+      brandTag: "Preserve your memories forever",
+
+      // Landing (hero)
+      heroTitleA: "Preserve Your",
+      heroTitleB: "Memories Forever",
+      heroBlurb: "Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.",
+      ctaStart: "Start Recording",
+      ctaStories: "My Stories",
+
+      // Landing (two cards)
+      startLabel: "Start Recording",
+      startDesc: "One tap to begin. Add a title and “when it happened” later.",
+      viewLabel: "View My Stories",
+      viewDesc: "Browse, rewrite with AI, export, and share with your family.",
+
+      // Landing (features)
+      featuresTitle: "Why Memoir?",
+      f1Title: "Simple & Gentle",
+      f1Text: "Large record button, guided prompts, and calm design for focus.",
+      f2Title: "Family Sharing",
+      f2Text: "Invite family to listen and read—safely stored in the cloud.",
+      f3Title: "Book-Ready",
+      f3Text: "Rewrite with AI and export to PDF when you’re ready.",
+
+      // Pricing
+      pricingTitle: "Pricing",
+      pricingFreeTitle: "Free",
+      pricingFreeTag: "Get started",
+      pricingFreeFeat1: "2-minute recordings",
+      pricingFreeFeat2: "Save & view stories",
+      pricingFreeFeat3: "Guided prompts",
+      pricingPremiumTitle: "Premium",
+      pricingPremiumTag: "€4.99 / month",
+      pricingPremiumFeat1: "Up to 15-minute recordings",
+      pricingPremiumFeat2: "AI rewrite & PDF export",
+      pricingPremiumFeat3: "Priority support",
+      pricingFamilyTitle: "Family",
+      pricingFamilyTag: "€7.99 / month",
+      pricingFamilyFeat1: "Share with up to 4 members",
+      pricingFamilyFeat2: "Read & listen access",
+      pricingFamilyFeat3: "All Premium features",
+      pricingCTA: "Upgrade to Premium or Family",
+
+      // FAQ
+      faqTitle: "FAQ",
+      faqQ1: "How do I start?",
+      faqA1: "Tap Start Recording, speak naturally, then save your story.",
+      faqQ2: "How does AI rewrite work?",
+      faqA2: "Your text is polished into a cohesive memoir chapter, keeping your voice.",
+      faqQ3: "How do I export?",
+      faqA3: "From My Stories, export individual stories or your full book.",
+      faqQ4: "How do I subscribe?",
+      faqA4: "Use the Pricing section. Billing is handled via Stripe.",
+      faqQ5: "Do I need internet?",
+      faqA5: "You can record offline. Audio will sync and transcribe when you reconnect.",
+
+      // Record page
+      recordTitle: "Record",
+      promptsToday: "Today's suggested prompts",
+      promptsRefresh: "Suggest other prompts",
+      notesLabel: "Notes (optional)",
+      toStories: "My Stories",
+      metaTitle: "Title",
+      metaWhen: "When did this happen?",
+      metaWhenPH: "e.g. “summer 1945”, “early 2018”, “15 Feb 1972”",
+      addPhoto: "Add photo (optional)",
+      transcriptLabel: "Transcript",
+      transcriptPlaceholder: "Your words will appear here…",
+      saveStory: "Save story",
+      recordButtonStart: "Record",
+      recordButtonStop: "Stop",
+
+      // Stories page
+      storiesTitle: "My Stories",
+      storiesSub: "Your library in the cloud",
+      statsStories: "Stories",
+      statsShared: "Family members shared",
+      shareWith: "Share with a family member",
+      shareEmailPH: "Enter email address",
+      shareSend: "Send invite",
+      listEmpty: "No stories yet.",
+
+      // Login page
+      loginTitle: "Login",
+      loginEmail: "Email address",
+      loginPassword: "Password",
+      loginSignIn: "Sign in",
+      loginHint: "You’ll receive a confirmation email if required."
     },
 
-    fr:{
-      common:{ start:"Commencer l’enregistrement", stories:"Mes histoires", view:"Voir mes histoires", record:"Enregistrer" },
-      home:{
-        appLabel:"Mémoire",
-        heroA:"Conservez vos",
-        heroB:"souvenirs pour toujours",
-        heroBlurb:"Enregistrez une fois, gardez pour des générations.",
-        startBlurb:"Un seul geste pour commencer. Ajoutez un titre et “quand c’était”.",
-        viewBlurb:"Parcourez, réécrivez avec l’IA, exportez et partagez en famille."
-      },
-      features:{
-        f1Title:"Transcription intelligente", f1Text:"Reconnaissance vocale avec IA.",
-        f2Title:"Multi-langue", f2Text:"Enregistrez et transcrivez dans plusieurs langues.",
-        f3Title:"Bibliothèque privée", f3Text:"Organisez et partagez en toute sécurité."
-      },
-      pricing:{
-        title:"Tarifs", premium:"Premium", premiumPrice:"4,99 € / mois",
-        family:"Famille", familyPrice:"7,99 € / mois", familyNote:"jusqu’à 4 membres en lecture seule",
-        upgrade:"Passer à l’offre"
-      },
-      faq:{
-        title:"FAQ",
-        q1:"Y a-t-il une formule gratuite ?", a1:"Oui, vous pouvez essayer gratuitement avant d’abonner.",
-        q2:"Quelles langues sont prises en charge ?", a2:"Anglais, Français, Néerlandais, Espagnol (bientôt plus).",
-        q3:"Comment est faite la transcription ?", a3:"Whisper côté serveur ; fonctionne hors-ligne puis se synchronise."
-      },
-      record:{
-        title:"Enregistrer",
-        suggested:"Suggestions du jour",
-        refresh:"Suggérer d’autres invites",
-        notes:"Notes (optionnel)",
-        titleLabel:"Titre", titlePh:"Titre de l’histoire",
-        when:"Quand cela s’est-il produit ?", whenPh:'ex. "été 1945", "début 2018", "15 fév 1972"',
-        photo:"Ajouter une photo (optionnel)",
-        transcript:"Transcription",
-        placeholder:"Vos mots apparaîtront ici…",
-        save:"Enregistrer l’histoire"
-      },
-      stories:{
-        title:"Mes histoires",
-        blurb:"Enregistrez une fois, gardez pour des générations.",
-        storiesLabel:"Histoires",
-        familyLabel:"Membres de la famille",
-        inviteLabel:"Inviter un membre de la famille",
-        invitePh:"email@exemple.com",
-        inviteBtn:"Inviter",
-        listHeader:"Mes histoires",
-        listEmpty:"Pas encore d’histoires."
-      }
+    fr: {
+      navHome: "Accueil",
+      navLogin: "Connexion",
+      navRecord: "Enregistrer",
+      navStories: "Mes histoires",
+      brandTitle: "MEMOIR APP",
+      brandTag: "Préservez vos souvenirs pour toujours",
+
+      heroTitleA: "Préservez vos",
+      heroTitleB: "Souvenirs pour toujours",
+      heroBlurb: "Enregistrez une fois, gardez pour des générations. Lancez un enregistrement en un geste, ajoutez un titre et « quand c’est arrivé », puis partagez en toute sécurité.",
+      ctaStart: "Commencer l’enregistrement",
+      ctaStories: "Mes histoires",
+
+      startLabel: "Commencer l’enregistrement",
+      startDesc: "Un geste suffit. Ajoutez le titre et « quand c’est arrivé » plus tard.",
+      viewLabel: "Voir mes histoires",
+      viewDesc: "Parcourez, réécrivez avec l’IA, exportez et partagez avec votre famille.",
+
+      featuresTitle: "Pourquoi Memoir ?",
+      f1Title: "Simple & apaisant",
+      f1Text: "Un grand bouton, des sujets guidés, une interface calme.",
+      f2Title: "Partage familial",
+      f2Text: "Invitez la famille à écouter et lire — stockage sécurisé dans le cloud.",
+      f3Title: "Prêt pour le livre",
+      f3Text: "Réécrivez avec l’IA et exportez en PDF quand vous êtes prêt.",
+
+      pricingTitle: "Tarifs",
+      pricingFreeTitle: "Gratuit",
+      pricingFreeTag: "Pour commencer",
+      pricingFreeFeat1: "Enregistrements de 2 minutes",
+      pricingFreeFeat2: "Enregistrer & consulter",
+      pricingFreeFeat3: "Sujets guidés",
+      pricingPremiumTitle: "Premium",
+      pricingPremiumTag: "4,99 € / mois",
+      pricingPremiumFeat1: "Enregistrements jusqu’à 15 minutes",
+      pricingPremiumFeat2: "Réécriture IA & export PDF",
+      pricingPremiumFeat3: "Support prioritaire",
+      pricingFamilyTitle: "Famille",
+      pricingFamilyTag: "7,99 € / mois",
+      pricingFamilyFeat1: "Partage avec 4 membres",
+      pricingFamilyFeat2: "Accès lecture & écoute",
+      pricingFamilyFeat3: "Toutes les fonctions Premium",
+      pricingCTA: "Passer à Premium ou Famille",
+
+      faqTitle: "FAQ",
+      faqQ1: "Comment démarrer ?",
+      faqA1: "Appuyez sur Commencer l’enregistrement, parlez, puis enregistrez votre histoire.",
+      faqQ2: "Comment fonctionne la réécriture IA ?",
+      faqA2: "Votre texte est poli en un chapitre fluide tout en gardant votre voix.",
+      faqQ3: "Comment exporter ?",
+      faqA3: "Depuis Mes histoires, exportez une histoire ou le livre complet.",
+      faqQ4: "Comment m’abonner ?",
+      faqA4: "Utilisez la section Tarifs. Le paiement est géré via Stripe.",
+      faqQ5: "Internet est-il nécessaire ?",
+      faqA5: "Vous pouvez enregistrer hors ligne. L’audio se synchronise et se transcrit plus tard.",
+
+      recordTitle: "Enregistrer",
+      promptsToday: "Sujets suggérés du jour",
+      promptsRefresh: "Suggérer d’autres sujets",
+      notesLabel: "Notes (optionnel)",
+      toStories: "Mes histoires",
+      metaTitle: "Titre",
+      metaWhen: "Quand cela s’est-il passé ?",
+      metaWhenPH: "ex. « été 1945 », « début 2018 », « 15 fév. 1972 »",
+      addPhoto: "Ajouter une photo (optionnel)",
+      transcriptLabel: "Transcription",
+      transcriptPlaceholder: "Vos mots apparaîtront ici…",
+      saveStory: "Enregistrer l’histoire",
+      recordButtonStart: "Enregistrer",
+      recordButtonStop: "Arrêter",
+
+      storiesTitle: "Mes histoires",
+      storiesSub: "Votre bibliothèque dans le cloud",
+      statsStories: "Histoires",
+      statsShared: "Membres partagés",
+      shareWith: "Partager avec un membre de la famille",
+      shareEmailPH: "Saisir l’adresse e-mail",
+      shareSend: "Envoyer l’invitation",
+      listEmpty: "Aucune histoire pour le moment.",
+
+      loginTitle: "Connexion",
+      loginEmail: "Adresse e-mail",
+      loginPassword: "Mot de passe",
+      loginSignIn: "Se connecter",
+      loginHint: "Vous recevrez un e-mail de confirmation si nécessaire."
     },
 
-    nl:{
-      common:{ start:"Opname starten", stories:"Mijn verhalen", view:"Bekijk mijn verhalen", record:"Opnemen" },
-      home:{
-        appLabel:"Memoir App",
-        heroA:"Bewaar je",
-        heroB:"herinneringen voor altijd",
-        heroBlurb:"Neem één keer op en bewaar het voor generaties.",
-        startBlurb:"Met één tik start je. Titel en ‘wanneer het gebeurde’ kan later.",
-        viewBlurb:"Blader, herschrijf met AI, exporteer en deel met familie."
-      },
-      features:{
-        f1Title:"Slimme transcriptie", f1Text:"Stem-naar-tekst met AI.",
-        f2Title:"Meertalige ondersteuning", f2Text:"Opnemen en transcriberen in meerdere talen.",
-        f3Title:"Privébibliotheek", f3Text:"Organiseer en deel veilig met familie."
-      },
-      pricing:{
-        title:"Prijzen", premium:"Premium", premiumPrice:"€4,99/maand",
-        family:"Familie", familyPrice:"€7,99/maand", familyNote:"tot 4 alleen-lezen familieleden",
-        upgrade:"Upgrade"
-      },
-      faq:{
-        title:"FAQ",
-        q1:"Is er een gratis plan?", a1:"Ja, je kunt de app gratis proberen voordat je upgrade.",
-        q2:"Welke talen worden ondersteund?", a2:"Engels, Frans, Nederlands, Spaans (meer volgt).",
-        q3:"Hoe gebeurt de transcriptie?", a3:"Whisper op de server; werkt offline en synchroniseert later."
-      },
-      record:{
-        title:"Opnemen",
-        suggested:"Suggesties van vandaag",
-        refresh:"Andere suggesties",
-        notes:"Notities (optioneel)",
-        titleLabel:"Titel", titlePh:"Titel van het verhaal",
-        when:"Wanneer gebeurde dit?", whenPh:'bijv. "zomer 1945", "begin 2018", "15 feb 1972"',
-        photo:"Foto toevoegen (optioneel)",
-        transcript:"Transcriptie",
-        placeholder:"Je woorden verschijnen hier…",
-        save:"Verhaal opslaan"
-      },
-      stories:{
-        title:"Mijn verhalen",
-        blurb:"Neem één keer op en bewaar het voor generaties.",
-        storiesLabel:"Verhalen",
-        familyLabel:"Familieleden",
-        inviteLabel:"Familielid uitnodigen",
-        invitePh:"email@voorbeeld.com",
-        inviteBtn:"Uitnodigen",
-        listHeader:"Mijn verhalen",
-        listEmpty:"Nog geen verhalen."
-      }
+    nl: {
+      navHome: "Home",
+      navLogin: "Inloggen",
+      navRecord: "Opnemen",
+      navStories: "Mijn verhalen",
+      brandTitle: "MEMOIR APP",
+      brandTag: "Bewaar je herinneringen voor altijd",
+
+      heroTitleA: "Bewaar je",
+      heroTitleB: "Herinneringen voor altijd",
+      heroBlurb: "Neem één keer op en bewaar voor generaties. Start met één tik, voeg titel en “wanneer het gebeurde” toe en deel veilig met familie.",
+      ctaStart: "Start opname",
+      ctaStories: "Mijn verhalen",
+
+      startLabel: "Start opname",
+      startDesc: "Met één tik beginnen. Titel en “wanneer” kan later.",
+      viewLabel: "Bekijk mijn verhalen",
+      viewDesc: "Blader, herschrijf met AI, exporteer en deel met familie.",
+
+      featuresTitle: "Waarom Memoir?",
+      f1Title: "Simpel & rustgevend",
+      f1Text: "Grote knop, begeleide onderwerpen en een rustige vormgeving.",
+      f2Title: "Familiedelen",
+      f2Text: "Nodig familie uit om te luisteren en te lezen — veilig in de cloud.",
+      f3Title: "Boek-klaar",
+      f3Text: "Herschrijf met AI en exporteer naar PDF wanneer je klaar bent.",
+
+      pricingTitle: "Prijzen",
+      pricingFreeTitle: "Gratis",
+      pricingFreeTag: "Begin eenvoudig",
+      pricingFreeFeat1: "Opnames van 2 minuten",
+      pricingFreeFeat2: "Verhalen opslaan & bekijken",
+      pricingFreeFeat3: "Begeleide onderwerpen",
+      pricingPremiumTitle: "Premium",
+      pricingPremiumTag: "€4,99 / maand",
+      pricingPremiumFeat1: "Opnames tot 15 minuten",
+      pricingPremiumFeat2: "AI-herschrijven & PDF-export",
+      pricingPremiumFeat3: "Prioritaire support",
+      pricingFamilyTitle: "Familie",
+      pricingFamilyTag: "€7,99 / maand",
+      pricingFamilyFeat1: "Delen met 4 leden",
+      pricingFamilyFeat2: "Lezen & luisteren",
+      pricingFamilyFeat3: "Alle Premium functies",
+      pricingCTA: "Upgrade naar Premium of Familie",
+
+      faqTitle: "FAQ",
+      faqQ1: "Hoe begin ik?",
+      faqA1: "Tik op Start opname, spreek rustig en sla je verhaal op.",
+      faqQ2: "Hoe werkt AI-herschrijven?",
+      faqA2: "We polijsten je tekst tot een samenhangend hoofdstuk met jouw stem.",
+      faqQ3: "Hoe exporteer ik?",
+      faqA3: "Via Mijn verhalen exporteer je losse verhalen of je hele boek.",
+      faqQ4: "Hoe abonneer ik me?",
+      faqA4: "Gebruik de sectie Prijzen. Betaling gaat via Stripe.",
+      faqQ5: "Heb ik internet nodig?",
+      faqA5: "Offline opnemen kan. Audio wordt later gesynchroniseerd en getranscribeerd.",
+
+      recordTitle: "Opnemen",
+      promptsToday: "Voorstellen van vandaag",
+      promptsRefresh: "Andere voorstellen",
+      notesLabel: "Notities (optioneel)",
+      toStories: "Mijn verhalen",
+      metaTitle: "Titel",
+      metaWhen: "Wanneer gebeurde dit?",
+      metaWhenPH: "bijv. “zomer 1945”, “begin 2018”, “15 feb. 1972”",
+      addPhoto: "Foto toevoegen (optioneel)",
+      transcriptLabel: "Transcript",
+      transcriptPlaceholder: "Je woorden verschijnen hier…",
+      saveStory: "Verhaal opslaan",
+      recordButtonStart: "Opnemen",
+      recordButtonStop: "Stoppen",
+
+      storiesTitle: "Mijn verhalen",
+      storiesSub: "Je bibliotheek in de cloud",
+      statsStories: "Verhalen",
+      statsShared: "Gedeelde leden",
+      shareWith: "Delen met familielid",
+      shareEmailPH: "E-mailadres invoeren",
+      shareSend: "Uitnodiging sturen",
+      listEmpty: "Nog geen verhalen.",
+
+      loginTitle: "Inloggen",
+      loginEmail: "E-mailadres",
+      loginPassword: "Wachtwoord",
+      loginSignIn: "Inloggen",
+      loginHint: "Je ontvangt indien nodig een bevestigingsmail."
     },
 
-    es:{
-      common:{ start:"Comenzar a grabar", stories:"Mis historias", view:"Ver mis historias", record:"Grabar" },
-      home:{
-        appLabel:"Memoir",
-        heroA:"Conserva tus",
-        heroB:"recuerdos para siempre",
-        heroBlurb:"Graba una vez y guárdalo para generaciones.",
-        startBlurb:"Un toque para empezar. Añade título y “cuándo ocurrió” después.",
-        viewBlurb:"Explora, reescribe con IA, exporta y comparte con tu familia."
-      },
-      features:{
-        f1Title:"Transcripción inteligente", f1Text:"De voz a texto con IA.",
-        f2Title:"Soporte multilingüe", f2Text:"Graba y transcribe en varios idiomas.",
-        f3Title:"Biblioteca privada", f3Text:"Organiza y comparte de forma segura con tu familia."
-      },
-      pricing:{
-        title:"Precios", premium:"Premium", premiumPrice:"4,99 €/mes",
-        family:"Familiar", familyPrice:"7,99 €/mes", familyNote:"hasta 4 familiares de solo lectura",
-        upgrade:"Mejorar"
-      },
-      faq:{
-        title:"FAQ",
-        q1:"¿Hay un plan gratuito?", a1:"Sí, puedes probar la app gratis antes de mejorar el plan.",
-        q2:"¿Qué idiomas están soportados?", a2:"Inglés, Francés, Neerlandés, Español (más en camino).",
-        q3:"¿Cómo se hace la transcripción?", a3:"Whisper en el servidor; funciona sin conexión y sincroniza luego."
-      },
-      record:{
-        title:"Grabar",
-        suggested:"Sugerencias de hoy",
-        refresh:"Sugerir otras",
-        notes:"Notas (opcional)",
-        titleLabel:"Título", titlePh:"Título de la historia",
-        when:"¿Cuándo ocurrió?", whenPh:'p. ej. "verano de 1945", "inicios de 2018", "15 feb 1972"',
-        photo:"Añadir foto (opcional)",
-        transcript:"Transcripción",
-        placeholder:"Tus palabras aparecerán aquí…",
-        save:"Guardar historia"
-      },
-      stories:{
-        title:"Mis historias",
-        blurb:"Graba una vez y guárdalo para generaciones.",
-        storiesLabel:"Historias",
-        familyLabel:"Miembros de la familia",
-        inviteLabel:"Invitar a un familiar",
-        invitePh:"email@ejemplo.com",
-        inviteBtn:"Invitar",
-        listHeader:"Mis historias",
-        listEmpty:"Aún no hay historias."
-      }
+    es: {
+      navHome: "Inicio",
+      navLogin: "Acceder",
+      navRecord: "Grabar",
+      navStories: "Mis historias",
+      brandTitle: "MEMOIR APP",
+      brandTag: "Conserva tus recuerdos para siempre",
+
+      heroTitleA: "Conserva tus",
+      heroTitleB: "Recuerdos para siempre",
+      heroBlurb: "Graba una vez y guarda para generaciones. Empieza con un toque, añade título y “cuándo pasó”, y comparte con tu familia.",
+      ctaStart: "Empezar a grabar",
+      ctaStories: "Mis historias",
+
+      startLabel: "Empezar a grabar",
+      startDesc: "Comienza con un toque. El título y “cuándo” pueden ir después.",
+      viewLabel: "Ver mis historias",
+      viewDesc: "Explora, reescribe con IA, exporta y comparte con tu familia.",
+
+      featuresTitle: "¿Por qué Memoir?",
+      f1Title: "Sencillo y amable",
+      f1Text: "Gran botón de grabación, temas guiados y diseño tranquilo.",
+      f2Title: "Compartir en familia",
+      f2Text: "Invita a la familia a escuchar y leer — almacenamiento seguro en la nube.",
+      f3Title: "Listo para libro",
+      f3Text: "Reescribe con IA y exporta a PDF cuando quieras.",
+
+      pricingTitle: "Precios",
+      pricingFreeTitle: "Gratis",
+      pricingFreeTag: "Empieza ahora",
+      pricingFreeFeat1: "Grabaciones de 2 minutos",
+      pricingFreeFeat2: "Guardar y ver historias",
+      pricingFreeFeat3: "Temas guiados",
+      pricingPremiumTitle: "Premium",
+      pricingPremiumTag: "4,99 € / mes",
+      pricingPremiumFeat1: "Grabaciones hasta 15 minutos",
+      pricingPremiumFeat2: "Reescritura IA y exportación PDF",
+      pricingPremiumFeat3: "Soporte prioritario",
+      pricingFamilyTitle: "Familiar",
+      pricingFamilyTag: "7,99 € / mes",
+      pricingFamilyFeat1: "Comparte con 4 miembros",
+      pricingFamilyFeat2: "Acceso a lectura y escucha",
+      pricingFamilyFeat3: "Todas las funciones Premium",
+      pricingCTA: "Mejorar a Premium o Familiar",
+
+      faqTitle: "Preguntas frecuentes",
+      faqQ1: "¿Cómo empiezo?",
+      faqA1: "Toca Empezar a grabar, habla con calma y guarda tu historia.",
+      faqQ2: "¿Cómo funciona la reescritura IA?",
+      faqA2: "Pulimos tu texto en un capítulo coherente manteniendo tu voz.",
+      faqQ3: "¿Cómo exporto?",
+      faqA3: "Desde Mis historias, exporta historias o tu libro completo.",
+      faqQ4: "¿Cómo me suscribo?",
+      faqA4: "Usa la sección Precios. Stripe gestiona la facturación.",
+      faqQ5: "¿Necesito internet?",
+      faqA5: "Puedes grabar sin conexión. El audio se sincroniza y transcribe más tarde.",
+
+      recordTitle: "Grabar",
+      promptsToday: "Sugerencias de hoy",
+      promptsRefresh: "Otras sugerencias",
+      notesLabel: "Notas (opcional)",
+      toStories: "Mis historias",
+      metaTitle: "Título",
+      metaWhen: "¿Cuándo ocurrió?",
+      metaWhenPH: "p. ej. “verano de 1945”, “inicios de 2018”, “15 feb. 1972”",
+      addPhoto: "Añadir foto (opcional)",
+      transcriptLabel: "Transcripción",
+      transcriptPlaceholder: "Tus palabras aparecerán aquí…",
+      saveStory: "Guardar historia",
+      recordButtonStart: "Grabar",
+      recordButtonStop: "Detener",
+
+      storiesTitle: "Mis historias",
+      storiesSub: "Tu biblioteca en la nube",
+      statsStories: "Historias",
+      statsShared: "Miembros compartidos",
+      shareWith: "Compartir con familiar",
+      shareEmailPH: "Introduce el correo electrónico",
+      shareSend: "Enviar invitación",
+      listEmpty: "Todavía no hay historias.",
+
+      loginTitle: "Acceder",
+      loginEmail: "Correo electrónico",
+      loginPassword: "Contraseña",
+      loginSignIn: "Acceder",
+      loginHint: "Recibirás un correo de confirmación si es necesario."
     }
   };
 
-  // Public API
-  window.MEMOIR_I18N = window.MEMOIR_I18N || {};
-  window.MEMOIR_I18N.strings = strings;
+  function getLang(){
+    return localStorage.getItem(LS_KEY) || 'en';
+  }
+  function setLang(code){
+    localStorage.setItem(LS_KEY, code);
+    window.dispatchEvent(new CustomEvent('memoir:lang', { detail:{ code } }));
+  }
+  function t(key){
+    const lang = getLang();
+    return (strings[lang] && strings[lang][key]) || (strings.en && strings.en[key]) || key;
+  }
 
-  // get/set language (persist + broadcast)
-  window.MEMOIR_I18N.getLang = function(){
-    return localStorage.getItem('memoir_lang') || 'en';
-  };
-  window.MEMOIR_I18N.setLang = function(code){
-    localStorage.setItem('memoir_lang', code);
-    // Notify all pages (they listen to this)
-    window.dispatchEvent(new CustomEvent('memoir:lang',{ detail:{ code } }));
-  };
+  window.MEMOIR_I18N = { strings, getLang, setLang, t };
 })();
