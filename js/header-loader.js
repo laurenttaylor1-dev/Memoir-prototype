@@ -1,4 +1,4 @@
-<script>
+// /js/header-loader.js  (PURE JS — no <script> tags)
 (function(){
   const HEADER_SLOT = 'site-header';
   const FOOTER_SLOT = 'site-footer';
@@ -31,8 +31,7 @@
 </header>`;
   }
 
-  function initHeaderBehaviors(){
-    // Close language dropdown after selecting & when clicking outside
+  function bindLangMenu(){
     const btn  = document.querySelector('[data-lang-btn],[data-lang-trigger]');
     const menu = document.querySelector('[data-lang-menu]');
     if (!btn || !menu) return;
@@ -59,6 +58,7 @@
         setTimeout(()=>document.addEventListener('click', onDoc), 0);
       }
     });
+    // Close after picking a language
     menu.addEventListener('click', (e)=>{
       const opt = e.target.closest('[data-set-lang]');
       if (opt) close();
@@ -76,10 +76,11 @@
         console.warn('Header partial failed, used fallback', e1, e2);
       }
     }
+    // optional init hook if your header defines it
     if (typeof window.MEMOIR_headerInit === 'function') {
       try { window.MEMOIR_headerInit(); } catch(_) {}
     }
-    initHeaderBehaviors();
+    bindLangMenu();
     window.dispatchEvent(new CustomEvent('memoir:header:loaded'));
   }
 
@@ -90,7 +91,7 @@
       try {
         setHTML(FOOTER_SLOT, await fetchText('/footer.html'));
       } catch(e2){
-        // no-op fallback
+        // footer is optional; safe to ignore
         console.warn('Footer partial failed', e1, e2);
       }
     }
@@ -102,4 +103,3 @@
     loadFooter();
   });
 })();
-</script>
