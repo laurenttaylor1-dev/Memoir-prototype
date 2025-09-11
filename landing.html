@@ -3,105 +3,322 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Memoir — Home</title>
-  <link rel="stylesheet" href="/styles.css"/>
+  <title>MEMOIR APP — Preserve your memories forever</title>
+  <link rel="preload" as="image" href="/assets/book-1.jpg">
   <style>
-    /* Ensure anchored sections account for sticky header */
-    #pricing, #faq { scroll-margin-top: 100px; }
+    :root{
+      --bg:#f6f2ec;
+      --panel:#fbf8f4;
+      --ink:#2b1e16;
+      --muted:#7a6656;
+      --brand:#8a5a3c;      /* sepia-brown */
+      --brand-2:#c08a62;    /* warm accent */
+      --ring:rgba(138,90,60,.25);
+      --elev:0 12px 30px rgba(60,40,20,.08), 0 2px 6px rgba(60,40,20,.04);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    a{color:inherit;text-decoration:none}
+    .wrap{max-width:1220px;margin:0 auto;padding:18px}
+
+    /* Header */
+    .hdr{position:sticky;top:0;z-index:50;background:linear-gradient(#f9f6f1, #f6f2ec);border-bottom:1px solid #e8ded6}
+    .hdr-inner{display:flex;align-items:center;gap:14px;justify-content:space-between;padding:14px 0}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:28px;height:28px;border-radius:8px;background:radial-gradient(60% 60% at 30% 30%,#d2a47f,#8a5a3c)}
+    .sub{font-size:12px;color:var(--muted)}
+    .nav{display:flex;gap:10px;flex-wrap:wrap}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:999px;border:1px solid #eadfd6;background:#fff;box-shadow:var(--elev)}
+    .pill:hover{box-shadow:0 0 0 4px var(--ring)}
+    .lang{position:relative}
+    .menu{position:absolute;right:0;top:calc(100% + 8px);background:#fff;border:1px solid #eadfd6;border-radius:14px;box-shadow:var(--elev);display:none;min-width:180px;overflow:hidden}
+    .menu.show{display:block}
+    .menu button{display:flex;gap:10px;width:100%;padding:10px 12px;background:transparent;border:0;text-align:left;cursor:pointer}
+    .menu button:hover{background:#f7f1eb}
+
+    /* Hero */
+    .hero{display:grid;grid-template-columns:1.2fr 1fr;gap:18px;margin-top:14px}
+    .card{background:var(--panel);border:1px solid #eadfd6;border-radius:var(--radius);box-shadow:var(--elev)}
+    .img{overflow:hidden;border-radius:var(--radius)}
+    .img img{width:100%;height:100%;object-fit:cover;display:block}
+    .hero-copy{padding:22px}
+    .h1{font-size:40px;line-height:1.05;margin:0 0 10px}
+    .lead{color:var(--muted);margin:0 0 20px}
+
+    .ctaRow{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:8px}
+    .cta{padding:22px}
+    .cta h3{margin:0 0 8px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 18px;border-radius:999px;border:0;background:linear-gradient(90deg,var(--brand),var(--brand-2));color:#fff;cursor:pointer;box-shadow:var(--elev)}
+    .btn.alt{background:#fff;color:var(--ink);border:1px solid #eadfd6}
+    .btn:active{transform:translateY(1px)}
+
+    /* Features / Pricing / FAQ */
+    .section{margin:28px 0}
+    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    .tile{padding:20px}
+    .tile h4{margin:0 0 8px}
+    .muted{color:var(--muted)}
+
+    .pricing{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+    .price-card{padding:22px}
+    .price{font-size:32px;font-weight:700;margin:8px 0}
+    .small{font-size:12px;color:var(--muted)}
+
+    .faq{display:grid;grid-template-columns:1fr;gap:12px}
+    details{background:var(--panel);border:1px solid #eadfd6;border-radius:12px;padding:12px}
+    summary{cursor:pointer;font-weight:600}
+
+    footer{margin:24px 0 12px;text-align:center;color:var(--muted);font-size:12px}
+
+    @media (max-width: 980px){
+      .hero{grid-template-columns:1fr}
+      .ctaRow{grid-template-columns:1fr}
+      .grid3{grid-template-columns:1fr}
+      .pricing{grid-template-columns:1fr}
+    }
   </style>
 </head>
-<body class="mk-theme-vintage">
-  <!-- Shared header will be injected here -->
-  <div id="site-header"></div>
-
-  <main class="mk-container">
-
-    <!-- Hero: image + actions column -->
-    <section class="mk-hero">
-      <div class="mk-hero__image">
-        <!-- Use your uploaded image path(s) -->
-        <img src="/assets/book-1.jpg" alt="Open book" loading="eager"/>
+<body>
+  <!-- Header (inline to avoid partial/loading issues) -->
+  <header class="hdr">
+    <div class="wrap hdr-inner">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <div style="font-weight:700">MEMOIR APP</div>
+          <div class="sub" data-i18n="tagline">Preserve your memories forever</div>
+        </div>
       </div>
+      <nav class="nav">
+        <a class="pill" href="/landing.html" data-i18n="home">Home</a>
+        <a class="pill" href="/login.html" data-i18n="login">Login</a>
+        <a class="pill" href="/record.html" data-i18n="record">Record</a>
+        <a class="pill" href="/stories.html" data-i18n="stories">My Stories</a>
 
-      <div class="mk-hero__content">
-        <h1 data-i18n="hero.title">Preserve Your Memories Forever</h1>
-        <p class="mk-hero__lede" data-i18n="hero.lede">
+        <div class="pill lang" id="langPill">
+          <span id="langLabel">🇬🇧 English</span>
+          <div class="menu" id="langMenu" role="menu" aria-label="Select language">
+            <button data-lang="en">🇬🇧 English</button>
+            <button data-lang="fr">🇫🇷 Français</button>
+            <button data-lang="nl">🇧🇪 Nederlands</button>
+            <button data-lang="es">🇪🇸 Español</button>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="img card"><img src="/assets/book-1.jpg" alt="Open family album"></div>
+
+      <div class="card hero-copy">
+        <h1 class="h1" data-i18n="h1">Preserve Your Memories Forever</h1>
+        <p class="lead" data-i18n="lead">
           Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.
         </p>
 
-        <div class="mk-hero__actions">
-          <a href="/record.html"  class="mk-btn mk-btn-primary" data-i18n="cta.startRecording">Start Recording</a>
-          <a href="/stories.html" class="mk-btn mk-btn-ghost"   data-i18n="cta.myStories">My Stories</a>
+        <div class="ctaRow">
+          <div class="card cta">
+            <h3 data-i18n="ctaRecordTitle">Start Recording</h3>
+            <p class="muted" data-i18n="ctaRecordText">One tap to begin. Add a title and “when it happened” later.</p>
+            <button class="btn" onclick="location.href='/record.html'"><span data-i18n="ctaRecordBtn">Start Recording</span></button>
+          </div>
+          <div class="card cta">
+            <h3 data-i18n="ctaStoriesTitle">View My Stories</h3>
+            <p class="muted" data-i18n="ctaStoriesText">Browse, rewrite with AI, export, and share with your family.</p>
+            <button class="btn alt" onclick="location.href='/stories.html'"><span data-i18n="ctaStoriesBtn">My Stories</span></button>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- Features -->
-    <section class="mk-features">
-      <article class="mk-card">
-        <h3 data-i18n="feat.1.title">Smart Transcription</h3>
-        <p data-i18n="feat.1.text">Server-side Whisper for accurate EN/FR/NL/ES.</p>
-      </article>
-      <article class="mk-card">
-        <h3 data-i18n="feat.2.title">Guided or Free</h3>
-        <p data-i18n="feat.2.text">Use gentle prompts or speak freely. Add a date or period like “early 1970s”.</p>
-      </article>
-      <article class="mk-card">
-        <h3 data-i18n="feat.3.title">Private Library</h3>
-        <p data-i18n="feat.3.text">Stories and media saved in your private account. Export when you’re ready.</p>
-      </article>
+    <section class="section">
+      <div class="grid3">
+        <div class="card tile">
+          <h4 data-i18n="f1t">Smart Transcription</h4>
+          <p class="muted" data-i18n="f1d">Server-side Whisper for accurate EN/FR/NL/ES, resilient to spotty connections.</p>
+        </div>
+        <div class="card tile">
+          <h4 data-i18n="f2t">Guided or Free</h4>
+          <p class="muted" data-i18n="f2d">Use gentle prompts or speak freely. Add a date or period like “early 1970s”.</p>
+        </div>
+        <div class="card tile">
+          <h4 data-i18n="f3t">Private Library</h4>
+          <p class="muted" data-i18n="f3d">Stories and media saved in your private account. Export to PDF/CSV when you’re ready.</p>
+        </div>
+      </div>
     </section>
 
     <!-- Pricing -->
-    <section id="pricing" class="mk-features" style="margin-top:40px;">
-      <article class="mk-card">
-        <h3 data-i18n="pricing.free.title">Free</h3>
-        <p data-i18n="pricing.free.text">Always free: record and save your memories, up to 2 minutes per story.</p>
-      </article>
-      <article class="mk-card">
-        <h3 data-i18n="pricing.premium.title">Premium — €4.99/month</h3>
-        <p data-i18n="pricing.premium.text">15-minute stories, AI rewrites, export to PDF/Canva, and cloud sync.</p>
-      </article>
-      <article class="mk-card">
-        <h3 data-i18n="pricing.family.title">Family — €7.99/month</h3>
-        <p data-i18n="pricing.family.text">All Premium features, plus sharing with up to 4 family members (read/listen only).</p>
-      </article>
+    <section class="section" id="pricing">
+      <h2 style="margin:0 0 10px" data-i18n="pricingTitle">Pricing</h2>
+      <div class="pricing">
+        <div class="card price-card">
+          <h3 data-i18n="p1t">Premium</h3>
+          <div class="price">€4.99 <span class="small" data-i18n="perMonth">/month</span></div>
+          <ul class="muted" style="margin:0 0 14px;padding-left:18px">
+            <li data-i18n="p1l1">Unlimited recording & Whisper transcription</li>
+            <li data-i18n="p1l2">AI rewrite & export</li>
+            <li data-i18n="p1l3">Private cloud backup</li>
+          </ul>
+          <button class="btn" onclick="location.href='/checkout.html?plan=premium'"><span data-i18n="upgrade">Upgrade</span></button>
+        </div>
+        <div class="card price-card">
+          <h3 data-i18n="p2t">Family</h3>
+          <div class="price">€7.99 <span class="small" data-i18n="perMonth">/month</span></div>
+          <ul class="muted" style="margin:0 0 14px;padding-left:18px">
+            <li data-i18n="p2l1">Share with up to 4 family readers</li>
+            <li data-i18n="p2l2">All Premium features</li>
+            <li data-i18n="p2l3">Family library</li>
+          </ul>
+          <button class="btn" onclick="location.href='/checkout.html?plan=family'"><span data-i18n="upgrade">Upgrade</span></button>
+        </div>
+      </div>
     </section>
 
     <!-- FAQ -->
-    <section id="faq" style="margin-top:40px;">
-      <h2 data-i18n="faq.title">FAQ</h2>
-      <details>
-        <summary data-i18n="faq.q1">How do I record a story?</summary>
-        <p data-i18n="faq.a1">Go to Record, tap the round button, and start speaking. Your words are transcribed automatically.</p>
-      </details>
-      <details>
-        <summary data-i18n="faq.q2">What is AI rewrite?</summary>
-        <p data-i18n="faq.a2">Premium users can enhance their stories with smoother language, while keeping their authentic voice.</p>
-      </details>
-      <details>
-        <summary data-i18n="faq.q3">How do I share with family?</summary>
-        <p data-i18n="faq.a3">On the My Stories page, you can invite family members by email (Family plan required).</p>
-      </details>
-      <details>
-        <summary data-i18n="faq.q4">How do subscriptions work?</summary>
-        <p data-i18n="faq.a4">Subscriptions are managed via Stripe. You can cancel anytime in your account.</p>
-      </details>
+    <section class="section" id="faq">
+      <h2 style="margin:0 0 10px" data-i18n="faqTitle">FAQ</h2>
+      <div class="faq">
+        <details>
+          <summary data-i18n="q1">How do I start recording?</summary>
+          <div class="muted" data-i18n="a1">Go to Record, tap the big button. You can add a title and “when it happened” anytime.</div>
+        </details>
+        <details>
+          <summary data-i18n="q2">How does AI rewrite work?</summary>
+          <div class="muted" data-i18n="a2">Open a story in My Stories and choose “Rewrite (AI)” to produce a cleaner, more vivid version.</div>
+        </details>
+        <details>
+          <summary data-i18n="q3">Will my stories sync across devices?</summary>
+          <div class="muted" data-i18n="a3">Yes. When logged in, stories and media are saved to your account in the cloud.</div>
+        </details>
+        <details>
+          <summary data-i18n="q4">What happens offline?</summary>
+          <div class="muted" data-i18n="a4">Audio saves locally, then uploads and transcribes with Whisper when you’re online again.</div>
+        </details>
+      </div>
     </section>
-
   </main>
 
-  <!-- Optional: set your public Supabase keys for plan badge / counts -->
+  <footer>
+    © Memoir App — built for families
+  </footer>
+
   <script>
-    // window.SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
-    // window.SUPABASE_ANON_KEY = "YOUR_PUBLIC_ANON_KEY";
+  // --- Minimal i18n for landing page (extend as needed)
+  const I18N = {
+    en:{
+      tagline:"Preserve your memories forever",
+      home:"Home", login:"Login", record:"Record", stories:"My Stories",
+      h1:"Preserve Your Memories Forever",
+      lead:"Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.",
+      ctaRecordTitle:"Start Recording", ctaRecordText:"One tap to begin. Add a title and “when it happened” later.", ctaRecordBtn:"Start Recording",
+      ctaStoriesTitle:"View My Stories", ctaStoriesText:"Browse, rewrite with AI, export, and share with your family.", ctaStoriesBtn:"My Stories",
+      f1t:"Smart Transcription", f1d:"Server-side Whisper for accurate EN/FR/NL/ES, resilient to spotty connections.",
+      f2t:"Guided or Free", f2d:"Use gentle prompts or speak freely. Add a date or period like “early 1970s”.",
+      f3t:"Private Library", f3d:"Stories and media saved in your private account. Export to PDF/CSV when you’re ready.",
+      pricingTitle:"Pricing", perMonth:"/month", p1t:"Premium", p1l1:"Unlimited recording & Whisper transcription", p1l2:"AI rewrite & export", p1l3:"Private cloud backup",
+      p2t:"Family", p2l1:"Share with up to 4 family readers", p2l2:"All Premium features", p2l3:"Family library", upgrade:"Upgrade",
+      faqTitle:"FAQ",
+      q1:"How do I start recording?", a1:"Go to Record, tap the big button. You can add a title and “when it happened” anytime.",
+      q2:"How does AI rewrite work?", a2:"Open a story in My Stories and choose “Rewrite (AI)” to produce a cleaner, more vivid version.",
+      q3:"Will my stories sync across devices?", a3:"Yes. When logged in, stories and media are saved to your account in the cloud.",
+      q4:"What happens offline?", a4:"Audio saves locally, then uploads and transcribes with Whisper when you’re online again."
+    },
+    fr:{
+      tagline:"Préservez vos souvenirs pour toujours",
+      home:"Accueil", login:"Connexion", record:"Enregistrer", stories:"Mes histoires",
+      h1:"Préservez vos souvenirs pour toujours",
+      lead:"Enregistrez une fois, gardez pour des générations. Lancez un enregistrement en un geste, ajoutez un titre et « quand c’est arrivé », puis partagez en toute sécurité avec votre famille.",
+      ctaRecordTitle:"Commencer", ctaRecordText:"Un geste pour démarrer. Ajoutez le titre et « quand » plus tard.", ctaRecordBtn:"Enregistrer",
+      ctaStoriesTitle:"Voir mes histoires", ctaStoriesText:"Parcourez, réécrivez avec l’IA, exportez et partagez.", ctaStoriesBtn:"Mes histoires",
+      f1t:"Transcription intelligente", f1d:"Whisper côté serveur pour FR/EN/NL/ES, robuste même avec un réseau instable.",
+      f2t:"Guidé ou libre", f2d:"Utilisez des invites douces ou parlez librement. Ajoutez une période comme « début des années 1970 ».",
+      f3t:"Bibliothèque privée", f3d:"Histoires et médias sauvegardés dans votre compte. Export PDF/CSV quand vous voulez.",
+      pricingTitle:"Tarifs", perMonth:"/mois", p1t:"Premium", p1l1:"Enregistrements illimités & Whisper", p1l2:"Réécriture IA & export", p1l3:"Sauvegarde privée",
+      p2t:"Famille", p2l1:"Partage avec 4 proches lecteurs", p2l2:"Toutes les fonctions Premium", p2l3:"Bibliothèque familiale", upgrade:"Passer au plan",
+      faqTitle:"FAQ",
+      q1:"Comment démarrer un enregistrement ?", a1:"Allez sur Enregistrer et touchez le gros bouton.",
+      q2:"Comment fonctionne la réécriture IA ?", a2:"Ouvrez une histoire et choisissez « Réécrire (IA) ».",
+      q3:"Mes histoires se synchronisent-elles ?", a3:"Oui, elles se sauvegardent dans le cloud.",
+      q4:"Et hors-ligne ?", a4:"L’audio est conservé localement puis transcrit quand Internet revient."
+    },
+    nl:{
+      tagline:"Bewaar je herinneringen voor altijd",
+      home:"Home", login:"Inloggen", record:"Opnemen", stories:"Mijn verhalen",
+      h1:"Bewaar je herinneringen voor altijd",
+      lead:"Neem één keer op en bewaar generaties lang. Start met één tik, voeg een titel en “wanneer het gebeurde” toe en deel veilig met familie.",
+      ctaRecordTitle:"Opname starten", ctaRecordText:"Met één tik. Titel en datum kunnen later.", ctaRecordBtn:"Opnemen",
+      ctaStoriesTitle:"Mijn verhalen", ctaStoriesText:"Blader, herschrijf met AI, exporteer en deel.",
+      f1t:"Slimme transcriptie", f1d:"Whisper op de server voor NL/EN/FR/ES, stabiel bij slechte verbinding.",
+      f2t:"Geleid of vrij", f2d:"Kies zachte vragen of spreek vrijuit. Voeg periodes toe zoals “begin jaren 70”.",
+      f3t:"Privébibliotheek", f3d:"Verhalen en media veilig in je account. Exporteer naar PDF/CSV.",
+      pricingTitle:"Prijzen", perMonth:"/maand", p1t:"Premium", p1l1:"Onbeperkt opnemen & Whisper", p1l2:"AI-herschrijven & export", p1l3:"Privé back-up",
+      p2t:"Family", p2l1:"Deel met 4 familie-lezers", p2l2:"Alle Premium-functies", p2l3:"Familiebibliotheek", upgrade:"Upgraden",
+      faqTitle:"FAQ",
+      q1:"Hoe begin ik met opnemen?", a1:"Ga naar Opnemen en druk op de grote knop.",
+      q2:"Hoe werkt AI-herschrijven?", a2:"Open een verhaal en kies “Herschrijf (AI)”.",
+      q3:"Synchroniseren mijn verhalen?", a3:"Ja, in de cloud bij inloggen.",
+      q4:"En offline?", a4:"Audio wordt lokaal bewaard en later getranscribeerd."
+    },
+    es:{
+      tagline:"Conserva tus recuerdos para siempre",
+      home:"Inicio", login:"Acceder", record:"Grabar", stories:"Mis historias",
+      h1:"Conserva tus recuerdos para siempre",
+      lead:"Graba una vez, guarda para generaciones. Empieza con un toque, añade título y “cuándo ocurrió”, y comparte con tu familia.",
+      ctaRecordTitle:"Empezar a grabar", ctaRecordText:"Un toque para iniciar. Título y fecha más tarde.", ctaRecordBtn:"Grabar",
+      ctaStoriesTitle:"Ver mis historias", ctaStoriesText:"Explora, reescribe con IA, exporta y comparte.",
+      f1t:"Transcripción inteligente", f1d:"Whisper en el servidor para ES/EN/FR/NL, resistente a conexiones inestables.",
+      f2t:"Guiado o libre", f2d:"Usa sugerencias suaves o habla libremente. Añade periodos como “inicios de los 70”.",
+      f3t:"Biblioteca privada", f3d:"Historias y medios en tu cuenta. Exporta a PDF/CSV.",
+      pricingTitle:"Precios", perMonth:"/mes", p1t:"Premium", p1l1:"Grabación ilimitada y Whisper", p1l2:"Reescritura IA y exportación", p1l3:"Copia en la nube",
+      p2t:"Familiar", p2l1:"Comparte con 4 lectores familiares", p2l2:"Todas las funciones Premium", p2l3:"Biblioteca familiar", upgrade:"Mejorar",
+      faqTitle:"Preguntas frecuentes",
+      q1:"¿Cómo empiezo a grabar?", a1:"Ve a Grabar y pulsa el botón grande.",
+      q2:"¿Cómo funciona la reescritura con IA?", a2:"Abre una historia y elige “Reescribir (IA)”.",
+      q3:"¿Mis historias se sincronizan?", a3:"Sí, cuando inicias sesión se guardan en la nube.",
+      q4:"¿Y sin conexión?", a4:"El audio se guarda localmente y se transcribe cuando vuelves a estar en línea."
+    }
+  };
+
+  const $=s=>document.querySelector(s);
+  const $$=s=>document.querySelectorAll(s);
+
+  function applyLang(code){
+    const dict=I18N[code]||I18N.en;
+    $$('[data-i18n]').forEach(el=>{
+      const key=el.getAttribute('data-i18n');
+      if(dict[key]) el.textContent=dict[key];
+    });
+    $('#langLabel').textContent = ({
+      en:'🇬🇧 English', fr:'🇫🇷 Français', nl:'🇧🇪 Nederlands', es:'🇪🇸 Español'
+    }[code]||'🇬🇧 English');
+
+    localStorage.setItem('memoir.lang', code);
+  }
+
+  // Language menu behavior
+  const pill = $('#langPill');
+  const menu = $('#langMenu');
+  pill.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    menu.classList.toggle('show');
+  });
+  menu.addEventListener('click', (e)=>{
+    const btn = e.target.closest('button[data-lang]');
+    if(!btn) return;
+    applyLang(btn.getAttribute('data-lang'));
+    menu.classList.remove('show');
+  });
+  document.addEventListener('click', ()=>menu.classList.remove('show'));
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') menu.classList.remove('show'); });
+
+  // Init language on first load
+  applyLang(localStorage.getItem('memoir.lang')||'en');
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/header-loader.js"></script>
-  <script src="/app.js"></script>
-  <div id="site-footer"></div>
-  <script src="/js/header-loader.js" defer></script>
-  <script src="/js/lang.js" defer></script>   <!-- if you use translations -->
-  <script src="/js/app.js" defer></script>    <!-- your shared app logic -->
 </body>
 </html>
