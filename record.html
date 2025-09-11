@@ -26,7 +26,6 @@
     .chip{padding:8px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;cursor:pointer}
     .label{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:12px 0 6px}
 
-    /* Big round mic */
     .micZone{display:flex;flex-direction:column;align-items:center;gap:10px}
     .mic{width:220px;height:220px;border-radius:999px;border:0;
          background:radial-gradient(70% 70% at 50% 30%, #b17d55, #8c5a3c);
@@ -42,83 +41,85 @@
   </style>
 </head>
 <body>
-  <!-- Shared header -->
   <div id="site-header"></div>
 
   <main class="container">
-    <h1 class="title" id="pageTitle">Record</h1>
+    <h1 class="title" id="recTitle">Record</h1>
 
     <section class="grid">
-      <!-- Left: capture -->
+      <!-- Left -->
       <div class="card">
         <div class="micZone">
           <button id="mic" class="mic" aria-pressed="false">Record</button>
           <div class="muted"><span class="timer" id="timer">00:00</span></div>
         </div>
 
-        <div class="label" id="promptsHdr">Today's suggested prompts</div>
+        <div class="label" id="suggestedLabel">Today's suggested prompts</div>
         <div class="row" style="justify-content:space-between">
           <div id="prompts" class="chips"></div>
-          <button id="btnShuffle" class="btn">Suggest other prompts</button>
+          <button id="refreshPrompts" class="btn" type="button">Suggest other prompts</button>
         </div>
 
         <div class="label" id="notesLabel">Notes (optional)</div>
-        <textarea id="notes" placeholder="Add a quick note…" aria-labelledby="notesLabel"></textarea>
+        <textarea id="notes" placeholder="Add a quick note…" aria-label="Notes"></textarea>
 
         <div class="row" style="margin-top:12px">
-          <a href="/stories.html" id="myStoriesBtn" class="btn">My Stories</a>
+          <a href="/stories.html" class="btn" id="toStoriesBtn">My Stories</a>
         </div>
       </div>
 
-      <!-- Right: metadata + transcript -->
+      <!-- Right -->
       <div class="card">
         <div class="label" id="titleLabel">Title</div>
-        <input id="title" type="text" placeholder="Story title" aria-labelledby="titleLabel"/>
+        <input id="title" type="text" placeholder="Story title" />
 
         <div class="label" id="whenLabel">When did this happen?</div>
-        <input id="when" type="text" placeholder='e.g. "summer 1945", "early 2018", "15 Feb 1972"' aria-labelledby="whenLabel"/>
+        <input id="when" type="text" placeholder='e.g. "summer 1945", "early 2018", "15 Feb 1972"' />
 
-        <div class="label" id="addPhotoLabel">Add photo (optional)</div>
-        <input id="photo" type="file" accept="image/*" aria-labelledby="addPhotoLabel"/>
+        <div class="label" id="photoLabel">Add photo (optional)</div>
+        <input id="photo" type="file" accept="image/*" />
 
         <div class="label" id="transcriptLabel" style="margin-top:14px">Transcript</div>
         <div id="transcript" class="transcript" aria-live="polite">Your words will appear here…</div>
         <div class="hint" id="asrHint" style="margin-top:6px"></div>
 
         <div class="row" style="margin-top:14px">
-          <button id="saveBtn" class="btn primary">Save story</button>
+          <button id="saveBtn" class="btn primary" type="button">Save story</button>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- Shared footer -->
   <div id="site-footer"></div>
 
-  <!-- Scripts: lang FIRST, then header loader -->
+  <!-- scripts -->
   <script src="/js/lang.js" defer></script>
   <script src="/js/header-loader.js" defer></script>
-
   <script>
-    // ---------- Localized guided prompts ----------
+    // ---------- i18n bindings ----------
     const TOPIC_WORDS = {
       en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
       fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
       es:["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"],
       nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
     };
+
+    function T(code){ return (window.MEMOIR_I18N?.strings?.[code]) || window.MEMOIR_I18N?.strings?.en || {}; }
+    function F(v,fb){ return (v ?? fb); }
+
     function renderPrompts(code){
       const words=(TOPIC_WORDS[code]||TOPIC_WORDS.en);
       const shuffled=[...words].sort(()=>Math.random()-0.5).slice(0,4);
       const wrap=document.getElementById('prompts'); wrap.innerHTML='';
       shuffled.forEach(w=>{
         const b=document.createElement('button');
-        b.className='chip'; b.textContent=w;
+        b.className='chip'; b.type='button';
+        b.textContent=w;
         b.onclick=()=>{ document.getElementById('title').value=w; speakPrompt(w, code); };
         wrap.appendChild(b);
       });
     }
-    // simple voice prompt
+
     const BCP={en:'en-US',fr:'fr-FR',es:'es-ES',nl:'nl-NL'};
     function speakPrompt(text, code){
       if(!('speechSynthesis' in window)) return;
@@ -127,35 +128,32 @@
       speechSynthesis.cancel(); speechSynthesis.speak(u);
     }
 
-    // ---------- i18n bindings for this page ----------
-    function localizeRecord(lang){
-      const t=(window.MEMOIR_I18N?.strings?.[lang]) || window.MEMOIR_I18N.strings.en;
-      // headings / labels
-      document.getElementById('pageTitle').textContent = t.nav_record || 'Record';
-      document.getElementById('promptsHdr').textContent = t.promptsHdr || "Today's suggested prompts";
-      document.getElementById('btnShuffle').textContent = t.btnShuffle || 'Suggest other prompts';
-      document.getElementById('notesLabel').textContent = t.notesLabel || 'Notes (optional)';
-      document.getElementById('notes').placeholder = t.notesPH || 'Add a quick note…';
-      document.getElementById('titleLabel').textContent = t.titleLabel || 'Title';
-      document.getElementById('title').placeholder = t.titlePH || 'Story title';
-      document.getElementById('whenLabel').textContent = t.whenLabel || 'When did this happen?';
-      document.getElementById('when').placeholder = t.whenPH || 'e.g. "summer 1945", "early 2018", "15 Feb 1972"';
-      document.getElementById('addPhotoLabel').textContent = t.addPhotoLabel || 'Add photo (optional)';
-      document.getElementById('transcriptLabel').textContent = t.transcriptLabel || 'Transcript';
-      document.getElementById('transcript').textContent = t.transcriptPH || 'Your words will appear here…';
-      document.getElementById('saveBtn').textContent = t.saveStory || 'Save story';
-      document.getElementById('myStoriesBtn').textContent = t.viewStories || 'My Stories';
-      // prompts
-      renderPrompts(lang);
-    }
-    window.addEventListener('memoir:lang', e=>localizeRecord(e.detail.code));
-    document.addEventListener('DOMContentLoaded', ()=>{
-      const code = window.MEMOIR_I18N?.getLang?.() || 'en';
-      localizeRecord(code);
-      document.getElementById('btnShuffle').onclick = ()=>localizeRecord(window.MEMOIR_I18N?.getLang?.()||'en');
-    });
+    function applyRecordLang(code){
+      const t=T(code);
+      document.getElementById('recTitle').textContent      = F(t.record?.title, 'Record');
+      document.getElementById('suggestedLabel').textContent= F(t.record?.suggested, "Today's suggested prompts");
+      document.getElementById('refreshPrompts').textContent= F(t.record?.refresh, 'Suggest other prompts');
+      document.getElementById('notesLabel').textContent    = F(t.record?.notes, 'Notes (optional)');
+      document.getElementById('toStoriesBtn').textContent  = F(t.common?.stories, 'My Stories');
+      document.getElementById('titleLabel').textContent    = F(t.record?.titleLabel, 'Title');
+      document.getElementById('title').placeholder         = F(t.record?.titlePh, 'Story title');
+      document.getElementById('whenLabel').textContent     = F(t.record?.when, 'When did this happen?');
+      document.getElementById('when').placeholder          = F(t.record?.whenPh, 'e.g. "summer 1945", "early 2018", "15 Feb 1972"');
+      document.getElementById('photoLabel').textContent    = F(t.record?.photo, 'Add photo (optional)');
+      document.getElementById('transcriptLabel').textContent=F(t.record?.transcript, 'Transcript');
+      document.getElementById('transcript').textContent    = F(t.record?.placeholder, 'Your words will appear here…');
+      document.getElementById('saveBtn').textContent       = F(t.record?.save, 'Save story');
 
-    // ---------- Recording + chunk upload ----------
+      renderPrompts(code);
+    }
+
+    window.addEventListener('memoir:lang', e => applyRecordLang(e.detail.code));
+    document.addEventListener('DOMContentLoaded', ()=>{
+      applyRecordLang(window.MEMOIR_I18N?.getLang?.() || 'en');
+    });
+    document.getElementById('refreshPrompts').onclick = ()=>applyRecordLang(window.MEMOIR_I18N?.getLang?.() || 'en');
+
+    // ---------- Recording (same behavior; uploads to your chunk endpoint) ----------
     const mic = document.getElementById('mic');
     const timerEl = document.getElementById('timer');
     const transcriptEl = document.getElementById('transcript');
@@ -167,18 +165,20 @@
         media = await navigator.mediaDevices.getUserMedia({ audio:true });
         const mr = new MediaRecorder(media, { mimeType: 'audio/webm' });
         chunks=[];
+
         mr.ondataavailable = e => { if(e.data && e.data.size) chunks.push(e.data); };
         mr.onstop = async () => {
           const blob = new Blob(chunks, { type:'audio/webm' });
           await uploadChunk(blob);
         };
+
         mr.start(1000);
         mic.textContent='Stop';
         mic.classList.add('pulse');
         recActive=true; startAt=Date.now();
-        tick=setInterval(updateTimer,1000);
+        tick=setInterval(()=>updateTimer(),1000);
         window._memoirRecorder = mr;
-        asrHint.textContent = (window.MEMOIR_I18N?.strings?.[window.MEMOIR_I18N.getLang()]?.asrRecording) || 'Recording… transcription will appear live when online.';
+        asrHint.textContent='Recording… transcription will appear live when online.';
       }catch(e){ alert('Microphone permission denied.'); }
     }
     function stopRec(){
@@ -211,9 +211,9 @@
         if(!r.ok) throw new Error('upload_failed');
         const data = await r.json().catch(()=>null);
         if(data?.partial){ transcriptEl.textContent = data.partial; }
-        asrHint.textContent=(window.MEMOIR_I18N?.strings?.[lang]?.asrListening)||'Listening…';
+        asrHint.textContent='Listening…';
       }catch(e){
-        asrHint.textContent=(window.MEMOIR_I18N?.strings?.[window.MEMOIR_I18N.getLang()]?.asrOffline)||'Offline or server unavailable — audio will be saved locally and sent later.';
+        asrHint.textContent='Offline or server unavailable — audio will be saved locally and sent later.';
       }
     }
 
@@ -225,10 +225,14 @@
       const photo = document.getElementById('photo').files?.[0] || null;
       const text  = (transcriptEl.textContent || '').trim();
       if(!text){ alert('There is no transcript yet. Say a few words, then try again.'); return; }
+
       const fd = new FormData();
-      fd.append('title', title); fd.append('when', when);
-      fd.append('notes', notes); fd.append('text', text);
+      fd.append('title', title);
+      fd.append('when', when);
+      fd.append('notes', notes);
+      fd.append('text', text);
       if(photo) fd.append('photo', photo);
+
       try{
         const r = await fetch('/api/transcribe-story', { method:'POST', body: fd });
         if(!r.ok) throw new Error('save_failed');
