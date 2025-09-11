@@ -4,31 +4,117 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — My Stories</title>
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/styles.css"/>
 </head>
-<body class="bg-cream">
+<body>
+  <!-- Shared header -->
   <div id="site-header"></div>
 
-  <main class="container" style="padding:20px 16px 30px">
-    <h1 class="page-title">My Stories</h1>
-
-    <section class="card">
-      <div class="row" style="justify-content:space-between;align-items:center">
-        <div class="muted">Synced stories will appear here.</div>
-        <a class="btn small" href="/record.html">Record</a>
+  <main class="container">
+    <!-- USER INFO -->
+    <section class="card" style="margin-bottom:20px;">
+      <h1 id="storiesHeader">My Stories</h1>
+      <p id="storiesIntro" class="muted">
+        Browse, listen, and share your memories. Invite your family to join.
+      </p>
+      <div class="row" style="flex-wrap:wrap;gap:16px;margin-top:12px;">
+        <div class="card" style="flex:1;min-width:220px;">
+          <div class="label">Stories</div>
+          <div id="storyCount" style="font-size:1.6em;font-weight:600;">0</div>
+        </div>
+        <div class="card" style="flex:1;min-width:220px;">
+          <div class="label">Family Members</div>
+          <div id="familyCount" style="font-size:1.6em;font-weight:600;">0</div>
+        </div>
+        <div class="card" style="flex:2;min-width:240px;">
+          <div class="label">Invite Family Member</div>
+          <form id="inviteForm" class="row" style="gap:10px;">
+            <input type="email" id="inviteEmail" placeholder="email@example.com"
+                   style="flex:1;padding:8px;border-radius:8px;border:1px solid #ccc"/>
+            <button type="submit" class="btn small primary">Invite</button>
+          </form>
+        </div>
       </div>
-      <div id="storiesList" class="list" style="margin-top:12px"></div>
+    </section>
+
+    <!-- STORIES LIST -->
+    <section>
+      <h2 style="margin:16px 0 10px;" id="storyListTitle">Your Stories</h2>
+      <div id="storiesList" class="two-cards">
+        <!-- Stories from Supabase will render here -->
+      </div>
     </section>
   </main>
 
+  <!-- Shared footer -->
   <div id="site-footer"></div>
 
+  <!-- Scripts -->
   <script src="/js/header-loader.js" defer></script>
   <script src="/js/lang.js" defer></script>
+  <script src="/js/app.js" defer></script>
   <script>
-    // demo list
-    const list = document.getElementById('storiesList');
-    list.innerHTML = '<div class="muted">No stories yet.</div>';
+    async function loadStories() {
+      try {
+        const { data, error } = await window.supabase
+          .from('stories')
+          .select('*')
+          .eq('user_id', window.supabase.auth.user()?.id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const list = document.getElementById('storiesList');
+        list.innerHTML = '';
+        if (!data || data.length === 0) {
+          list.innerHTML = '<p>No stories yet. Start recording today!</p>';
+        } else {
+          data.forEach(story => {
+            const el = document.createElement('div');
+            el.className = 'card';
+            el.innerHTML = `
+              <h3>${story.title || '(Untitled)'}</h3>
+              <p class="muted">${story.transcript?.slice(0,120) || 'No transcript yet'}...</p>
+              <div class="row" style="margin-top:10px;">
+                <a class="btn small" href="#" onclick="alert('Full view coming soon')">Open</a>
+              </div>
+            `;
+            list.appendChild(el);
+          });
+        }
+
+        document.getElementById('storyCount').textContent = data.length;
+      } catch (err) {
+        console.error('Error loading stories:', err);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadStories);
+
+    // Dummy family count (replace with Supabase fetch later)
+    document.getElementById('familyCount').textContent = 0;
+
+    // Handle invites
+    document.getElementById('inviteForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const email = document.getElementById('inviteEmail').value;
+      if (email) {
+        alert(`Invite sent to ${email} (hook this to Supabase)`);
+        document.getElementById('inviteEmail').value = '';
+      }
+    });
+
+    // Localization hook
+    function applyStoriesLang(code){
+      const t = (window.MEMOIR_I18N?.strings?.[code]) || window.MEMOIR_I18N.strings.en;
+      storiesHeader.textContent = t.viewStories;
+      storiesIntro.textContent = t.heroBlurb;
+      storyListTitle.textContent = t.viewStories;
+    }
+    window.addEventListener('memoir:lang', e => applyStoriesLang(e.detail.code));
+    document.addEventListener('DOMContentLoaded', () =>
+      applyStoriesLang(window.MEMOIR_I18N?.getLang?.() || 'en')
+    );
   </script>
 </body>
 </html>
