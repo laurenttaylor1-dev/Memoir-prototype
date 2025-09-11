@@ -1,33 +1,57 @@
 <!-- /partials/header.html -->
-<header class="mk-header" role="banner">
+<header class="mk-header">
   <div class="mk-header-inner">
-    <a class="mk-brand" href="/landing.html">
-      <span class="mk-logo" aria-hidden="true"></span>
+    <a class="mk-brand" href="/landing.html" aria-label="Memoir App Home">
+      <div class="mk-logo" aria-hidden="true"></div>
       <div class="mk-brand-text">
         <strong>MEMOIR APP</strong>
         <small>Preserve your memories forever</small>
       </div>
     </a>
 
-    <nav class="mk-nav" aria-label="Primary">
-      <a class="mk-chip" href="/landing.html" data-i18n="home">Home</a>
-      <a class="mk-chip" href="/login.html" data-i18n="login">Login</a>
-      <a class="mk-chip" href="/record.html" data-i18n="record">Record</a>
-      <a class="mk-chip" href="/stories.html" data-i18n="myStories">My Stories</a>
+    <nav class="mk-nav" aria-label="Main">
+      <a class="mk-chip" href="/landing.html" data-i18n="nav.home">Home</a>
+      <a class="mk-chip" href="/login.html" data-i18n="nav.login">Login</a>
+      <a class="mk-chip" href="/record.html" data-i18n="nav.record">Record</a>
+      <a class="mk-chip" href="/stories.html" data-i18n="nav.stories">My Stories</a>
 
       <!-- Language -->
       <div class="mk-lang">
-        <button id="mkLangBtn" class="mk-chip mk-lang-btn" aria-expanded="false" aria-haspopup="listbox">
-          <span class="mk-flag">🇬🇧</span><span id="mkLangLabel">English</span>
-          <svg class="mk-caret" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
+        <button class="mk-chip mk-lang-trigger" id="mkLangBtn"
+                aria-haspopup="menu" aria-controls="mkLangMenu" aria-expanded="false">
+          <span id="mkLangCurrentFlag" aria-hidden="true">🇬🇧</span>
+          <span id="mkLangCurrentText">English</span>
+          <svg class="mk-caret" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="currentColor" d="M7 10l5 5 5-5H7z"/>
+          </svg>
         </button>
-        <ul id="mkLangMenu" class="mk-lang-menu" role="listbox" tabindex="-1" aria-label="Language">
-          <li><button type="button" role="option" data-lang="en">🇬🇧 English</button></li>
-          <li><button type="button" role="option" data-lang="fr">🇫🇷 Français</button></li>
-          <li><button type="button" role="option" data-lang="nl">🇧🇪 Nederlands</button></li>
-          <li><button type="button" role="option" data-lang="es">🇪🇸 Español</button></li>
+
+        <ul class="mk-lang-menu" id="mkLangMenu" role="menu" aria-label="Language">
+          <li role="none"><button role="menuitem" data-lang="en">🇬🇧 English</button></li>
+          <li role="none"><button role="menuitem" data-lang="fr">🇫🇷 Français</button></li>
+          <li role="none"><button role="menuitem" data-lang="nl">🇧🇪 Nederlands</button></li>
+          <li role="none"><button role="menuitem" data-lang="es">🇪🇸 Español</button></li>
         </ul>
       </div>
     </nav>
   </div>
 </header>
+
+<!-- minimal critical styles so header never appears “unstyled” -->
+<style>
+  .mk-header{position:sticky;top:0;z-index:50;background:#f4efe8;border-bottom:1px solid rgba(0,0,0,.06)}
+  .mk-header-inner{max-width:1200px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px}
+  .mk-brand{display:flex;align-items:center;gap:10px;color:#3b2f2a;text-decoration:none}
+  .mk-logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#8c5a3c,#b99173)}
+  .mk-brand-text small{display:block;color:#7b6a62;font-size:12px}
+  .mk-nav{display:flex;align-items:center;gap:10px;margin-left:auto}
+  .mk-chip{border:1px solid rgba(0,0,0,.12);background:#fff;border-radius:999px;padding:10px 14px;text-decoration:none;color:#3b2f2a;font-weight:600;display:inline-flex;align-items:center;gap:8px}
+  .mk-caret{margin-left:6px;opacity:.7;transition:transform .18s ease}
+  .mk-lang{position:relative}
+  .mk-lang-menu{position:absolute;right:0;top:calc(100% + 6px);min-width:180px;background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:14px;box-shadow:0 20px 40px rgba(0,0,0,.12);padding:6px;display:none;z-index:60}
+  .mk-lang-menu.open{display:block}
+  .mk-lang-menu li{list-style:none}
+  .mk-lang-menu button{width:100%;text-align:left;border:0;background:transparent;padding:10px 12px;border-radius:10px;cursor:pointer}
+  .mk-lang-menu button:hover{background:#f6f1ea}
+  .mk-lang-trigger[aria-expanded="true"] .mk-caret{transform:rotate(180deg)}
+</style>
