@@ -9,171 +9,177 @@
 
   <style>
     :root{
-      --bg:#f6f1ea;           /* warm cream */
-      --card:#fffaf5;
-      --ink:#3b2f2a;          /* dark brown */
-      --muted:#7b6a62;
-      --accent:#8c5a3c;       /* vintage brown */
-      --accent2:#b17d55;
-      --radius:18px;
+      /* warm/vintage palette */
+      --bg:#f6f1ea; --card:#fffaf5; --ink:#3b2f2a; --muted:#7b6a62;
+      --accent:#8c5a3c; --accent2:#b17d55; --radius:18px;
       --shadow:0 18px 40px rgba(59,47,42,.10), 0 2px 8px rgba(59,47,42,.06);
+      --pill:#fff;
     }
-    body{background:var(--bg); color:var(--ink); margin:0; font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;}
-    .container{max-width:1200px; margin:0 auto; padding:20px 16px 28px;}
+    body{background:var(--bg);color:var(--ink);margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    .container{max-width:1200px;margin:0 auto;padding:20px 16px 28px}
 
-    /* IMAGE LEFT / CONTENT RIGHT */
-    .hero-shell{display:grid; grid-template-columns: 1.05fr .95fr; gap:22px; align-items:start;}
-    @media (max-width: 980px){ .hero-shell{grid-template-columns: 1fr;} }
+    /* HERO */
+    .hero{
+      display:grid; grid-template-columns: 1.1fr .9fr; gap:22px; align-items:stretch;
+    }
+    @media (max-width: 980px){ .hero{grid-template-columns:1fr; } }
 
     .hero-img{background:var(--card); border:1px solid rgba(0,0,0,.06); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden;}
     .hero-img img{display:block; width:100%; height:100%; object-fit:cover;}
 
-    .card{background:var(--card); border:1px solid rgba(0,0,0,.08); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px;}
-    .eyebrow{font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:6px}
-    .h1{font-size:clamp(30px, 3.6vw, 48px); line-height:1.08; margin:8px 0 12px; letter-spacing:.2px;}
-    .gradient{background:linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip:text; background-clip:text; color:transparent;}
-    .muted{color:var(--muted)}
-    .label{font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:6px}
-    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-    .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 16px; border-radius:999px; border:1px solid rgba(0,0,0,.12); background:#fff; color:var(--ink); text-decoration:none; font-weight:700}
-    .btn.primary{background:linear-gradient(90deg, var(--accent), var(--accent2)); color:#fff; border:0;}
-
-    /* right column stack */
-    .right-stack{display:grid; grid-template-columns:1fr; gap:16px;}
-
-    /* three features */
-    .features{display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-top:22px}
-    @media (max-width: 960px){ .features{grid-template-columns:1fr} }
-
-    /* pricing + faq */
-    .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px}
-    @media (max-width: 960px){ .grid-2{grid-template-columns:1fr} }
-
-    .section-title{font-size:18px; font-weight:800; margin:6px 0 10px}
-    .faq .faq-item + .faq-item{margin-top:12px}
-    .faq h4{margin:0 0 4px}
-
-    /* note block (your blue text area style) */
-    .note{
-      background:#eef6ff; border:1px solid #cfe5ff; color:#0b4a9e;
-      padding:10px 12px; border-radius:12px; font-size:14px; line-height:1.35;
+    .hero-card{
+      display:flex; flex-direction:column; justify-content:space-between;
+      background:var(--card); border:1px solid rgba(0,0,0,.08); border-radius:var(--radius); box-shadow:var(--shadow);
+      padding:18px; min-height:100%;
     }
+    .label{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
 
-    /* guard to prevent CLS while header loads */
-    #site-header:empty{min-height:68px; display:block}
+    .h1{
+      /* forced two-line layout: we hard-break and clamp line-height to keep height stable across languages */
+      font-size:clamp(28px, 3.3vw, 42px); line-height:1.12; margin:6px 0 10px; letter-spacing:.2px; font-weight:800;
+    }
+    .h1 .line{display:block}
+    .h1 .accent{background:linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip:text; background-clip:text; color:transparent;}
+
+    .muted{color:var(--muted)}
+    .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+
+    .cta-pair{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:12px}
+    @media (max-width: 700px){ .cta-pair{grid-template-columns:1fr} }
+
+    .cta{
+      background:#fff; border:1px solid rgba(0,0,0,.08); border-radius:16px; padding:14px;
+      display:flex; flex-direction:column; gap:8px; justify-content:space-between;
+    }
+    .cta h3{margin:0; font-size:18px}
+    .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 16px; border-radius:999px; border:1px solid rgba(0,0,0,.12); background:var(--pill); color:var(--ink); text-decoration:none; font-weight:700; cursor:pointer}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#fff; border:0;}
+
+    /* FEATURES (3-up) */
+    .features{margin-top:26px}
+    .feat-grid{display:grid; grid-template-columns: repeat(3, 1fr); gap:16px}
+    @media (max-width: 900px){ .feat-grid{grid-template-columns:1fr} }
+    .feat .title{font-weight:800; margin:0 0 6px; font-size:18px}
+    .feat p{margin:0; color:var(--muted)}
+
+    /* PRICING */
+    .pricing{margin-top:30px}
+    .pricing-grid{display:grid; grid-template-columns: repeat(4, 1fr); gap:16px}
+    @media (max-width: 1100px){ .pricing-grid{grid-template-columns: repeat(2, 1fr);} }
+    @media (max-width: 700px){ .pricing-grid{grid-template-columns: 1fr;} }
+
+    .plan{
+      background:#fff; border:1px solid rgba(0,0,0,.08); border-radius:16px; padding:16px;
+      display:flex; flex-direction:column; gap:8px; justify-content:space-between;
+    }
+    .plan h3{margin:0; font-size:18px}
+    .price{font-weight:800; font-size:22px}
+    .perk{display:flex; gap:10px; align-items:flex-start; color:var(--muted)}
+    .perk svg{flex:0 0 auto; margin-top:2px}
+    .plan .choose{margin-top:8px}
   </style>
 </head>
 <body>
-  <!-- Shared header -->
+  <!-- Shared header (loaded via JS) -->
   <div id="site-header"></div>
 
   <main class="container">
-
-    <!-- IMAGE LEFT / RIGHT COLUMN WITH 2 FULL CARDS -->
-    <section class="hero-shell">
-      <!-- Left: image -->
+    <!-- HERO -->
+    <section class="hero">
       <div class="hero-img">
-        <img src="/assets/book-1.jpg" alt="Open memory book">
+        <img src="/assets/book-1.jpg" alt="Open book">
       </div>
 
-      <!-- Right: hero text + two ACTION cards (full content) -->
-      <div class="right-stack">
-        <!-- Hero text card -->
-        <div class="card">
-          <div class="eyebrow" data-i18n="brandEyebrow">MEMOIR APP</div>
-          <h1 class="h1">
-            <span data-i18n="heroTitleA">Preserve Your</span><br/>
-            <span class="gradient" data-i18n="heroTitleB">Memories Forever</span>
+      <div class="hero-card">
+        <div>
+          <div class="label" id="heroBadge">Memoir App</div>
+          <h1 class="h1" aria-live="polite">
+            <span id="heroLine1" class="line">Preserve Your</span>
+            <span id="heroLine2" class="line accent">Memories Forever</span>
           </h1>
-          <p class="muted" style="max-width:60ch" data-i18n="heroBlurb">
+          <p id="heroBlurb" class="muted" style="max-width:64ch">
             Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.
           </p>
         </div>
 
-        <!-- Start Recording card -->
-        <div class="card">
-          <div class="label" data-i18n="startRecording">Start Recording</div>
-          <h3 style="margin:6px 0 8px" data-i18n="startRecording">Start Recording</h3>
-          <p class="muted" data-i18n="startCopy">
-            One tap to begin. Add a title and “when it happened” later.
-          </p>
-          <div class="row">
-            <a class="btn primary" href="/record.html" data-i18n="startRecording">Start Recording</a>
+        <!-- Two CTAs (cards) – aligned with image height on large screens -->
+        <div class="cta-pair">
+          <div class="cta">
+            <h3 id="cta1Title">Start Recording</h3>
+            <p class="muted" id="cta1Text">One tap to begin. Add a title and “when it happened” later.</p>
+            <a class="btn primary" href="/record.html" id="cta1Btn">Start Recording</a>
           </div>
-        </div>
-
-        <!-- View My Stories card -->
-        <div class="card">
-          <div class="label" data-i18n="viewStories">View My Stories</div>
-          <h3 style="margin:6px 0 8px" data-i18n="viewStories">View My Stories</h3>
-          <p class="muted" data-i18n="viewCopy">
-            Browse, rewrite with AI, export, and share with your family.
-          </p>
-          <div class="row">
-            <a class="btn" href="/stories.html" data-i18n="viewStories">My Stories</a>
+          <div class="cta">
+            <h3 id="cta2Title">View My Stories</h3>
+            <p class="muted" id="cta2Text">Browse your stories, refine with AI, and organize by time and theme.</p>
+            <a class="btn" href="/stories.html" id="cta2Btn">My Stories</a>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Three main points (exactly like your screenshot) -->
+    <!-- FEATURES -->
     <section class="features">
-      <div class="card">
-        <h3 class="section-title" data-i18n="feat1Title">Smart Transcription</h3>
-        <p class="muted" data-i18n="feat1Copy">AI-powered voice-to-text conversion.</p>
-      </div>
-      <div class="card">
-        <h3 class="section-title" data-i18n="feat2Title">Multi-language Support</h3>
-        <p class="muted" data-i18n="feat2Copy">Record and transcribe in multiple languages — and share your stories worldwide.</p>
-      </div>
-      <div class="card">
-        <h3 class="section-title" data-i18n="feat3Title">Private Library</h3>
-        <p class="muted" data-i18n="feat3Copy">Your stories are stored in your private library, available across your devices.</p>
+      <div class="label" id="featBadge">Why Memoir</div>
+      <div class="feat-grid">
+        <div class="card feat">
+          <div class="title" id="feat1Title">Guided or Free</div>
+          <p id="feat1Text">Pick a gentle prompt or simply speak freely. The app keeps the pace simple and human.</p>
+        </div>
+        <div class="card feat">
+          <div class="title" id="feat2Title">High-quality Transcription</div>
+          <p id="feat2Text">Whisper-based transcription for Dutch, French, English, and Spanish—live when online, deferred when offline.</p>
+        </div>
+        <div class="card feat">
+          <div class="title" id="feat3Title">Family-safe Sharing</div>
+          <p id="feat3Text">Your stories sync across devices. Invite family to follow along—and add photos to chapters.</p>
+        </div>
       </div>
     </section>
 
-    <!-- Pricing + FAQ -->
-    <section class="grid-2">
-      <!-- Pricing -->
-      <div class="card">
-        <h3 class="section-title" data-i18n="pricing">Pricing</h3>
-        <ul class="muted" style="margin:0 0 12px 18px">
-          <li><strong data-i18n="planPremium">Premium</strong> — <span data-i18n="pricePremium">€4.99/month</span></li>
-          <li><strong data-i18n="planFamily">Family</strong> — <span data-i18n="priceFamily">€7.99/month</span> <span class="muted" data-i18n="familyNote">(up to 4 read-only family members)</span></li>
-        </ul>
-
-        <!-- Your “Please note…” block from the screenshot -->
-        <div class="note" aria-label="Upcoming changes">
-          <strong>Please note — we’re planning changes:</strong><br/>
-          Free: up to 10 stories of max 2 minutes transcription each.<br/>
-          Premium: <strong>€6.99</strong>/month for up to <strong>2.5 hours</strong>/month of AI transcription & rewriting.<br/>
-          Family: <strong>€8.99</strong>/month for Premium + sharing your library with up to 4 family members.<br/>
-          Exclusive: <strong>€11.99</strong>/month for up to <strong>5 hours</strong>/month of AI transcription & rewriting + sharing (up to 4 read-only family members).
+    <!-- PRICING -->
+    <section class="pricing">
+      <div class="label" id="pricingBadge">Pricing</div>
+      <div class="pricing-grid">
+        <!-- FREE -->
+        <div class="plan">
+          <h3 id="planFreeTitle">Free</h3>
+          <div class="price" id="planFreePrice">€0 / mo</div>
+          <div class="perk"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg><span id="planFreeP1">2-minute recordings</span></div>
+          <div class="perk"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg><span id="planFreeP2">Local library</span></div>
+          <div class="perk"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg><span id="planFreeP3">Basic prompts</span></div>
+          <a href="/subscribe.html?plan=free" class="btn choose" id="planFreeBtn">Stay on Free</a>
         </div>
 
-        <div class="row" style="margin-top:12px">
-          <a class="btn" href="/api/checkout?plan=premium" data-i18n="upgradePremium">Upgrade to Premium</a>
-          <a class="btn" href="/api/checkout?plan=family"  data-i18n="upgradeFamily">Upgrade to Family</a>
-        </div>
-      </div>
-
-      <!-- FAQ -->
-      <div class="card faq">
-        <h3 class="section-title" data-i18n="faq">FAQ</h3>
-
-        <div class="faq-item">
-          <h4 data-i18n="qFree">Is there a free plan?</h4>
-          <p class="muted" data-i18n="aFree">Yes, you can try the app for free before upgrading.</p>
+        <!-- PREMIUM -->
+        <div class="plan">
+          <h3 id="planPremiumTitle">Premium</h3>
+          <div class="price" id="planPremiumPrice">€4.99 / mo</div>
+          <div class="perk"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg><span id="planPremiumP1">Longer recordings</span></div>
+          <div class="perk"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg><span id="planPremiumP2">Cloud sync + AI rewrite</span></div>
+          <div class="perk"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg><span id="planPremiumP3">Export to book (PDF)</span></div>
+          <a href="/subscribe.html?plan=premium" class="btn primary choose" id="planPremiumBtn">Choose Premium</a>
         </div>
 
-        <div class="faq-item">
-          <h4 data-i18n="qLangs">Which languages are supported?</h4>
-          <p class="muted" data-i18n="aLangs">English, Français, Nederlands, Español (more coming).</p>
+        <!-- FAMILY -->
+        <div class="plan">
+          <h3 id="planFamilyTitle">Family</h3>
+          <div class="price" id="planFamilyPrice">€7.99 / mo</div>
+          <div class="perk"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg><span id="planFamilyP1">Premium features</span></div>
+          <div class="perk"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg><span id="planFamilyP2">Share with up to 4 family readers</span></div>
+          <div class="perk"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg><span id="planFamilyP3">Private, read-only access</span></div>
+          <a href="/subscribe.html?plan=family" class="btn primary choose" id="planFamilyBtn">Choose Family</a>
         </div>
 
-        <div class="faq-item">
-          <h4 data-i18n="qTransc">How is transcription done?</h4>
-          <p class="muted" data-i18n="aTransc">Server-side Whisper for high accuracy; works offline then syncs later.</p>
+        <!-- EXCLUSIVE -->
+        <div class="plan">
+          <h3 id="planExclusiveTitle">Exclusive</h3>
+          <div class="price" id="planExclusivePrice">€XX.XX / mo</div>
+          <div class="perk"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg><span id="planExclusiveP1">Everything in Family</span></div>
+          <div class="perk"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg><span id="planExclusiveP2">Up to 5 hours transcription / month</span></div>
+          <div class="perk"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg><span id="planExclusiveP3">Priority support</span></div>
+          <a href="/subscribe.html?plan=exclusive" class="btn primary choose" id="planExclusiveBtn">Choose Exclusive</a>
         </div>
       </div>
     </section>
@@ -182,59 +188,76 @@
   <!-- Shared footer -->
   <div id="site-footer"></div>
 
-  <!-- Scripts: lang first, then header loader -->
+  <!-- JS: i18n first, then header/footer loader -->
   <script src="/js/lang.js" defer></script>
   <script src="/js/header-loader.js" defer></script>
 
   <script>
-    /* Apply translations to this page (uses your existing MEMOIR_I18N) */
-    function txt(code, key, fallback){
-      const dict = (window.MEMOIR_I18N?.strings?.[code]) || window.MEMOIR_I18N?.strings?.en || {};
-      return dict[key] || fallback || '';
+    // Localize all landing strings using lang.js dictionary.
+    function applyLanding(code){
+      const t = (window.MEMOIR_I18N?.strings?.[code]) || window.MEMOIR_I18N.strings.en;
+
+      // Hero
+      document.getElementById('heroBadge').textContent = t.heroBadge || 'Memoir App';
+      document.getElementById('heroLine1').textContent = t.heroLine1 || 'Preserve Your';
+      document.getElementById('heroLine2').textContent = t.heroLine2 || 'Memories Forever';
+      document.getElementById('heroBlurb').textContent = t.heroBlurb || 'Record once, keep for generations…';
+
+      // CTAs
+      document.getElementById('cta1Title').textContent = t.cta1Title || 'Start Recording';
+      document.getElementById('cta1Text').textContent  = t.cta1Text  || 'One tap to begin…';
+      document.getElementById('cta1Btn').textContent   = t.cta1Btn   || 'Start Recording';
+
+      document.getElementById('cta2Title').textContent = t.cta2Title || 'View My Stories';
+      document.getElementById('cta2Text').textContent  = t.cta2Text  || 'Browse your stories…';
+      document.getElementById('cta2Btn').textContent   = t.cta2Btn   || 'My Stories';
+
+      // Features
+      document.getElementById('featBadge').textContent = t.featBadge || 'Why Memoir';
+      document.getElementById('feat1Title').textContent= t.feat1Title|| 'Guided or Free';
+      document.getElementById('feat1Text').textContent = t.feat1Text || 'Pick a gentle prompt or speak freely…';
+      document.getElementById('feat2Title').textContent= t.feat2Title|| 'High-quality Transcription';
+      document.getElementById('feat2Text').textContent = t.feat2Text || 'Whisper-based transcription…';
+      document.getElementById('feat3Title').textContent= t.feat3Title|| 'Family-safe Sharing';
+      document.getElementById('feat3Text').textContent = t.feat3Text || 'Your stories sync across devices…';
+
+      // Pricing
+      document.getElementById('pricingBadge').textContent    = t.pricingBadge || 'Pricing';
+
+      document.getElementById('planFreeTitle').textContent   = t.planFreeTitle   || 'Free';
+      document.getElementById('planFreePrice').textContent   = t.planFreePrice   || '€0 / mo';
+      document.getElementById('planFreeP1').textContent      = t.planFreeP1      || '2-minute recordings';
+      document.getElementById('planFreeP2').textContent      = t.planFreeP2      || 'Local library';
+      document.getElementById('planFreeP3').textContent      = t.planFreeP3      || 'Basic prompts';
+      document.getElementById('planFreeBtn').textContent     = t.planFreeBtn     || 'Stay on Free';
+
+      document.getElementById('planPremiumTitle').textContent= t.planPremiumTitle|| 'Premium';
+      document.getElementById('planPremiumPrice').textContent= t.planPremiumPrice|| '€4.99 / mo';
+      document.getElementById('planPremiumP1').textContent   = t.planPremiumP1   || 'Longer recordings';
+      document.getElementById('planPremiumP2').textContent   = t.planPremiumP2   || 'Cloud sync + AI rewrite';
+      document.getElementById('planPremiumP3').textContent   = t.planPremiumP3   || 'Export to book (PDF)';
+      document.getElementById('planPremiumBtn').textContent  = t.planPremiumBtn  || 'Choose Premium';
+
+      document.getElementById('planFamilyTitle').textContent = t.planFamilyTitle || 'Family';
+      document.getElementById('planFamilyPrice').textContent = t.planFamilyPrice || '€7.99 / mo';
+      document.getElementById('planFamilyP1').textContent    = t.planFamilyP1    || 'Premium features';
+      document.getElementById('planFamilyP2').textContent    = t.planFamilyP2    || 'Share with up to 4 family readers';
+      document.getElementById('planFamilyP3').textContent    = t.planFamilyP3    || 'Private, read-only access';
+      document.getElementById('planFamilyBtn').textContent   = t.planFamilyBtn   || 'Choose Family';
+
+      document.getElementById('planExclusiveTitle').textContent = t.planExclusiveTitle || 'Exclusive';
+      document.getElementById('planExclusivePrice').textContent = t.planExclusivePrice || '€XX.XX / mo';
+      document.getElementById('planExclusiveP1').textContent    = t.planExclusiveP1    || 'Everything in Family';
+      document.getElementById('planExclusiveP2').textContent    = t.planExclusiveP2    || 'Up to 5 hours transcription / month';
+      document.getElementById('planExclusiveP3').textContent    = t.planExclusiveP3    || 'Priority support';
+      document.getElementById('planExclusiveBtn').textContent   = t.planExclusiveBtn   || 'Choose Exclusive';
     }
-    function set(key, sel, fallback){ const el=document.querySelector(sel); if(el) el.textContent = txt(window.MEMOIR_I18N?.getLang?.()||'en', key, fallback); }
-    function setAll(key, sel){ document.querySelectorAll(sel).forEach(n => n.textContent = txt(window.MEMOIR_I18N?.getLang?.()||'en', key, n.textContent)); }
 
-    function applyLanding(){
-      const lang = window.MEMOIR_I18N?.getLang?.() || 'en';
-      set('brandEyebrow','[data-i18n="brandEyebrow"]','MEMOIR APP');
-      set('heroTitleA','[data-i18n="heroTitleA"]','Preserve Your');
-      set('heroTitleB','[data-i18n="heroTitleB"]','Memories Forever');
-      set('heroBlurb','[data-i18n="heroBlurb"]','Record once, keep for generations...');
-
-      setAll('startRecording','[data-i18n="startRecording"]');
-      set('startCopy','[data-i18n="startCopy"]','One tap to begin. Add a title and “when it happened” later.');
-
-      setAll('viewStories','[data-i18n="viewStories"]');
-      set('viewCopy','[data-i18n="viewCopy"]','Browse, rewrite with AI, export, and share with your family.');
-
-      set('feat1Title','[data-i18n="feat1Title"]','Smart Transcription');
-      set('feat1Copy','[data-i18n="feat1Copy"]','AI-powered voice-to-text conversion.');
-      set('feat2Title','[data-i18n="feat2Title"]','Multi-language Support');
-      set('feat2Copy','[data-i18n="feat2Copy"]','Record and transcribe in multiple languages — and share your stories worldwide.');
-      set('feat3Title','[data-i18n="feat3Title"]','Private Library');
-      set('feat3Copy','[data-i18n="feat3Copy"]','Your stories are stored in your private library, available across your devices.');
-
-      set('pricing','[data-i18n="pricing"]','Pricing');
-      set('planPremium','[data-i18n="planPremium"]','Premium');
-      set('planFamily','[data-i18n="planFamily"]','Family');
-      set('pricePremium','[data-i18n="pricePremium"]','€4.99/month');
-      set('priceFamily','[data-i18n="priceFamily"]','€7.99/month');
-      set('familyNote','[data-i18n="familyNote"]','(up to 4 read-only family members)');
-      set('upgradePremium','[data-i18n="upgradePremium"]','Upgrade to Premium');
-      set('upgradeFamily','[data-i18n="upgradeFamily"]','Upgrade to Family');
-
-      set('faq','[data-i18n="faq"]','FAQ');
-      set('qFree','[data-i18n="qFree"]','Is there a free plan?');
-      set('aFree','[data-i18n="aFree"]','Yes, you can try the app for free before upgrading.');
-      set('qLangs','[data-i18n="qLangs"]','Which languages are supported?');
-      set('aLangs','[data-i18n="aLangs"]','English, Français, Nederlands, Español (more coming).');
-      set('qTransc','[data-i18n="qTransc"]','How is transcription done?');
-      set('aTransc','[data-i18n="aTransc"]','Server-side Whisper for high accuracy; works offline then syncs later.');
-    }
-
-    window.addEventListener('memoir:lang', applyLanding);
-    document.addEventListener('DOMContentLoaded', applyLanding);
+    // Apply on load + whenever the header changes language
+    window.addEventListener('memoir:lang', e => applyLanding(e.detail.code));
+    document.addEventListener('DOMContentLoaded', () => {
+      applyLanding(window.MEMOIR_I18N?.getLang?.() || 'en');
+    });
   </script>
 </body>
 </html>
