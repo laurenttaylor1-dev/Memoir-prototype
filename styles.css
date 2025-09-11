@@ -96,3 +96,32 @@ input, select, textarea{box-sizing:border-box;max-width:100%}
 .site-header .lang { position: relative; z-index: 20; }
 .site-header .lang-menu { position: absolute; right: 0; top: 100%; }
 .site-header .lang-toggle { position: relative; z-index: 21; }
+
+/* ========== Memoir overrides (landing layout fixes) ========== */
+
+/* never clamp/cut body text inside cards */
+.no-clamp,
+.card p,
+.mini-card p {
+  display:block !important;
+  overflow:visible !important;
+  text-overflow:unset !important;
+  white-space:normal !important;
+  -webkit-line-clamp:unset !important;
+  -webkit-box-orient:unset !important;
+}
+
+/* make mini cards roomy so copy shows fully */
+.mini-card { min-height: 150px; }
+.mini-card p { line-height: 1.35; }
+
+/* ensure the two action cards feel substantial on wide screens */
+@media (min-width: 981px) {
+  .hero-actions .mini-card { padding:20px; }
+}
+
+/* center footer on all pages */
+.site-footer { background: transparent; }
+.site-footer .site-footer-wrap { max-width: 1200px; margin: 0 auto; }
+.site-footer .foot-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+@media (max-width: 900px) { .site-footer .foot-grid { grid-template-columns: 1fr; } }
