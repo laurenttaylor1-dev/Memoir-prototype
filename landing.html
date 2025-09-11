@@ -4,23 +4,66 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — Home</title>
+
+  <!-- Your global stylesheet still loads if you have one -->
   <link rel="stylesheet" href="/styles.css">
+
+  <!-- Scoped fallback styles to guarantee the layout -->
+  <style>
+    :root{
+      --bg:#f6f1ea;           /* warm cream */
+      --card:#fffaf5;
+      --ink:#3b2f2a;          /* dark brown */
+      --muted:#7b6a62;
+      --accent:#8c5a3c;       /* vintage brown */
+      --accent2:#b17d55;
+      --radius:18px;
+      --shadow:0 18px 40px rgba(59,47,42,.10), 0 2px 8px rgba(59,47,42,.06);
+    }
+    body{background:var(--bg); color:var(--ink); margin:0; font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;}
+    .container{max-width:1200px; margin:0 auto; padding:20px 16px 28px;}
+    .hero-grid{
+      display:grid; grid-template-columns: 1.1fr .9fr; gap:22px; align-items:stretch;
+    }
+    @media (max-width: 980px){
+      .hero-grid{grid-template-columns: 1fr; }
+    }
+    .hero-img{background:var(--card); border:1px solid rgba(0,0,0,.06); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden;}
+    .hero-img img{display:block; width:100%; height:100%; object-fit:cover;}
+    .card{
+      background:var(--card); border:1px solid rgba(0,0,0,.08); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px;
+    }
+    .h1{font-size:clamp(28px, 3.4vw, 44px); line-height:1.1; margin:8px 0 10px; letter-spacing:.2px;}
+    .gradient{background:linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+    .muted{color:var(--muted)}
+    .cta-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px}
+    .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 16px; border-radius:999px; border:1px solid rgba(0,0,0,.12); background:#fff; color:var(--ink); text-decoration:none; font-weight:600;}
+    .btn.small{padding:10px 14px; font-weight:600;}
+    .btn.primary{background:linear-gradient(90deg, var(--accent), var(--accent2)); color:#fff; border:0;}
+    .two-cards{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:18px}
+    @media (max-width: 860px){ .two-cards{grid-template-columns:1fr} }
+    .label{font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:6px}
+    .row{display:flex; gap:10px; align-items:center}
+  </style>
 </head>
-<body class="bg-cream">
-  <!-- Header slot -->
+<body>
+  <!-- Header slot (loaded by /js/header-loader.js) -->
   <div id="site-header"></div>
 
-  <main class="container" style="padding:20px 16px 10px">
+  <main class="container">
+    <!-- HERO -->
     <section class="hero-grid">
       <div class="hero-img">
-        <img src="/assets/book-1.jpg" alt="Open book" loading="eager"/>
+        <img src="/assets/book-1.jpg" alt="Open book">
       </div>
-      <div class="hero-copy card">
+
+      <div class="card">
+        <div class="label">Memoir App</div>
         <h1 class="h1">
           <span id="heroA">Preserve Your</span><br/>
           <span id="heroB" class="gradient">Memories Forever</span>
         </h1>
-        <p id="heroBlurb" class="muted" style="max-width:56ch">
+        <p id="heroBlurb" class="muted" style="max-width:60ch">
           Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.
         </p>
 
@@ -31,17 +74,24 @@
       </div>
     </section>
 
+    <!-- QUICK ACTION CARDS -->
     <section class="two-cards">
       <div class="card">
-        <h3 id="startTitle">Start Recording</h3>
+        <div class="label" id="startLabel">Start Recording</div>
+        <h3 style="margin:6px 0 8px" id="startTitle">Start Recording</h3>
         <p class="muted">One tap to begin. Add a title and “when it happened” later.</p>
-        <a class="btn small primary" href="/record.html" id="startBtn">Start Recording</a>
+        <div class="row">
+          <a class="btn small primary" href="/record.html" id="startBtn">Start Recording</a>
+        </div>
       </div>
 
       <div class="card">
-        <h3 id="viewTitle">View My Stories</h3>
+        <div class="label" id="viewLabel">View My Stories</div>
+        <h3 style="margin:6px 0 8px" id="viewTitle">View My Stories</h3>
         <p class="muted">Browse, rewrite with AI, export, and share with your family.</p>
-        <a class="btn small" href="/stories.html" id="viewBtn">My Stories</a>
+        <div class="row">
+          <a class="btn small" href="/stories.html" id="viewBtn">My Stories</a>
+        </div>
       </div>
     </section>
   </main>
@@ -53,20 +103,26 @@
   <script src="/js/header-loader.js" defer></script>
   <script src="/js/lang.js" defer></script>
   <script>
-    // Localize hero/CTA
-    window.addEventListener('memoir:lang', (e)=>{
-      const code = e.detail.code;
-      const t = MEMOIR_I18N.strings[code] || MEMOIR_I18N.strings.en;
-      document.getElementById('heroA').textContent = t.heroTitleA || MEMOIR_I18N.strings.en.heroTitleA;
-      document.getElementById('heroB').textContent = t.heroTitleB || MEMOIR_I18N.strings.en.heroTitleB;
-      document.getElementById('heroBlurb').textContent = t.heroBlurb || MEMOIR_I18N.strings.en.heroBlurb;
-      document.getElementById('ctaStart').textContent = t.startRecording;
-      document.getElementById('ctaStories').textContent = t.viewStories;
-      document.getElementById('startTitle').textContent = t.startRecording;
-      document.getElementById('startBtn').textContent   = t.startRecording;
-      document.getElementById('viewTitle').textContent  = t.viewStories;
-      document.getElementById('viewBtn').textContent    = t.viewStories;
-    });
+    // Localize the hero and CTA text using lang.js
+    function applyLanding(code){
+      const t = (window.MEMOIR_I18N?.strings?.[code]) || window.MEMOIR_I18N.strings.en;
+      heroA.textContent = t.heroTitleA || MEMOIR_I18N.strings.en.heroTitleA;
+      heroB.textContent = t.heroTitleB || MEMOIR_I18N.strings.en.heroTitleB;
+      heroBlurb.textContent = t.heroBlurb || MEMOIR_I18N.strings.en.heroBlurb;
+
+      ctaStart.textContent = t.startRecording;
+      ctaStories.textContent = t.viewStories;
+
+      startLabel.textContent = t.startRecording;
+      startTitle.textContent = t.startRecording;
+      startBtn.textContent = t.startRecording;
+
+      viewLabel.textContent = t.viewStories;
+      viewTitle.textContent = t.viewStories;
+      viewBtn.textContent = t.viewStories;
+    }
+    window.addEventListener('memoir:lang', e => applyLanding(e.detail.code));
+    document.addEventListener('DOMContentLoaded', () => applyLanding(window.MEMOIR_I18N?.getLang?.() || 'en'));
   </script>
 </body>
 </html>
