@@ -4,198 +4,121 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — Record</title>
-
   <link rel="stylesheet" href="/styles.css">
-  <style>
-    :root{
-      --bg:#f6f1ea; --card:#fffaf5; --ink:#3b2f2a; --muted:#7b6a62;
-      --accent:#8c5a3c; --accent2:#b17d55; --radius:18px;
-      --shadow:0 18px 40px rgba(59,47,42,.10), 0 2px 8px rgba(59,47,42,.06);
-    }
-    body{background:var(--bg);color:var(--ink);margin:0}
-    .container{max-width:1100px;margin:0 auto;padding:20px 16px 28px}
-    .title{font-size:clamp(26px,3vw,38px);margin:8px 0 16px}
-    .grid{display:grid;grid-template-columns:420px 1fr;gap:20px;align-items:start}
-    @media (max-width:980px){ .grid{grid-template-columns:1fr} }
-    .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
-    .muted{color:var(--muted)}
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;color:var(--ink);text-decoration:none;font-weight:700;cursor:pointer}
-    .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:0}
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-
-    /* Big mic */
-    .micZone{display:flex;flex-direction:column;align-items:center;gap:12px}
-    .mic{width:220px;height:220px;border-radius:999px;border:0;background:radial-gradient(70% 70% at 50% 30%, #b17d55, #8c5a3c);color:#fff;font-weight:800;font-size:20px;cursor:pointer;box-shadow:0 20px 60px rgba(140,90,60,.35)}
-    .mic.pulse{animation:pulse 1.6s infinite ease-in-out}
-    @keyframes pulse{0%{transform:scale(1)} 50%{transform:scale(1.04)} 100%{transform:scale(1)}}
-    .timer{font-weight:800;letter-spacing:.06em}
-
-    textarea,input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(0,0,0,.15);background:#fff;color:inherit}
-    textarea{min-height:110px;resize:vertical}
-    .label{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:12px 0 6px}
-
-    /* Mode switch (FREE / GUIDED) */
-    .seg{display:inline-flex;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;overflow:hidden}
-    .seg button{border:0;background:transparent;padding:10px 16px;font-weight:700;cursor:pointer}
-    .seg button.active{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff}
-
-    /* Guided prompt grid — 5 equal tiles */
-    .prompt-grid{
-      display:grid;gap:10px;margin-top:10px;
-      grid-template-columns: repeat(5, 1fr);
-    }
-    @media (max-width:1100px){ .prompt-grid{grid-template-columns: repeat(3, 1fr);} }
-    @media (max-width:700px){ .prompt-grid{grid-template-columns: repeat(2, 1fr);} }
-    .tile{
-      display:flex;align-items:center;justify-content:center;text-align:center;
-      min-height:64px;border-radius:14px;border:1px solid rgba(0,0,0,.12);background:#fff;
-      padding:10px;font-weight:700;cursor:pointer;
-    }
-    .tile:hover{box-shadow:0 8px 20px rgba(0,0,0,.08)}
-    .tile.small{font-weight:600}
-
-    .transcript{min-height:200px;border-radius:12px;border:1px solid rgba(0,0,0,.15);background:#fff;padding:12px}
-    .hint{font-size:12px;color:var(--muted)}
-  </style>
 </head>
 <body>
-  <!-- shared header -->
   <div id="site-header"></div>
 
   <main class="container">
-    <h1 class="title" id="pageTitle" data-i18n="record.title">Record</h1>
+    <h1 class="section-title" id="recTitle">Record</h1>
 
     <section class="grid">
-      <!-- LEFT: mic + mode switch + guided -->
+      <!-- LEFT: Capture / Modes / Prompts -->
       <div class="card">
         <div class="micZone">
-          <button id="mic" class="mic" aria-pressed="false" data-i18n="record.recordBtn">Record</button>
+          <button id="mic" class="mic" aria-pressed="false">Record</button>
           <div class="muted"><span class="timer" id="timer">00:00</span></div>
         </div>
 
-        <!-- Mode switch -->
-        <div class="label" data-i18n="record.modeLabel">Mode</div>
-        <div class="seg" role="tablist" aria-label="Recording mode">
-          <button id="modeFree"   class="active" role="tab" aria-selected="true"  data-i18n="record.free">Free</button>
-          <button id="modeGuided"           role="tab" aria-selected="false" data-i18n="record.guided">Guided</button>
+        <div class="toggle">
+          <button class="pill active" id="btnFree"></button>
+          <button class="pill" id="btnGuided"></button>
         </div>
 
-        <!-- Guided area (hidden until chosen) -->
-        <div id="guidedWrap" style="display:none">
-          <div class="label" style="margin-top:12px" data-i18n="record.pickTopic">Pick a topic</div>
-          <div id="promptGrid" class="prompt-grid"></div>
-          <div class="hint" style="margin-top:6px" data-i18n="record.promptHint">
-            Tap a topic to set your title automatically. We’ll read it aloud to get you started.
-          </div>
-        </div>
+        <div class="label" id="todays"></div>
+        <div id="promptWrap" class="prompt-grid" aria-live="polite"></div>
 
-        <div class="label" style="margin-top:14px" data-i18n="record.notes">Notes (optional)</div>
-        <textarea id="notes" placeholder="Add a quick note…" data-i18n-placeholder="record.notesPh"></textarea>
+        <div class="label" id="notesLbl">Notes (optional)</div>
+        <textarea id="notes" placeholder="Add a quick note…"></textarea>
 
-        <div class="row" style="margin-top:12px">
-          <a href="/stories.html" class="btn" data-i18n="record.myStories">My Stories</a>
-        </div>
+        <div style="margin-top:12px"><a href="/stories.html" class="btn" id="toStories">My Stories</a></div>
       </div>
 
-      <!-- RIGHT: metadata + transcript -->
+      <!-- RIGHT: Meta + Transcript -->
       <div class="card">
-        <div class="label" data-i18n="record.titleLabel">Title</div>
-        <input id="title" type="text" placeholder="Story title" data-i18n-placeholder="record.titlePh"/>
+        <div class="label" id="titleLbl">Title</div>
+        <input id="title" type="text" placeholder="Story title" />
 
-        <div class="label" data-i18n="record.whenLabel">When did this happen?</div>
-        <input id="when" type="text" placeholder='e.g. "summer 1945", "early 2018", "15 Feb 1972"' data-i18n-placeholder="record.whenPh"/>
+        <div class="label" id="whenLbl">When did this happen?</div>
+        <input id="when" type="text" placeholder='e.g. "summer 1945", "early 2018", "15 Feb 1972"' />
 
-        <div class="label" data-i18n="record.photoLabel">Add photo (optional)</div>
+        <div class="label" id="photoLbl">Add photo (optional)</div>
         <input id="photo" type="file" accept="image/*" />
 
-        <div class="label" style="margin-top:14px" data-i18n="record.transcriptLabel">Transcript</div>
-        <div id="transcript" class="transcript" aria-live="polite" data-i18n="record.transcriptPh">Your words will appear here…</div>
+        <div class="label" style="margin-top:14px" id="transLbl">Transcript</div>
+        <div id="transcript" class="transcript" aria-live="polite">Your words will appear here…</div>
         <div class="hint" id="asrHint" style="margin-top:6px"></div>
 
-        <div class="row" style="margin-top:14px">
-          <button id="saveBtn" class="btn primary" data-i18n="record.save">Save story</button>
-        </div>
+        <div class="row" style="margin-top:14px"><button id="saveBtn" class="btn primary">Save story</button></div>
       </div>
     </section>
   </main>
 
-  <!-- shared footer -->
   <div id="site-footer"></div>
 
-  <!-- scripts: lang FIRST -->
   <script src="/js/lang.js" defer></script>
   <script src="/js/header-loader.js" defer></script>
   <script>
-    // ---------- Guided topics ----------
-    const TOPIC_SETS = {
-      en:["Childhood","Family","School","Work","Travel"],
-      fr:["Enfance","Famille","École","Travail","Voyages"],
-      es:["Infancia","Familia","Escuela","Trabajo","Viajes"],
-      nl:["Jeugd","Familie","School","Werk","Reizen"]
-    };
-    const LABEL_OTHER = { en:"Other", fr:"Autre", es:"Otro", nl:"Anders" };
-    const BCP       = { en:'en-US', fr:'fr-FR', es:'es-ES', nl:'nl-NL' };
+    /* ===== Localization for Record page ===== */
+    function applyRecLang(code){
+      const t = (window.MEMOIR_I18N?.strings?.[code]) || window.MEMOIR_I18N.strings.en;
+      recTitle.textContent = t.recTitle;
+      btnFree.textContent = t.freeMode;
+      btnGuided.textContent = t.guidedMode;
+      todays.textContent = t.todays;
+      notesLbl.textContent = t.notes;
+      titleLbl.textContent = t.titleLabel;
+      whenLbl.textContent = t.whenLabel;
+      photoLbl.textContent = t.photoLabel;
+      transLbl.textContent = t.transcriptLabel;
+      asrHint.textContent = t.transcriptHint;
+      saveBtn.textContent = t.save;
+      toStories.textContent = t.myStories || "My Stories";
+    }
+    window.addEventListener('memoir:lang', e=>{ applyRecLang(e.detail.code); renderPrompts(e.detail.code); });
+    document.addEventListener('DOMContentLoaded', ()=>{ const code = window.MEMOIR_I18N?.getLang?.() || 'en'; applyRecLang(code); renderPrompts(code); });
 
-    function renderGuided(lang){
-      const wrap = document.getElementById('promptGrid');
-      wrap.innerHTML = '';
-      const base = TOPIC_SETS[lang] || TOPIC_SETS.en;
-      // 5 equal tiles → 4 topics + 1 "Other"
-      [...base.slice(0,4), LABEL_OTHER[lang]||LABEL_OTHER.en].forEach(word=>{
-        const tile = document.createElement('button');
-        tile.className = 'tile' + (word === (LABEL_OTHER[lang]||LABEL_OTHER.en) ? ' small' : '');
-        tile.textContent = word;
-        tile.onclick = () => {
-          // If OTHER, just speak encouragement; else set title
-          if (word !== (LABEL_OTHER[lang]||LABEL_OTHER.en)) {
-            document.getElementById('title').value = word;
-          }
-          speakPrompt(word, lang);
-        };
-        wrap.appendChild(tile);
+    /* ===== FREE / GUIDED toggle ===== */
+    let mode = 'free';
+    btnFree.onclick = ()=>{ mode='free'; btnFree.classList.add('active'); btnGuided.classList.remove('active'); renderPrompts(window.MEMOIR_I18N?.getLang?.() || 'en'); };
+    btnGuided.onclick = ()=>{ mode='guided'; btnGuided.classList.add('active'); btnFree.classList.remove('active'); renderPrompts(window.MEMOIR_I18N?.getLang?.() || 'en'); };
+
+    /* ===== Prompts: 4 topics + OTHER, equal size ===== */
+    const TOPIC_WORDS = {
+      en:["Childhood","Family","School","Work","Other"],
+      fr:["Enfance","Famille","École","Travail","Autre"],
+      nl:["Jeugd","Familie","School","Werk","Overig"],
+      es:["Infancia","Familia","Escuela","Trabajo","Otro"]
+    };
+
+    function renderPrompts(code){
+      const wrap = document.getElementById('promptWrap'); wrap.innerHTML='';
+      const words = (TOPIC_WORDS[code]||TOPIC_WORDS.en).slice(0,5);
+
+      // In FREE mode show placeholders; in GUIDED mode clickable
+      words.forEach(w=>{
+        const b = document.createElement('button');
+        b.className = 'chip'; b.textContent = w;
+        if(mode==='guided'){
+          b.onclick = ()=>{ document.getElementById('title').value = (w==='Other'||w==='Autre'||w==='Otro'||w==='Overig') ? '' : w; speakPrompt(w, code); };
+        }else{
+          b.disabled = true; b.style.opacity='.65';
+        }
+        wrap.appendChild(b);
       });
     }
 
-    // Voice prompt (system speech synthesis; if unavailable, no-op)
-    function speakPrompt(text, lang){
-      if(!('speechSynthesis' in window)) return;
-      const u = new SpeechSynthesisUtterance(String(text));
-      u.lang = BCP[lang] || 'en-US'; u.rate = .95; u.pitch = 1; u.volume = 1;
-      speechSynthesis.cancel(); speechSynthesis.speak(u);
+    /* ===== ElevenLabs voice (via your /api/voice.js) ===== */
+    async function speakPrompt(text, code){
+      try{
+        const r = await fetch(`/api/voice.js?text=${encodeURIComponent(text)}&lang=${encodeURIComponent(code)}`);
+        const { url } = await r.json();
+        const audio = new Audio(url);
+        audio.play().catch(()=>{});
+      }catch(e){ /* silent */ }
     }
 
-    // Mode switch
-    const guidedWrap   = document.getElementById('guidedWrap');
-    const btnFree      = document.getElementById('modeFree');
-    const btnGuided    = document.getElementById('modeGuided');
-
-    function setMode(mode){
-      const lang = window.MEMOIR_I18N?.getLang?.() || 'en';
-      if(mode === 'guided'){
-        btnFree.classList.remove('active');
-        btnGuided.classList.add('active');
-        guidedWrap.style.display = '';
-        renderGuided(lang);
-      }else{
-        btnGuided.classList.remove('active');
-        btnFree.classList.add('active');
-        guidedWrap.style.display = 'none';
-      }
-    }
-    btnFree.onclick   = () => setMode('free');
-    btnGuided.onclick = () => setMode('guided');
-
-    // React to language change → re-render guided labels
-    window.addEventListener('memoir:lang', e=>{
-      if(guidedWrap.style.display !== 'none'){ renderGuided(e.detail.code); }
-      // also localize placeholders
-      window.MEMOIR_I18N?.applyPlaceholders?.(document);
-    });
-    document.addEventListener('DOMContentLoaded', ()=>{
-      window.MEMOIR_I18N?.applyPlaceholders?.(document);
-    });
-
-    // ---------- Recording skeleton (same behavior as before) ----------
+    /* ===== Recording + chunk upload (same as before, with live partials) ===== */
     const mic = document.getElementById('mic');
     const timerEl = document.getElementById('timer');
     const transcriptEl = document.getElementById('transcript');
@@ -214,56 +137,54 @@
         };
         mr.start(1000);
         window._memoirRecorder = mr;
-        mic.textContent = (window.MEMOIR_I18N?.strings?.[window.MEMOIR_I18N?.getLang?.()||'en']?.recording || 'Recording…');
-        mic.classList.add('pulse');
-        recActive=true; startAt=Date.now();
-        tick=setInterval(()=>updateTimer(),1000);
-        asrHint.textContent = window.MEMOIR_I18N?.strings?.[window.MEMOIR_I18N?.getLang?.()||'en']?.asrRecording || 'Recording… transcription will appear live when online.';
+        mic.textContent='Stop'; mic.classList.add('pulse');
+        recActive=true; startAt=Date.now(); tick=setInterval(()=>updateTimer(),1000);
+        asrHint.textContent = (window.MEMOIR_I18N?.strings?.[window.MEMOIR_I18N.getLang()]||{}).transcriptHint || 'Recording…';
       }catch(e){ alert('Microphone permission denied.'); }
     }
     function stopRec(){
       try{ window._memoirRecorder && window._memoirRecorder.stop(); }catch{}
       try{ media && media.getTracks().forEach(t=>t.stop()); }catch{}
       clearInterval(tick); tick=null;
-      mic.textContent = (window.MEMOIR_I18N?.strings?.[window.MEMOIR_I18N?.getLang?.()||'en']?.recordBtn || 'Record');
-      mic.classList.remove('pulse');
-      recActive=false; updateTimer(0);
+      mic.textContent='Record'; mic.classList.remove('pulse'); recActive=false; updateTimer(0);
     }
     mic.onclick = ()=> recActive ? stopRec() : startRec();
     function updateTimer(forceZero){
       const ms = forceZero===0 ? 0 : (Date.now()-startAt);
-      const s = Math.floor(ms/1000), mm = String(Math.floor(s/60)).padStart(2,'0'), ss = String(s%60).padStart(2,'0');
+      const s = Math.floor(ms/1000); const mm = String(Math.floor(s/60)).padStart(2,'0'); const ss = String(s%60).padStart(2,'0');
       timerEl.textContent = `${mm}:${ss}`;
     }
+
     async function uploadChunk(blob){
       try{
         const lang = window.MEMOIR_I18N?.getLang?.() || 'en';
-        const r = await fetch('/api/transcribe-chunk', { method:'POST', headers:{'x-memoir-lang':lang}, body: blob });
+        const r = await fetch('/api/transcribe-chunk', { method:'POST', headers:{'x-memoir-lang':lang}, body:blob });
         if(!r.ok) throw new Error('upload_failed');
         const data = await r.json().catch(()=>null);
         if(data?.partial){ transcriptEl.textContent = data.partial; }
-        asrHint.textContent = window.MEMOIR_I18N?.strings?.[lang]?.asrListening || 'Listening…';
+        asrHint.textContent='Listening…';
       }catch(e){
-        asrHint.textContent = window.MEMOIR_I18N?.strings?.[window.MEMOIR_I18N?.getLang?.()||'en']?.asrOffline || 'Offline — audio will be saved and sent later.';
+        asrHint.textContent='Offline or server unavailable — audio will be saved locally and sent later.';
       }
     }
 
-    // Save
     document.getElementById('saveBtn').onclick = async()=>{
       if(recActive) stopRec();
-      const title = (document.getElementById('title').value||'').trim() || 'Story';
-      const when  = (document.getElementById('when').value||'').trim();
-      const notes = (document.getElementById('notes').value||'').trim();
+      const title = document.getElementById('title').value.trim() || 'Story';
+      const when  = document.getElementById('when').value.trim() || '';
+      const notes = document.getElementById('notes').value.trim() || '';
       const photo = document.getElementById('photo').files?.[0] || null;
-      const text  = (transcriptEl.textContent||'').trim();
+      const text  = (transcriptEl.textContent || '').trim();
       if(!text){ alert('There is no transcript yet. Say a few words, then try again.'); return; }
+
       const fd = new FormData();
-      fd.append('title',title); fd.append('when',when); fd.append('notes',notes); fd.append('text',text);
-      if(photo) fd.append('photo',photo);
+      fd.append('title', title); fd.append('when', when); fd.append('notes', notes); fd.append('text', text);
+      if(photo) fd.append('photo', photo);
       try{
-        const r = await fetch('/api/transcribe-story',{method:'POST',body:fd});
+        const r = await fetch('/api/transcribe-story', { method:'POST', body: fd });
         if(!r.ok) throw new Error('save_failed');
-        alert('Saved! You can find it in My Stories.'); window.location.href='/stories.html';
+        alert('Saved! You can find it in My Stories.');
+        window.location.href = '/stories.html';
       }catch(e){ alert('Save failed. If you are offline, it will retry when connected.'); }
     };
   </script>
