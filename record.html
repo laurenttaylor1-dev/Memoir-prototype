@@ -4,6 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — Record</title>
+
   <link rel="stylesheet" href="/styles.css">
   <style>
     :root{
@@ -18,14 +19,19 @@
     @media (max-width:980px){ .grid{grid-template-columns:1fr} }
     .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
     .muted{color:var(--muted)}
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;color:var(--ink);text-decoration:none;font-weight:700}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;color:var(--ink);text-decoration:none;font-weight:700;cursor:pointer}
     .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:0}
     .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .chips{display:flex;gap:8px;flex-wrap:wrap}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
     .chip{padding:8px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;cursor:pointer}
     .label{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:12px 0 6px}
+
+    /* Big round mic */
     .micZone{display:flex;flex-direction:column;align-items:center;gap:10px}
-    .mic{width:220px;height:220px;border-radius:999px;border:0;background:radial-gradient(70% 70% at 50% 30%, #b17d55, #8c5a3c);color:#fff;font-weight:800;font-size:20px;cursor:pointer;box-shadow:0 20px 60px rgba(140,90,60,.35)}
+    .mic{width:220px;height:220px;border-radius:999px;border:0;
+         background:radial-gradient(70% 70% at 50% 30%, #b17d55, #8c5a3c);
+         color:#fff;font-weight:800;font-size:20px;cursor:pointer;
+         box-shadow:0 20px 60px rgba(140,90,60,.35)}
     .mic.pulse{animation:pulse 1.6s infinite ease-in-out}
     @keyframes pulse{0%{transform:scale(1)} 50%{transform:scale(1.04)} 100%{transform:scale(1)}}
     .timer{font-weight:800;letter-spacing:.06em}
@@ -36,183 +42,154 @@
   </style>
 </head>
 <body>
+  <!-- Shared header -->
   <div id="site-header"></div>
 
   <main class="container">
-    <h1 class="title" id="recordTitle">Record</h1>
+    <h1 class="title" id="pageTitle"></h1>
 
     <section class="grid">
-      <!-- Left -->
+      <!-- Left: mic + prompts -->
       <div class="card">
         <div class="micZone">
           <button id="mic" class="mic" aria-pressed="false">Record</button>
           <div class="muted"><span class="timer" id="timer">00:00</span></div>
         </div>
 
-        <div class="label" id="promptsToday">Today's suggested prompts</div>
+        <div class="label" id="promptsTitle"></div>
         <div class="row" style="justify-content:space-between">
           <div id="prompts" class="chips"></div>
-          <button id="refreshPrompts" class="btn">Suggest other prompts</button>
+          <button id="refreshPrompts" class="btn"></button>
         </div>
 
-        <div class="label" id="notesLabel">Notes (optional)</div>
+        <div class="label" id="notesLabel"></div>
         <textarea id="notes" placeholder=""></textarea>
 
         <div class="row" style="margin-top:12px">
-          <a href="/stories.html" class="btn" id="toStories">My Stories</a>
+          <a href="/stories.html" class="btn" id="myStoriesBtn"></a>
         </div>
       </div>
 
-      <!-- Right -->
+      <!-- Right: metadata + transcript -->
       <div class="card">
-        <div class="label" id="metaTitle">Title</div>
-        <input id="title" type="text" placeholder=""/>
+        <div class="label" id="titleLabel"></div>
+        <input id="title" type="text" placeholder="" />
 
-        <div class="label" id="metaWhen">When did this happen?</div>
-        <input id="when" type="text" placeholder=""/>
+        <div class="label" id="whenLabel"></div>
+        <input id="when" type="text" placeholder="" />
 
-        <div class="label" id="addPhoto">Add photo (optional)</div>
-        <input id="photo" type="file" accept="image/*"/>
+        <div class="label" id="addPhotoLabel"></div>
+        <input id="photo" type="file" accept="image/*" />
 
-        <div class="label" id="transcriptLabel" style="margin-top:14px">Transcript</div>
-        <div id="transcript" class="transcript" aria-live="polite">Your words will appear here…</div>
+        <div class="label" id="transcriptLabel" style="margin-top:14px"></div>
+        <div id="transcript" class="transcript" aria-live="polite"></div>
         <div class="hint" id="asrHint" style="margin-top:6px"></div>
 
         <div class="row" style="margin-top:14px">
-          <button id="saveBtn" class="btn primary">Save story</button>
+          <button id="saveBtn" class="btn primary"></button>
         </div>
       </div>
     </section>
   </main>
 
+  <!-- Shared footer -->
   <div id="site-footer"></div>
 
+  <!-- Scripts -->
   <script src="/js/lang.js" defer></script>
   <script src="/js/header-loader.js" defer></script>
   <script>
-    // Prompts
+    // === Guided Prompts with voice ===
     const TOPIC_WORDS = {
       en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
       fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
-      es:["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"],
-      nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
+      nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"],
+      es:["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Puntos-clave"]
     };
-    const BCP={en:'en-US',fr:'fr-FR',es:'es-ES',nl:'nl-NL'};
-    function speakPrompt(text, code){
-      if(!('speechSynthesis' in window)) return;
-      const u=new SpeechSynthesisUtterance(String(text));
-      u.lang=BCP[code]||'en-US'; u.rate=.95; u.pitch=1; u.volume=1;
-      speechSynthesis.cancel(); speechSynthesis.speak(u);
+
+    function sentence(topic, code){
+      return MEMOIR_I18N.t('guidePrefix') + ' ' + topic;
     }
+
+    async function speak(text, code){
+      try{
+        const r = await fetch('/api/voice', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({ text, lang:code })
+        });
+        if(r.ok){
+          const blob=await r.blob(); new Audio(URL.createObjectURL(blob)).play(); return;
+        }
+      }catch{}
+      if('speechSynthesis' in window){
+        const u=new SpeechSynthesisUtterance(text);
+        u.lang=({en:'en-US',fr:'fr-FR',nl:'nl-NL',es:'es-ES'})[code]||'en-US';
+        speechSynthesis.cancel(); speechSynthesis.speak(u);
+      }
+    }
+
     function renderPrompts(code){
-      const words=(TOPIC_WORDS[code]||TOPIC_WORDS.en);
-      const shuffled=[...words].sort(()=>Math.random()-0.5).slice(0,4);
       const wrap=document.getElementById('prompts'); wrap.innerHTML='';
-      shuffled.forEach(w=>{
-        const b=document.createElement('button');
-        b.className='chip'; b.textContent=w;
-        b.onclick=()=>{ document.getElementById('title').value=w; speakPrompt(w, code); };
+      const chosen=[...(TOPIC_WORDS[code]||TOPIC_WORDS.en)].sort(()=>Math.random()-0.5).slice(0,4);
+      chosen.forEach(w=>{
+        const b=document.createElement('button'); b.className='chip'; b.textContent=w;
+        b.onclick=()=>{ document.getElementById('title').value=w; speak(sentence(w,code),code); };
         wrap.appendChild(b);
       });
     }
 
-    // i18n apply
-    function applyRecord(code){
-      const t = MEMOIR_I18N.strings[code] || MEMOIR_I18N.strings.en;
-      recordTitle.textContent = t.recordTitle;
-      promptsToday.textContent = t.promptsToday;
-      refreshPrompts.textContent = t.promptsRefresh;
-      notesLabel.textContent = t.notesLabel;
-      toStories.textContent = t.toStories;
-      metaTitle.textContent = t.metaTitle;
-      metaWhen.textContent = t.metaWhen;
-      when.placeholder = t.metaWhenPH;
-      title.placeholder = t.metaTitle;
-      addPhoto.textContent = t.addPhoto;
-      transcriptLabel.textContent = t.transcriptLabel;
-      transcript.textContent = t.transcriptPlaceholder;
-      saveBtn.textContent = t.saveStory;
-      mic.textContent = t.recordButtonStart;
-      document.title = `Memoir — ${t.recordTitle}`;
-      // re-render prompts
+    function applyLang(code){
+      const t=MEMOIR_I18N.t;
+      document.getElementById('pageTitle').textContent=t('recordTitle');
+      document.getElementById('promptsTitle').textContent=t('promptsTitle');
+      document.getElementById('refreshPrompts').textContent=t('suggestOther');
+      document.getElementById('notesLabel').textContent=t('notesOptional');
+      document.getElementById('myStoriesBtn').textContent=t('myStoriesBtn');
+      document.getElementById('titleLabel').textContent=t('titleLabel');
+      document.getElementById('title').placeholder=t('storyTitlePh');
+      document.getElementById('whenLabel').textContent=t('whenLabel');
+      document.getElementById('when').placeholder=t('whenPh');
+      document.getElementById('addPhotoLabel').textContent=t('addPhotoLabel');
+      document.getElementById('transcriptLabel').textContent=t('transcriptLabel');
+      document.getElementById('saveBtn').textContent=t('saveStory');
       renderPrompts(code);
     }
-    window.addEventListener('memoir:lang', e=>applyRecord(e.detail.code));
-    document.addEventListener('DOMContentLoaded', ()=>applyRecord(MEMOIR_I18N.getLang()));
-    document.getElementById('refreshPrompts').onclick = ()=>applyRecord(MEMOIR_I18N.getLang());
+    window.addEventListener('memoir:lang',e=>applyLang(e.detail.code));
+    document.addEventListener('DOMContentLoaded',()=>applyLang(MEMOIR_I18N.getLang()));
+    document.getElementById('refreshPrompts').onclick=()=>applyLang(MEMOIR_I18N.getLang());
 
-    // Recording (timer + upload chunk to your endpoint)
-    const mic = document.getElementById('mic');
-    const timerEl = document.getElementById('timer');
-    const transcriptEl = document.getElementById('transcript');
-    const asrHint = document.getElementById('asrHint');
-    let recActive=false, startAt=0, tick=null, media=null, chunks=[];
+    // === Recorder + Whisper chunk ===
+    const mic=document.getElementById('mic'); const timerEl=document.getElementById('timer');
+    const transcriptEl=document.getElementById('transcript'); const asrHint=document.getElementById('asrHint');
+    let rec=false,startAt=0,tick,media,chunks=[];
 
     async function startRec(){
       try{
-        media = await navigator.mediaDevices.getUserMedia({ audio:true });
-        const mr = new MediaRecorder(media, { mimeType: 'audio/webm' });
-        chunks=[];
-        mr.ondataavailable = e => { if(e.data && e.data.size) chunks.push(e.data); };
-        mr.onstop = async () => {
-          const blob = new Blob(chunks, { type:'audio/webm' });
-          await uploadChunk(blob);
-        };
-        mr.start(1000);
-        mic.textContent = (MEMOIR_I18N.t('recordButtonStop'));
-        mic.classList.add('pulse');
-        recActive=true; startAt=Date.now();
-        tick=setInterval(()=>updateTimer(),1000);
-        window._memoirRecorder = mr;
-        asrHint.textContent='Recording… transcription will appear live when online.';
-      }catch(e){ alert('Microphone permission denied.'); }
+        media=await navigator.mediaDevices.getUserMedia({audio:true});
+        const mr=new MediaRecorder(media,{mimeType:'audio/webm'});
+        chunks=[]; mr.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+        mr.onstop=async()=>{const blob=new Blob(chunks,{type:'audio/webm'}); await uploadChunk(blob);};
+        mr.start(1000); window._memoirRecorder=mr; mic.textContent='Stop'; mic.classList.add('pulse');
+        rec=true; startAt=Date.now(); tick=setInterval(updateTimer,1000); asrHint.textContent=MEMOIR_I18N.t('transcriptHintOnline');
+      }catch{alert('Microphone denied');}
     }
-    function stopRec(){
-      try{ window._memoirRecorder && window._memoirRecorder.stop(); }catch{}
-      try{ media && media.getTracks().forEach(t=>t.stop()); }catch{}
-      clearInterval(tick); tick=null;
-      mic.textContent=(MEMOIR_I18N.t('recordButtonStart'));
-      mic.classList.remove('pulse'); recActive=false; updateTimer(0);
-    }
-    mic.onclick = ()=> recActive ? stopRec() : startRec();
-    function updateTimer(z){
-      const ms = z===0 ? 0 : (Date.now()-startAt);
-      const s = Math.floor(ms/1000);
-      const mm = String(Math.floor(s/60)).padStart(2,'0');
-      const ss = String(s%60).padStart(2,'0');
-      timerEl.textContent = `${mm}:${ss}`;
-    }
+    function stopRec(){try{window._memoirRecorder.stop();}catch{} try{media.getTracks().forEach(t=>t.stop());}catch{} clearInterval(tick); mic.textContent='Record'; mic.classList.remove('pulse'); rec=false; updateTimer(0);}
+    mic.onclick=()=>rec?stopRec():startRec();
+    function updateTimer(){const s=Math.floor((Date.now()-startAt)/1000); const mm=String(Math.floor(s/60)).padStart(2,'0'); const ss=String(s%60).padStart(2,'0'); timerEl.textContent=`${mm}:${ss}`;}
     async function uploadChunk(blob){
-      try{
-        const lang = MEMOIR_I18N.getLang();
-        const r = await fetch('/api/transcribe-chunk',{ method:'POST', headers:{'x-memoir-lang':lang}, body: blob });
-        if(!r.ok) throw new Error('upload_failed');
-        const data = await r.json().catch(()=>null);
-        if(data?.partial){ transcriptEl.textContent = data.partial; }
-        asrHint.textContent='Listening…';
-      }catch(e){
-        asrHint.textContent='Offline or server unavailable — audio will be saved and transcribed later.';
-      }
+      try{const lang=MEMOIR_I18N.getLang(); const r=await fetch('/api/transcribe-chunk',{method:'POST',headers:{'x-memoir-lang':lang},body:blob});
+        if(!r.ok) throw 0; const d=await r.json().catch(()=>null); if(d?.partial) transcriptEl.textContent=d.partial;
+        asrHint.textContent=MEMOIR_I18N.t('transcriptHintOnline');}
+      catch{asrHint.textContent=MEMOIR_I18N.t('transcriptHintOffline');}
     }
-
-    // Save story (relies on your /api/transcribe-story)
-    saveBtn.onclick = async()=>{
-      if(recActive) stopRec();
-      const title = document.getElementById('title').value.trim() || MEMOIR_I18N.t('metaTitle');
-      const when  = document.getElementById('when').value.trim() || '';
-      const notes = document.getElementById('notes').value.trim() || '';
-      const photo = document.getElementById('photo').files?.[0] || null;
-      const text  = (transcriptEl.textContent || '').trim();
-      if(!text){ alert('There is no transcript yet.'); return; }
-      const fd = new FormData();
-      fd.append('title', title); fd.append('when', when);
-      fd.append('notes', notes); fd.append('text', text);
-      if(photo) fd.append('photo', photo);
-      try{
-        const r = await fetch('/api/transcribe-story', { method:'POST', body: fd });
-        if(!r.ok) throw new Error('save_failed');
-        window.location.href = '/stories.html';
-      }catch(e){ alert('Save failed. If offline, it will retry later.'); }
+    document.getElementById('saveBtn').onclick=async()=>{
+      if(rec) stopRec(); const title=document.getElementById('title').value||'Story';
+      const when=document.getElementById('when').value, notes=document.getElementById('notes').value, photo=document.getElementById('photo').files?.[0], text=transcriptEl.textContent;
+      if(!text){alert('No transcript yet');return;}
+      const fd=new FormData(); fd.append('title',title); fd.append('when',when); fd.append('notes',notes); fd.append('text',text); if(photo) fd.append('photo',photo);
+      try{const r=await fetch('/api/transcribe-story',{method:'POST',body:fd}); if(!r.ok) throw 0; alert('Saved!'); location.href='/stories.html';}
+      catch{alert('Save failed');}
     };
   </script>
 </body>
