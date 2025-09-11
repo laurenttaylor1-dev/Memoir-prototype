@@ -3,60 +3,117 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title data-i18n="record.title">Record</title>
-  <link rel="stylesheet" href="/styles.css"/>
+  <title>Memoir — Record</title>
+  <link rel="stylesheet" href="/styles.css">
 </head>
-<body class="mk-theme-vintage">
+<body class="bg-cream">
   <div id="site-header"></div>
 
-  <main class="mk-container">
-    <h1 class="mk-page-title" data-i18n="record.title">Record</h1>
+  <main class="container" style="padding:20px 16px 30px">
+    <h1 class="page-title">Record</h1>
 
-    <section class="mk-record">
-      <!-- Left: big record circle & elapsed -->
-      <div class="mk-record__left">
-        <button id="recordBtn" class="mk-record-btn" type="button">Record</button>
-        <div id="elapsed" class="mk-elapsed">00:00</div>
+    <section class="record-grid card">
+      <div class="record-left">
+        <button id="recBtn" class="record-circle">Record</button>
+        <div id="timer" class="muted" style="margin-top:10px">00:00</div>
+      </div>
 
-        <!-- Guided prompts -->
-        <div class="mk-guided">
-          <div class="mk-guided__header">
-            <span data-i18n="record.prompts">Today's suggested prompts</span>
-            <button id="guidedRefresh" class="mk-btn mk-btn-ghost small" type="button" data-i18n="record.prompts.refresh">Suggest other prompts</button>
-          </div>
-          <div id="guidedChips" class="mk-chips"></div>
+      <div class="record-right">
+        <div class="label-row">
+          <div class="label" id="todayLabel">Today's suggested prompts</div>
+          <button id="refreshPrompts" class="btn small outline">Suggest other prompts</button>
+        </div>
+        <div id="promptsWrap" class="chip-row" aria-live="polite"></div>
+
+        <div class="field">
+          <label>Notes (optional)</label>
+          <textarea id="notes" class="input" rows="3" placeholder="Add a quick note…"></textarea>
+        </div>
+
+        <div class="field">
+          <label>Title</label>
+          <input id="title" class="input" placeholder="Story title"/>
+        </div>
+
+        <div class="field">
+          <label>When did this happen?</label>
+          <input id="when" class="input" placeholder='e.g. "summer 1945", "early 2018", "15 Feb 1972"'/>
+        </div>
+
+        <div class="row">
+          <button id="saveStory" class="btn primary">Save story</button>
+          <a class="btn" href="/stories.html">My Stories</a>
         </div>
       </div>
+    </section>
 
-      <!-- Right: fields -->
-      <div class="mk-record__right">
-        <label class="mk-label" for="note" data-i18n="record.notes">Notes (optional)</label>
-        <textarea id="note" class="mk-input" rows="4" placeholder=""></textarea>
-
-        <label class="mk-label" for="storyTitle" data-i18n="record.storyTitle">Title</label>
-        <input id="storyTitle" class="mk-input" type="text" placeholder=""/>
-
-        <label class="mk-label" for="when" data-i18n="record.when">When did this happen?</label>
-        <input id="when" class="mk-input" type="text" placeholder='e.g. "summer 1945", "15 Feb 1972"' />
-
-        <label class="mk-label" for="photo" data-i18n="record.addPhoto">Add photo (optional)</label>
-        <input id="photo" type="file" accept="image/*" class="mk-file"/>
-
-        <button id="saveStory" class="mk-btn mk-btn-primary" type="button" data-i18n="record.save">Save story</button>
-      </div>
+    <section class="card" style="margin-top:14px">
+      <div class="label">Transcript</div>
+      <div id="transcript" class="transcript-area">Your words will appear here…</div>
     </section>
   </main>
 
-  <!-- Supabase (optional client features), shared header, shared runtime -->
-  <script>
-    // window.SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
-    // window.SUPABASE_ANON_KEY = "YOUR_PUBLIC_ANON_KEY";
-  </script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/header-loader.js"></script>
-  <script src="/app.js"></script>
+  <div id="site-footer"></div>
 
-  <!-- Your existing recorder/transcription code here (if any) -->
-  <!-- <script src="/js/recorder-chunk-whisper.js"></script> -->
+  <script src="/js/header-loader.js" defer></script>
+  <script src="/js/lang.js" defer></script>
+
+  <script>
+    // ---- prompts UI ----
+    function renderPrompts(code){
+      const wrap = document.getElementById('promptsWrap');
+      wrap.innerHTML = '';
+      const prompts = MEMOIR_I18N.getPrompts(code, 4);
+      prompts.forEach(p=>{
+        const b = document.createElement('button');
+        b.className = 'chip';
+        b.textContent = p;
+        b.onclick = ()=>{ document.getElementById('title').value = p; };
+        wrap.appendChild(b);
+      });
+      const t = MEMOIR_I18N.strings[code] || MEMOIR_I18N.strings.en;
+      document.getElementById('todayLabel').textContent = t.todayPrompts;
+      document.getElementById('refreshPrompts').textContent = t.refreshPrompts;
+    }
+
+    window.addEventListener('memoir:lang', (e)=>{
+      renderPrompts(e.detail.code);
+    });
+
+    document.getElementById('refreshPrompts').addEventListener('click', ()=>{
+      renderPrompts(MEMOIR_I18N.getLang());
+    });
+
+    // initial render
+    renderPrompts(MEMOIR_I18N.getLang());
+
+    // ---- dummy recorder (hook yours here) ----
+    const recBtn = document.getElementById('recBtn');
+    const transcriptEl = document.getElementById('transcript');
+    const timerEl = document.getElementById('timer');
+    let t=0, ticking=null, recording=false;
+    function fmt(s){const m=String(Math.floor(s/60)).padStart(2,'0');const ss=String(s%60).padStart(2,'0');return `${m}:${ss}`;}
+    recBtn.onclick = ()=>{
+      if (!recording){
+        recording = true;
+        recBtn.classList.add('pulse');
+        recBtn.textContent = 'Stop';
+        t = 0; timerEl.textContent = '00:00';
+        ticking = setInterval(()=>{ t++; timerEl.textContent = fmt(t); },1000);
+        transcriptEl.textContent = 'Listening… (demo placeholder)';
+      } else {
+        recording = false;
+        recBtn.classList.remove('pulse');
+        recBtn.textContent = 'Record';
+        clearInterval(ticking);
+        transcriptEl.textContent = 'Final transcript (demo placeholder).';
+      }
+    };
+
+    // ---- save handler (wire to Supabase as you already have) ----
+    document.getElementById('saveStory').onclick = ()=>{
+      alert('Saving… (wire to Supabase create story)');
+    };
+  </script>
 </body>
 </html>
