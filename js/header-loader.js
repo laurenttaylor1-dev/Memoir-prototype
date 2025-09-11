@@ -77,7 +77,22 @@
       });
     });
   }
-
+    // pick a language
+    menu.querySelectorAll('button[data-lang]').forEach((b) => {
+      b.addEventListener('click', () => {
+        const code = b.getAttribute('data-lang');
+        // Save + apply via global i18n (preferred)
+        if (window.MEMOIR_I18N && typeof window.MEMOIR_I18N.setLang === 'function') {
+          window.MEMOIR_I18N.setLang(code);
+        } else {
+          // Fallback: basic dispatch if lang.js hasn't loaded yet
+          localStorage.setItem('memoir.lang', code);
+          window.dispatchEvent(new CustomEvent('memoir:lang', { detail: { code } }));
+        }
+        close();
+      });
+    });
+  
   // Give the browser a tick to paint the injected HTML, then init
   requestAnimationFrame(initLang);
 })();
