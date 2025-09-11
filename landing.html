@@ -131,14 +131,5 @@
       document.addEventListener('DOMContentLoaded', ()=>applyLanding(window.MEMOIR_I18N?.getLang?.() || 'en'));
     })();
   </script>
-  <script>
-    // Safety net if header fails
-    setTimeout(()=>{
-      const slot=document.getElementById('site-header');
-      if(slot && slot.children.length===0){
-        slot.innerHTML='<header style="padding:12px;background:#fffaf5;border-bottom:1px solid #ddd">MEMOIR APP — <a href="/record.html">Record</a> | <a href="/stories.html">My Stories</a></header>';
-      }
-    },600);
-  </script>
 </body>
 </html>
