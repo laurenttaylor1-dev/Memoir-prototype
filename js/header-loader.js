@@ -1,26 +1,56 @@
-(async ()=>{
-  const include = async (sel, url) => {
-    const slot = document.querySelector(sel);
-    if (!slot) return;
-    try {
-      const res = await fetch(url, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-      slot.innerHTML = await res.text();
-    } catch (err) {
-      console.error('Include failed:', url, err);
-      slot.innerHTML = `
-        <div style="border:1px solid #f3c2b6;background:#fff7f5;color:#9a2c14;
-                    padding:10px;border-radius:8px;margin:8px 0;font:14px/1.4 system-ui">
-          Failed to load <strong>${url}</strong> — ${err.message}.<br>
-          Open this URL directly in a new tab to debug.
-        </div>`;
+<script>
+// Inject /partials/header.html and /partials/footer.html.
+// Also wires the language dropdown so it closes on select and on outside click.
+document.addEventListener('DOMContentLoaded', async () => {
+  const headerSlot = document.getElementById('site-header');
+  const footerSlot = document.getElementById('site-footer');
+
+  async function inject(target, url) {
+    if (!target) return;
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error('Failed to fetch ' + url);
+    target.innerHTML = await res.text();
+
+    // --- Language menu wiring ---
+    const langBtn  = target.querySelector('[data-lang-btn]');
+    const langMenu = target.querySelector('[data-lang-menu]');
+
+    function hideMenu() {
+      langMenu?.classList.add('hidden');
+      document.removeEventListener('click', onDoc);
     }
-  };
+    function onDoc(e) {
+      if (!langMenu?.contains(e.target) && !langBtn?.contains(e.target)) hideMenu();
+    }
 
-  await include('#__site-header', '/partials/header.html');
-  await include('#__site-footer', '/partials/footer.html');
+    // Open/close
+    langBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      langMenu?.classList.toggle('hidden');
+      if (!langMenu?.classList.contains('hidden')) {
+        document.addEventListener('click', onDoc);
+      } else {
+        document.removeEventListener('click', onDoc);
+      }
+    });
 
-  // After header loads, you may call shared app.js helpers if needed
-  if (window.initHeaderBindings) window.initHeaderBindings();
-  if (window.applyTranslations)  window.applyTranslations(localStorage.getItem('memoir.lang')||'en');
-})();
+    // Select language => close immediately
+    langMenu?.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-set-lang]');
+      if (!btn) return;
+      // Dispatch event to lang.js
+      const code = btn.getAttribute('data-set-lang');
+      window.dispatchEvent(new CustomEvent('memoir:set-lang', { detail: { code } }));
+      hideMenu();
+    });
+  }
+
+  try {
+    await inject(headerSlot, '/partials/header.html');
+  } catch (e) { console.warn(e); }
+
+  try {
+    await inject(footerSlot, '/partials/footer.html');
+  } catch (e) { console.warn(e); }
+});
+</script>
