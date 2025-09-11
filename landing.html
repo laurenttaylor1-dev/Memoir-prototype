@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — Home</title>
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/styles.css"/>
 
   <style>
     :root{
@@ -12,32 +12,42 @@
       --accent:#8c5a3c; --accent2:#b17d55; --radius:18px;
       --shadow:0 18px 40px rgba(59,47,42,.10), 0 2px 8px rgba(59,47,42,.06);
     }
-    body{background:var(--bg); color:var(--ink); margin:0; font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;}
-    .container{max-width:1200px; margin:0 auto; padding:20px 16px 28px;}
-    .hero-grid{display:grid; grid-template-columns: 1.1fr .9fr; gap:22px; align-items:stretch;}
-    @media (max-width: 980px){ .hero-grid{grid-template-columns: 1fr; } }
-    .hero-img{background:var(--card); border:1px solid rgba(0,0,0,.06); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden;}
-    .hero-img img{display:block; width:100%; height:100%; object-fit:cover;}
-    .card{background:var(--card); border:1px solid rgba(0,0,0,.08); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px;}
-    .h1{font-size:clamp(28px, 3.4vw, 44px); line-height:1.1; margin:8px 0 10px; letter-spacing:.2px;}
-    .gradient{background:linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+    body{background:var(--bg); color:var(--ink); margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    .container{max-width:1200px; margin:0 auto; padding:20px 16px 32px}
+    /* HERO */
+    .hero{display:grid; grid-template-columns:1.1fr .9fr; gap:22px; align-items:stretch}
+    @media (max-width:980px){ .hero{grid-template-columns:1fr} }
+    .hero-img{background:var(--card); border:1px solid rgba(0,0,0,.06); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow)}
+    .hero-img img{width:100%; height:100%; display:block; object-fit:cover}
+    .card{background:var(--card); border:1px solid rgba(0,0,0,.08); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px}
+    .h1{font-size:clamp(28px,3.4vw,44px); line-height:1.1; margin:8px 0 10px}
+    .gradient{background:linear-gradient(90deg,var(--accent),var(--accent2)); -webkit-background-clip:text; background-clip:text; color:transparent}
     .muted{color:var(--muted)}
-    .cta-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px}
-    .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 16px; border-radius:999px; border:1px solid rgba(0,0,0,.12); background:#fff; color:var(--ink); text-decoration:none; font-weight:700;}
-    .btn.primary{background:linear-gradient(90deg, var(--accent), var(--accent2)); color:#fff; border:0;}
+    .cta-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+    .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 16px; border-radius:999px; border:1px solid rgba(0,0,0,.12); background:#fff; color:var(--ink); text-decoration:none; font-weight:700}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#fff; border:0}
+    /* Quick actions below hero (still visible on small screens) */
     .two-cards{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:18px}
-    @media (max-width: 860px){ .two-cards{grid-template-columns:1fr} }
+    @media (max-width:860px){ .two-cards{grid-template-columns:1fr} }
     .label{font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:6px}
     .row{display:flex; gap:10px; align-items:center}
+    /* Three reasons */
+    .features{display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-top:22px}
+    @media (max-width:980px){ .features{grid-template-columns:1fr} }
+    /* Pricing + FAQ */
+    .info{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:22px}
+    @media (max-width:980px){ .info{grid-template-columns:1fr} }
+    .section-title{font-size:clamp(18px,2vw,22px); margin:6px 0 10px}
+    .faq-item h4{margin:8px 0 2px}
   </style>
 </head>
 <body>
-  <!-- Shared header -->
+  <!-- shared header -->
   <div id="site-header"></div>
 
   <main class="container">
     <!-- HERO -->
-    <section class="hero-grid">
+    <section class="hero">
       <div class="hero-img">
         <img src="/assets/book-1.jpg" alt="Open book">
       </div>
@@ -45,73 +55,153 @@
       <div class="card">
         <div class="label" id="homeAppLabel">Memoir App</div>
         <h1 class="h1">
-          <span id="heroA">Preserve Your</span><br/>
+          <span id="heroA">Preserve Your</span><br>
           <span id="heroB" class="gradient">Memories Forever</span>
         </h1>
         <p id="heroBlurb" class="muted" style="max-width:60ch">
           Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.
         </p>
-
         <div class="cta-row">
-          <a class="btn primary" href="/record.html" id="ctaStart">Start Recording</a>
-          <a class="btn" href="/stories.html" id="ctaStories">My Stories</a>
+          <a id="ctaStart"   class="btn primary" href="/record.html">Start Recording</a>
+          <a id="ctaStories" class="btn"          href="/stories.html">My Stories</a>
         </div>
       </div>
     </section>
 
-    <!-- QUICK ACTION CARDS -->
+    <!-- QUICK ACTIONS (kept for clarity and for narrow screens) -->
     <section class="two-cards">
       <div class="card">
-        <div class="label" id="startLabel">Start Recording</div>
-        <h3 style="margin:6px 0 8px" id="startTitle">Start Recording</h3>
-        <p class="muted" id="startBlurb">One tap to begin. Add a title and “when it happened” later.</p>
+        <div class="label" id="qaStartLabel">Start Recording</div>
+        <h3 id="qaStartTitle" style="margin:6px 0 8px">Start Recording</h3>
+        <p id="qaStartBlurb" class="muted">One tap to begin. Add a title and “when it happened” later.</p>
         <div class="row">
-          <a class="btn primary" href="/record.html" id="startBtn">Start Recording</a>
+          <a id="qaStartBtn" class="btn primary" href="/record.html">Start Recording</a>
         </div>
       </div>
 
       <div class="card">
-        <div class="label" id="viewLabel">View My Stories</div>
-        <h3 style="margin:6px 0 8px" id="viewTitle">View My Stories</h3>
-        <p class="muted" id="viewBlurb">Browse, rewrite with AI, export, and share with your family.</p>
+        <div class="label" id="qaViewLabel">View My Stories</div>
+        <h3 id="qaViewTitle" style="margin:6px 0 8px">View My Stories</h3>
+        <p id="qaViewBlurb" class="muted">Browse, rewrite with AI, export, and share with your family.</p>
         <div class="row">
-          <a class="btn" href="/stories.html" id="viewBtn">My Stories</a>
+          <a id="qaViewBtn" class="btn" href="/stories.html">My Stories</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- THREE MAIN REASONS -->
+    <section class="features">
+      <div class="card">
+        <h3 id="feat1Title">Smart Transcription</h3>
+        <p id="feat1Text" class="muted">AI-powered voice-to-text conversion.</p>
+      </div>
+      <div class="card">
+        <h3 id="feat2Title">Multi-language Support</h3>
+        <p id="feat2Text" class="muted">Record and transcribe in multiple languages.</p>
+      </div>
+      <div class="card">
+        <h3 id="feat3Title">Private Library</h3>
+        <p id="feat3Text" class="muted">Organize and share securely with your family.</p>
+      </div>
+    </section>
+
+    <!-- PRICING + FAQ -->
+    <section class="info">
+      <div class="card">
+        <h2 class="section-title" id="pricingTitle">Pricing</h2>
+        <ul style="margin:0 0 10px 18px">
+          <li><strong id="planPremium">Premium</strong> — <span id="pricePremium">€4.99/month</span></li>
+          <li><strong id="planFamily">Family</strong> — <span id="priceFamily">€7.99/month</span> (<span id="familyNote">up to 4 read-only family members</span>)</li>
+        </ul>
+        <a id="upgradeBtn" class="btn primary" href="/api/checkout">Upgrade</a>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title" id="faqTitle">FAQ</h2>
+        <div class="faq-item">
+          <h4 id="faq1Q">Is there a free plan?</h4>
+          <p id="faq1A" class="muted">Yes, you can try the app for free before upgrading.</p>
+        </div>
+        <div class="faq-item">
+          <h4 id="faq2Q">Which languages are supported?</h4>
+          <p id="faq2A" class="muted">English, Français, Nederlands, Español (more coming).</p>
+        </div>
+        <div class="faq-item">
+          <h4 id="faq3Q">How is transcription done?</h4>
+          <p id="faq3A" class="muted">Server-side Whisper for high accuracy; works offline then syncs later.</p>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- Shared footer -->
+  <!-- shared footer -->
   <div id="site-footer"></div>
 
-  <!-- Scripts: lang BEFORE header-loader -->
+  <!-- IMPORTANT: load order (lang BEFORE header) -->
   <script src="/js/lang.js" defer></script>
   <script src="/js/header-loader.js" defer></script>
   <script>
-    function T(code){ return (window.MEMOIR_I18N?.strings?.[code]) || window.MEMOIR_I18N?.strings?.en || {}; }
+    // ------- robust language application for the whole page -------
+    function S(code){ return (window.MEMOIR_I18N?.strings?.[code]) || window.MEMOIR_I18N?.strings?.en || {}; }
+    const F = (v,fb)=> (v ?? fb);
+
     function applyLanding(code){
-      const t = T(code);
-      const f = (v,fb)=> (v ?? fb);
+      const t=S(code);
 
-      document.getElementById('homeAppLabel').textContent = f(t.home?.appLabel, 'Memoir App');
-      document.getElementById('heroA').textContent       = f(t.home?.heroA, 'Preserve Your');
-      document.getElementById('heroB').textContent       = f(t.home?.heroB, 'Memories Forever');
-      document.getElementById('heroBlurb').textContent   = f(t.home?.heroBlurb, 'Record once, keep for generations...');
-      document.getElementById('ctaStart').textContent    = f(t.common?.start, 'Start Recording');
-      document.getElementById('ctaStories').textContent  = f(t.common?.stories, 'My Stories');
+      // hero
+      document.getElementById('homeAppLabel').textContent = F(t.home?.appLabel, 'Memoir App');
+      document.getElementById('heroA').textContent        = F(t.home?.heroA, 'Preserve Your');
+      document.getElementById('heroB').textContent        = F(t.home?.heroB, 'Memories Forever');
+      document.getElementById('heroBlurb').textContent    = F(t.home?.heroBlurb, 'Record once, keep for generations...');
+      document.getElementById('ctaStart').textContent     = F(t.common?.start, 'Start Recording');
+      document.getElementById('ctaStories').textContent   = F(t.common?.stories, 'My Stories');
 
-      document.getElementById('startLabel').textContent  = f(t.common?.start, 'Start Recording');
-      document.getElementById('startTitle').textContent  = f(t.common?.start, 'Start Recording');
-      document.getElementById('startBlurb').textContent  = f(t.home?.startBlurb, 'One tap to begin. Add a title and “when it happened” later.');
-      document.getElementById('startBtn').textContent    = f(t.common?.start, 'Start Recording');
+      // quick actions
+      document.getElementById('qaStartLabel').textContent = F(t.common?.start, 'Start Recording');
+      document.getElementById('qaStartTitle').textContent = F(t.common?.start, 'Start Recording');
+      document.getElementById('qaStartBlurb').textContent = F(t.home?.startBlurb, 'One tap to begin…');
+      document.getElementById('qaStartBtn').textContent   = F(t.common?.start, 'Start Recording');
 
-      document.getElementById('viewLabel').textContent   = f(t.common?.view, 'View My Stories');
-      document.getElementById('viewTitle').textContent   = f(t.common?.view, 'View My Stories');
-      document.getElementById('viewBlurb').textContent   = f(t.home?.viewBlurb, 'Browse, rewrite with AI, export, and share with your family.');
-      document.getElementById('viewBtn').textContent     = f(t.common?.stories, 'My Stories');
+      document.getElementById('qaViewLabel').textContent  = F(t.common?.view, 'View My Stories');
+      document.getElementById('qaViewTitle').textContent  = F(t.common?.view, 'View My Stories');
+      document.getElementById('qaViewBlurb').textContent  = F(t.home?.viewBlurb, 'Browse, rewrite with AI, export…');
+      document.getElementById('qaViewBtn').textContent    = F(t.common?.stories, 'My Stories');
+
+      // features
+      document.getElementById('feat1Title').textContent   = F(t.features?.f1Title, 'Smart Transcription');
+      document.getElementById('feat1Text').textContent    = F(t.features?.f1Text,  'AI-powered voice-to-text conversion.');
+      document.getElementById('feat2Title').textContent   = F(t.features?.f2Title, 'Multi-language Support');
+      document.getElementById('feat2Text').textContent    = F(t.features?.f2Text,  'Record and transcribe in multiple languages.');
+      document.getElementById('feat3Title').textContent   = F(t.features?.f3Title, 'Private Library');
+      document.getElementById('feat3Text').textContent    = F(t.features?.f3Text,  'Organize and share securely with your family.');
+
+      // pricing + faq
+      document.getElementById('pricingTitle').textContent = F(t.pricing?.title, 'Pricing');
+      document.getElementById('planPremium').textContent  = F(t.pricing?.premium, 'Premium');
+      document.getElementById('pricePremium').textContent = F(t.pricing?.premiumPrice, '€4.99/month');
+      document.getElementById('planFamily').textContent   = F(t.pricing?.family, 'Family');
+      document.getElementById('priceFamily').textContent  = F(t.pricing?.familyPrice, '€7.99/month');
+      document.getElementById('familyNote').textContent   = F(t.pricing?.familyNote, 'up to 4 read-only family members');
+      document.getElementById('upgradeBtn').textContent   = F(t.pricing?.upgrade, 'Upgrade');
+
+      document.getElementById('faqTitle').textContent     = F(t.faq?.title, 'FAQ');
+      document.getElementById('faq1Q').textContent        = F(t.faq?.q1, 'Is there a free plan?');
+      document.getElementById('faq1A').textContent        = F(t.faq?.a1, 'Yes, you can try the app for free before upgrading.');
+      document.getElementById('faq2Q').textContent        = F(t.faq?.q2, 'Which languages are supported?');
+      document.getElementById('faq2A').textContent        = F(t.faq?.a2, 'English, Français, Nederlands, Español (more coming).');
+      document.getElementById('faq3Q').textContent        = F(t.faq?.q3, 'How is transcription done?');
+      document.getElementById('faq3A').textContent        = F(t.faq?.a3, 'Server-side Whisper for high accuracy; works offline then syncs later.');
     }
-    window.addEventListener('memoir:lang', e => applyLanding(e.detail.code));
-    document.addEventListener('DOMContentLoaded', ()=> applyLanding(window.MEMOIR_I18N?.getLang?.() || 'en'));
+
+    // Listen THREE ways so we never miss it
+    function currentLang(){ return (window.MEMOIR_I18N?.getLang?.() || localStorage.getItem('memoir_lang') || 'en'); }
+    function applyNow(){ applyLanding(currentLang()); }
+
+    window.addEventListener('memoir:lang', e=>applyLanding(e.detail.code));
+    window.addEventListener('storage', e=>{ if(e.key==='memoir_lang') applyNow(); });
+    document.addEventListener('DOMContentLoaded', applyNow);
+    // Safety tick in case event fired before listener attached
+    setTimeout(applyNow, 0);
   </script>
 </body>
 </html>
