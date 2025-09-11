@@ -4,7 +4,6 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — Record</title>
-
   <link rel="stylesheet" href="/styles.css">
 
   <style>
@@ -22,7 +21,6 @@
     .muted{color:var(--muted)}
     .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;color:var(--ink);text-decoration:none;font-weight:700}
     .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:0}
-    .btn.ghost{background:transparent}
     .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .chips{display:flex;gap:8px;flex-wrap:wrap}
     .chip{padding:8px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;cursor:pointer}
@@ -58,32 +56,32 @@
           <div class="muted"><span class="timer" id="timer">00:00</span></div>
         </div>
 
-        <div class="label">Today's suggested prompts</div>
+        <div class="label" id="promptsHdr">Today's suggested prompts</div>
         <div class="row" style="justify-content:space-between">
           <div id="prompts" class="chips"></div>
-          <button id="refreshPrompts" class="btn">Suggest other prompts</button>
+          <button id="btnShuffle" class="btn">Suggest other prompts</button>
         </div>
 
-        <div class="label">Notes (optional)</div>
-        <textarea id="notes" placeholder="Add a quick note…"></textarea>
+        <div class="label" id="notesLabel">Notes (optional)</div>
+        <textarea id="notes" placeholder="Add a quick note…" aria-labelledby="notesLabel"></textarea>
 
         <div class="row" style="margin-top:12px">
-          <a href="/stories.html" class="btn">My Stories</a>
+          <a href="/stories.html" id="myStoriesBtn" class="btn">My Stories</a>
         </div>
       </div>
 
       <!-- Right: metadata + transcript -->
       <div class="card">
-        <div class="label">Title</div>
-        <input id="title" type="text" placeholder="Story title" />
+        <div class="label" id="titleLabel">Title</div>
+        <input id="title" type="text" placeholder="Story title" aria-labelledby="titleLabel"/>
 
-        <div class="label">When did this happen?</div>
-        <input id="when" type="text" placeholder='e.g. "summer 1945", "early 2018", "15 Feb 1972"' />
+        <div class="label" id="whenLabel">When did this happen?</div>
+        <input id="when" type="text" placeholder='e.g. "summer 1945", "early 2018", "15 Feb 1972"' aria-labelledby="whenLabel"/>
 
-        <div class="label">Add photo (optional)</div>
-        <input id="photo" type="file" accept="image/*" />
+        <div class="label" id="addPhotoLabel">Add photo (optional)</div>
+        <input id="photo" type="file" accept="image/*" aria-labelledby="addPhotoLabel"/>
 
-        <div class="label" style="margin-top:14px">Transcript</div>
+        <div class="label" id="transcriptLabel" style="margin-top:14px">Transcript</div>
         <div id="transcript" class="transcript" aria-live="polite">Your words will appear here…</div>
         <div class="hint" id="asrHint" style="margin-top:6px"></div>
 
@@ -97,11 +95,12 @@
   <!-- Shared footer -->
   <div id="site-footer"></div>
 
-  <!-- Scripts -->
+  <!-- Scripts: lang FIRST, then header loader -->
   <script src="/js/lang.js" defer></script>
   <script src="/js/header-loader.js" defer></script>
+
   <script>
-    // ===== Guided prompts (simple, localized) =====
+    // ---------- Localized guided prompts ----------
     const TOPIC_WORDS = {
       en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
       fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
@@ -119,8 +118,7 @@
         wrap.appendChild(b);
       });
     }
-
-    // Simple voice prompt (system speechSynthesis fallback)
+    // simple voice prompt
     const BCP={en:'en-US',fr:'fr-FR',es:'es-ES',nl:'nl-NL'};
     function speakPrompt(text, code){
       if(!('speechSynthesis' in window)) return;
@@ -129,15 +127,35 @@
       speechSynthesis.cancel(); speechSynthesis.speak(u);
     }
 
-    // React to language changes from header/lang.js
-    function applyLang(code){
-      renderPrompts(code);
+    // ---------- i18n bindings for this page ----------
+    function localizeRecord(lang){
+      const t=(window.MEMOIR_I18N?.strings?.[lang]) || window.MEMOIR_I18N.strings.en;
+      // headings / labels
+      document.getElementById('pageTitle').textContent = t.nav_record || 'Record';
+      document.getElementById('promptsHdr').textContent = t.promptsHdr || "Today's suggested prompts";
+      document.getElementById('btnShuffle').textContent = t.btnShuffle || 'Suggest other prompts';
+      document.getElementById('notesLabel').textContent = t.notesLabel || 'Notes (optional)';
+      document.getElementById('notes').placeholder = t.notesPH || 'Add a quick note…';
+      document.getElementById('titleLabel').textContent = t.titleLabel || 'Title';
+      document.getElementById('title').placeholder = t.titlePH || 'Story title';
+      document.getElementById('whenLabel').textContent = t.whenLabel || 'When did this happen?';
+      document.getElementById('when').placeholder = t.whenPH || 'e.g. "summer 1945", "early 2018", "15 Feb 1972"';
+      document.getElementById('addPhotoLabel').textContent = t.addPhotoLabel || 'Add photo (optional)';
+      document.getElementById('transcriptLabel').textContent = t.transcriptLabel || 'Transcript';
+      document.getElementById('transcript').textContent = t.transcriptPH || 'Your words will appear here…';
+      document.getElementById('saveBtn').textContent = t.saveStory || 'Save story';
+      document.getElementById('myStoriesBtn').textContent = t.viewStories || 'My Stories';
+      // prompts
+      renderPrompts(lang);
     }
-    window.addEventListener('memoir:lang', e=>applyLang(e.detail.code));
-    document.addEventListener('DOMContentLoaded', ()=>applyLang(window.MEMOIR_I18N?.getLang?.() || 'en'));
-    document.getElementById('refreshPrompts').onclick = ()=>applyLang(window.MEMOIR_I18N?.getLang?.() || 'en');
+    window.addEventListener('memoir:lang', e=>localizeRecord(e.detail.code));
+    document.addEventListener('DOMContentLoaded', ()=>{
+      const code = window.MEMOIR_I18N?.getLang?.() || 'en';
+      localizeRecord(code);
+      document.getElementById('btnShuffle').onclick = ()=>localizeRecord(window.MEMOIR_I18N?.getLang?.()||'en');
+    });
 
-    // ===== Recording UI (timer only; your chunked upload runs server side) =====
+    // ---------- Recording + chunk upload ----------
     const mic = document.getElementById('mic');
     const timerEl = document.getElementById('timer');
     const transcriptEl = document.getElementById('transcript');
@@ -149,27 +167,20 @@
         media = await navigator.mediaDevices.getUserMedia({ audio:true });
         const mr = new MediaRecorder(media, { mimeType: 'audio/webm' });
         chunks=[];
-
         mr.ondataavailable = e => { if(e.data && e.data.size) chunks.push(e.data); };
         mr.onstop = async () => {
           const blob = new Blob(chunks, { type:'audio/webm' });
-          await uploadChunk(blob); // send whole blob as a single “chunk” (your server can split if needed)
+          await uploadChunk(blob);
         };
-
-        mr.start(1000); // request data every second
-        mic.dataset.recorderId = Math.random().toString(36).slice(2);
+        mr.start(1000);
         mic.textContent='Stop';
         mic.classList.add('pulse');
         recActive=true; startAt=Date.now();
-        tick=setInterval(()=>updateTimer(),1000);
-        // Keep a reference
+        tick=setInterval(updateTimer,1000);
         window._memoirRecorder = mr;
-        asrHint.textContent='Recording… transcription will appear live when online.';
-      }catch(e){
-        alert('Microphone permission denied.');
-      }
+        asrHint.textContent = (window.MEMOIR_I18N?.strings?.[window.MEMOIR_I18N.getLang()]?.asrRecording) || 'Recording… transcription will appear live when online.';
+      }catch(e){ alert('Microphone permission denied.'); }
     }
-
     function stopRec(){
       try{ window._memoirRecorder && window._memoirRecorder.stop(); }catch{}
       try{ media && media.getTracks().forEach(t=>t.stop()); }catch{}
@@ -179,7 +190,6 @@
       recActive=false;
       updateTimer(0);
     }
-
     mic.onclick = ()=> recActive ? stopRec() : startRec();
 
     function updateTimer(forceZero){
@@ -191,7 +201,6 @@
     }
 
     async function uploadChunk(blob){
-      // Send to your existing server endpoint that streams to Whisper
       try{
         const lang = window.MEMOIR_I18N?.getLang?.() || 'en';
         const r = await fetch('/api/transcribe-chunk', {
@@ -199,18 +208,15 @@
           headers: { 'x-memoir-lang': lang },
           body: blob
         });
-        if(!r.ok){ throw new Error('upload_failed'); }
+        if(!r.ok) throw new Error('upload_failed');
         const data = await r.json().catch(()=>null);
-        if(data?.partial){
-          transcriptEl.textContent = data.partial;
-        }
-        asrHint.textContent='Listening…';
+        if(data?.partial){ transcriptEl.textContent = data.partial; }
+        asrHint.textContent=(window.MEMOIR_I18N?.strings?.[lang]?.asrListening)||'Listening…';
       }catch(e){
-        asrHint.textContent='Offline or server unavailable — audio will be saved locally and sent later.';
+        asrHint.textContent=(window.MEMOIR_I18N?.strings?.[window.MEMOIR_I18N.getLang()]?.asrOffline)||'Offline or server unavailable — audio will be saved locally and sent later.';
       }
     }
 
-    // ===== Save story (front-end only; assumes your /api/transcribe-story etc. exist) =====
     document.getElementById('saveBtn').onclick = async()=>{
       if(recActive) stopRec();
       const title = document.getElementById('title').value.trim() || 'Story';
@@ -218,24 +224,17 @@
       const notes = document.getElementById('notes').value.trim() || '';
       const photo = document.getElementById('photo').files?.[0] || null;
       const text  = (transcriptEl.textContent || '').trim();
-
       if(!text){ alert('There is no transcript yet. Say a few words, then try again.'); return; }
-
       const fd = new FormData();
-      fd.append('title', title);
-      fd.append('when', when);
-      fd.append('notes', notes);
-      fd.append('text', text);
+      fd.append('title', title); fd.append('when', when);
+      fd.append('notes', notes); fd.append('text', text);
       if(photo) fd.append('photo', photo);
-
       try{
         const r = await fetch('/api/transcribe-story', { method:'POST', body: fd });
         if(!r.ok) throw new Error('save_failed');
         alert('Saved! You can find it in My Stories.');
         window.location.href = '/stories.html';
-      }catch(e){
-        alert('Save failed. If you are offline, it will retry when connected.');
-      }
+      }catch(e){ alert('Save failed. If you are offline, it will retry when connected.'); }
     };
   </script>
 </body>
