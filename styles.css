@@ -80,3 +80,14 @@ input, select, textarea{box-sizing:border-box;max-width:100%}
   .site-header .wrap { flex-wrap:wrap; }
   .site-header .nav { width:100%; justify-content:flex-start; flex-wrap:wrap; }
 }
+
+/* === Language dropdown guard === */
+.site-header .lang {
+  position: relative;
+}
+.site-header .lang-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 1000;
+}
