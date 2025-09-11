@@ -11,11 +11,5 @@
   ],
   "redirects": [
     { "source": "/", "destination": "/landing.html", "permanent": false }
-  ],
-  "crons": [
-    {
-      "path": "/api/cron-transcribe-pending",
-      "schedule": "*/5 * * * *"
-    }
   ]
 }
