@@ -3,40 +3,32 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title data-i18n="stories.title">My Stories</title>
-  <link rel="stylesheet" href="/styles.css"/>
+  <title>Memoir — My Stories</title>
+  <link rel="stylesheet" href="/styles.css">
 </head>
-<body class="mk-theme-vintage">
+<body class="bg-cream">
   <div id="site-header"></div>
 
-  <main class="mk-container">
-    <header class="mk-stories-header">
-      <h1 data-i18n="stories.title">My Stories</h1>
-      <div class="mk-stats">
-        <div class="mk-stat">
-          <div id="storyCount" class="mk-stat__num">0</div>
-          <div class="mk-stat__label" data-i18n="stories.count">Stories</div>
-        </div>
-        <div class="mk-stat">
-          <div id="sharedCount" class="mk-stat__num">—</div>
-          <div class="mk-stat__label" data-i18n="stories.shared">Shared with family</div>
-        </div>
-      </div>
-    </header>
+  <main class="container" style="padding:20px 16px 30px">
+    <h1 class="page-title">My Stories</h1>
 
-    <!-- Your stories grid/list (feel free to wire with Supabase). -->
-    <section id="storiesList" class="mk-stories-list">
-      <!-- placeholder -->
-      <div class="mk-card">Your stories will appear here.</div>
+    <section class="card">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div class="muted">Synced stories will appear here.</div>
+        <a class="btn small" href="/record.html">Record</a>
+      </div>
+      <div id="storiesList" class="list" style="margin-top:12px"></div>
     </section>
   </main>
 
+  <div id="site-footer"></div>
+
+  <script src="/js/header-loader.js" defer></script>
+  <script src="/js/lang.js" defer></script>
   <script>
-    // window.SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
-    // window.SUPABASE_ANON_KEY = "YOUR_PUBLIC_ANON_KEY";
+    // demo list
+    const list = document.getElementById('storiesList');
+    list.innerHTML = '<div class="muted">No stories yet.</div>';
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/header-loader.js"></script>
-  <script src="/app.js"></script>
 </body>
 </html>
