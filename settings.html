@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Memoir — Settings</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    :root{ --bg:#f6f1ea; --card:#fffaf5; --ink:#3b2f2a; --muted:#7b6a62; --radius:18px; --shadow:0 18px 40px rgba(59,47,42,.10), 0 2px 8px rgba(59,47,42,.06) }
+    body{background:var(--bg);color:var(--ink);margin:0}
+    .container{max-width:900px;margin:0 auto;padding:20px 16px 40px}
+    .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+    .section{margin:14px 0}
+    .section h2{margin:0 0 10px}
+    details{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:12px;padding:12px;margin:8px 0}
+    summary{font-weight:700;cursor:pointer}
+    .muted{color:var(--muted)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;color:var(--ink);text-decoration:none;font-weight:700}
+  </style>
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main class="container">
+    <h1 data-i18n="settings.title">Settings</h1>
+
+    <section class="section card">
+      <h2 data-i18n="settings.account">Account</h2>
+      <p class="muted" id="acctEmail">—</p>
+      <div class="row">
+        <a href="/login.html" class="btn" data-i18n="settings.signIn">Sign in</a>
+        <button class="btn" id="signOutBtn" data-i18n="settings.signOut">Sign out</button>
+      </div>
+    </section>
+
+    <section class="section card">
+      <h2 data-i18n="settings.faq">FAQ</h2>
+      <details>
+        <summary data-i18n="faq.q1">Is there a free plan?</summary>
+        <p class="muted" data-i18n="faq.a1">Yes, you can try Memoir for free before upgrading.</p>
+      </details>
+      <details>
+        <summary data-i18n="faq.q2">Which languages are supported?</summary>
+        <p class="muted" data-i18n="faq.a2">English, Français, Nederlands, Español (more coming).</p>
+      </details>
+      <details>
+        <summary data-i18n="faq.q3">How is transcription done?</summary>
+        <p class="muted" data-i18n="faq.a3">Server-side Whisper for accuracy; works offline then syncs later.</p>
+      </details>
+    </section>
+
+    <section class="section card">
+      <h2 data-i18n="settings.legal">Legal</h2>
+      <p class="muted"><a href="/privacy.html">Privacy Policy</a> · <a href="/terms.html">Terms</a> · <a href="/gdpr.html">GDPR</a></p>
+      <p class="muted" data-i18n="settings.gdprNote">For data requests (GDPR/DSAR), contact support via the Privacy page.</p>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <script src="/js/lang.js" defer></script>
+  <script src="/js/header-loader.js" defer></script>
+  <script>
+    // (Optional) show current user if your auth endpoint exists
+    fetch('/api/auth', { method:'GET' })
+      .then(r=>r.ok?r.json():null)
+      .then(d=>{ if(d?.email){ document.getElementById('acctEmail').textContent = d.email; } });
+
+    document.getElementById('signOutBtn')?.addEventListener('click', async ()=>{
+      try{ await fetch('/api/auth', { method:'DELETE' }); location.href='/landing.html'; }catch(e){}
+    });
+  </script>
+</body>
+</html>
