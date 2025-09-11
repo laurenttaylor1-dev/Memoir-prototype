@@ -1,148 +1,103 @@
-<!-- lang.js -->
 <script>
-window.I18N = {
-  en: {
-    nav_home: "Home",
-    nav_record: "Record",
-    nav_stories: "My Stories",
-    nav_help: "Help",
-    nav_login: "Login",
+// Tiny i18n + prompts. Default to English on first visit.
+(function(){
+  const DEFAULT = 'en';
+  const FLAGS = { en:'🇬🇧', fr:'🇫🇷', nl:'🇧🇪', es:'🇪🇸' };
 
-    // record
-    guided: "Guided",
-    free: "Free",
-    todays_suggestions: "Today’s suggested prompts",
-    refresh_prompts: "Suggest other prompts",
-    title_label: "Title",
-    when_label: "When did this happen?",
-    start_recording: "Start Recording",
-    stop_recording: "Stop Recording",
-    transcript_placeholder: "Your words will appear here…",
-    add_photo: "Add a photo (optional)",
-    save_story: "Save story",
+  const STRINGS = {
+    en: {
+      startRecording: 'Start Recording',
+      viewStories: 'My Stories',
+      todayPrompts: "Today's suggested prompts",
+      refreshPrompts: 'Suggest other prompts',
+      prompts: ['Childhood','Family','School','Work','Love','Travel','Traditions','Holidays','Lessons','Advice','Turning points'],
+      heroTitleA: 'Preserve Your',
+      heroTitleB: 'Memories Forever',
+      heroBlurb: 'Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.'
+    },
+    fr: {
+      startRecording: 'Commencer',
+      viewStories: 'Mes histoires',
+      todayPrompts: 'Suggestions du jour',
+      refreshPrompts: 'Autres suggestions',
+      prompts: ['Enfance','Famille','École','Travail','Amour','Voyages','Traditions','Fêtes','Leçons','Conseils','Déclics'],
+      heroTitleA: 'Préservez Vos',
+      heroTitleB: 'Souvenirs Pour Toujours',
+      heroBlurb: 'Enregistrez une fois, gardez pour des générations…'
+    },
+    nl: {
+      startRecording: 'Opnemen',
+      viewStories: 'Mijn verhalen',
+      todayPrompts: 'Suggesties van vandaag',
+      refreshPrompts: 'Meer suggesties',
+      prompts: ['Jeugd','Familie','School','Werk','Liefde','Reizen','Tradities','Feestdagen','Lessen','Advies','Keerpunt'],
+      heroTitleA: 'Bewaar Je',
+      heroTitleB: 'Herinneringen Voor Altijd',
+      heroBlurb: 'Neem één keer op, bewaar voor generaties…'
+    },
+    es: {
+      startRecording: 'Grabar',
+      viewStories: 'Mis historias',
+      todayPrompts: 'Sugerencias de hoy',
+      refreshPrompts: 'Otras sugerencias',
+      prompts: ['Infancia','Familia','Escuela','Trabajo','Amor','Viajes','Tradiciones','Fiestas','Lecciones','Consejos','Puntos clave'],
+      heroTitleA: 'Conserva Tus',
+      heroTitleB: 'Recuerdos Para Siempre',
+      heroBlurb: 'Graba una vez, guarda para generaciones…'
+    }
+  };
 
-    // stories
-    my_stories: "My Stories",
-    you_have_x_stories: (n)=>`You have ${n} stor${n===1?'y':'ies'}.`,
-    shared_with: "Shared with",
-    invite_family: "Invite a family member",
-    invite_email_ph: "Family member email",
-    send_invite: "Send invite",
-
-    // login
-    sign_in: "Sign in",
-    email: "Email",
-    password: "Password",
-    create_account: "Create account",
-  },
-  fr: {
-    nav_home: "Accueil",
-    nav_record: "Enregistrer",
-    nav_stories: "Mes histoires",
-    nav_help: "Aide",
-    nav_login: "Se connecter",
-
-    guided: "Guidé",
-    free: "Libre",
-    todays_suggestions: "Suggestions du jour",
-    refresh_prompts: "Proposer d’autres sujets",
-    title_label: "Titre",
-    when_label: "Quand cela s’est-il passé ?",
-    start_recording: "Commencer l’enregistrement",
-    stop_recording: "Arrêter",
-    transcript_placeholder: "Vos paroles apparaîtront ici…",
-    add_photo: "Ajouter une photo (optionnel)",
-    save_story: "Enregistrer l’histoire",
-
-    my_stories: "Mes histoires",
-    you_have_x_stories: (n)=>`Vous avez ${n} histoire${n>1?'s':''}.`,
-    shared_with: "Partagé avec",
-    invite_family: "Inviter un membre de la famille",
-    invite_email_ph: "Email du membre",
-    send_invite: "Envoyer l’invitation",
-
-    sign_in: "Se connecter",
-    email: "Email",
-    password: "Mot de passe",
-    create_account: "Créer un compte",
-  },
-  nl: {
-    nav_home: "Home",
-    nav_record: "Opnemen",
-    nav_stories: "Mijn verhalen",
-    nav_help: "Help",
-    nav_login: "Inloggen",
-
-    guided: "Begeleid",
-    free: "Vrij",
-    todays_suggestions: "Suggesties van vandaag",
-    refresh_prompts: "Andere suggesties",
-    title_label: "Titel",
-    when_label: "Wanneer gebeurde dit?",
-    start_recording: "Start opname",
-    stop_recording: "Stop opname",
-    transcript_placeholder: "Je woorden verschijnen hier…",
-    add_photo: "Foto toevoegen (optioneel)",
-    save_story: "Verhaal opslaan",
-
-    my_stories: "Mijn verhalen",
-    you_have_x_stories: (n)=>`Je hebt ${n} verhaal${n!==1?'len':''}.`,
-    shared_with: "Gedeeld met",
-    invite_family: "Familielid uitnodigen",
-    invite_email_ph: "E-mail familielid",
-    send_invite: "Uitnodiging versturen",
-
-    sign_in: "Inloggen",
-    email: "E-mail",
-    password: "Wachtwoord",
-    create_account: "Account aanmaken",
-  },
-  es: {
-    nav_home: "Inicio",
-    nav_record: "Grabar",
-    nav_stories: "Mis historias",
-    nav_help: "Ayuda",
-    nav_login: "Entrar",
-
-    guided: "Guiado",
-    free: "Libre",
-    todays_suggestions: "Sugerencias de hoy",
-    refresh_prompts: "Sugerir otros temas",
-    title_label: "Título",
-    when_label: "¿Cuándo ocurrió?",
-    start_recording: "Comenzar a grabar",
-    stop_recording: "Detener",
-    transcript_placeholder: "Tus palabras aparecerán aquí…",
-    add_photo: "Añadir foto (opcional)",
-    save_story: "Guardar historia",
-
-    my_stories: "Mis historias",
-    you_have_x_stories: (n)=>`Tienes ${n} historia${n!==1?'s':''}.`,
-    shared_with: "Compartido con",
-    invite_family: "Invitar a un familiar",
-    invite_email_ph: "Correo del familiar",
-    send_invite: "Enviar invitación",
-
-    sign_in: "Iniciar sesión",
-    email: "Correo",
-    password: "Contraseña",
-    create_account: "Crear cuenta",
+  function getLang() {
+    try {
+      const saved = localStorage.getItem('memoir.lang');
+      if (saved) return saved;
+      localStorage.setItem('memoir.lang', DEFAULT);
+      return DEFAULT;
+    } catch {
+      return DEFAULT;
+    }
   }
-};
 
-window.getLang = ()=> localStorage.getItem('lang') || 'en';
-window.setLang = (code)=>{ localStorage.setItem('lang', code); location.reload(); };
+  function setLang(code) {
+    const c = STRINGS[code] ? code : DEFAULT;
+    try { localStorage.setItem('memoir.lang', c); } catch {}
+    window.dispatchEvent(new CustomEvent('memoir:lang', { detail:{ code:c }}));
+  }
 
-window.t = (key, ...args)=>{
-  const L = I18N[getLang()] || I18N.en;
-  const v = L[key];
-  return typeof v==='function' ? v(...args) : (v || key);
-};
+  // Update header label/flag if present
+  function applyHeader(code){
+    const flag = document.getElementById('langFlag');
+    const label = document.getElementById('langLabel');
+    if (flag)  flag.textContent  = FLAGS[code] || FLAGS.en;
+    if (label) label.textContent = (
+      {en:'English',fr:'Français',nl:'Nederlands',es:'Español'}[code] || 'English'
+    );
+  }
 
-window.applyI18N = ()=>{
-  document.querySelectorAll('[data-i18n]').forEach(el=>{
-    const key = el.getAttribute('data-i18n');
-    el.textContent = t(key);
-  });
-};
+  // public API
+  window.MEMOIR_I18N = {
+    strings: STRINGS,
+    flags: FLAGS,
+    getLang,
+    setLang,
+    getPrompts(code, n=4){
+      const pool = STRINGS[code || getLang()]?.prompts || STRINGS.en.prompts;
+      // return random N
+      const arr = [...pool].sort(()=>Math.random()-0.5).slice(0,n);
+      return arr;
+    }
+  };
+
+  // react to menu selection (from header-loader)
+  window.addEventListener('memoir:set-lang', (e)=> setLang(e.detail.code));
+
+  // first paint
+  const initial = getLang();
+  applyHeader(initial);
+  // notify pages
+  setTimeout(()=>window.dispatchEvent(new CustomEvent('memoir:lang', { detail:{ code: initial } })), 0);
+
+  // keep header labels in sync
+  window.addEventListener('memoir:lang', (e)=> applyHeader(e.detail.code));
+})();
 </script>
