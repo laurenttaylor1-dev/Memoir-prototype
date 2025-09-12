@@ -5,69 +5,83 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — Settings</title>
   <link rel="stylesheet" href="/styles.css">
+  <style>
+    :root{ --card:#fffaf5; --ink:#3b2f2a; --muted:#7b6a62; --radius:18px;
+           --shadow:0 18px 40px rgba(59,47,42,.10),0 2px 8px rgba(59,47,42,.06); }
+    body{ color:var(--ink); margin:0; background:#f6f1ea; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial }
+    .wrap{ max-width:1100px; margin:0 auto; padding:20px 16px 28px }
+    h1{ font-size:clamp(26px,3vw,38px); margin:8px 0 18px }
+    h2{ font-size:clamp(18px,2.1vw,22px); margin:16px 0 10px }
+    p.muted{ color:var(--muted) }
+    .grid{ display:grid; gap:18px; grid-template-columns:1fr 1fr; }
+    @media (max-width: 980px){ .grid{ grid-template-columns:1fr; } }
+    .card{ background:var(--card); border:1px solid rgba(0,0,0,.08); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center }
+    .pill{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:999px;
+           border:1px solid rgba(0,0,0,.12); background:#fff; color:var(--ink); text-decoration:none; font-weight:600 }
+    .pill.primary{ background:linear-gradient(90deg,#8c5a3c,#b17d55); border:0; color:#fff }
+    .small{ font-size:12px; color:var(--muted) }
+    .kv{ display:grid; grid-template-columns:160px 1fr; gap:8px 14px; align-items:center }
+    .list{ margin:8px 0 0 18px }
+    .list li{ margin:6px 0 }
+  </style>
 </head>
 <body>
   <div id="site-header"></div>
 
-  <main class="container">
-    <h1 class="section-title" id="stgTitle">Settings</h1>
+  <main class="wrap">
+    <h1 id="setTitle">Settings</h1>
 
-    <div class="card" style="margin-bottom:16px">
-      <h2 class="section-title" id="acctTitle">Account</h2>
-      <p id="acctDesc" class="muted">Manage your login and personal settings.</p>
-      <div id="acctBox" class="mini-card" style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap">
-        <div>
-          <div class="label" id="acctStatusLbl">Status</div>
-          <div id="acctStatusVal">Signed out</div>
+    <section class="grid">
+      <!-- Account -->
+      <div class="card">
+        <h2 id="setAccount">Account</h2>
+        <div class="kv">
+          <div class="small" id="setEmailLabel">Email</div>
+          <div id="accEmail">—</div>
+
+          <div class="small" id="setPlanLabel">Current plan</div>
+          <div id="accPlan">Free</div>
+
+          <div class="small" id="setNextBillLabel">Next billing</div>
+          <div id="accNextBill">—</div>
         </div>
-        <div style="display:flex;gap:10px">
-          <a href="/login.html" class="btn" id="btnSignIn">Sign in</a>
-          <button class="btn" id="btnSignOut">Sign out</button>
+        <div class="row" style="margin-top:12px">
+          <a href="/api/checkout" class="pill primary" id="setUpgrade">Upgrade / Manage</a>
+          <a href="/api/checkout?portal=1" class="pill" id="setPortal">Billing portal</a>
         </div>
+        <p class="small" style="margin-top:8px" id="setManageNote">
+          Use “Billing portal” to update payment method, download invoices or cancel.
+        </p>
       </div>
-    </div>
 
-    <div class="card" style="margin-bottom:16px">
-      <h2 class="section-title" id="subTitle">Subscription</h2>
-      <div class="mini-card" style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center">
-        <div>
-          <div class="label" id="planLabel">Current plan</div>
-          <div id="planName">Free</div>
-          <div class="muted" id="planNext">Next billing: —</div>
-        </div>
-        <div style="display:flex;gap:10px">
-          <a href="/checkout.html" class="btn primary" id="btnUpgrade">Upgrade</a>
-          <button class="btn" id="btnManageBilling">Manage billing</button>
-        </div>
+      <!-- Security & Data -->
+      <div class="card">
+        <h2 id="setSecurity">Security & Data</h2>
+        <ul class="list">
+          <li id="setExport">Export your data (CSV/PDF) from “My Stories”.</li>
+          <li id="setPrivacy">Stories are private by default. Sharing is read-only for invited family.</li>
+          <li id="setDelete">Need your account deleted? Email support@memoir.app from your account address.</li>
+        </ul>
       </div>
-      <p id="subNote" class="muted" style="margin-top:10px">
-        You’ll be charged monthly. You can cancel anytime from the billing portal.
-      </p>
-    </div>
 
-    <div class="card" style="margin-bottom:16px">
-      <h2 class="section-title" id="faqTitle">FAQ</h2>
-      <details>
-        <summary id="qFree">Is there a free plan?</summary>
-        <div id="aFree" class="muted">Yes, you can try the app for free before upgrading.</div>
-      </details>
-      <details>
-        <summary id="qLangs">Which languages are supported?</summary>
-        <div id="aLangs" class="muted">English, Français, Nederlands, Español (more coming).</div>
-      </details>
-      <details>
-        <summary id="qTrans">How is transcription done?</summary>
-        <div id="aTrans" class="muted">Server-side Whisper for high accuracy; works offline then syncs later.</div>
-      </details>
-    </div>
+      <!-- FAQ (short) -->
+      <div class="card">
+        <h2 id="setFaq">FAQ (quick)</h2>
+        <ul class="list">
+          <li><strong id="q1">Is there a free plan?</strong> <span id="a1">Yes — up to 10 stories, 2 minutes transcription each.</span></li>
+          <li><strong id="q2">Which languages are supported?</strong> <span id="a2">English, Français, Nederlands, Español (more coming).</span></li>
+          <li><strong id="q3">How does rewriting work?</strong> <span id="a3">AI turns transcripts into polished, book-ready prose you can review and tweak.</span></li>
+        </ul>
+      </div>
 
-    <div class="card">
-      <h2 class="section-title" id="legalTitle">Legal</h2>
-      <ul class="muted" style="margin:0;padding-left:18px">
-        <li><a href="/legal/privacy.html" id="linkPrivacy">Privacy Policy</a></li>
-        <li><a href="/legal/terms.html" id="linkTerms">Terms of Service</a></li>
-      </ul>
-    </div>
+      <!-- Legal -->
+      <div class="card">
+        <h2 id="setLegal">Legal</h2>
+        <p class="muted" id="setLegalCopy">Read our policies and terms.</p>
+        <a href="/legal.html" class="pill" id="setLegalLink">Legal & Policies</a>
+      </div>
+    </section>
   </main>
 
   <div id="site-footer"></div>
@@ -75,89 +89,17 @@
   <script src="/js/lang.js" defer></script>
   <script src="/js/header-loader.js" defer></script>
   <script>
-    // Minimal “session” detection. If you use Supabase Auth, replace this block with your client check.
-    // This reads a simple cookie/localStorage flag you may already set after login.
-    function getUserEmail(){
-      try{
-        return localStorage.getItem('memoir_user_email') || '';
-      }catch{return '';}
-    }
+    // Fill lightweight account info from localStorage if you store it;
+    // otherwise these can remain placeholders or be filled by a small /api/me endpoint.
+    const me = JSON.parse(localStorage.getItem('memoir_user')||'{}');
+    if(me.email) document.getElementById('accEmail').textContent = me.email;
+    if(me.plan)  document.getElementById('accPlan').textContent  = me.plan; // e.g. "Free", "Storyteller"
+    if(me.next_billing) document.getElementById('accNextBill').textContent = me.next_billing;
 
-    async function openBillingPortal(){
-      try{
-        // If you already have an API route that returns {url}, call it here.
-        // Examples you may have: /api/checkout.js?mode=portal  OR  /api/stripe-portal
-        const r = await fetch('/api/checkout.js?mode=portal');
-        const { url } = await r.json();
-        if(url) window.location.href = url; else alert('Unable to open billing portal.');
-      }catch(e){ alert('Unable to open billing portal.'); }
-    }
-
-    function applySettingsLang(code){
-      const t = (window.MEMOIR_I18N?.strings?.[code]) || window.MEMOIR_I18N.strings.en;
-
-      // Titles/labels
-      stgTitle.textContent = t.stgTitle;
-      acctTitle.textContent = t.acctTitle;
-      acctDesc.textContent = t.acctDesc;
-      acctStatusLbl.textContent = t.acctStatusLbl;
-      btnSignIn.textContent = t.btnSignIn;
-      btnSignOut.textContent = t.btnSignOut;
-
-      subTitle.textContent = t.subTitle;
-      planLabel.textContent = t.planLabel;
-      btnUpgrade.textContent = t.upgrade;
-      btnManageBilling.textContent = t.btnManageBilling;
-      subNote.textContent = t.subNote;
-
-      // FAQ & legal reuse footer strings + extra
-      document.getElementById('faqTitle').textContent = t.faqTitle;
-      qFree.textContent = t.qFree;   aFree.textContent = t.aFree;
-      qLangs.textContent = t.qLangs; aLangs.textContent = t.aLangs;
-      qTrans.textContent = t.qTrans; aTrans.textContent = t.aTrans;
-      legalTitle.textContent = t.legalTitle;
-      linkPrivacy.textContent = t.linkPrivacy;
-      linkTerms.textContent = t.linkTerms;
-    }
-
-    document.addEventListener('DOMContentLoaded', ()=>{
-      const code = window.MEMOIR_I18N?.getLang?.() || 'en';
-      applySettingsLang(code);
-
-      // Set account status from local storage or your auth
-      const email = getUserEmail();
-      if(email){
-        acctStatusVal.textContent = email;
-        btnSignIn.style.display = 'none';
-        btnSignOut.style.display = '';
-      }else{
-        acctStatusVal.textContent = (window.MEMOIR_I18N?.strings?.[code]?.signedOut) || 'Signed out';
-        btnSignIn.style.display = '';
-        btnSignOut.style.display = 'none';
-      }
-
-      btnSignOut.addEventListener('click', ()=>{
-        try{ localStorage.removeItem('memoir_user_email'); }catch{}
-        window.location.href = '/landing.html';
-      });
-
-      btnManageBilling.addEventListener('click', openBillingPortal);
-
-      // Optional: fetch live subscription info if you expose an API like /api/subscription
-      // Expected { planName, nextBillingISO }
-      fetch('/api/subscription').then(r=>r.ok?r.json():null).then(data=>{
-        if(!data) return;
-        planName.textContent = data.planName || planName.textContent;
-        if(data.nextBillingISO){
-          const dt = new Date(data.nextBillingISO);
-          const code2 = window.MEMOIR_I18N?.getLang?.() || 'en';
-          const t = window.MEMOIR_I18N.strings[code2];
-          planNext.textContent = (t.subNext || 'Next billing:') + ' ' + dt.toLocaleDateString();
-        }
-      }).catch(()=>{});
+    // Minimal i18n hook: if your lang.js emits `memoir:lang`, you can translate these labels there.
+    window.addEventListener('memoir:lang', e=>{
+      // nothing required here if lang.js already swaps textContent by ids
     });
-
-    window.addEventListener('memoir:lang', e=>applySettingsLang(e.detail.code));
   </script>
 </body>
 </html>
