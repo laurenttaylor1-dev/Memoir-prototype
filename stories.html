@@ -6,18 +6,22 @@
   <title>Memoir — My Stories</title>
   <link rel="stylesheet" href="/styles.css">
   <style>
-    :root{--bg:#f6f1ea;--card:#fffaf5;--ink:#3b2f2a;--muted:#7b6a62;--radius:18px;--shadow:0 18px 40px rgba(59,47,42,.10),0 2px 8px rgba(59,47,42,.06)}
+    :root{
+      --bg:#f6f1ea; --card:#fffaf5; --ink:#3b2f2a; --muted:#7b6a62;
+      --accent:#8c5a3c; --accent2:#b17d55; --radius:18px;
+      --shadow:0 18px 40px rgba(59,47,42,.10), 0 2px 8px rgba(59,47,42,.06);
+    }
     body{background:var(--bg);color:var(--ink);margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
     .container{max-width:1100px;margin:0 auto;padding:20px 16px 28px}
-    .title{font-size:clamp(26px,3vw,38px);margin:8px 0 16px}
-    .grid{display:grid;grid-template-columns:380px 1fr;gap:18px;align-items:start}
-    @media (max-width:980px){ .grid{grid-template-columns:1fr} }
-    .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
-    .muted{color:var(--muted)}
-    .pill{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:999px;border:1px solid rgba(0,0,0,.15);background:#fff;text-decoration:none;color:inherit;font-weight:700}
-    .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .stat{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:12px;font-weight:800;box-shadow:var(--shadow)}
-    .empty{padding:18px;border:1px dashed rgba(0,0,0,.2);border-radius:12px;background:#fff}
+    .title{font-size:clamp(26px,3vw,38px);margin:8px 0 20px}
+    .list{display:grid;gap:16px}
+    .story-card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+    .story-card h3{margin:0 0 6px}
+    .story-card .meta{color:var(--muted);font-size:14px;margin-bottom:8px}
+    .story-card .actions{display:flex;gap:10px;margin-top:10px}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;color:#3b2f2a;text-decoration:none;font-weight:600;cursor:pointer}
+    .pill.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:0}
+    .empty{padding:40px;text-align:center;color:var(--muted);font-size:16px}
   </style>
 </head>
 <body>
@@ -25,37 +29,10 @@
 
   <main class="container">
     <h1 class="title" data-i18n="storiesTitle">My Stories</h1>
-    <p class="muted" data-i18n="storiesBlurb">
-      Record once, keep for generations…
-    </p>
 
-    <section class="grid">
-      <div class="card">
-        <div class="stats">
-          <div>
-            <div class="muted" data-i18n="statStories">Stories</div>
-            <div class="stat" id="statStoriesCount">0</div>
-          </div>
-          <div>
-            <div class="muted" data-i18n="statFamily">Family Members</div>
-            <div class="stat" id="statFamilyCount">0</div>
-          </div>
-        </div>
-
-        <div style="margin-top:12px">
-          <label class="muted" for="inviteEmail" data-i18n="inviteLabel">Invite Family Member</label>
-          <div style="display:flex;gap:8px;margin-top:6px">
-            <input id="inviteEmail" type="email" style="flex:1"
-              data-i18n-placeholder="invitePlaceholder" placeholder="name@example.com">
-            <button class="pill" id="inviteBtn" data-i18n="inviteBtn">Invite</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div id="storiesList" class="empty" data-i18n="listEmpty">No stories yet — start your first one!</div>
-      </div>
-    </section>
+    <div id="storiesList" class="list">
+      <div class="empty" data-i18n="storiesEmpty">No stories yet. Record your first one!</div>
+    </div>
   </main>
 
   <div id="site-footer"></div>
@@ -63,11 +40,36 @@
   <script src="/js/lang.js" defer></script>
   <script src="/js/header-loader.js" defer></script>
   <script>
-    // Example counters wiring — replace with your Supabase values
-    document.addEventListener('DOMContentLoaded', ()=>{
-      // statStoriesCount.textContent = actualStoriesCount
-      // statFamilyCount.textContent  = actualSharedCount
-    });
+    // Load stories (placeholder — replace with real fetch)
+    const listEl = document.getElementById('storiesList');
+    const fakeStories = []; // later hook up with your backend
+    function renderStories(){
+      listEl.innerHTML = '';
+      if(!fakeStories.length){
+        const div = document.createElement('div');
+        div.className = 'empty';
+        div.textContent = window.MEMOIR_I18N.t('storiesEmpty');
+        listEl.appendChild(div);
+        return;
+      }
+      fakeStories.forEach(story=>{
+        const card = document.createElement('div');
+        card.className = 'story-card';
+        card.innerHTML = `
+          <h3>${story.title}</h3>
+          <div class="meta">${story.when || ''}</div>
+          <p>${story.text || ''}</p>
+          <div class="actions">
+            <button class="pill primary">${window.MEMOIR_I18N.t('storiesRewrite')}</button>
+            <button class="pill">${window.MEMOIR_I18N.t('storiesExport')}</button>
+            <button class="pill">${window.MEMOIR_I18N.t('storiesDelete')}</button>
+          </div>
+        `;
+        listEl.appendChild(card);
+      });
+    }
+    window.addEventListener('memoir:lang', ()=>renderStories());
+    document.addEventListener('DOMContentLoaded', renderStories);
   </script>
 </body>
 </html>
