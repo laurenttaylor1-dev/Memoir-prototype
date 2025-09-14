@@ -2,12 +2,10 @@
  * - Persists selected language to localStorage ("memoir.lang")
  * - Translates any element that has:
  *     data-i18n="key"                  -> sets textContent
- *     data-i18n-attr="placeholder:key" -> sets placeholder
- *     data-i18n-attr="title:key"       -> sets title
+ *     data-i18n-attr="placeholder:key" -> sets placeholder (or title:..., aria-label:...)
  * - Emits `memoir:lang` CustomEvent({detail:{code}})
  * - Safe to call repeatedly. Works with header/footer loaders.
  */
-
 (function(){
   const STORE_KEY = 'memoir.lang';
   const DEFAULT_LANG = 'en';
@@ -15,420 +13,273 @@
   const strings = {
     en: {
       // Header
-      navHome: 'Home',
-      navLogin: 'Login',
-      navRecord: 'Record',
-      navStories: 'My Stories',
+      navHome:'Home', navLogin:'Login', navRecord:'Record', navStories:'My Stories', navSettings:'Settings',
+      brandKicker:'MEMOIR APP',
 
       // Footer
-      footerAbout: 'Memoir is a gentle way to capture life stories and keep them safe for your family.',
-      footerLegal: 'Legal & Policies',
+      footerAbout:'Memoir helps families capture life stories with beautiful voice capture, polished AI rewrites and a family library for all generations.',
+      footerLegal:'Legal & Policies',
 
       // Landing (hero + action cards)
-      heroTitleA: 'Preserve Your',
-      heroTitleB: 'Memories Forever',
-      heroBlurb: 'Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.',
-      landingStartCardTitle: 'Start Recording',
-      landingStartCardText: 'One tap to begin. Add a title and “when it happened” later. Whisper AI transcribes clearly in your language.',
-      landingStartBtn: 'Start Recording',
-      landingStoriesCardTitle: 'View My Stories',
-      landingStoriesCardText: 'Browse your private library, attach photos, AI-rewrite for clarity, and export.',
-      landingStoriesBtn: 'My Stories',
+      heroTitleA:'Preserve Your', heroTitleB:'Memories Forever',
+      heroBlurb:'Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.',
+      landingStartCardTitle:'Start Recording',
+      landingStartCardText:'One tap to begin. Add a title and “when it happened” later. Whisper AI transcribes clearly in your language.',
+      startRecording:'Start Recording',
+      landingStoriesCardTitle:'My Stories',
+      landingStoriesCardText:'Browse your private library, attach photos, AI-rewrite for clarity, and export.',
+      viewStories:'My Stories',
 
-      // Features row
-      feat1Title: 'Clear transcription (Whisper)',
-      feat1Text: 'Accurate, multilingual speech-to-text built for real voices and accents.',
-      feat2Title: 'AI rewrite to book-quality',
-      feat2Text: 'Turn raw speech into warm, readable prose—perfect for your family archive.',
-      feat3Title: 'Private sharing',
-      feat3Text: 'Your stories stay yours. Share read-only access with family you choose.',
+      // Features
+      featuresTitle:'Why Memoir',
+      featuresIntro:'Three reasons families choose Memoir.',
+      feat1Title:'Accurate transcription (Whisper)',
+      feat1Text:'Capture every word with Whisper-powered transcription for high accuracy and clarity.',
+      feat2Title:'AI rewrite for families',
+      feat2Text:'Turn your spoken words into polished, engaging stories — like real literature your family will love to read.',
+      feat3Title:'Private or shared',
+      feat3Text:'Keep stories private or share read-only with selected family members; everything syncs across your devices.',
 
-      // Pricing on landing/settings
-      planFree: 'Free',
-      planPremium: 'Storyteller',
-      planFamily: 'Family',
-      planExclusive: 'Exclusive',
-      priceFree: '€0 / month',
-      pricePremium: '€6.99 / month',
-      priceFamily: '€8.99 / month',
-      priceExclusive: '€11.99 / month',
-      planFreeDesc: 'Record locally, keep a private library on your device.',
-      planPremiumDesc: 'Cloud sync + Whisper transcription + AI rewrite. For solo authors.',
-      planFamilyDesc: 'Everything in Storyteller, plus read-only sharing for up to 4 family members.',
-      planExclusiveDesc: 'Up to 5 hours of transcription monthly, priority processing, and premium support.',
-      planCTA: 'Choose plan',
+      // Pricing
+      pricingTitle:'Pricing',
+      ctaTryFree:'Try free', ctaSubscribe:'Subscribe',
+      planFreeTitle:'Free', planFreePrice:'€0',
+      planFreeB1:'Up to 10 stories', planFreeB2:'Max 2 minutes transcription per story', planFreeB3:'Private library on all your devices',
+      planStoryTitle:'Storyteller — €6.99/month', planStoryPrice:'€6.99 / mo',
+      planStoryB1:'Up to 2.5 hours / month of AI transcription', planStoryB2:'AI Rewrite (polish stories), export to PDF/CSV', planStoryB3:'Priority processing',
+      planFamilyTitle:'Family — €8.99/month', planFamilyPrice:'€8.99 / mo',
+      planFamilyB1:'Everything in Storyteller', planFamilyB2:'Share your library with up to 4 read-only family members', planFamilyB3:'Invite by email; revoke anytime',
+      planExclTitle:'Exclusive — €11.99/month', planExclPrice:'€11.99 / mo',
+      planExclB1:'Up to 5 hours / month of AI transcription + rewrite', planExclB2:'Family sharing (up to 4)', planExclB3:'Best for active storytellers',
 
       // Record page
-      recordTitle: 'Record',
-      recordFree: 'FREE',
-      recordGuided: 'GUIDED',
-      recordPromptsToday: "Today's suggested prompts",
-      recordOtherPrompts: 'Suggest other prompts',
-      recordNotes: 'Notes (optional)',
-      recordTitleLabel: 'Title',
-      recordWhenLabel: 'When did this happen?',
-      recordWhenPH: 'e.g. “summer 1945”, “early 2018”, “15 Feb 1972”',
-      recordAddPhoto: 'Add photo (optional)',
-      recordTranscript: 'Transcript',
-      recordSave: 'Save story',
-      recordMicHintRecording: 'Recording… transcription will appear live when online.',
-      recordMicHintOffline: 'Offline or server unavailable — audio will be saved and sent later.',
+      recordTitle:'Record',
+      recordBtn:'Record',
+      tabFree:'Free', tabGuided:'Guided',
+      promptsLabel:"Today's suggested prompts", promptsRefresh:'Suggest other prompts',
+      notesLabel:'Notes (optional)', notesPlaceholder:'Add a quick note…',
+      titleLabel:'Title', titlePlaceholder:'Story title',
+      whenLabel:'When did this happen?', whenPlaceholder:'e.g. "summer 1945", "early 2018", "15 Feb 1972"',
+      photoLabel:'Add photo (optional)',
+      transcriptLabel:'Transcript', transcriptEmpty:'Your words will appear here…',
+      saveStory:'Save story',
 
       // Stories page
-      storiesTitle: 'My Stories',
-      storiesEmpty: 'Your stories will all be added to this private library.',
-      storiesCount: 'stories',
-      storiesRewrite: 'Rewrite (AI)',
-      storiesExport: 'Export',
-      storiesDelete: 'Delete',
+      storiesTitle:'My Stories',
+      statStories:'Stories', statFamily:'Family Members',
+      libraryBlurb:'Your stories will appear in your private library here.',
+      storiesEmpty:'No stories yet. Record your first one!',
+      storiesRewrite:'Rewrite with AI', storiesExport:'Export', storiesDelete:'Delete',
 
-      // Settings page
-      settingsTitle: 'Settings',
-      settingsAccount: 'Account',
-      settingsLanguage: 'Language',
-      settingsPrivacy: 'Privacy',
-      settingsFAQ: 'FAQ',
-      settingsPlans: 'Subscription details',
-      settingsSignedInAs: 'Signed in as',
-      settingsPlan: 'Current plan',
-      settingsChangePlan: 'Change plan',
-      settingsFAQIntro: 'Quick answers to common questions.',
-      settingsPrivacyIntro: 'Your data and choices.',
-      settingsLanguageIntro: 'Choose the language used across the app.',
-      settingsPlansIntro: 'Compare plans and pick the one that fits your needs.',
-      settingsPlanLines: {
-        free: 'Free — record locally (no cloud sync).',
-        storyteller: 'Storyteller — cloud sync + Whisper + AI rewrite.',
-        family: 'Family — Storyteller features + share with up to 4 family members (read-only).',
-        exclusive: 'Exclusive — up to 5 hours/mo transcription, priority, premium support.'
-      },
-      settingsChoose: 'Choose',
+      // Settings
+      settingsTitle:'Settings',
+      settingsAccount:'Account', settingsAccountCopy:'Manage your sign-in and personal details.', settingsSignIn:'Sign in',
+      settingsSub:'Subscription', settingsSubCopy:'Choose or change your plan.',
+      settingsBilling:'Billing', settingsBillingCopy:'View invoices and next renewal.', settingsManageBilling:'Manage billing',
+      settingsFaq:'FAQ',
+      faqQ1:'Is there a free plan?', faqQ2:'Which languages are supported?', faqQ3:'How is transcription done?',
+      settingsPlanDetails:'Subscription details'
     },
 
     fr: {
-      navHome: 'Accueil',
-      navLogin: 'Connexion',
-      navRecord: 'Enregistrer',
-      navStories: 'Mes histoires',
-      footerAbout: 'Memoir est un moyen doux de capturer les histoires de vie et de les conserver pour votre famille.',
-      footerLegal: 'Mentions légales',
-
-      heroTitleA: 'Préservez vos',
-      heroTitleB: 'souvenirs pour toujours',
-      heroBlurb: 'Enregistrez une fois, gardez pour des générations. Lancez un enregistrement en un geste, ajoutez un titre et “quand cela s’est passé”, puis partagez en toute sécurité.',
-      landingStartCardTitle: 'Commencer un enregistrement',
-      landingStartCardText: 'Un geste pour démarrer. Ajoutez le titre et “quand cela s’est passé” plus tard. Whisper transcrit clairement dans votre langue.',
-      landingStartBtn: 'Commencer',
-      landingStoriesCardTitle: 'Voir mes histoires',
-      landingStoriesCardText: 'Parcourez votre bibliothèque privée, ajoutez des photos, réécrivez avec l’IA et exportez.',
-      landingStoriesBtn: 'Mes histoires',
-
-      feat1Title: 'Transcription claire (Whisper)',
-      feat1Text: 'Reconnaissance de la parole précise et multilingue.',
-      feat2Title: 'Réécriture IA de qualité “livre”',
-      feat2Text: 'Transformez la parole brute en prose chaleureuse et lisible.',
-      feat3Title: 'Partage privé',
-      feat3Text: 'Vos histoires restent à vous. Partage en lecture seule avec vos proches.',
-
-      planFree: 'Gratuit',
-      planPremium: 'Conteur',
-      planFamily: 'Famille',
-      planExclusive: 'Exclusif',
-      priceFree: '0 € / mois',
-      pricePremium: '6,99 € / mois',
-      priceFamily: '8,99 € / mois',
-      priceExclusive: '11,99 € / mois',
-      planFreeDesc: 'Enregistrez en local, conservez une bibliothèque privée sur votre appareil.',
-      planPremiumDesc: 'Synchronisation cloud + Whisper + réécriture IA. Pour les auteurs solo.',
-      planFamilyDesc: 'Tout Conteur + partage en lecture seule pour 4 proches.',
-      planExclusiveDesc: 'Jusqu’à 5 h/mois, priorité et support premium.',
-      planCTA: 'Choisir ce plan',
-
-      recordTitle: 'Enregistrer',
-      recordFree: 'LIBRE',
-      recordGuided: 'GUIDÉ',
-      recordPromptsToday: 'Suggestions du jour',
-      recordOtherPrompts: 'Autres suggestions',
-      recordNotes: 'Notes (facultatif)',
-      recordTitleLabel: 'Titre',
-      recordWhenLabel: 'Quand cela s’est-il produit ?',
-      recordWhenPH: 'ex. “été 1945”, “début 2018”, “15 fév. 1972”',
-      recordAddPhoto: 'Ajouter une photo (facultatif)',
-      recordTranscript: 'Transcription',
-      recordSave: 'Enregistrer l’histoire',
-      recordMicHintRecording: 'Enregistrement… la transcription s’affichera en ligne.',
-      recordMicHintOffline: 'Hors-ligne — l’audio sera envoyé plus tard.',
-
-      storiesTitle: 'Mes histoires',
-      storiesEmpty: 'Vos histoires seront ajoutées à cette bibliothèque privée.',
-      storiesCount: 'histoires',
-      storiesRewrite: 'Réécrire (IA)',
-      storiesExport: 'Exporter',
-      storiesDelete: 'Supprimer',
-
-      settingsTitle: 'Paramètres',
-      settingsAccount: 'Compte',
-      settingsLanguage: 'Langue',
-      settingsPrivacy: 'Confidentialité',
-      settingsFAQ: 'FAQ',
-      settingsPlans: 'Détails des abonnements',
-      settingsSignedInAs: 'Connecté en tant que',
-      settingsPlan: 'Abonnement actuel',
-      settingsChangePlan: 'Changer d’abonnement',
-      settingsFAQIntro: 'Réponses rapides aux questions fréquentes.',
-      settingsPrivacyIntro: 'Vos données et vos choix.',
-      settingsLanguageIntro: 'Choisissez la langue de l’application.',
-      settingsPlansIntro: 'Comparez les offres et choisissez celle qui vous convient.',
-      settingsPlanLines: {
-        free: 'Gratuit — enregistrement local.',
-        storyteller: 'Conteur — cloud + Whisper + réécriture IA.',
-        family: 'Famille — Conteur + partage en lecture seule (4 proches).',
-        exclusive: 'Exclusif — 5 h/mois, priorité, support premium.'
-      },
-      settingsChoose: 'Choisir',
+      navHome:'Accueil', navLogin:'Connexion', navRecord:'Enregistrer', navStories:'Mes histoires', navSettings:'Réglages',
+      brandKicker:'MEMOIR APP',
+      footerAbout:'Memoir aide les familles à capturer leurs histoires avec une belle prise de voix, des réécritures IA soignées et une bibliothèque familiale.',
+      footerLegal:'Mentions légales',
+      heroTitleA:'Préservez vos', heroTitleB:'souvenirs pour toujours',
+      heroBlurb:'Enregistrez une fois, gardez pour des générations. Un seul geste, ajoutez un titre et “quand c’est arrivé”, puis partagez en toute sécurité.',
+      landingStartCardTitle:'Commencer un enregistrement',
+      landingStartCardText:'Un geste pour commencer. Ajoutez le titre et “quand” plus tard. Whisper transcrit clairement dans votre langue.',
+      startRecording:"Commencer l'enregistrement",
+      landingStoriesCardTitle:'Mes histoires',
+      landingStoriesCardText:'Parcourez votre bibliothèque privée, ajoutez des photos, réécrivez avec l’IA et exportez.',
+      viewStories:'Mes histoires',
+      featuresTitle:'Pourquoi Memoir',
+      featuresIntro:'Trois raisons de choisir Memoir.',
+      feat1Title:'Transcription précise (Whisper)',
+      feat1Text:'Une reconnaissance vocale précise et multilingue pour les vraies voix.',
+      feat2Title:'Réécriture IA pour la famille',
+      feat2Text:'Transformez la parole en histoires chaleureuses et lisibles — comme un vrai livre.',
+      feat3Title:'Privé ou partagé',
+      feat3Text:'Restez privé ou partagez en lecture seule avec la famille; tout est synchronisé.',
+      pricingTitle:'Tarifs',
+      ctaTryFree:'Essayer', ctaSubscribe:'S’abonner',
+      planFreeTitle:'Gratuit', planFreePrice:'0 €',
+      planFreeB1:'Jusqu’à 10 histoires', planFreeB2:'2 minutes de transcription par histoire', planFreeB3:'Bibliothèque privée sur tous vos appareils',
+      planStoryTitle:'Storyteller — 6,99 €/mois', planStoryPrice:'6,99 € / mois',
+      planStoryB1:'Jusqu’à 2,5 h / mois de transcription IA', planStoryB2:'Réécriture IA, export PDF/CSV', planStoryB3:'Traitement prioritaire',
+      planFamilyTitle:'Famille — 8,99 €/mois', planFamilyPrice:'8,99 € / mois',
+      planFamilyB1:'Tout dans Storyteller', planFamilyB2:'Partage avec 4 proches en lecture seule', planFamilyB3:'Invitation par email; révocation possible',
+      planExclTitle:'Exclusive — 11,99 €/mois', planExclPrice:'11,99 € / mois',
+      planExclB1:'Jusqu’à 5 h / mois de transcription + réécriture', planExclB2:'Partage familial (jusqu’à 4)', planExclB3:'Idéal pour conteurs actifs',
+      recordTitle:'Enregistrer', recordBtn:'Enregistrer', tabFree:'Libre', tabGuided:'Guidé',
+      promptsLabel:'Suggestions du jour', promptsRefresh:'Autres suggestions',
+      notesLabel:'Notes (optionnel)', notesPlaceholder:'Ajoutez une note…',
+      titleLabel:'Titre', titlePlaceholder:'Titre de l’histoire',
+      whenLabel:'Quand est-ce arrivé ?', whenPlaceholder:'ex. "été 1945", "début 2018", "15 fév 1972"',
+      photoLabel:'Ajouter une photo (optionnel)',
+      transcriptLabel:'Transcription', transcriptEmpty:'Vos mots apparaîtront ici…',
+      saveStory:'Enregistrer l’histoire',
+      storiesTitle:'Mes histoires',
+      statStories:'Histoires', statFamily:'Membres de la famille',
+      libraryBlurb:'Vos histoires apparaîtront ici dans votre bibliothèque privée.',
+      storiesEmpty:'Pas encore d’histoire. Enregistrez votre première !',
+      storiesRewrite:'Réécrire avec IA', storiesExport:'Exporter', storiesDelete:'Supprimer',
+      settingsTitle:'Réglages',
+      settingsAccount:'Compte', settingsAccountCopy:'Gérez votre connexion et vos informations.', settingsSignIn:'Se connecter',
+      settingsSub:'Abonnement', settingsSubCopy:'Choisissez ou changez votre offre.',
+      settingsBilling:'Facturation', settingsBillingCopy:'Voir les factures et le prochain renouvellement.', settingsManageBilling:'Gérer la facturation',
+      settingsFaq:'FAQ',
+      faqQ1:'Y a-t-il une offre gratuite ?', faqQ2:'Quelles langues sont prises en charge ?', faqQ3:'Comment se fait la transcription ?',
+      settingsPlanDetails:'Détails des abonnements'
     },
 
     nl: {
-      navHome: 'Home',
-      navLogin: 'Inloggen',
-      navRecord: 'Opnemen',
-      navStories: 'Mijn verhalen',
-      footerAbout: 'Memoir is een zachte manier om levensverhalen vast te leggen en veilig te bewaren voor je familie.',
-      footerLegal: 'Juridisch & beleid',
-
-      heroTitleA: 'Bewaar je',
-      heroTitleB: 'herinneringen voor altijd',
-      heroBlurb: 'Neem één keer op en bewaar het voor generaties. Start met één tik, voeg later een titel en “wanneer het gebeurde” toe en deel veilig met je familie.',
-      landingStartCardTitle: 'Opname starten',
-      landingStartCardText: 'Start met één tik. Titel en “wanneer” kan later. Whisper zet helder om naar tekst.',
-      landingStartBtn: 'Opnemen',
-      landingStoriesCardTitle: 'Mijn verhalen bekijken',
-      landingStoriesCardText: 'Blader door je privébibliotheek, voeg foto’s toe, herschrijf met AI en exporteer.',
-      landingStoriesBtn: 'Mijn verhalen',
-
-      feat1Title: 'Heldere transcriptie (Whisper)',
-      feat1Text: 'Nauwkeurige, meertalige spraak-naar-tekst.',
-      feat2Title: 'AI-herschrijven naar boekkwaliteit',
-      feat2Text: 'Maak van ruwe spraak warme, leesbare teksten.',
-      feat3Title: 'Privé delen',
-      feat3Text: 'Jij bepaalt wie mag meelezen, alleen-lezen toegang.',
-
-      planFree: 'Gratis',
-      planPremium: 'Verteller',
-      planFamily: 'Familie',
-      planExclusive: 'Exclusief',
-      priceFree: '€0 / maand',
-      pricePremium: '€6,99 / maand',
-      priceFamily: '€8,99 / maand',
-      priceExclusive: '€11,99 / maand',
-      planFreeDesc: 'Lokaal opnemen, privébibliotheek op je toestel.',
-      planPremiumDesc: 'Cloudsync + Whisper + AI-herschrijven. Voor solo-auteurs.',
-      planFamilyDesc: 'Alles van Verteller + delen met 4 familieleden (alleen lezen).',
-      planExclusiveDesc: 'Tot 5 uur transcriptie per maand, prioriteit en premium support.',
-      planCTA: 'Kies plan',
-
-      recordTitle: 'Opnemen',
-      recordFree: 'VRIJ',
-      recordGuided: 'GELEID',
-      recordPromptsToday: 'Suggesties van vandaag',
-      recordOtherPrompts: 'Andere suggesties',
-      recordNotes: 'Notities (optioneel)',
-      recordTitleLabel: 'Titel',
-      recordWhenLabel: 'Wanneer gebeurde dit?',
-      recordWhenPH: 'bijv. “zomer 1945”, “begin 2018”, “15 feb 1972”',
-      recordAddPhoto: 'Foto toevoegen (optioneel)',
-      recordTranscript: 'Transcriptie',
-      recordSave: 'Verhaal opslaan',
-      recordMicHintRecording: 'Opnemen… transcriptie verschijnt live als je online bent.',
-      recordMicHintOffline: 'Offline — audio wordt later verzonden.',
-
-      storiesTitle: 'Mijn verhalen',
-      storiesEmpty: 'Je verhalen komen hier in je privébibliotheek.',
-      storiesCount: 'verhalen',
-      storiesRewrite: 'Herschrijf (AI)',
-      storiesExport: 'Exporteren',
-      storiesDelete: 'Verwijderen',
-
-      settingsTitle: 'Instellingen',
-      settingsAccount: 'Account',
-      settingsLanguage: 'Taal',
-      settingsPrivacy: 'Privacy',
-      settingsFAQ: 'FAQ',
-      settingsPlans: 'Abonnementsdetails',
-      settingsSignedInAs: 'Ingelogd als',
-      settingsPlan: 'Huidig abonnement',
-      settingsChangePlan: 'Abonnement wijzigen',
-      settingsFAQIntro: 'Snel antwoord op veelgestelde vragen.',
-      settingsPrivacyIntro: 'Jouw data en keuzes.',
-      settingsLanguageIntro: 'Kies de taal van de app.',
-      settingsPlansIntro: 'Vergelijk en kies wat past.',
-      settingsPlanLines: {
-        free: 'Gratis — lokaal opnemen.',
-        storyteller: 'Verteller — cloud + Whisper + AI-herschrijven.',
-        family: 'Familie — Verteller + delen met 4 familieleden.',
-        exclusive: 'Exclusief — 5 u/maand, prioriteit, premium support.'
-      },
-      settingsChoose: 'Kiezen',
+      navHome:'Home', navLogin:'Inloggen', navRecord:'Opnemen', navStories:'Mijn verhalen', navSettings:'Instellingen',
+      brandKicker:'MEMOIR APP',
+      footerAbout:'Memoir helpt families levensverhalen vastleggen met mooie stemopnames, AI-herschrijvingen en een familiebibliotheek.',
+      footerLegal:'Juridisch & beleid',
+      heroTitleA:'Bewaar je', heroTitleB:'herinneringen voor altijd',
+      heroBlurb:'Neem één keer op voor generaties. Eén tik, voeg een titel en “wanneer” toe en deel veilig met je familie.',
+      landingStartCardTitle:'Opname starten',
+      landingStartCardText:'Met één tik beginnen. Titel en “wanneer” later. Whisper transcribeert duidelijk in je taal.',
+      startRecording:'Opname starten',
+      landingStoriesCardTitle:'Mijn verhalen',
+      landingStoriesCardText:'Blader door je privébibliotheek, voeg foto’s toe, herschrijf met AI en exporteer.',
+      viewStories:'Mijn verhalen',
+      featuresTitle:'Waarom Memoir',
+      featuresIntro:'Drie redenen om te kiezen voor Memoir.',
+      feat1Title:'Nauwkeurige transcriptie (Whisper)',
+      feat1Text:'Zeer nauwkeurige spraak-naar-tekst voor echte stemmen.',
+      feat2Title:'AI-herschrijven voor families',
+      feat2Text:'Maak van gesproken woorden leesbare, warme verhalen — als literatuur.',
+      feat3Title:'Privé of gedeeld',
+      feat3Text:'Houd privé of deel alleen-lezen met familie; gesynchroniseerd op je apparaten.',
+      pricingTitle:'Prijzen',
+      ctaTryFree:'Probeer gratis', ctaSubscribe:'Abonneren',
+      planFreeTitle:'Gratis', planFreePrice:'€0',
+      planFreeB1:'Tot 10 verhalen', planFreeB2:'Max 2 minuten per verhaal', planFreeB3:'Privébibliotheek op al je apparaten',
+      planStoryTitle:'Storyteller — €6,99/maand', planStoryPrice:'€6,99 / mnd',
+      planStoryB1:'Tot 2,5 uur / maand AI-transcriptie', planStoryB2:'AI-herschrijven, export naar PDF/CSV', planStoryB3:'Prioriteit',
+      planFamilyTitle:'Familie — €8,99/maand', planFamilyPrice:'€8,99 / mnd',
+      planFamilyB1:'Alles van Storyteller', planFamilyB2:'Deel met 4 familieleden (alleen lezen)', planFamilyB3:'Uitnodigen per e-mail, intrekken kan',
+      planExclTitle:'Exclusive — €11,99/maand', planExclPrice:'€11,99 / mnd',
+      planExclB1:'Tot 5 uur / maand transcriptie + herschrijven', planExclB2:'Familiedelen (tot 4)', planExclB3:'Voor actieve vertellers',
+      recordTitle:'Opnemen', recordBtn:'Opnemen', tabFree:'Vrij', tabGuided:'Geleid',
+      promptsLabel:'Suggesties van vandaag', promptsRefresh:'Andere suggesties',
+      notesLabel:'Notities (optioneel)', notesPlaceholder:'Snel notitie…',
+      titleLabel:'Titel', titlePlaceholder:'Titel van verhaal',
+      whenLabel:'Wanneer gebeurde dit?', whenPlaceholder:'bv. "zomer 1945", "begin 2018", "15 feb 1972"',
+      photoLabel:'Foto toevoegen (optioneel)',
+      transcriptLabel:'Transcript', transcriptEmpty:'Je woorden verschijnen hier…',
+      saveStory:'Verhaal opslaan',
+      storiesTitle:'Mijn verhalen',
+      statStories:'Verhalen', statFamily:'Familieleden',
+      libraryBlurb:'Je verhalen verschijnen hier in je privébibliotheek.',
+      storiesEmpty:'Nog geen verhalen. Neem je eerste op!',
+      storiesRewrite:'Herschrijf met AI', storiesExport:'Exporteren', storiesDelete:'Verwijderen',
+      settingsTitle:'Instellingen',
+      settingsAccount:'Account', settingsAccountCopy:'Beheer je login en gegevens.', settingsSignIn:'Inloggen',
+      settingsSub:'Abonnement', settingsSubCopy:'Kies of wijzig je plan.',
+      settingsBilling:'Facturatie', settingsBillingCopy:'Bekijk facturen en volgende verlenging.', settingsManageBilling:'Facturatie beheren',
+      settingsFaq:'FAQ',
+      faqQ1:'Is er een gratis plan?', faqQ2:'Welke talen worden ondersteund?', faqQ3:'Hoe wordt getranscribeerd?',
+      settingsPlanDetails:'Abonnementsdetails'
     },
 
     es: {
-      navHome: 'Inicio',
-      navLogin: 'Acceder',
-      navRecord: 'Grabar',
-      navStories: 'Mis historias',
-      footerAbout: 'Memoir es una forma amable de capturar historias de vida y guardarlas para tu familia.',
-      footerLegal: 'Avisos legales',
-
-      heroTitleA: 'Conserva para siempre',
-      heroTitleB: 'tus recuerdos',
-      heroBlurb: 'Graba una vez y guárdalo para generaciones. Empieza con un toque, añade un título y “cuándo pasó” y comparte de forma segura.',
-      landingStartCardTitle: 'Empezar a grabar',
-      landingStartCardText: 'Un toque para comenzar. Añade el título y “cuándo” después. Whisper transcribe con claridad.',
-      landingStartBtn: 'Grabar',
-      landingStoriesCardTitle: 'Ver mis historias',
-      landingStoriesCardText: 'Explora tu biblioteca privada, añade fotos, reescribe con IA y exporta.',
-      landingStoriesBtn: 'Mis historias',
-
-      feat1Title: 'Transcripción clara (Whisper)',
-      feat1Text: 'Reconocimiento de voz preciso y multilingüe.',
-      feat2Title: 'Reescritura IA con calidad de libro',
-      feat2Text: 'Convierte la voz en prosa cálida y legible.',
-      feat3Title: 'Compartir privado',
-      feat3Text: 'Control total: acceso de solo lectura a tu familia.',
-
-      planFree: 'Gratis',
-      planPremium: 'Narrador',
-      planFamily: 'Familiar',
-      planExclusive: 'Exclusivo',
-      priceFree: '€0 / mes',
-      pricePremium: '€6,99 / mes',
-      priceFamily: '€8,99 / mes',
-      priceExclusive: '€11,99 / mes',
-      planFreeDesc: 'Graba localmente y guarda una biblioteca privada en tu dispositivo.',
-      planPremiumDesc: 'Sincronización en la nube + Whisper + reescritura IA. Para autores individuales.',
-      planFamilyDesc: 'Todo en Narrador + compartir con hasta 4 familiares (solo lectura).',
-      planExclusiveDesc: 'Hasta 5 horas/mes, prioridad y soporte premium.',
-      planCTA: 'Elegir plan',
-
-      recordTitle: 'Grabar',
-      recordFree: 'LIBRE',
-      recordGuided: 'GUIADO',
-      recordPromptsToday: 'Sugerencias de hoy',
-      recordOtherPrompts: 'Otras sugerencias',
-      recordNotes: 'Notas (opcional)',
-      recordTitleLabel: 'Título',
-      recordWhenLabel: '¿Cuándo ocurrió?',
-      recordWhenPH: 'p. ej., “verano de 1945”, “inicios de 2018”, “15 feb 1972”',
-      recordAddPhoto: 'Añadir foto (opcional)',
-      recordTranscript: 'Transcripción',
-      recordSave: 'Guardar historia',
-      recordMicHintRecording: 'Grabando… la transcripción aparecerá cuando haya conexión.',
-      recordMicHintOffline: 'Sin conexión — el audio se enviará más tarde.',
-
-      storiesTitle: 'Mis historias',
-      storiesEmpty: 'Tus historias se añadirán aquí a tu biblioteca privada.',
-      storiesCount: 'historias',
-      storiesRewrite: 'Reescribir (IA)',
-      storiesExport: 'Exportar',
-      storiesDelete: 'Eliminar',
-
-      settingsTitle: 'Ajustes',
-      settingsAccount: 'Cuenta',
-      settingsLanguage: 'Idioma',
-      settingsPrivacy: 'Privacidad',
-      settingsFAQ: 'FAQ',
-      settingsPlans: 'Detalles de suscripción',
-      settingsSignedInAs: 'Conectado como',
-      settingsPlan: 'Plan actual',
-      settingsChangePlan: 'Cambiar plan',
-      settingsFAQIntro: 'Respuestas rápidas a preguntas frecuentes.',
-      settingsPrivacyIntro: 'Tus datos y elecciones.',
-      settingsLanguageIntro: 'Elige el idioma de la app.',
-      settingsPlansIntro: 'Compara planes y elige el tuyo.',
-      settingsPlanLines: {
-        free: 'Gratis — grabación local.',
-        storyteller: 'Narrador — nube + Whisper + reescritura IA.',
-        family: 'Familiar — Narrador + compartir con 4 familiares.',
-        exclusive: 'Exclusivo — 5 h/mes, prioridad, soporte premium.'
-      },
-      settingsChoose: 'Elegir',
+      navHome:'Inicio', navLogin:'Acceder', navRecord:'Grabar', navStories:'Mis historias', navSettings:'Ajustes',
+      brandKicker:'MEMOIR APP',
+      footerAbout:'Memoir ayuda a las familias a capturar historias con voz, reescrituras con IA y una biblioteca familiar.',
+      footerLegal:'Aviso legal y políticas',
+      heroTitleA:'Preserva tus', heroTitleB:'recuerdos para siempre',
+      heroBlurb:'Graba una vez para generaciones. Un toque, añade título y “cuándo ocurrió”, comparte con tu familia.',
+      landingStartCardTitle:'Iniciar grabación',
+      landingStartCardText:'Un toque para empezar. Título y “cuándo” más tarde. Whisper transcribe con claridad.',
+      startRecording:'Iniciar grabación',
+      landingStoriesCardTitle:'Mis historias',
+      landingStoriesCardText:'Explora tu biblioteca privada, añade fotos, reescribe con IA y exporta.',
+      viewStories:'Mis historias',
+      featuresTitle:'Por qué Memoir',
+      featuresIntro:'Tres motivos para elegir Memoir.',
+      feat1Title:'Transcripción precisa (Whisper)',
+      feat1Text:'Captura fiel con reconocimiento de voz multilingüe.',
+      feat2Title:'Reescritura con IA para familias',
+      feat2Text:'Convierte tu voz en historias pulidas y agradables de leer.',
+      feat3Title:'Privado o compartido',
+      feat3Text:'Mantén privado o comparte solo lectura; todo se sincroniza.',
+      pricingTitle:'Precios',
+      ctaTryFree:'Probar gratis', ctaSubscribe:'Suscribirse',
+      planFreeTitle:'Gratis', planFreePrice:'€0',
+      planFreeB1:'Hasta 10 historias', planFreeB2:'Máx. 2 minutos por historia', planFreeB3:'Biblioteca privada en tus dispositivos',
+      planStoryTitle:'Storyteller — €6,99/mes', planStoryPrice:'€6,99 / mes',
+      planStoryB1:'Hasta 2,5 h/mes de transcripción IA', planStoryB2:'Reescritura IA, exportación PDF/CSV', planStoryB3:'Procesamiento prioritario',
+      planFamilyTitle:'Familiar — €8,99/mes', planFamilyPrice:'€8,99 / mes',
+      planFamilyB1:'Todo en Storyteller', planFamilyB2:'Comparte con hasta 4 familiares (solo lectura)', planFamilyB3:'Invitación por email; revoca cuando quieras',
+      planExclTitle:'Exclusive — €11,99/mes', planExclPrice:'€11,99 / mes',
+      planExclB1:'Hasta 5 h/mes de transcripción + reescritura', planExclB2:'Uso familiar (hasta 4)', planExclB3:'Para narradores activos',
+      recordTitle:'Grabar', recordBtn:'Grabar', tabFree:'Libre', tabGuided:'Guiado',
+      promptsLabel:'Sugerencias de hoy', promptsRefresh:'Otras sugerencias',
+      notesLabel:'Notas (opcional)', notesPlaceholder:'Añade una nota rápida…',
+      titleLabel:'Título', titlePlaceholder:'Título de la historia',
+      whenLabel:'¿Cuándo ocurrió?', whenPlaceholder:'p. ej. "verano de 1945", "inicios de 2018", "15 feb 1972"',
+      photoLabel:'Añadir foto (opcional)',
+      transcriptLabel:'Transcripción', transcriptEmpty:'Tus palabras aparecerán aquí…',
+      saveStory:'Guardar historia',
+      storiesTitle:'Mis historias',
+      statStories:'Historias', statFamily:'Familiares',
+      libraryBlurb:'Tus historias aparecerán aquí en tu biblioteca privada.',
+      storiesEmpty:'Aún no hay historias. ¡Graba la primera!',
+      storiesRewrite:'Reescribir con IA', storiesExport:'Exportar', storiesDelete:'Eliminar',
+      settingsTitle:'Ajustes',
+      settingsAccount:'Cuenta', settingsAccountCopy:'Gestiona inicio de sesión y datos.', settingsSignIn:'Acceder',
+      settingsSub:'Suscripción', settingsSubCopy:'Elige o cambia tu plan.',
+      settingsBilling:'Facturación', settingsBillingCopy:'Ver facturas y próxima renovación.', settingsManageBilling:'Gestionar facturación',
+      settingsFaq:'FAQ',
+      faqQ1:'¿Hay un plan gratuito?', faqQ2:'¿Qué idiomas están disponibles?', faqQ3:'¿Cómo se transcribe?',
+      settingsPlanDetails:'Detalles de suscripción'
     }
   };
 
-  const flags  = { en:'🇬🇧', fr:'🇫🇷', nl:'🇧🇪', es:'🇪🇸' };
-  const labels = { en:'English', fr:'Français', nl:'Nederlands', es:'Español' };
-
   function getLang(){
-    const fromStore = localStorage.getItem(STORE_KEY);
-    return (fromStore && strings[fromStore]) ? fromStore : DEFAULT_LANG;
+    return localStorage.getItem(STORE_KEY) || DEFAULT_LANG;
   }
-  function setLang(code){
-    const lang = strings[code] ? code : DEFAULT_LANG;
-    localStorage.setItem(STORE_KEY, lang);
-    applyAll(document);
-    window.dispatchEvent(new CustomEvent('memoir:lang',{ detail:{ code: lang }}));
-  }
-
   function t(key){
     const lang = getLang();
-    return (strings[lang] && strings[lang][key]) || strings[DEFAULT_LANG][key] || key;
+    const dict = strings[lang] || strings[DEFAULT_LANG];
+    if (key in dict) return dict[key];
+    if (key in strings.en) return strings.en[key];
+    return null;
   }
-
-  // Apply translations to a root (document or a subtree)
-  function applyAll(root){
-    const lang = getLang();
-
-    // 1) elements with data-i18n="key"
+  function applyAll(root=document){
+    // text nodes
     root.querySelectorAll('[data-i18n]').forEach(el=>{
-      const key = el.getAttribute('data-i18n');
-      const found =
-        (strings[lang] && strings[lang][key]) ??
-        (strings.en   && strings.en[key]);
-
-    // Only set text if we actually have a translation.
-    if (typeof found === 'string' && found.trim() !== '') {
-      el.textContent = found;
-    }
-
-   // 2) elements with data-i18n-attr="placeholder:key;title:key2"
-   root.querySelectorAll('[data-i18n-attr]').forEach(el=>{
-     const map = el.getAttribute('data-i18n-attr');
-     if (!map) return;
-     map.split(';').forEach(pair=>{
-       const [attr, key] = pair.split(':').map(s=>s && s.trim());
-       if (!attr || !key) return;
-       const found =
-         (strings[lang] && strings[lang][key]) ??
-         (strings.en   && strings.en[key]);
-       if (typeof found === 'string' && found.trim() !== '') {
-         el.setAttribute(attr, found);
-       }
-     });
-   });
-
-   // Update current language flag/label if present
-   const flagEl = document.querySelector('#lang-current-flag');
-   const labEl  = document.querySelector('#lang-current-label');
-   if (flagEl) flagEl.textContent = (flags[lang] || '🌐');
-   if (labEl)  labEl.textContent  = (labels[lang] || lang.toUpperCase());
-  }  
-
-  // Initial apply as soon as DOM is ready
-  function init(){
+      const k=el.getAttribute('data-i18n'); const v=t(k);
+      if (v!=null) el.textContent=v;
+    });
+    // attribute translations: data-i18n-attr="placeholder:key, title:key2"
+    root.querySelectorAll('[data-i18n-attr]').forEach(el=>{
+      const spec = el.getAttribute('data-i18n-attr');
+      spec.split(',').forEach(pair=>{
+        const [attr,key]=pair.split(':').map(s=>s.trim());
+        const v=t(key);
+        if (attr && v!=null) el.setAttribute(attr,v);
+      });
+    });
+  }
+  function setLang(code){
+    localStorage.setItem(STORE_KEY, code);
     applyAll(document);
+    window.dispatchEvent(new CustomEvent('memoir:lang',{detail:{code}}));
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+  // expose
+  window.MEMOIR_I18N = { strings, getLang, setLang, t, applyAll };
 
-  // Also react when header/footer get injected later
-  window.addEventListener('memoir:header-ready', ()=>applyAll(document));
-  window.addEventListener('memoir:footer-ready', ()=>applyAll(document));
-  window.addEventListener('memoir:lang', (e)=>applyAll(document));
+  // initial apply
+  document.addEventListener('DOMContentLoaded', ()=>applyAll(document));
 
-  // Expose API
-  window.MEMOIR_I18N = { strings, flags, labels, getLang, setLang, t, applyAll };
+  // re-apply when header/footer are injected (our loaders dispatch these)
+  window.addEventListener('memoir:header-ready', e=>applyAll(e.detail?.root||document));
+  window.addEventListener('memoir:footer-ready', e=>applyAll(e.detail?.root||document));
 })();
