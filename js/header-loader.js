@@ -1,116 +1,84 @@
-// /js/header-loader.js
-// Requires /js/lang.js to be loaded BEFORE this script on every page.
+<script>
+/* global window, document, fetch, MEMOIR_I18N */
 
-(async function attachHeaderFooter(){
-  // 1) Inject header & footer
-  const headerSlot = document.getElementById('site-header');
-  const footerSlot = document.getElementById('site-footer');
+(function(){
+  const HEADER_URL = '/partials/header.html';
+  const FOOTER_URL = '/partials/footer.html';
 
-  async function loadInto(el, url){
-    if(!el) return;
-    try{
-      const r = await fetch(url, { cache: 'no-store' });
-      if (!r.ok) throw new Error(`Failed to load ${url}`);
-      el.innerHTML = await r.text();
-    }catch(e){
-      console.error(e);
-      // Minimal fallback to avoid a blank header/footer
-      if(url.includes('header')) el.innerHTML = '<header class="site-header"><div class="wrap"><a class="brand" href="/landing.html">Memoir</a></div></header>';
-      if(url.includes('footer')) el.innerHTML = '<footer class="site-footer"><div class="wrap">© Memoir</div></footer>';
-    }
+  async function inject(id, url) {
+    const host = document.getElementById(id);
+    if (!host) return null;
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) return null;
+    host.innerHTML = await res.text();
+    // After injection, translate the inserted chunk
+    if (window.MEMOIR_I18N) window.MEMOIR_I18N.applyAll(host);
+    return host;
   }
 
-  await Promise.all([
-    loadInto(headerSlot, '/partials/header.html'),
-    loadInto(footerSlot, '/partials/footer.html')
-  ]);
-
-  // 2) Wire language menu (after header HTML exists)
-  const toggle = document.getElementById('lang-toggle');
-  const menu   = document.getElementById('lang-dropdown');
-  const items  = Array.from(document.querySelectorAll('.lang-item'));
-  const flagEl = document.getElementById('lang-current-flag');
-  const labelEl= document.getElementById('lang-current-label');
-
-  function currentLang(){
-    return (window.MEMOIR_I18N?.getLang?.() || localStorage.getItem('memoir_lang') || 'en');
+  function updateLangButton(lang) {
+    const flagEl  = document.getElementById('lang-current-flag');
+    const labelEl = document.getElementById('lang-current-label');
+    const map = {
+      en: { f: '🇬🇧', l: 'English'   },
+      fr: { f: '🇫🇷', l: 'Français'  },
+      nl: { f: '🇧🇪', l: 'Nederlands'},
+      es: { f: '🇪🇸', l: 'Español'   },
+    };
+    const cur = map[lang] || map.en;
+    if (flagEl)  flagEl.textContent  = cur.f;
+    if (labelEl) labelEl.textContent = cur.l;
   }
 
-  function labelFor(code){
-    switch(code){
-      case 'en': return {flag:'🇬🇧', label:'English'};
-      case 'fr': return {flag:'🇫🇷', label:'Français'};
-      case 'nl': return {flag:'🇧🇪', label:'Nederlands'};
-      case 'es': return {flag:'🇪🇸', label:'Español'};
-      default:   return {flag:'🌐', label:code};
-    }
-  }
+  function wireHeaderInteractions(root) {
+    const toggle = root.querySelector('#lang-toggle');
+    const menu   = root.querySelector('#lang-dropdown');
+    if (!toggle || !menu) return;
 
-  function closeMenu(){
-    if(!menu) return;
-    menu.hidden = true;
-    if(toggle) toggle.setAttribute('aria-expanded','false');
-  }
-  function openMenu(){
-    if(!menu) return;
-    menu.hidden = false;
-    if(toggle) toggle.setAttribute('aria-expanded','true');
-  }
-  function toggleMenu(){
-    if(!menu) return;
-    menu.hidden ? openMenu() : closeMenu();
-  }
-
-  // Initialize current label
-  const start = currentLang();
-  const startInfo = labelFor(start);
-  if(flagEl)  flagEl.textContent = startInfo.flag;
-  if(labelEl) labelEl.textContent = startInfo.label;
-
-  // Click: open/close
-  if(toggle){
+    // Open/close
     toggle.addEventListener('click', (e)=>{
       e.stopPropagation();
-      toggleMenu();
+      menu.hidden = !menu.hidden;
+      toggle.setAttribute('aria-expanded', String(!menu.hidden));
     });
+
+    // Select language
+    root.querySelectorAll('.lang-item').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const lang = btn.getAttribute('data-lang') || 'en';
+        window.MEMOIR_I18N?.setLang(lang);
+        updateLangButton(lang);
+        menu.hidden = true;
+        toggle.setAttribute('aria-expanded','false');
+      });
+    });
+
+    // Click outside closes
+    document.addEventListener('click', ()=>{
+      if (!menu.hidden) {
+        menu.hidden = true;
+        toggle.setAttribute('aria-expanded','false');
+      }
+    });
+
+    // Initialize from stored language
+    updateLangButton(window.MEMOIR_I18N?.getLang?.() || 'en');
   }
 
-  // Click on a language
-  items.forEach(btn=>{
-    btn.addEventListener('click', (e)=>{
-      e.stopPropagation();
-      const code = btn.getAttribute('data-lang');
-      if(!code) return;
+  // Inject header & footer on DOM ready
+  document.addEventListener('DOMContentLoaded', async ()=>{
+    const header = await inject('site-header', HEADER_URL);
+    if (header) wireHeaderInteractions(header);
 
-      // Update button label/flag
-      const info = labelFor(code);
-      if(flagEl)  flagEl.textContent = info.flag;
-      if(labelEl) labelEl.textContent = info.label;
-
-      // Persist + broadcast change (pages listen for 'memoir:lang')
-      if(window.MEMOIR_I18N?.setLang){
-        window.MEMOIR_I18N.setLang(code);
-      }else{
-        localStorage.setItem('memoir_lang', code);
-        window.dispatchEvent(new CustomEvent('memoir:lang',{ detail:{ code } }));
-      }
-
-      closeMenu();
-    });
+    await inject('site-footer', FOOTER_URL);
   });
 
-  // Close on outside click
-  document.addEventListener('click', (e)=>{
-    if(!menu || menu.hidden) return;
-    const within = e.target.closest('#lang-menu');
-    if(!within) closeMenu();
+  // If language changes later, re-translate the injected partials too
+  window.addEventListener('memoir:lang', ()=>{
+    const header = document.getElementById('site-header');
+    const footer = document.getElementById('site-footer');
+    window.MEMOIR_I18N?.applyAll(header || document);
+    window.MEMOIR_I18N?.applyAll(footer || document);
   });
-  // Close on Escape
-  document.addEventListener('keydown', (e)=>{
-    if(e.key === 'Escape') closeMenu();
-  });
-
-  // 3) Re-apply current lang to the header texts (optional; header itself’s labels)
-  // If you have translatable nav labels, you can update them here by reading
-  // MEMOIR_I18N.strings[currentLang()] and assigning to #navHome, #navLogin, etc.
 })();
+</script>
