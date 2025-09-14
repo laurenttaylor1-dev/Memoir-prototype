@@ -168,5 +168,39 @@
   <script src="/js/lang.js"></script>
   <script src="/js/header-loader.js"></script>
   <script src="/js/footer-loader.js"></script>
+  <script>
+  /* Ensure hero title sits on exactly two lines by shrinking a bit if needed */
+  (function(){
+    const title = document.getElementById('heroTitle');
+    if(!title) return;
+
+    function isTwoLines(el){
+      // Each span should be one visual line; if either wraps into 2 rect rows, we know it flowed.
+      const rects = el.getClientRects?.();
+      return rects && rects.length >= 2; // two spans = two rows
+    }
+
+    function fit(){
+      // Reset to base size (matches CSS clamp’s max)
+      let size = 46; // px
+      title.style.fontSize = size + 'px';
+
+      // shrink until spans render on two rows inside the panel
+      let guard = 16; // max 16 steps
+      while (guard-- > 0 && !isTwoLines(title)){
+        size -= 1.5;
+        if(size < 30) break;
+        title.style.fontSize = size + 'px';
+      }
+    }
+
+    // Run after language changes and on resize
+    window.addEventListener('memoir:lang', fit);
+    window.addEventListener('resize', fit);
+    document.addEventListener('DOMContentLoaded', fit);
+    // In case header/footer load later and shift width:
+    setTimeout(fit, 300);
+  })();
+  </script>
 </body>
 </html>
