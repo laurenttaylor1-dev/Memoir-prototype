@@ -6,32 +6,24 @@
   <title>Memoir — My Stories</title>
   <link rel="stylesheet" href="/styles.css">
   <style>
-    :root{
-      --bg:#f6f1ea; --card:#fffaf5; --ink:#3b2f2a; --muted:#7b6a62;
-      --accent:#8c5a3c; --accent2:#b17d55; --radius:18px;
-      --shadow:0 18px 40px rgba(59,47,42,.10), 0 2px 8px rgba(59,47,42,.06);
-    }
+    :root{--bg:#f6f1ea;--card:#fffaf5;--ink:#3b2f2a;--muted:#7b6a62;--accent:#8c5a3c;--accent2:#b17d55;--radius:18px;--shadow:0 18px 40px rgba(59,47,42,.10),0 2px 8px rgba(59,47,42,.06)}
     body{background:var(--bg);color:var(--ink);margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
     .container{max-width:1100px;margin:0 auto;padding:20px 16px 28px}
     .title{font-size:clamp(26px,3vw,38px);margin:8px 0 20px}
-
-    .stats{display:grid;grid-template-columns:260px 1fr;gap:16px;align-items:stretch;margin-bottom:18px}
-    @media (max-width:820px){ .stats{grid-template-columns:1fr} }
-    .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
-    .stat-box{display:grid;gap:10px}
-    .kpi{display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:14px 16px}
-    .kpi .num{font-size:24px;font-weight:800}
-    .kpi .label{color:var(--muted)}
-
+    .topbar{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+    @media (max-width:900px){.topbar{grid-template-columns:1fr}}
+    .stats{display:flex;gap:12px}
+    .stat{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;min-width:140px}
+    .stat .num{font-size:24px;font-weight:800}
+    .library{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
     .list{display:grid;gap:16px}
-    .story-card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+    .story-card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:16px}
     .story-card h3{margin:0 0 6px}
-    .story-card .meta{color:var(--muted);font-size:14px;margin-bottom:8px}
-    .story-card .actions{display:flex;gap:10px;margin-top:10px}
+    .meta{color:var(--muted);font-size:14px;margin-bottom:8px}
+    .actions{display:flex;gap:10px;margin-top:10px}
     .pill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;color:#3b2f2a;text-decoration:none;font-weight:600;cursor:pointer}
     .pill.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:0}
-    .empty{padding:32px 18px;text-align:center;color:var(--muted);font-size:16px}
-    .empty a{margin-left:6px}
+    .empty{padding:40px;text-align:center;color:var(--muted);font-size:16px}
   </style>
 </head>
 <body>
@@ -40,70 +32,56 @@
   <main class="container">
     <h1 class="title" data-i18n="storiesTitle">My Stories</h1>
 
-    <!-- Stats header -->
-    <section class="stats">
-      <div class="card stat-box">
-        <div class="kpi">
-          <div class="label" data-i18n="kpiStories">Stories</div>
-          <div id="kpiStories" class="num">0</div>
+    <section class="topbar">
+      <div class="stats">
+        <div class="stat">
+          <div class="num" id="countStories">0</div>
+          <div class="muted" data-i18n="statStories">Stories</div>
         </div>
-        <!-- You can add more KPIs later (e.g., shared members, minutes used) -->
+        <div class="stat">
+          <div class="num" id="countFamily">0</div>
+          <div class="muted" data-i18n="statFamily">Family Members</div>
+        </div>
       </div>
+      <div class="library">
+        <div class="muted" data-i18n="libraryBlurb">Your stories will appear in your private library here.</div>
+      </div>
+    </section>
 
-      <div id="storiesList" class="card list">
-        <!-- populated by JS -->
-      </div>
+    <section class="list" id="storiesList">
+      <div class="empty" data-i18n="storiesEmpty">No stories yet. Record your first one!</div>
     </section>
   </main>
 
   <div id="site-footer"></div>
 
-  <script src="/js/lang.js" defer></script>
-  <script src="/js/header-loader.js" defer></script>
+  <script src="/js/lang.js"></script>
+  <script src="/js/header-loader.js"></script>
+  <script src="/js/footer-loader.js"></script>
   <script>
-    const listEl   = document.getElementById('storiesList');
-    const kpiEl    = document.getElementById('kpiStories');
-
-    // For now: mock stories until you connect your backend.
-    // Set [] to check the empty-state.
-    let stories = []; // e.g., [{title:"Summer of 1965", when:"July 1965", text:"…"}];
-
+    // Placeholder: plug in Supabase later
+    const fakeStories=[]; const listEl=document.getElementById('storiesList');
     function renderStories(){
-      // KPI
-      kpiEl.textContent = String(stories.length);
-
-      // List / Empty state
-      listEl.innerHTML = '';
-      if(!stories.length){
-        const empty = document.createElement('div');
-        empty.className = 'empty';
-        empty.innerHTML = `
-          ${window.MEMOIR_I18N.t('storiesEmptyLong') || 'Your stories will all be added to this private library.'}
-          <a class="pill" href="/record.html">${window.MEMOIR_I18N.t('ctaStart') || 'Start Recording'}</a>
-        `;
-        listEl.appendChild(empty);
-        return;
+      document.getElementById('countStories').textContent = String(fakeStories.length);
+      listEl.innerHTML='';
+      if(!fakeStories.length){
+        const d=document.createElement('div');
+        d.className='empty'; d.textContent=window.MEMOIR_I18N.t('storiesEmpty');
+        listEl.appendChild(d); return;
       }
-
-      stories.forEach(story=>{
-        const card = document.createElement('div');
-        card.className = 'story-card';
-        card.innerHTML = `
-          <h3>${story.title}</h3>
-          <div class="meta">${story.when || ''}</div>
-          <p>${story.text || ''}</p>
+      fakeStories.forEach(st=>{
+        const card=document.createElement('div'); card.className='story-card';
+        card.innerHTML=`<h3>${st.title}</h3><div class="meta">${st.when||''}</div><p>${st.text||''}</p>
           <div class="actions">
-            <button class="pill primary">${window.MEMOIR_I18N.t('storiesRewrite') || 'Rewrite with AI'}</button>
-            <button class="pill">${window.MEMOIR_I18N.t('storiesExport') || 'Export'}</button>
-            <button class="pill">${window.MEMOIR_I18N.t('storiesDelete') || 'Delete'}</button>
-          </div>
-        `;
+            <button class="pill primary">${window.MEMOIR_I18N.t('storiesRewrite')}</button>
+            <button class="pill">${window.MEMOIR_I18N.t('storiesExport')}</button>
+            <button class="pill">${window.MEMOIR_I18N.t('storiesDelete')}</button>
+          </div>`;
         listEl.appendChild(card);
       });
     }
-
-    window.addEventListener('memoir:lang', renderStories);
-    document.addEventListener('DOMContentLoaded', renderStories);
+    document.addEventListener('DOMContentLoaded',renderStories);
+    window.addEventListener('memoir:lang',renderStories);
   </script>
 </body>
 </html>
