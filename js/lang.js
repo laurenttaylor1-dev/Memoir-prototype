@@ -377,29 +377,41 @@
   // Apply translations to a root (document or a subtree)
   function applyAll(root){
     const lang = getLang();
-    // 1) text nodes
+
+    // 1) elements with data-i18n="key"
     root.querySelectorAll('[data-i18n]').forEach(el=>{
       const key = el.getAttribute('data-i18n');
-      const val = (strings[lang] && strings[lang][key]) || (strings.en && strings.en[key]) || '';
-      if (val !== '') el.textContent = val;
-    });
-    // 2) attribute mappings: data-i18n-attr="placeholder:key;title:key2"
-    root.querySelectorAll('[data-i18n-attr]').forEach(el=>{
-      const map = el.getAttribute('data-i18n-attr');
-      if (!map) return;
-      map.split(';').forEach(pair=>{
-        const [attr, key] = pair.split(':').map(s=>s && s.trim());
-        if (!attr || !key) return;
-        const val = (strings[lang] && strings[lang][key]) || (strings.en && strings.en[key]) || '';
-        if (val !== '') el.setAttribute(attr, val);
-      });
-    });
-    // Update visible flag/label in header if present
-    const flagEl = document.querySelector('#lang-current-flag');
-    const labEl  = document.querySelector('#lang-current-label');
-    if (flagEl) flagEl.textContent = flags[lang] || '🌐';
-    if (labEl)  labEl.textContent  = labels[lang] || lang.toUpperCase();
-  }
+      const found =
+        (strings[lang] && strings[lang][key]) ??
+        (strings.en   && strings.en[key]);
+
+    // Only set text if we actually have a translation.
+    if (typeof found === 'string' && found.trim() !== '') {
+      el.textContent = found;
+    }
+
+   // 2) elements with data-i18n-attr="placeholder:key;title:key2"
+   root.querySelectorAll('[data-i18n-attr]').forEach(el=>{
+     const map = el.getAttribute('data-i18n-attr');
+     if (!map) return;
+     map.split(';').forEach(pair=>{
+       const [attr, key] = pair.split(':').map(s=>s && s.trim());
+       if (!attr || !key) return;
+       const found =
+         (strings[lang] && strings[lang][key]) ??
+         (strings.en   && strings.en[key]);
+       if (typeof found === 'string' && found.trim() !== '') {
+         el.setAttribute(attr, found);
+       }
+     });
+   });
+
+   // Update current language flag/label if present
+   const flagEl = document.querySelector('#lang-current-flag');
+   const labEl  = document.querySelector('#lang-current-label');
+   if (flagEl) flagEl.textContent = (flags[lang] || '🌐');
+   if (labEl)  labEl.textContent  = (labels[lang] || lang.toUpperCase());
+  }  
 
   // Initial apply as soon as DOM is ready
   function init(){
