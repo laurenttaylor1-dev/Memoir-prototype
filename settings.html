@@ -6,99 +6,152 @@
   <title>Memoir — Settings</title>
   <link rel="stylesheet" href="/styles.css">
   <style>
-    :root{ --card:#fffaf5; --ink:#3b2f2a; --muted:#7b6a62; --radius:18px;
-           --shadow:0 18px 40px rgba(59,47,42,.10),0 2px 8px rgba(59,47,42,.06); }
-    body{ color:var(--ink); margin:0; background:#f6f1ea; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial }
-    .wrap{ max-width:1100px; margin:0 auto; padding:20px 16px 28px }
-    h1{ font-size:clamp(26px,3vw,38px); margin:8px 0 18px }
-    h2{ font-size:clamp(18px,2.1vw,22px); margin:16px 0 10px }
-    p.muted{ color:var(--muted) }
-    .grid{ display:grid; gap:18px; grid-template-columns:1fr 1fr; }
-    @media (max-width: 980px){ .grid{ grid-template-columns:1fr; } }
-    .card{ background:var(--card); border:1px solid rgba(0,0,0,.08); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px }
-    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center }
-    .pill{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:999px;
-           border:1px solid rgba(0,0,0,.12); background:#fff; color:var(--ink); text-decoration:none; font-weight:600 }
-    .pill.primary{ background:linear-gradient(90deg,#8c5a3c,#b17d55); border:0; color:#fff }
-    .small{ font-size:12px; color:var(--muted) }
-    .kv{ display:grid; grid-template-columns:160px 1fr; gap:8px 14px; align-items:center }
-    .list{ margin:8px 0 0 18px }
-    .list li{ margin:6px 0 }
+    :root{ --bg:#f6f1ea; --card:#fffaf5; --ink:#3b2f2a; --muted:#7b6a62; --accent:#8c5a3c; --accent2:#b17d55; --radius:18px; --shadow:0 18px 40px rgba(59,47,42,.10), 0 2px 8px rgba(59,47,42,.06); }
+    body{background:var(--bg);color:var(--ink);margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    .container{max-width:1100px;margin:0 auto;padding:20px 16px 28px}
+    .title{font-size:clamp(26px,3vw,38px);margin:8px 0 20px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    @media (max-width:960px){ .grid{grid-template-columns:1fr} }
+    .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+    .label{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;color:#3b2f2a;text-decoration:none;font-weight:600;cursor:pointer}
+    .pill.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:0}
+    .subgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:760px){ .subgrid{grid-template-columns:1fr} }
+    ul{margin:8px 0 0 18px;color:var(--muted)}
   </style>
 </head>
 <body>
   <div id="site-header"></div>
 
-  <main class="wrap">
-    <h1 id="setTitle">Settings</h1>
+  <main class="container">
+    <h1 class="title" data-i18n="settingsTitle">Settings</h1>
 
     <section class="grid">
-      <!-- Account -->
+      <!-- 1) Account -->
       <div class="card">
-        <h2 id="setAccount">Account</h2>
-        <div class="kv">
-          <div class="small" id="setEmailLabel">Email</div>
-          <div id="accEmail">—</div>
-
-          <div class="small" id="setPlanLabel">Current plan</div>
-          <div id="accPlan">Free</div>
-
-          <div class="small" id="setNextBillLabel">Next billing</div>
-          <div id="accNextBill">—</div>
+        <div class="label" data-i18n="settingsAccount">Account</div>
+        <div class="row" style="justify-content:space-between">
+          <div id="acctEmail"><strong data-i18n="settingsSignedInAs">Signed in as</strong>: <span id="acctEmailValue">—</span></div>
+          <div class="row">
+            <a class="pill" href="/login.html" data-i18n="navLogin">Login</a>
+            <button class="pill" id="logoutBtn">Logout</button>
+          </div>
         </div>
-        <div class="row" style="margin-top:12px">
-          <a href="/api/checkout" class="pill primary" id="setUpgrade">Upgrade / Manage</a>
-          <a href="/api/checkout?portal=1" class="pill" id="setPortal">Billing portal</a>
+        <div style="margin-top:10px">
+          <div><strong data-i18n="settingsPlan">Current plan</strong>: <span id="acctPlan">Free</span></div>
+          <div class="row" style="margin-top:8px">
+            <a class="pill primary" href="/settings.html#plans" data-i18n="settingsChangePlan">Change plan</a>
+          </div>
         </div>
-        <p class="small" style="margin-top:8px" id="setManageNote">
-          Use “Billing portal” to update payment method, download invoices or cancel.
-        </p>
       </div>
 
-      <!-- Security & Data -->
+      <!-- 2) Language -->
       <div class="card">
-        <h2 id="setSecurity">Security & Data</h2>
-        <ul class="list">
-          <li id="setExport">Export your data (CSV/PDF) from “My Stories”.</li>
-          <li id="setPrivacy">Stories are private by default. Sharing is read-only for invited family.</li>
-          <li id="setDelete">Need your account deleted? Email support@memoir.app from your account address.</li>
+        <div class="label" data-i18n="settingsLanguage">Language</div>
+        <p class="muted" data-i18n="settingsLanguageIntro">Choose the language used across the app.</p>
+        <div class="row">
+          <button class="pill" onclick="MEMOIR_I18N.setLang('en')">🇬🇧 English</button>
+          <button class="pill" onclick="MEMOIR_I18N.setLang('fr')">🇫🇷 Français</button>
+          <button class="pill" onclick="MEMOIR_I18N.setLang('nl')">🇧🇪 Nederlands</button>
+          <button class="pill" onclick="MEMOIR_I18N.setLang('es')">🇪🇸 Español</button>
+        </div>
+      </div>
+
+      <!-- 3) Privacy -->
+      <div class="card">
+        <div class="label" data-i18n="settingsPrivacy">Privacy</div>
+        <p class="muted" data-i18n="settingsPrivacyIntro">Your data and choices.</p>
+        <ul>
+          <li>Export your data anytime.</li>
+          <li>Delete individual stories or your account on request.</li>
+          <li>Shared access is read-only unless you promote someone.</li>
         </ul>
       </div>
 
-      <!-- FAQ (short) -->
+      <!-- 4) FAQ -->
       <div class="card">
-        <h2 id="setFaq">FAQ (quick)</h2>
-        <ul class="list">
-          <li><strong id="q1">Is there a free plan?</strong> <span id="a1">Yes — up to 10 stories, 2 minutes transcription each.</span></li>
-          <li><strong id="q2">Which languages are supported?</strong> <span id="a2">English, Français, Nederlands, Español (more coming).</span></li>
-          <li><strong id="q3">How does rewriting work?</strong> <span id="a3">AI turns transcripts into polished, book-ready prose you can review and tweak.</span></li>
+        <div class="label" data-i18n="settingsFAQ">FAQ</div>
+        <p class="muted" data-i18n="settingsFAQIntro">Quick answers to common questions.</p>
+        <ul>
+          <li>How do I start? — Use “Record”, press the big button, and speak naturally.</li>
+          <li>What if I’m offline? — Audio is saved and transcribed later.</li>
+          <li>Can I add photos? — Yes, while saving or later from My Stories.</li>
         </ul>
       </div>
 
-      <!-- Legal -->
-      <div class="card">
-        <h2 id="setLegal">Legal</h2>
-        <p class="muted" id="setLegalCopy">Read our policies and terms.</p>
-        <a href="/legal.html" class="pill" id="setLegalLink">Legal & Policies</a>
+      <!-- 5) Subscription details (new) -->
+      <div id="plans" class="card">
+        <div class="label" data-i18n="settingsPlans">Subscription details</div>
+        <p class="muted" data-i18n="settingsPlansIntro">Compare plans and pick the one that fits your needs.</p>
+
+        <div class="subgrid">
+          <div class="card">
+            <h3 data-i18n="planFree">Free</h3>
+            <div class="muted" data-i18n="priceFree">€0 / month</div>
+            <p class="muted" data-i18n="planFreeDesc">Record locally, keep a private library on your device.</p>
+            <ul>
+              <li data-i18n="settingsPlanLines.free">Free — record locally (no cloud sync).</li>
+            </ul>
+            <a class="pill" href="/settings.html" data-i18n="settingsChoose">Choose</a>
+          </div>
+
+          <div class="card">
+            <h3 data-i18n="planPremium">Storyteller</h3>
+            <div class="muted" data-i18n="pricePremium">€6.99 / month</div>
+            <p class="muted" data-i18n="planPremiumDesc">Cloud sync + Whisper transcription + AI rewrite. For solo authors.</p>
+            <ul>
+              <li data-i18n="settingsPlanLines.storyteller"></li>
+            </ul>
+            <a class="pill primary" href="/api/create-checkout-session?plan=premium" data-i18n="planCTA">Choose plan</a>
+          </div>
+
+          <div class="card">
+            <h3 data-i18n="planFamily">Family</h3>
+            <div class="muted" data-i18n="priceFamily">€8.99 / month</div>
+            <p class="muted" data-i18n="planFamilyDesc">Everything in Storyteller, plus read-only sharing for up to 4 family members.</p>
+            <ul>
+              <li data-i18n="settingsPlanLines.family"></li>
+            </ul>
+            <a class="pill primary" href="/api/create-checkout-session?plan=family" data-i18n="planCTA">Choose plan</a>
+          </div>
+
+          <div class="card">
+            <h3 data-i18n="planExclusive">Exclusive</h3>
+            <div class="muted" data-i18n="priceExclusive">€11.99 / month</div>
+            <p class="muted" data-i18n="planExclusiveDesc">Up to 5 hours of transcription monthly, priority processing, and premium support.</p>
+            <ul>
+              <li data-i18n="settingsPlanLines.exclusive"></li>
+            </ul>
+            <a class="pill primary" href="/api/create-checkout-session?plan=exclusive" data-i18n="planCTA">Choose plan</a>
+          </div>
+        </div>
       </div>
     </section>
   </main>
 
   <div id="site-footer"></div>
 
-  <script src="/js/lang.js" defer></script>
-  <script src="/js/header-loader.js" defer></script>
+  <script src="/js/lang.js"></script>
+  <script src="/js/header-loader.js"></script>
+  <script src="/js/footer-loader.js"></script>
   <script>
-    // Fill lightweight account info from localStorage if you store it;
-    // otherwise these can remain placeholders or be filled by a small /api/me endpoint.
-    const me = JSON.parse(localStorage.getItem('memoir_user')||'{}');
-    if(me.email) document.getElementById('accEmail').textContent = me.email;
-    if(me.plan)  document.getElementById('accPlan').textContent  = me.plan; // e.g. "Free", "Storyteller"
-    if(me.next_billing) document.getElementById('accNextBill').textContent = me.next_billing;
+    // Fill in account data if you already have Supabase auth on the page
+    (async function(){
+      try{
+        if (!window.supabase) return;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.email) document.getElementById('acctEmailValue').textContent = user.email;
+      }catch{}
+    })();
 
-    // Minimal i18n hook: if your lang.js emits `memoir:lang`, you can translate these labels there.
-    window.addEventListener('memoir:lang', e=>{
-      // nothing required here if lang.js already swaps textContent by ids
+    // Logout wire (no-op if you don’t use Supabase here)
+    document.getElementById('logoutBtn')?.addEventListener('click', async ()=>{
+      try{
+        if (window.supabase) await supabase.auth.signOut();
+      }catch{}
+      location.href = '/landing.html';
     });
   </script>
 </body>
