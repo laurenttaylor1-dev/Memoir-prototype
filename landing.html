@@ -4,7 +4,11 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — Home</title>
-  <link rel="stylesheet" href="/styles.css">
+
+  <!-- Global styles -->
+  <link rel="stylesheet" href="/styles.css"/>
+
+  <!-- Page-scoped additions -->
   <style>
     :root{
       --bg:#f6f1ea; --card:#fffaf5; --ink:#3b2f2a; --muted:#7b6a62;
@@ -16,44 +20,63 @@
 
     /* HERO */
     .hero-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:22px;align-items:stretch}
-    @media (max-width:980px){.hero-grid{grid-template-columns:1fr}}
+    @media (max-width:980px){ .hero-grid{grid-template-columns:1fr} }
+
     .hero-img{background:var(--card);border:1px solid rgba(0,0,0,.06);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
     .hero-img img{display:block;width:100%;height:100%;object-fit:cover}
+
     .hero-panel{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;display:flex;flex-direction:column}
     .hero-kicker{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
-    .hero-title{margin:6px 0 12px;font-size:clamp(32px,4vw,46px);font-weight:800;line-height:1.15}
+
+    /* force TWO lines across languages */
+    .hero-title{margin:6px 0 12px;font-weight:800;line-height:1.12}
     .hero-title .force-two{display:block;line-height:1.12}
     .hero-title .force-two span{display:block}
+    /* Responsive font so “two lines” is preserved */
+    @media (min-width:981px){ .hero-title{font-size: clamp(36px, 3.8vw, 46px);} }
+    @media (max-width:980px){ .hero-title{font-size: clamp(30px, 6.5vw, 40px);} }
+
     .gradient{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
     .hero-blurb{color:var(--muted);font-size:18px;line-height:1.5;max-width:60ch}
+
     .hero-actions{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    @media (max-width:640px){.hero-actions{grid-template-columns:1fr}}
+    @media (max-width:640px){ .hero-actions{grid-template-columns:1fr} }
+
     .mini-card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:18px;box-shadow:0 8px 20px rgba(0,0,0,.06)}
     .mini-card h4{margin:0 0 6px;font-size:16px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-    .mini-card p{margin:0 0 10px;font-size:15px;line-height:1.45;color:var(--ink)}
+    .mini-card p{margin:0 10px 10px 0;font-size:15px;line-height:1.45;color:var(--ink)}
     .pill{display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;color:var(--ink);text-decoration:none;font-weight:700}
     .pill.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:0}
 
-    /* Features */
-    .section-title{font-size:clamp(22px,2.5vw,28px);margin:28px 0 10px}
+    /* Why Memoir row tweaks */
+    .section-title{font-size:clamp(22px,2.6vw,28px);margin:26px 0 10px}
     .muted{color:var(--muted)}
-    .feat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
-    @media (max-width:900px){.feat-grid{grid-template-columns:1fr}}
-    .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
-    .card h3{margin:0 0 8px}
+    .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    @media (max-width:980px){ .feat-grid{grid-template-columns:1fr} }
 
-    /* Pricing */
-    .pricing-wrap{margin-top:14px}
-    .plans{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
-    .plan{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:16px;box-shadow:0 8px 20px rgba(0,0,0,.06);display:flex;flex-direction:column}
-    .plan h4{margin:0 0 4px}
+    /* === Pricing layout (4 -> 2x2 -> 1) === */
+    .pricing-grid{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(260px, 1fr));
+      gap:16px;
+      align-items:stretch;
+    }
+    @media (max-width:1200px){
+      .pricing-grid{ grid-template-columns: repeat(2, minmax(280px, 1fr)); }
+    }
+    @media (max-width:640px){
+      .pricing-grid{ grid-template-columns: 1fr; }
+    }
+    .plan{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;display:flex;flex-direction:column}
+    .plan-name{margin:0 0 6px}
     .price{font-weight:800;margin-bottom:8px}
-    .plan ul{margin:0 0 14px 18px}
-    .plan .pill{align-self:flex-start}
-    @media (max-width:1100px){.plans{grid-template-columns:1fr}}
+    .plan-body{flex:1 1 auto}
+    .plan-cta{margin-top:12px}
+    .plan ul{margin:8px 0 0 18px}
   </style>
 </head>
 <body>
+  <!-- Shared header -->
   <div id="site-header"></div>
 
   <main class="container">
@@ -65,9 +88,11 @@
 
       <div class="hero-panel">
         <div class="hero-kicker" data-i18n="brandKicker">MEMOIR APP</div>
-        <h1 class="hero-title force-two" id="heroTitle">
-          <span data-i18n="heroTitleA">Preserve Your</span>
-          <span class="gradient" data-i18n="heroTitleB">Memories Forever</span>
+        <h1 class="hero-title">
+          <span class="force-two">
+            <span class="lineA" data-i18n="heroTitleA">Preserve Your</span>
+            <span class="lineB gradient" data-i18n="heroTitleB">Memories Forever</span>
+          </span>
         </h1>
         <p class="hero-blurb" data-i18n="heroBlurb">
           Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.
@@ -77,128 +102,134 @@
           <div class="mini-card">
             <h4 data-i18n="landingStartCardTitle">Start Recording</h4>
             <p data-i18n="landingStartCardText">One tap to begin. Add a title and “when it happened” later. Whisper AI transcribes clearly in your language.</p>
-            <a class="pill primary" href="/record.html" data-i18n="startRecording">Start Recording</a>
+            <a class="pill primary" href="/record.html" data-i18n="landingStartBtn">Start Recording</a>
           </div>
           <div class="mini-card">
-            <h4 data-i18n="landingStoriesCardTitle">My Stories</h4>
+            <h4 data-i18n="landingStoriesCardTitle">View My Stories</h4>
             <p data-i18n="landingStoriesCardText">Browse your private library, attach photos, AI-rewrite for clarity, and export.</p>
-            <a class="pill" href="/stories.html" data-i18n="viewStories">My Stories</a>
+            <a class="pill" href="/stories.html" data-i18n="landingStoriesBtn">My Stories</a>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Features -->
+    <!-- WHY MEMOIR -->
     <h2 class="section-title" data-i18n="featuresTitle">Why Memoir</h2>
-    <p class="muted" data-i18n="featuresIntro">Three reasons families choose Memoir.</p>
+    <p class="muted" data-i18n="featuresIntro">Capture beautifully, polish with AI, and keep everything safe for your family.</p>
     <section class="feat-grid">
-      <div class="card">
-        <h3 data-i18n="feat1Title">Clear transcription (Whisper)</h3>
-        <p data-i18n="feat1Text">Accurate, multilingual speech-to-text built for real voices and accents.</p>
-      </div>
-      <div class="card">
-        <h3 data-i18n="feat2Title">AI rewrite to book-quality</h3>
-        <p data-i18n="feat2Text">Turn raw speech into warm, readable prose—perfect for your family archive.</p>
-      </div>
-      <div class="card">
-        <h3 data-i18n="feat3Title">Private sharing</h3>
-        <p data-i18n="feat3Text">Your stories stay yours. Share read-only access with family you choose.</p>
-      </div>
+      <article class="mini-card">
+        <h3 data-i18n="f1Title">Accurate transcription</h3>
+        <p data-i18n="f1Copy">Capture every word with Whisper-powered transcription for high accuracy and clarity.</p>
+      </article>
+      <article class="mini-card">
+        <h3 data-i18n="f2Title">AI rewrite for families</h3>
+        <p data-i18n="f2Copy">Turn your spoken words into polished, engaging stories your family will love to read.</p>
+      </article>
+      <article class="mini-card">
+        <h3 data-i18n="f3Title">Private or shared</h3>
+        <p data-i18n="f3Copy">Keep stories private or share read-only with selected family; everything syncs across your devices.</p>
+      </article>
     </section>
 
-    <!-- Pricing -->
+    <!-- PRICING -->
     <h2 class="section-title" data-i18n="pricingTitle">Pricing</h2>
-    <section class="pricing-wrap">
-      <div class="plans">
-        <!-- Free -->
-        <article class="plan">
-          <h4 data-i18n="planFreeTitle">Free</h4>
-          <div class="price" data-i18n="planFreePrice">€0</div>
-          <ul>
-            <li data-i18n="planFreeB1">Up to 10 stories</li>
-            <li data-i18n="planFreeB2">Max 2 minutes transcription per story</li>
-            <li data-i18n="planFreeB3">Private library on all your devices</li>
+    <section class="pricing-grid">
+      <!-- Free -->
+      <article class="plan">
+        <h3 class="plan-name" data-i18n="planFreeName">Free</h3>
+        <div class="price" data-i18n="planFreePrice">€0</div>
+        <div class="plan-body">
+          <ul class="plan-points">
+            <li data-i18n="planFreeP1">Up to 10 stories</li>
+            <li data-i18n="planFreeP2">Max 2 minutes transcription per story</li>
+            <li data-i18n="planFreeP3">Private library on all your devices</li>
           </ul>
-          <a class="pill" href="/settings.html#subscribe" data-i18n="ctaTryFree">Try free</a>
-        </article>
+        </div>
+        <div class="plan-cta">
+          <a class="pill" href="/settings.html#plans" data-i18n="planLearnMore">Learn more</a>
+        </div>
+      </article>
 
-        <!-- Storyteller (formerly Premium) -->
-        <article class="plan">
-          <h4 data-i18n="planStoryTitle">Storyteller — €6.99/month</h4>
-          <div class="price" data-i18n="planStoryPrice">€6.99 / mo</div>
-          <ul>
-            <li data-i18n="planStoryB1">Up to 2.5 hours / month of AI transcription</li>
-            <li data-i18n="planStoryB2">AI Rewrite (polish stories), export to PDF/CSV</li>
-            <li data-i18n="planStoryB3">Priority processing</li>
+      <!-- Storyteller (Premium) -->
+      <article class="plan">
+        <h3 class="plan-name" data-i18n="planStorytellerName">Storyteller — €6.99/month</h3>
+        <div class="price" data-i18n="planStorytellerPrice">€6.99 / mo</div>
+        <div class="plan-body">
+          <ul class="plan-points">
+            <li data-i18n="planStorytellerP1">Up to 2.5 hours / month of AI transcription</li>
+            <li data-i18n="planStorytellerP2">AI Rewrite (polish stories), export to PDF/CSV</li>
+            <li data-i18n="planStorytellerP3">Priority processing</li>
           </ul>
-          <a class="pill primary" href="/api/checkout?price=storyteller" data-i18n="ctaSubscribe">Subscribe</a>
-        </article>
+        </div>
+        <div class="plan-cta">
+          <button class="pill primary subscribe-btn" data-plan="storyteller" data-i18n="planSubscribe">Subscribe</button>
+        </div>
+      </article>
 
-        <!-- Family -->
-        <article class="plan">
-          <h4 data-i18n="planFamilyTitle">Family — €8.99/month</h4>
-          <div class="price" data-i18n="planFamilyPrice">€8.99 / mo</div>
-          <ul>
-            <li data-i18n="planFamilyB1">Everything in Storyteller</li>
-            <li data-i18n="planFamilyB2">Share your library with up to 4 read-only family members</li>
-            <li data-i18n="planFamilyB3">Invite by email; revoke anytime</li>
+      <!-- Family -->
+      <article class="plan">
+        <h3 class="plan-name" data-i18n="planFamilyName">Family — €8.99/month</h3>
+        <div class="price" data-i18n="planFamilyPrice">€8.99 / mo</div>
+        <div class="plan-body">
+          <ul class="plan-points">
+            <li data-i18n="planFamilyP1">Everything in Storyteller</li>
+            <li data-i18n="planFamilyP2">Share your library with up to 4 read-only family members</li>
+            <li data-i18n="planFamilyP3">Invite by email; revoke anytime</li>
           </ul>
-          <a class="pill primary" href="/api/checkout?price=family" data-i18n="ctaSubscribe">Subscribe</a>
-        </article>
+        </div>
+        <div class="plan-cta">
+          <button class="pill primary subscribe-btn" data-plan="family" data-i18n="planSubscribe">Subscribe</button>
+        </div>
+      </article>
 
-        <!-- Exclusive (will wrap under on narrow, but still works) -->
-        <article class="plan">
-          <h4 data-i18n="planExclTitle">Exclusive — €11.99/month</h4>
-          <div class="price" data-i18n="planExclPrice">€11.99 / mo</div>
-          <ul>
-            <li data-i18n="planExclB1">Up to 5 hours / month of AI transcription + rewrite</li>
-            <li data-i18n="planExclB2">Family sharing (up to 4)</li>
-            <li data-i18n="planExclB3">Best for active storytellers</li>
+      <!-- Exclusive -->
+      <article class="plan">
+        <h3 class="plan-name" data-i18n="planExclusiveName">Exclusive — €11.99/month</h3>
+        <div class="price" data-i18n="planExclusivePrice">€11.99 / mo</div>
+        <div class="plan-body">
+          <ul class="plan-points">
+            <li data-i18n="planExclusiveP1">Up to 5 hours / month of AI transcription + rewrite</li>
+            <li data-i18n="planExclusiveP2">Family sharing (up to 4)</li>
+            <li data-i18n="planExclusiveP3">Best for active storytellers</li>
           </ul>
-          <a class="pill primary" href="/api/checkout?price=exclusive" data-i18n="ctaSubscribe">Subscribe</a>
-        </article>
-      </div>
+        </div>
+        <div class="plan-cta">
+          <button class="pill primary subscribe-btn" data-plan="exclusive" data-i18n="planSubscribe">Subscribe</button>
+        </div>
+      </article>
     </section>
   </main>
 
+  <!-- Shared footer -->
   <div id="site-footer"></div>
 
+  <!-- Scripts (lang first, then header/footer loaders) -->
   <script src="/js/lang.js"></script>
   <script src="/js/header-loader.js"></script>
   <script src="/js/footer-loader.js"></script>
+
+  <!-- Lightweight checkout handler for landing page buttons -->
   <script>
-  /* Ensure hero title sits on exactly two lines by shrinking a bit if needed */
-  (function(){
-    const title = document.getElementById('heroTitle');
-    if(!title) return;
-
-    function isTwoLines(el){
-      // Each span should be one visual line; if either wraps into 2 rect rows, we know it flowed.
-      const rects = el.getClientRects?.();
-      return rects && rects.length >= 2; // two spans = two rows
-    }
-
-    function fit(){
-      // Reset to base size (matches CSS clamp’s max)
-      let size = 46; // px
-      title.style.fontSize = size + 'px';
-
-      // shrink until spans render on two rows inside the panel
-      let guard = 16; // max 16 steps
-      while (guard-- > 0 && !isTwoLines(title)){
-        size -= 1.5;
-        if(size < 30) break;
-        title.style.fontSize = size + 'px';
+    (function(){
+      async function go(plan){
+        try{
+          const res = await fetch(`/api/create-checkout-session?plan=${encodeURIComponent(plan)}`, { method:'POST' });
+          if(!res.ok) throw new Error('checkout_failed');
+          const data = await res.json();
+          if(data?.url){ window.location = data.url; return; }
+          alert('Unable to start checkout. Please try again.');
+        }catch(e){
+          console.error(e);
+          alert('Checkout error. Please try again.');
+        }
       }
-    }
-
-    // Run after language changes and on resize
-    window.addEventListener('memoir:lang', fit);
-    window.addEventListener('resize', fit);
-    document.addEventListener('DOMContentLoaded', fit);
-    // In case header/footer load later and shift width:
-    setTimeout(fit, 300);
-  })();
+      document.addEventListener('click', (e)=>{
+        const btn = e.target.closest('.subscribe-btn');
+        if(!btn) return;
+        e.preventDefault();
+        go(btn.dataset.plan);
+      });
+    })();
   </script>
 </body>
 </html>
