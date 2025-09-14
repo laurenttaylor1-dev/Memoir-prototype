@@ -240,3 +240,10 @@ textarea{ min-height:110px; resize:vertical; }
 
 /* Prevent ancestors from clipping the dropdown; useful if a parent had overflow hidden */
 .site-header, .site-header .wrap, .site-header .nav, .lang { overflow: visible !important; }
+
+/* Footer centering */
+.site-footer { background: transparent; }
+.site-footer .site-footer-wrap { max-width: 1200px; margin: 0 auto; padding: 20px 16px; }
+.site-footer .foot,
+#site-footer .foot { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; text-align: center; }
+.site-footer .foot a { text-decoration: none; color: inherit; font-weight: 600; }
