@@ -6,20 +6,18 @@
   <title>Memoir — Settings</title>
   <link rel="stylesheet" href="/styles.css">
   <style>
-    :root{ --bg:#f6f1ea; --card:#fffaf5; --ink:#3b2f2a; --muted:#7b6a62; --accent:#8c5a3c; --accent2:#b17d55; --radius:18px; --shadow:0 18px 40px rgba(59,47,42,.10), 0 2px 8px rgba(59,47,42,.06); }
+    :root{--bg:#f6f1ea;--card:#fffaf5;--ink:#3b2f2a;--muted:#7b6a62;--accent:#8c5a3c;--accent2:#b17d55;--radius:18px;--shadow:0 18px 40px rgba(59,47,42,.10),0 2px 8px rgba(59,47,42,.06)}
     body{background:var(--bg);color:var(--ink);margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
     .container{max-width:1100px;margin:0 auto;padding:20px 16px 28px}
-    .title{font-size:clamp(26px,3vw,38px);margin:8px 0 20px}
+    .title{font-size:clamp(26px,3vw,38px);margin:8px 0 16px}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    @media (max-width:960px){ .grid{grid-template-columns:1fr} }
+    @media (max-width:900px){.grid{grid-template-columns:1fr}}
     .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
-    .label{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .card h3{margin:0 0 10px}
     .pill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;color:#3b2f2a;text-decoration:none;font-weight:600;cursor:pointer}
     .pill.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:0}
-    .subgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    @media (max-width:760px){ .subgrid{grid-template-columns:1fr} }
-    ul{margin:8px 0 0 18px;color:var(--muted)}
+    .muted{color:var(--muted)}
+    .list{margin:0 0 0 18px}
   </style>
 </head>
 <body>
@@ -29,102 +27,64 @@
     <h1 class="title" data-i18n="settingsTitle">Settings</h1>
 
     <section class="grid">
-      <!-- 1) Account -->
       <div class="card">
-        <div class="label" data-i18n="settingsAccount">Account</div>
-        <div class="row" style="justify-content:space-between">
-          <div id="acctEmail"><strong data-i18n="settingsSignedInAs">Signed in as</strong>: <span id="acctEmailValue">—</span></div>
-          <div class="row">
-            <a class="pill" href="/login.html" data-i18n="navLogin">Login</a>
-            <button class="pill" id="logoutBtn">Logout</button>
-          </div>
-        </div>
-        <div style="margin-top:10px">
-          <div><strong data-i18n="settingsPlan">Current plan</strong>: <span id="acctPlan">Free</span></div>
-          <div class="row" style="margin-top:8px">
-            <a class="pill primary" href="/settings.html#plans" data-i18n="settingsChangePlan">Change plan</a>
-          </div>
+        <h3 data-i18n="settingsAccount">Account</h3>
+        <p class="muted" data-i18n="settingsAccountCopy">Manage your sign-in and personal details.</p>
+        <button class="pill" data-i18n="settingsSignIn">Sign in</button>
+      </div>
+
+      <div class="card" id="subscribe">
+        <h3 data-i18n="settingsSub">Subscription</h3>
+        <p class="muted" data-i18n="settingsSubCopy">Choose or change your plan.</p>
+        <div class="list">
+          <p><strong data-i18n="planStoryTitle">Storyteller — €6.99/month</strong> — <a href="/api/checkout?price=storyteller" class="pill primary" data-i18n="ctaSubscribe">Subscribe</a></p>
+          <p><strong data-i18n="planFamilyTitle">Family — €8.99/month</strong> — <a href="/api/checkout?price=family" class="pill primary" data-i18n="ctaSubscribe">Subscribe</a></p>
+          <p><strong data-i18n="planExclTitle">Exclusive — €11.99/month</strong> — <a href="/api/checkout?price=exclusive" class="pill primary" data-i18n="ctaSubscribe">Subscribe</a></p>
         </div>
       </div>
 
-      <!-- 2) Language -->
       <div class="card">
-        <div class="label" data-i18n="settingsLanguage">Language</div>
-        <p class="muted" data-i18n="settingsLanguageIntro">Choose the language used across the app.</p>
-        <div class="row">
-          <button class="pill" onclick="MEMOIR_I18N.setLang('en')">🇬🇧 English</button>
-          <button class="pill" onclick="MEMOIR_I18N.setLang('fr')">🇫🇷 Français</button>
-          <button class="pill" onclick="MEMOIR_I18N.setLang('nl')">🇧🇪 Nederlands</button>
-          <button class="pill" onclick="MEMOIR_I18N.setLang('es')">🇪🇸 Español</button>
-        </div>
+        <h3 data-i18n="settingsBilling">Billing</h3>
+        <p class="muted" data-i18n="settingsBillingCopy">View invoices and next renewal.</p>
+        <button class="pill" data-i18n="settingsManageBilling">Manage billing</button>
       </div>
 
-      <!-- 3) Privacy -->
       <div class="card">
-        <div class="label" data-i18n="settingsPrivacy">Privacy</div>
-        <p class="muted" data-i18n="settingsPrivacyIntro">Your data and choices.</p>
-        <ul>
-          <li>Export your data anytime.</li>
-          <li>Delete individual stories or your account on request.</li>
-          <li>Shared access is read-only unless you promote someone.</li>
+        <h3 data-i18n="settingsFaq">FAQ</h3>
+        <ul class="list">
+          <li data-i18n="faqQ1">Is there a free plan?</li>
+          <li data-i18n="faqQ2">Which languages are supported?</li>
+          <li data-i18n="faqQ3">How is transcription done?</li>
         </ul>
       </div>
 
-      <!-- 4) FAQ -->
-      <div class="card">
-        <div class="label" data-i18n="settingsFAQ">FAQ</div>
-        <p class="muted" data-i18n="settingsFAQIntro">Quick answers to common questions.</p>
-        <ul>
-          <li>How do I start? — Use “Record”, press the big button, and speak naturally.</li>
-          <li>What if I’m offline? — Audio is saved and transcribed later.</li>
-          <li>Can I add photos? — Yes, while saving or later from My Stories.</li>
-        </ul>
-      </div>
-
-      <!-- 5) Subscription details (new) -->
-      <div id="plans" class="card">
-        <div class="label" data-i18n="settingsPlans">Subscription details</div>
-        <p class="muted" data-i18n="settingsPlansIntro">Compare plans and pick the one that fits your needs.</p>
-
-        <div class="subgrid">
+      <!-- 5) Detailed plan descriptions -->
+      <div class="card" style="grid-column:1/-1">
+        <h3 data-i18n="settingsPlanDetails">Subscription details</h3>
+        <div class="grid">
           <div class="card">
-            <h3 data-i18n="planFree">Free</h3>
-            <div class="muted" data-i18n="priceFree">€0 / month</div>
-            <p class="muted" data-i18n="planFreeDesc">Record locally, keep a private library on your device.</p>
-            <ul>
-              <li data-i18n="settingsPlanLines.free">Free — record locally (no cloud sync).</li>
+            <h4 data-i18n="planStoryTitle">Storyteller — €6.99/month</h4>
+            <ul class="list">
+              <li data-i18n="planStoryB1"></li>
+              <li data-i18n="planStoryB2"></li>
+              <li data-i18n="planStoryB3"></li>
             </ul>
-            <a class="pill" href="/settings.html" data-i18n="settingsChoose">Choose</a>
           </div>
-
           <div class="card">
-            <h3 data-i18n="planPremium">Storyteller</h3>
-            <div class="muted" data-i18n="pricePremium">€6.99 / month</div>
-            <p class="muted" data-i18n="planPremiumDesc">Cloud sync + Whisper transcription + AI rewrite. For solo authors.</p>
-            <ul>
-              <li data-i18n="settingsPlanLines.storyteller"></li>
+            <h4 data-i18n="planFamilyTitle">Family — €8.99/month</h4>
+            <ul class="list">
+              <li data-i18n="planFamilyB1"></li>
+              <li data-i18n="planFamilyB2"></li>
+              <li data-i18n="planFamilyB3"></li>
             </ul>
-            <a class="pill primary" href="/api/create-checkout-session?plan=premium" data-i18n="planCTA">Choose plan</a>
           </div>
-
           <div class="card">
-            <h3 data-i18n="planFamily">Family</h3>
-            <div class="muted" data-i18n="priceFamily">€8.99 / month</div>
-            <p class="muted" data-i18n="planFamilyDesc">Everything in Storyteller, plus read-only sharing for up to 4 family members.</p>
-            <ul>
-              <li data-i18n="settingsPlanLines.family"></li>
+            <h4 data-i18n="planExclTitle">Exclusive — €11.99/month</h4>
+            <ul class="list">
+              <li data-i18n="planExclB1"></li>
+              <li data-i18n="planExclB2"></li>
+              <li data-i18n="planExclB3"></li>
             </ul>
-            <a class="pill primary" href="/api/create-checkout-session?plan=family" data-i18n="planCTA">Choose plan</a>
-          </div>
-
-          <div class="card">
-            <h3 data-i18n="planExclusive">Exclusive</h3>
-            <div class="muted" data-i18n="priceExclusive">€11.99 / month</div>
-            <p class="muted" data-i18n="planExclusiveDesc">Up to 5 hours of transcription monthly, priority processing, and premium support.</p>
-            <ul>
-              <li data-i18n="settingsPlanLines.exclusive"></li>
-            </ul>
-            <a class="pill primary" href="/api/create-checkout-session?plan=exclusive" data-i18n="planCTA">Choose plan</a>
           </div>
         </div>
       </div>
@@ -136,23 +96,5 @@
   <script src="/js/lang.js"></script>
   <script src="/js/header-loader.js"></script>
   <script src="/js/footer-loader.js"></script>
-  <script>
-    // Fill in account data if you already have Supabase auth on the page
-    (async function(){
-      try{
-        if (!window.supabase) return;
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user?.email) document.getElementById('acctEmailValue').textContent = user.email;
-      }catch{}
-    })();
-
-    // Logout wire (no-op if you don’t use Supabase here)
-    document.getElementById('logoutBtn')?.addEventListener('click', async ()=>{
-      try{
-        if (window.supabase) await supabase.auth.signOut();
-      }catch{}
-      location.href = '/landing.html';
-    });
-  </script>
 </body>
 </html>
