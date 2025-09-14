@@ -215,3 +215,28 @@ textarea{ min-height:110px; resize:vertical; }
   -webkit-line-clamp:unset !important;
   -webkit-box-orient:unset !important;
 }
+
+/* ==== Header & language menu (robust) ==== */
+.site-header{position:sticky;top:0;z-index:1000;background:#f3eadf;border-bottom:1px solid rgba(0,0,0,.06)}
+.site-header .wrap{max-width:1200px;margin:0 auto;padding:12px 16px;
+  display:flex;align-items:center;gap:16px}
+.site-header .brand{display:flex;align-items:center;gap:10px;color:#3b2f2a;text-decoration:none;flex:0 0 auto}
+.site-header .brand .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#8c5a3c,#b17d55)}
+.site-header .brand-text small{display:block;font-size:12px;color:#7b6a62}
+
+.site-header .nav{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:nowrap}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;
+  border:1px solid rgba(0,0,0,.12);background:#fff;color:#3b2f2a;text-decoration:none;font-weight:600;white-space:nowrap}
+
+.lang{position:relative;flex:0 0 auto;z-index:21}          /* keep above other content */
+.lang-toggle{position:relative;z-index:22}
+.lang-menu{position:absolute;right:0;top:calc(100% + 8px);
+  min-width:180px;background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:12px;
+  box-shadow:0 18px 36px rgba(0,0,0,.08);padding:6px}
+.lang-menu[hidden]{display:none}
+.lang-menu .lang-item{width:100%;text-align:left;border:0;background:transparent;
+  padding:10px 12px;border-radius:8px;cursor:pointer}
+.lang-menu .lang-item:hover{background:#f6efe8}
+
+/* Prevent ancestors from clipping the dropdown; useful if a parent had overflow hidden */
+.site-header, .site-header .wrap, .site-header .nav, .lang { overflow: visible !important; }
