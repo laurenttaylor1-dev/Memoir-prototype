@@ -1,87 +1,70 @@
-// Inject header/footer partials and wire the language dropdown (single-run, robust)
-(function(){
-  const STATE = (window.__memoirHeaderState = window.__memoirHeaderState || {});
+<script>
+// Loads /partials/header.html and /partials/footer.html,
+// wires the language dropdown, and keeps current flag/label in sync.
 
-  async function inject(id, url){
-    const host = document.getElementById(id);
-    if(!host) return null;
+(async function () {
+  const headerSlot = document.getElementById('site-header');
+  const footerSlot = document.getElementById('site-footer');
+
+  async function loadInto(el, url) {
+    if (!el) return;
     const r = await fetch(url, { cache: 'no-store' });
     const html = await r.text();
-    host.innerHTML = html;
-    return host;
+    el.innerHTML = html;
   }
 
-  function bindLangMenu(){
-    if (STATE.bound) return; // prevent double binding on navigations
-    STATE.bound = true;
+  await Promise.all([
+    loadInto(headerSlot, '/partials/header.html'),
+    loadInto(footerSlot, '/partials/footer.html')
+  ]);
 
-    const i18n = window.MEMOIR_I18N;
-    const getLang = i18n?.getLang || (()=>'en');
-    const setLang = i18n?.setLang || (()=>{});
-    const MAP = {
-      en: ['🇬🇧', 'English'],
-      fr: ['🇫🇷', 'Français'],
-      nl: ['🇧🇪', 'Nederlands'],
-      es: ['🇪🇸', 'Español']
-    };
+  // After injection, wire up the language dropdown
+  const toggle   = document.getElementById('lang-toggle');
+  const dropdown = document.getElementById('lang-dropdown');
+  const items    = dropdown ? dropdown.querySelectorAll('.lang-item') : [];
 
-    const menuWrap = document.getElementById('lang-menu');
-    const toggle   = document.getElementById('lang-toggle');
-    const dropdown = document.getElementById('lang-dropdown');
-    const flag     = document.getElementById('lang-current-flag');
-    const label    = document.getElementById('lang-current-label');
-
-    if(!menuWrap || !toggle || !dropdown || !flag || !label) return; // header not present
-
-    function reflect(){
-      const code = getLang();
-      const [f, name] = MAP[code] || MAP.en;
-      flag.textContent = f;
-      label.textContent = name;
-    }
-    reflect();
-
-    function open(){ dropdown.hidden = false; toggle.setAttribute('aria-expanded','true'); }
-    function close(){ dropdown.hidden = true; toggle.setAttribute('aria-expanded','false'); }
-
-    toggle.addEventListener('click', (e)=>{
-      e.preventDefault(); e.stopPropagation();
-      dropdown.hidden ? open() : close();
-    });
-
-    dropdown.addEventListener('click', (e)=>{
-      const btn = e.target.closest('.lang-item');
-      if(!btn) return;
-      const code = btn.dataset.lang || 'en';
-      setLang(code);
-      reflect();
-      close();
-    });
-
-    document.addEventListener('click', (e)=>{
-      if(!e.target.closest('#lang-menu')) close();
-    });
-    document.addEventListener('keydown', (e)=>{
-      if(e.key === 'Escape') close();
-    });
-
-    // Re-reflect when something else changes the language
-    window.addEventListener('memoir:lang', reflect);
+  // Update current flag/label
+  function paintCurrentLang() {
+    const code = window.MEMOIR_I18N?.getLang?.() || 'en';
+    const map = { en: ['🇬🇧','English'], fr:['🇫🇷','Français'], nl:['🇧🇪','Nederlands'], es:['🇪🇸','Español'] };
+    const [flag,label] = map[code] || map.en;
+    const flagEl  = document.getElementById('lang-current-flag');
+    const labelEl = document.getElementById('lang-current-label');
+    if (flagEl)  flagEl.textContent  = flag;
+    if (labelEl) labelEl.textContent = label;
   }
 
-  async function boot(){
-    // 1) inject partials
-    await inject('site-header', '/partials/header.html');
-    await inject('site-footer', '/partials/footer.html');
+  function closeMenu(){ dropdown?.setAttribute('hidden',''); toggle?.setAttribute('aria-expanded','false'); }
+  function openMenu(){ dropdown?.removeAttribute('hidden'); toggle?.setAttribute('aria-expanded','true'); }
 
-    // 2) translate newly inserted markup
-    if (window.MEMOIR_I18N?.applyAll) {
-      window.MEMOIR_I18N.applyAll(document);
-    }
+  toggle?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const open = dropdown && dropdown.hasAttribute('hidden') === false;
+    open ? closeMenu() : openMenu();
+  });
 
-    // 3) bind the dropdown once
-    bindLangMenu();
-  }
+  items.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const code = btn.getAttribute('data-lang');
+      if (code) {
+        window.MEMOIR_I18N?.setLang?.(code); // this also reapplies translations + fires event
+        paintCurrentLang();
+        closeMenu();
+      }
+    });
+  });
 
-  document.addEventListener('DOMContentLoaded', boot);
+  document.addEventListener('click', (e) => {
+    if (!dropdown || !toggle) return;
+    if (e.target === toggle || toggle.contains(e.target)) return;
+    if (dropdown.contains(e.target)) return;
+    closeMenu();
+  });
+
+  window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
+
+  // First paint of flag/label + apply translations once the header/footer exists
+  paintCurrentLang();
+  window.MEMOIR_I18N?.apply?.(window.MEMOIR_I18N?.getLang?.() || 'en');
 })();
+</script>
