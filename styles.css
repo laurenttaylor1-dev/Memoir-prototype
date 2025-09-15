@@ -247,3 +247,8 @@ textarea{ min-height:110px; resize:vertical; }
 .site-footer .foot,
 #site-footer .foot { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; text-align: center; }
 .site-footer .foot a { text-decoration: none; color: inherit; font-weight: 600; }
+
+/* --- language dropdown clickability guards (header) --- */
+.site-header .lang { position: relative; z-index: 50; }
+.site-header .lang-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 51; }
+.site-header .lang-toggle { position: relative; z-index: 52; }
