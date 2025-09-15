@@ -252,3 +252,48 @@ textarea{ min-height:110px; resize:vertical; }
 .site-header .lang { position: relative; z-index: 50; }
 .site-header .lang-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 51; }
 .site-header .lang-toggle { position: relative; z-index: 52; }
+
+/* --- Footer centering & width guard --- */
+.site-footer { background: transparent; }
+.site-footer .site-footer-wrap,
+.site-footer .foot-inner,
+.site-footer .foot-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.site-footer .foot-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  text-align: center;
+}
+.site-footer .foot-about { text-align: center; }
+
+/* In case the loader only injects a single paragraph: */
+#site-footer { text-align: center; }
+
+/* --- Header: keep controls usable on phones --- */
+.site-header { position: sticky; top: 0; z-index: 1000; background:#f3eadf; }
+.site-header .wrap { display:flex; align-items:center; gap:12px; max-width:1200px; margin:0 auto; padding:10px 16px; }
+.site-header .brand { flex:0 0 auto; display:flex; align-items:center; gap:10px; color:#3b2f2a; text-decoration:none; }
+.site-header .nav   { flex:1 1 auto; display:flex; align-items:center; gap:10px; justify-content:flex-end; min-width:0; flex-wrap:wrap; }
+
+.pill { display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:999px; border:1px solid rgba(0,0,0,.12); background:#fff; color:#3b2f2a; text-decoration:none; font-weight:600; white-space:nowrap; }
+
+.lang { position:relative; z-index: 20; }
+.lang-menu {
+  position:absolute; right:0; top:calc(100% + 8px);
+  min-width: 180px; background:#fff; border:1px solid rgba(0,0,0,.12);
+  border-radius:12px; box-shadow:0 18px 36px rgba(0,0,0,.08);
+  padding:6px; z-index: 1001;
+}
+.lang-menu[hidden]{ display:none; }
+
+/* Small screens: allow wrapping and slightly smaller chips so nothing overlaps */
+@media (max-width: 780px) {
+  .site-header .nav { justify-content:flex-start; gap:8px; }
+  .pill { padding:8px 10px; font-size: 14px; }
+}
+
+/* Extra guard: if something below overlaps, keep header clickable */
+.site-header, .site-header * { pointer-events:auto; }
