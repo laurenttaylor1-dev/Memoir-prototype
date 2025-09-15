@@ -297,3 +297,23 @@ textarea{ min-height:110px; resize:vertical; }
 
 /* Extra guard: if something below overlaps, keep header clickable */
 .site-header, .site-header * { pointer-events:auto; }
+
+/* --- Language menu must be clickable & visible --- */
+.site-header { position: sticky; top: 0; z-index: 1000; background: #f3eadf; overflow: visible; }
+.site-header .wrap { overflow: visible; }
+.lang { position: relative; z-index: 1001; }
+.lang-menu { z-index: 1002; }
+.lang-menu[hidden]{ display: none !important; }
+/* If any ancestor accidentally clips dropdown */
+.site-header, .site-header * { pointer-events: auto; }
+
+/* --- Footer centering guard (works with your loader or plain HTML) --- */
+.site-footer { background: transparent; }
+.site-footer .site-footer-wrap,
+.site-footer .foot-inner,
+.site-footer .foot-grid,
+#site-footer > * {
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
