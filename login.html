@@ -37,14 +37,15 @@
     .gdpr input{width:auto}
   </style>
 
-  <!-- Inline Supabase config so the page doesn't wait for the header -->
+  <!-- Inline Supabase config so we don't wait for header load -->
   <script>
-    // 🔧 FILL THESE TWO VALUES (from Supabase → Project Settings → API)
-    window.MEMOIR_SUPABASE_URL  = "https://jrjqciywlijhhcxfxywh.supabase.co";
-    window.MEMOIR_SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyanFjaXl3bGlqaGhjeGZ4eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDQ2NzEsImV4cCI6MjA3MTA4MDY3MX0.5FeQxu_N7q-1Br00yJu4E-TKTZK4U4ZnJ4jpRo7Atak";
+    // 🔧 REPLACE these with your project values (Supabase → Project Settings → API)
+    window.MEMOIR_SUPABASE_URL  = "https://YOUR-PROJECT-REF.supabase.co";
+    window.MEMOIR_SUPABASE_ANON = "YOUR-ANON-KEY";
   </script>
 </head>
 <body>
+  <!-- Shared header -->
   <div id="site-header"></div>
 
   <main class="container">
@@ -121,12 +122,13 @@
     </section>
   </main>
 
+  <!-- Shared footer -->
   <div id="site-footer"></div>
 
   <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- i18n bridge ensures translation even if your lang.js is different/missing -->
+  <!-- i18n bridge (keeps translations working even if your lang.js is minimal) -->
   <script src="/js/i18n-bridge.js"></script>
 
   <!-- Your shared header/footer -->
@@ -134,23 +136,16 @@
   <script src="/js/footer-loader.js"></script>
 
   <script>
-    /* ------------------- Utilities ------------------- */
-    function applyI18n(){
-      // i18n-bridge already applies once and on memoir:lang;
-      // this is here in case you want to force re-apply manually later.
-      window.dispatchEvent(new CustomEvent('memoir:lang', { detail: { force:true } }));
-    }
-
-    // Lazily create Supabase so UI always initializes even if config is missing
+    /* ---------- Helpers ---------- */
     function getSupabase(){
       const url = window.MEMOIR_SUPABASE_URL;
       const key = window.MEMOIR_SUPABASE_ANON;
       if (!window.supabase) { alert('Supabase library not loaded.'); return null; }
-      if (!url || !key) { alert('Supabase is not configured. Please set MEMOIR_SUPABASE_URL and MEMOIR_SUPABASE_ANON at the top of LOGIN.html.'); return null; }
+      if (!url || !key) { alert('Supabase is not configured. Fill MEMOIR_SUPABASE_URL and MEMOIR_SUPABASE_ANON at the top of LOGIN.html.'); return null; }
       return window.supabase.createClient(url, key);
     }
 
-    // Reveal/Hide Register panel (works even if Supabase not configured)
+    // Show/hide Register panel (always works, independent of Supabase)
     const panel = document.getElementById('registerPanel');
     document.getElementById('toggleRegister').addEventListener('click', ()=>{
       const open = panel.classList.toggle('open');
@@ -158,7 +153,7 @@
       if(open) document.getElementById('reg_name').focus();
     });
 
-    // Username -> email via secure RPC (email_for_username)
+    // Resolve username -> email via secure RPC (created earlier)
     async function resolveEmail(sb, identifier){
       const id = (identifier||'').trim();
       if (!id) return null;
@@ -168,7 +163,7 @@
       return data || null;
     }
 
-    /* ------------------- Sign in ------------------- */
+    /* ---------- Sign in ---------- */
     const loginForm   = document.getElementById('loginForm');
     const loginError  = document.getElementById('loginError');
     const loginSubmit = document.getElementById('loginSubmit');
@@ -196,7 +191,7 @@
       }
     });
 
-    /* ------------------- Register ------------------- */
+    /* ---------- Register (metadata only; DB trigger creates profiles row) ---------- */
     const registerForm   = document.getElementById('registerForm');
     const registerError  = document.getElementById('registerError');
     const registerSubmit = document.getElementById('registerSubmit');
@@ -205,34 +200,37 @@
       e.preventDefault(); registerError.textContent='';
 
       const sb = getSupabase(); if (!sb) return;
-      const name = document.getElementById('reg_name').value.trim();
-      const username = document.getElementById('reg_username').value.trim() || null;
-      const email = document.getElementById('reg_email').value.trim();
-      const password = document.getElementById('reg_password').value;
-      const plan = document.getElementById('reg_plan').value;
-      const gdprOk = document.getElementById('reg_gdpr').checked;
+      const name      = document.getElementById('reg_name').value.trim();
+      const username  = document.getElementById('reg_username').value.trim() || null;
+      const email     = document.getElementById('reg_email').value.trim();
+      const password  = document.getElementById('reg_password').value;
+      const plan      = document.getElementById('reg_plan').value;
+      const gdprOk    = document.getElementById('reg_gdpr').checked;
       if(!gdprOk){ registerError.textContent = 'Please agree to the Terms and Privacy Policy.'; return; }
 
       registerSubmit.disabled=true; registerSubmit.setAttribute('aria-busy','true');
       try{
-        const { data, error: signErr } = await sb.auth.signUp({
-          email, password,
-          options: { emailRedirectTo: location.origin + '/LOGIN.html' } // email confirmation
+        const sign = await sb.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: location.origin + '/LOGIN.html',
+            data: {
+              name,
+              username,
+              subscription_type: plan,
+              gdpr_consent: true
+            }
+          }
         });
-        if (signErr) throw signErr;
 
-        const userId = data?.user?.id;
-        if (userId){
-          // If your table uses 'user_id' instead of 'id', keep user_id here:
-          const { error: pErr } = await sb.from('profiles').insert({
-            user_id: userId,
-            name, username, email,
-            subscription_type: plan,
-            gdpr_consent: true,
-            gdpr_consent_ts: new Date().toISOString()
-          });
-          if (pErr) throw pErr;
+        if (sign.error) {
+          if (sign.error.message?.includes('fetch')) throw new Error('Network error: cannot reach Supabase. Check URL/key & HTTPS.');
+          if (sign.error.code === 'user_already_exists') throw new Error('An account already exists for this email.');
+          throw sign.error;
         }
+
+        // No client insert here — DB trigger will create the profiles row
 
         registerError.style.color = '#2d6a4f';
         registerError.textContent = 'Account created! Check your email to confirm, then sign in.';
@@ -245,7 +243,7 @@
       }
     });
 
-    // Optional: If your Settings page has a button with this id, make it navigate
+    // Optional: make a settings sign-in button navigate (if present)
     document.getElementById('settings-signin')?.addEventListener('click', ()=>{ location.href='/LOGIN.html'; });
   </script>
 </body>
