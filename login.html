@@ -36,9 +36,15 @@
     .gdpr{display:flex; gap:10px; align-items:flex-start; font-size:14px; color:var(--muted)}
     .gdpr input{width:auto}
   </style>
+
+  <!-- Inline Supabase config so the page doesn't wait for the header -->
+  <script>
+    // 🔧 FILL THESE TWO VALUES (from Supabase → Project Settings → API)
+    window.MEMOIR_SUPABASE_URL  = "https://YOUR-PROJECT-REF.supabase.co";
+    window.MEMOIR_SUPABASE_ANON = "YOUR-ANON-KEY";
+  </script>
 </head>
 <body>
-  <!-- Shared header -->
   <div id="site-header"></div>
 
   <main class="container">
@@ -115,19 +121,36 @@
     </section>
   </main>
 
-  <!-- Shared footer -->
   <div id="site-footer"></div>
 
-  <!-- Scripts -->
+  <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- i18n bridge ensures translation even if your lang.js is different/missing -->
   <script src="/js/i18n-bridge.js"></script>
+
+  <!-- Your shared header/footer -->
   <script src="/js/header-loader.js"></script>
   <script src="/js/footer-loader.js"></script>
-  <script>
-    // Supabase client from globals set in your header partial
-    const supabase = window.supabase.createClient(window.MEMOIR_SUPABASE_URL, window.MEMOIR_SUPABASE_ANON);
 
-    // Reveal/Hide Register panel (this is what shows the extra fields)
+  <script>
+    /* ------------------- Utilities ------------------- */
+    function applyI18n(){
+      // i18n-bridge already applies once and on memoir:lang;
+      // this is here in case you want to force re-apply manually later.
+      window.dispatchEvent(new CustomEvent('memoir:lang', { detail: { force:true } }));
+    }
+
+    // Lazily create Supabase so UI always initializes even if config is missing
+    function getSupabase(){
+      const url = window.MEMOIR_SUPABASE_URL;
+      const key = window.MEMOIR_SUPABASE_ANON;
+      if (!window.supabase) { alert('Supabase library not loaded.'); return null; }
+      if (!url || !key) { alert('Supabase is not configured. Please set MEMOIR_SUPABASE_URL and MEMOIR_SUPABASE_ANON at the top of LOGIN.html.'); return null; }
+      return window.supabase.createClient(url, key);
+    }
+
+    // Reveal/Hide Register panel (works even if Supabase not configured)
     const panel = document.getElementById('registerPanel');
     document.getElementById('toggleRegister').addEventListener('click', ()=>{
       const open = panel.classList.toggle('open');
@@ -135,32 +158,35 @@
       if(open) document.getElementById('reg_name').focus();
     });
 
-    // Username -> email via secure RPC (you created email_for_username earlier)
-    async function resolveEmail(identifier){
+    // Username -> email via secure RPC (email_for_username)
+    async function resolveEmail(sb, identifier){
       const id = (identifier||'').trim();
       if (!id) return null;
       if (id.includes('@')) return id;
-      const { data, error } = await supabase.rpc('email_for_username', { p_username: id });
+      const { data, error } = await sb.rpc('email_for_username', { p_username: id });
       if (error) throw error;
       return data || null;
     }
 
-    // Sign in
+    /* ------------------- Sign in ------------------- */
     const loginForm   = document.getElementById('loginForm');
     const loginError  = document.getElementById('loginError');
     const loginSubmit = document.getElementById('loginSubmit');
+
     loginForm.addEventListener('submit', async (e)=>{
       e.preventDefault();
       loginError.textContent='';
+
+      const sb = getSupabase(); if (!sb) return;
       const identifier = document.getElementById('identifier').value;
       const password   = document.getElementById('password').value;
       if(!identifier || !password){ loginError.textContent = 'Please fill email/username and password.'; return; }
 
       loginSubmit.disabled=true; loginSubmit.setAttribute('aria-busy','true');
       try{
-        const email = await resolveEmail(identifier);
+        const email = await resolveEmail(sb, identifier);
         if(!email) throw new Error('We could not find that user.');
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await sb.auth.signInWithPassword({ email, password });
         if (error) throw error;
         location.href = '/stories.html';
       }catch(err){
@@ -170,12 +196,15 @@
       }
     });
 
-    // Register
+    /* ------------------- Register ------------------- */
     const registerForm   = document.getElementById('registerForm');
     const registerError  = document.getElementById('registerError');
     const registerSubmit = document.getElementById('registerSubmit');
+
     registerForm.addEventListener('submit', async (e)=>{
       e.preventDefault(); registerError.textContent='';
+
+      const sb = getSupabase(); if (!sb) return;
       const name = document.getElementById('reg_name').value.trim();
       const username = document.getElementById('reg_username').value.trim() || null;
       const email = document.getElementById('reg_email').value.trim();
@@ -186,17 +215,16 @@
 
       registerSubmit.disabled=true; registerSubmit.setAttribute('aria-busy','true');
       try{
-        // Ask Supabase to send a confirmation email
-        const { data, error: signErr } = await supabase.auth.signUp({
+        const { data, error: signErr } = await sb.auth.signUp({
           email, password,
-          options: { emailRedirectTo: location.origin + '/LOGIN.html' }
+          options: { emailRedirectTo: location.origin + '/LOGIN.html' } // email confirmation
         });
         if (signErr) throw signErr;
 
         const userId = data?.user?.id;
         if (userId){
-          // If your table uses 'user_id' (not 'id'), keep 'user_id' here:
-          const { error: pErr } = await supabase.from('profiles').insert({
+          // If your table uses 'user_id' instead of 'id', keep user_id here:
+          const { error: pErr } = await sb.from('profiles').insert({
             user_id: userId,
             name, username, email,
             subscription_type: plan,
@@ -216,6 +244,9 @@
         registerSubmit.disabled=false; registerSubmit.removeAttribute('aria-busy');
       }
     });
+
+    // Optional: If your Settings page has a button with this id, make it navigate
+    document.getElementById('settings-signin')?.addEventListener('click', ()=>{ location.href='/LOGIN.html'; });
   </script>
 </body>
 </html>
