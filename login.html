@@ -30,9 +30,9 @@
     .error{margin-top:8px; color:#a23a3a; font-size:14px; min-height:1.1em}
     .helper{color:var(--muted); font-size:14px; margin-top:4px}
 
-    /* Register area reveal */
+    /* Register reveal */
     #registerPanel{max-height:0; overflow:hidden; transition:max-height .35s ease, opacity .25s ease; opacity:0}
-    #registerPanel.open{max-height:1000px; opacity:1}
+    #registerPanel.open{max-height:1200px; opacity:1}
     .gdpr{display:flex; gap:10px; align-items:flex-start; font-size:14px; color:var(--muted)}
     .gdpr input{width:auto}
   </style>
@@ -45,33 +45,31 @@
     <h1 class="title" data-i18n="login.title">Welcome back</h1>
 
     <section class="card">
-      <!-- Sign-in form -->
+      <!-- Sign-in -->
       <form id="loginForm" novalidate class="grid">
         <div class="field">
           <label for="identifier" data-i18n="login.identifierLabel">Email or username</label>
           <input id="identifier" name="identifier" type="text" autocomplete="username"
                  data-i18n-attr="placeholder:login.identifierPH"
-                 placeholder="you@example.com or @username" required>
+                 placeholder="you@example.com or username" required>
         </div>
-
         <div class="field">
           <label for="password" data-i18n="login.passwordLabel">Password</label>
           <input id="password" name="password" type="password" autocomplete="current-password"
                  data-i18n-attr="placeholder:login.passwordPH"
                  placeholder="Your password" required>
         </div>
-
         <div class="actions">
           <button id="loginSubmit" class="btn primary" type="submit" data-i18n="login.submit">Sign in</button>
           <button id="toggleRegister" class="btn" type="button" data-i18n="login.registerToggle">Register</button>
+          <a class="btn ghost" href="/auth/request-reset.html" data-i18n="login.forgot">Forgot password?</a>
           <a class="btn ghost" href="/landing.html" data-i18n="login.cancel">Cancel</a>
         </div>
-
         <div id="loginError" class="error" role="status" aria-live="polite"></div>
         <div class="helper" data-i18n="login.helper">Press Enter to sign in.</div>
       </form>
 
-      <!-- Register panel (revealed inline) -->
+      <!-- Register (inline) -->
       <div id="registerPanel" aria-hidden="true">
         <hr style="border:none;border-top:1px dashed rgba(0,0,0,.1);margin:14px 0 10px">
         <h2 class="title" style="font-size:22px; margin:0 0 8px;" data-i18n="register.title">Create your account</h2>
@@ -101,7 +99,6 @@
               <option value="pro" data-i18n="register.planPro">Pro</option>
             </select>
           </div>
-
           <div class="gdpr">
             <input id="reg_gdpr" type="checkbox" required>
             <label for="reg_gdpr" data-i18n="register.gdprText">
@@ -109,7 +106,6 @@
               and consent to the processing of my data for account creation and service delivery.
             </label>
           </div>
-
           <div class="actions">
             <button id="registerSubmit" class="btn primary" type="submit" data-i18n="register.submit">Create account</button>
           </div>
@@ -128,90 +124,27 @@
   <script src="/js/header-loader.js"></script>
   <script src="/js/footer-loader.js"></script>
   <script>
-    // --- Supabase client from global config (set in header partial) ---
+    // Supabase client from globals set in your header partial
     const SUPABASE_URL  = window.MEMOIR_SUPABASE_URL;
     const SUPABASE_ANON = window.MEMOIR_SUPABASE_ANON;
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-    /* ===================== i18n helpers ===================== */
+    // i18n helper
     const I18N = window.MEMOIR_I18N || {};
     function t(key, fallback){ try{ return I18N.t ? I18N.t(key) : fallback; } catch{ return fallback; } }
-
-    function applyI18n() {
-      // text content
+    function applyI18n(){
       document.querySelectorAll('[data-i18n]').forEach(el=>{
-        const key = el.getAttribute('data-i18n');
-        const val = t(key, el.textContent);
-        if (val != null) el.textContent = val;
+        const key = el.getAttribute('data-i18n'); const val = t(key, el.textContent); if(val!=null) el.textContent = val;
       });
-      // attributes like placeholder
       document.querySelectorAll('[data-i18n-attr]').forEach(el=>{
-        const map = el.getAttribute('data-i18n-attr') // e.g. "placeholder:login.identifierPH"
-          .split(',')
-          .map(s => s.trim())
-          .map(pair => pair.split(':').map(x=>x.trim()));
-        map.forEach(([attr, key])=>{
-          const val = t(key, el.getAttribute(attr));
-          if (val != null) el.setAttribute(attr, val);
+        el.getAttribute('data-i18n-attr').split(',').map(s=>s.trim().split(':')).forEach(([attr,key])=>{
+          const val = t(key, el.getAttribute(attr)); if(val!=null) el.setAttribute(attr, val);
         });
       });
     }
-    // apply on load & when language changes
-    applyI18n();
-    window.addEventListener('memoir:lang', applyI18n);
+    applyI18n(); window.addEventListener('memoir:lang', applyI18n);
 
-    /* ===================== Sign in (email OR username) ===================== */
-    const loginForm   = document.getElementById('loginForm');
-    const loginError  = document.getElementById('loginError');
-    const loginSubmit = document.getElementById('loginSubmit');
-
-    async function resolveEmail(identifier){
-      const id = identifier.trim();
-      if (!id) return null;
-      if (id.includes('@')) return id; // already an email
-      // treat as username -> look up email in profiles
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('email')              // requires profiles.email or a view returning email
-        .eq('username', id)
-        .limit(1)
-        .maybeSingle();
-      if (error) throw error;
-      return data?.email || null;
-    }
-
-    loginForm.addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      loginError.textContent = '';
-      const identifier = document.getElementById('identifier').value;
-      const password   = document.getElementById('password').value;
-      if(!identifier || !password){
-        loginError.textContent = t('login.missing', 'Please fill email/username and password.');
-        return;
-      }
-
-      loginSubmit.disabled = true; loginSubmit.setAttribute('aria-busy','true');
-      try{
-        const email = await resolveEmail(identifier);
-        if (!email) throw new Error(t('login.userNotFound', 'We could not find that user.'));
-
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        window.location.href = '/stories.html';
-      }catch(err){
-        loginError.textContent = err.message || t('login.failed', 'Sign in failed. Please try again.');
-      }finally{
-        loginSubmit.disabled = false; loginSubmit.removeAttribute('aria-busy');
-      }
-    });
-
-    // Enter key convenience
-    ['identifier','password'].forEach(id=>{
-      const el=document.getElementById(id);
-      el.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ loginForm.requestSubmit(); } });
-    });
-
-    /* ===================== Register reveal + submit ===================== */
+    // Reveal/Hide Register panel
     const panel = document.getElementById('registerPanel');
     document.getElementById('toggleRegister').addEventListener('click', ()=>{
       const open = panel.classList.toggle('open');
@@ -219,40 +152,73 @@
       if(open) document.getElementById('reg_name').focus();
     });
 
+    // Username -> email via secure RPC (created earlier)
+    async function resolveEmail(identifier){
+      const id = identifier.trim();
+      if (!id) return null;
+      if (id.includes('@')) return id;
+      const { data, error } = await supabase.rpc('email_for_username', { p_username: id });
+      if (error) throw error;
+      return data || null;
+    }
+
+    // Sign in
+    const loginForm   = document.getElementById('loginForm');
+    const loginError  = document.getElementById('loginError');
+    const loginSubmit = document.getElementById('loginSubmit');
+    loginForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      loginError.textContent='';
+
+      const identifier = document.getElementById('identifier').value;
+      const password   = document.getElementById('password').value;
+      if(!identifier || !password){
+        loginError.textContent = t('login.missing','Please fill email/username and password.'); return;
+      }
+
+      loginSubmit.disabled=true; loginSubmit.setAttribute('aria-busy','true');
+      try{
+        const email = await resolveEmail(identifier);
+        if(!email) throw new Error(t('login.userNotFound','We could not find that user.'));
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        location.href = '/stories.html';
+      }catch(err){
+        loginError.textContent = err.message || t('login.failed','Sign in failed. Please try again.');
+      }finally{
+        loginSubmit.disabled=false; loginSubmit.removeAttribute('aria-busy');
+      }
+    });
+
+    // Register
     const registerForm   = document.getElementById('registerForm');
     const registerError  = document.getElementById('registerError');
     const registerSubmit = document.getElementById('registerSubmit');
-
     registerForm.addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      registerError.textContent = '';
-
-      const name      = document.getElementById('reg_name').value.trim();
-      const username  = document.getElementById('reg_username').value.trim() || null;
-      const email     = document.getElementById('reg_email').value.trim();
-      const password  = document.getElementById('reg_password').value;
-      const plan      = document.getElementById('reg_plan').value;
-      const gdprOk    = document.getElementById('reg_gdpr').checked;
-
+      e.preventDefault(); registerError.textContent='';
+      const name = document.getElementById('reg_name').value.trim();
+      const username = document.getElementById('reg_username').value.trim() || null;
+      const email = document.getElementById('reg_email').value.trim();
+      const password = document.getElementById('reg_password').value;
+      const plan = document.getElementById('reg_plan').value;
+      const gdprOk = document.getElementById('reg_gdpr').checked;
       if(!gdprOk){ registerError.textContent = t('register.gdprRequired','Please agree to the Terms and Privacy Policy.'); return; }
 
-      registerSubmit.disabled = true; registerSubmit.setAttribute('aria-busy','true');
+      registerSubmit.disabled=true; registerSubmit.setAttribute('aria-busy','true');
       try{
-        // 1) Create auth user
+        // Request email confirmation; after clicking email, user returns to LOGIN.html
         const { data, error: signErr } = await supabase.auth.signUp({
           email, password,
           options: { emailRedirectTo: location.origin + '/LOGIN.html' }
         });
         if (signErr) throw signErr;
 
-        // 2) Save profile
         const userId = data?.user?.id;
         if (userId){
+          // if your table uses user_id (not id), change to user_id: userId
           const { error: pErr } = await supabase.from('profiles').insert({
-            id: userId,                   // if your table uses user_id instead, change to user_id: userId
-            name,
-            username,
-            email,                         // keep a copy for username→email lookups
+            user_id: userId,          // <-- or id: userId if you migrated
+            name, username, email,
             subscription_type: plan,
             gdpr_consent: true,
             gdpr_consent_ts: new Date().toISOString()
@@ -262,13 +228,19 @@
 
         registerError.style.color = '#2d6a4f';
         registerError.textContent = t('register.success','Account created! Check your email to confirm, then sign in.');
-        setTimeout(()=>window.location.href='/LOGIN.html', 1500);
+        setTimeout(()=>location.href='/LOGIN.html', 1500);
       }catch(err){
         registerError.style.color = '#a23a3a';
         registerError.textContent = err.message || t('register.failed','Registration failed.');
       }finally{
-        registerSubmit.disabled = false; registerSubmit.removeAttribute('aria-busy');
+        registerSubmit.disabled=false; registerSubmit.removeAttribute('aria-busy');
       }
+    });
+
+    // Enter key convenience
+    ['identifier','password'].forEach(id=>{
+      const el=document.getElementById(id);
+      el.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ loginForm.requestSubmit(); } });
     });
   </script>
 </body>
