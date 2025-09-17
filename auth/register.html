@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Register — Memoir</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main style="display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;height:100vh;text-align:center;">
+    <h1>Create your account</h1>
+    <form id="register-form" style="display:flex;flex-direction:column;gap:10px;min-width:min(420px,82vw);max-width:420px;">
+      <input id="name" type="text" placeholder="Your name" required />
+      <input id="email" type="email" placeholder="you@email.com" required />
+      <input id="password" type="password" placeholder="Password (min 6 chars)" required />
+      <select id="subscription">
+        <option value="free" selected>Free</option>
+        <option value="basic">Basic</option>
+        <option value="pro">Pro</option>
+      </select>
+      <button type="submit" class="btn primary">Create account</button>
+      <div id="reg-status" class="status"></div>
+      <p>Already have an account? <a href="/auth/sign-in.html">Sign in</a></p>
+    </form>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co"; // replace
+    const SUPABASE_ANON_KEY = "YOUR-ANON-KEY";                   // replace
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    document.getElementById('register-form').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const status = document.getElementById('reg-status');
+      status.textContent = 'Creating account…';
+
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const subscription = document.getElementById('subscription').value;
+
+      try{
+        const { data, error } = await supabase.auth.signUp({
+          email, password,
+          options: { emailRedirectTo: "https://www.memoirapp.co/auth/sign-in.html" }
+        });
+        if (error) throw error;
+
+        const userId = data?.user?.id;
+        if (userId){
+          // Insert profile row that stores name + plan
+          const { error: pErr } = await supabase.from('profiles').insert({
+            id: userId, name, subscription_type: subscription
+          });
+          if (pErr) throw pErr;
+        }
+
+        status.textContent = "Account created! Check your email to confirm, then sign in.";
+        setTimeout(()=>location.href="/auth/sign-in.html", 1200);
+      }catch(err){
+        status.textContent = err.message || "Something went wrong.";
+      }
+    });
+  </script>
+</body>
+</html>
