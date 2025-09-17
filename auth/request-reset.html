@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Reset password — Memoir</title>
+  <link rel="stylesheet" href="/styles.css"/>
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main style="min-height:calc(100vh - 160px);display:flex;align-items:center;justify-content:center;">
+    <section style="width:100%;max-width:520px;padding:24px;">
+      <h1 class="title" style="text-align:center;margin:0 0 18px;">Reset your password</h1>
+      <form id="req-form" class="login-card" style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:18px;box-shadow:0 18px 40px rgba(59,47,42,.10),0 2px 8px rgba(59,47,42,.06);padding:18px;">
+        <div class="field"><input id="email" type="email" placeholder="you@email.com" required/></div>
+        <div class="actions"><button class="btn primary" type="submit" style="flex:1">Send reset link</button></div>
+        <div id="status" class="status" style="margin-top:10px;min-height:1.1em;"></div>
+      </form>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/header-loader.js"></script>
+  <script src="/js/footer-loader.js"></script>
+  <script>
+    const supabase = window.supabase.createClient(window.MEMOIR_SUPABASE_URL, window.MEMOIR_SUPABASE_ANON);
+    document.getElementById('req-form').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const status = document.getElementById('status');
+      const email  = document.getElementById('email').value.trim();
+      status.textContent = 'Sending…';
+      try{
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: location.origin + '/auth/reset-password.html'
+        });
+        if (error) throw error;
+        status.textContent = 'Check your inbox for a reset link.';
+      }catch(err){
+        status.textContent = err.message || 'Could not send reset email.';
+      }
+    });
+  </script>
+</body>
+</html>
