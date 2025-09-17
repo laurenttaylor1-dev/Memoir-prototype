@@ -120,31 +120,14 @@
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/js/lang.js"></script>
+  <script src="/js/i18n-bridge.js"></script>
   <script src="/js/header-loader.js"></script>
   <script src="/js/footer-loader.js"></script>
   <script>
     // Supabase client from globals set in your header partial
-    const SUPABASE_URL  = window.MEMOIR_SUPABASE_URL;
-    const SUPABASE_ANON = window.MEMOIR_SUPABASE_ANON;
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+    const supabase = window.supabase.createClient(window.MEMOIR_SUPABASE_URL, window.MEMOIR_SUPABASE_ANON);
 
-    // i18n helper
-    const I18N = window.MEMOIR_I18N || {};
-    function t(key, fallback){ try{ return I18N.t ? I18N.t(key) : fallback; } catch{ return fallback; } }
-    function applyI18n(){
-      document.querySelectorAll('[data-i18n]').forEach(el=>{
-        const key = el.getAttribute('data-i18n'); const val = t(key, el.textContent); if(val!=null) el.textContent = val;
-      });
-      document.querySelectorAll('[data-i18n-attr]').forEach(el=>{
-        el.getAttribute('data-i18n-attr').split(',').map(s=>s.trim().split(':')).forEach(([attr,key])=>{
-          const val = t(key, el.getAttribute(attr)); if(val!=null) el.setAttribute(attr, val);
-        });
-      });
-    }
-    applyI18n(); window.addEventListener('memoir:lang', applyI18n);
-
-    // Reveal/Hide Register panel
+    // Reveal/Hide Register panel (this is what shows the extra fields)
     const panel = document.getElementById('registerPanel');
     document.getElementById('toggleRegister').addEventListener('click', ()=>{
       const open = panel.classList.toggle('open');
@@ -152,9 +135,9 @@
       if(open) document.getElementById('reg_name').focus();
     });
 
-    // Username -> email via secure RPC (created earlier)
+    // Username -> email via secure RPC (you created email_for_username earlier)
     async function resolveEmail(identifier){
-      const id = identifier.trim();
+      const id = (identifier||'').trim();
       if (!id) return null;
       if (id.includes('@')) return id;
       const { data, error } = await supabase.rpc('email_for_username', { p_username: id });
@@ -169,22 +152,19 @@
     loginForm.addEventListener('submit', async (e)=>{
       e.preventDefault();
       loginError.textContent='';
-
       const identifier = document.getElementById('identifier').value;
       const password   = document.getElementById('password').value;
-      if(!identifier || !password){
-        loginError.textContent = t('login.missing','Please fill email/username and password.'); return;
-      }
+      if(!identifier || !password){ loginError.textContent = 'Please fill email/username and password.'; return; }
 
       loginSubmit.disabled=true; loginSubmit.setAttribute('aria-busy','true');
       try{
         const email = await resolveEmail(identifier);
-        if(!email) throw new Error(t('login.userNotFound','We could not find that user.'));
+        if(!email) throw new Error('We could not find that user.');
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         location.href = '/stories.html';
       }catch(err){
-        loginError.textContent = err.message || t('login.failed','Sign in failed. Please try again.');
+        loginError.textContent = err.message || 'Sign in failed. Please try again.';
       }finally{
         loginSubmit.disabled=false; loginSubmit.removeAttribute('aria-busy');
       }
@@ -202,11 +182,11 @@
       const password = document.getElementById('reg_password').value;
       const plan = document.getElementById('reg_plan').value;
       const gdprOk = document.getElementById('reg_gdpr').checked;
-      if(!gdprOk){ registerError.textContent = t('register.gdprRequired','Please agree to the Terms and Privacy Policy.'); return; }
+      if(!gdprOk){ registerError.textContent = 'Please agree to the Terms and Privacy Policy.'; return; }
 
       registerSubmit.disabled=true; registerSubmit.setAttribute('aria-busy','true');
       try{
-        // Request email confirmation; after clicking email, user returns to LOGIN.html
+        // Ask Supabase to send a confirmation email
         const { data, error: signErr } = await supabase.auth.signUp({
           email, password,
           options: { emailRedirectTo: location.origin + '/LOGIN.html' }
@@ -215,9 +195,9 @@
 
         const userId = data?.user?.id;
         if (userId){
-          // if your table uses user_id (not id), change to user_id: userId
+          // If your table uses 'user_id' (not 'id'), keep 'user_id' here:
           const { error: pErr } = await supabase.from('profiles').insert({
-            user_id: userId,          // <-- or id: userId if you migrated
+            user_id: userId,
             name, username, email,
             subscription_type: plan,
             gdpr_consent: true,
@@ -227,20 +207,14 @@
         }
 
         registerError.style.color = '#2d6a4f';
-        registerError.textContent = t('register.success','Account created! Check your email to confirm, then sign in.');
+        registerError.textContent = 'Account created! Check your email to confirm, then sign in.';
         setTimeout(()=>location.href='/LOGIN.html', 1500);
       }catch(err){
         registerError.style.color = '#a23a3a';
-        registerError.textContent = err.message || t('register.failed','Registration failed.');
+        registerError.textContent = err.message || 'Registration failed.';
       }finally{
         registerSubmit.disabled=false; registerSubmit.removeAttribute('aria-busy');
       }
-    });
-
-    // Enter key convenience
-    ['identifier','password'].forEach(id=>{
-      const el=document.getElementById(id);
-      el.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ loginForm.requestSubmit(); } });
     });
   </script>
 </body>
