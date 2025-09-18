@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Memoir — Trial Codes</title>
+  <link rel="stylesheet" href="/partials/styles.css">
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main class="container" style="max-width:900px;margin:32px auto;padding:16px">
+    <h1>Active 14-day Trial Codes</h1>
+    <ul id="codes"></ul>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <script src="/js/header-loader.js"></script>
+  <script src="/js/footer-loader.js"></script>
+  <script src="/js/supabase-client.js"></script>
+  <script>
+  (async ()=>{
+    // (optional) enforce admin by checking profiles.role === 'admin' here
+
+    const list = document.getElementById('codes');
+    const { data, error } = await MEMOIR_SB
+      .from('active_trial_codes')
+      .select('*')
+      .order('expires_at', { ascending:true });
+
+    if (error) { list.innerHTML = '<li>Error loading codes</li>'; return; }
+
+    list.innerHTML = (data||[]).map(c=>{
+      const exp = c.expires_at ? new Date(c.expires_at).toLocaleString() : 'no expiry';
+      const left = (c.max_redemptions == null) ? '∞' : (c.max_redemptions - (c.redemptions||0));
+      return `<li><code>${c.code}</code> — ${c.trial_days} days — remaining: ${left} — expires: ${exp}</li>`;
+    }).join('') || '<li>No active trial codes.</li>';
+  })();
+  </script>
+</body>
+</html>
