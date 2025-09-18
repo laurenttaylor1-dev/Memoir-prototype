@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Memoir — Sign in</title>
+
+  <!-- Use the site-wide stylesheet (root path) -->
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <!-- header/footer injected by your loaders so the chrome matches other pages -->
+  <div id="site-header"></div>
+
+  <main class="container">
+    <h1 class="title" data-i18n="loginTitle">Sign in</h1>
+
+    <section class="card">
+      <form id="loginForm" novalidate>
+        <div class="field">
+          <label for="email" data-i18n="loginEmailLabel">Email</label>
+          <input id="email" name="email" type="email" autocomplete="username"
+                 required placeholder="you@email.com">
+        </div>
+
+        <div class="field">
+          <label for="password" data-i18n="loginPasswordLabel">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password"
+                 required placeholder="Your password">
+        </div>
+
+        <div class="actions">
+          <button id="loginSubmit" class="btn primary" type="submit" data-i18n="loginSubmit">Sign in</button>
+          <a class="btn" href="/auth/request-reset.html">Forgot password?</a>
+          <a class="btn" href="/auth/register.html">Create account</a>
+        </div>
+
+        <div id="loginError" class="error" role="status" aria-live="polite"></div>
+      </form>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <!-- Shared loaders + Supabase -->
+  <script src="/js/header-loader.js"></script>
+  <script src="/js/footer-loader.js"></script>
+  <script src="/js/lang.js"></script>
+  <script src="/js/supabase-client.js"></script>
+
+  <script>
+    // Sign-in with Supabase Auth
+    (function(){
+      const form = document.getElementById('loginForm');
+      const emailEl = document.getElementById('email');
+      const passEl  = document.getElementById('password');
+      const errEl   = document.getElementById('loginError');
+      const submit  = document.getElementById('loginSubmit');
+
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        errEl.textContent = '';
+        submit.disabled = true;
+
+        try{
+          const email = emailEl.value.trim();
+          const password = passEl.value;
+          const { error } = await MEMOIR_SB.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          window.location.href = '/stories.html';
+        }catch(err){
+          errEl.textContent = err?.message || 'Sign in failed. Please try again.';
+        }finally{
+          submit.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
