@@ -2,65 +2,74 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Register — Memoir</title>
-  <link rel="stylesheet" href="/styles.css">
+  <title>Memoir — Register</title>
+  <link rel="stylesheet" href="/partials/styles.css">
 </head>
 <body>
-  <main style="display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;height:100vh;text-align:center;">
+  <div id="site-header"></div>
+
+  <main class="container" style="max-width:640px;margin:40px auto;padding:16px">
     <h1>Create your account</h1>
-    <form id="register-form" style="display:flex;flex-direction:column;gap:10px;min-width:min(420px,82vw);max-width:420px;">
-      <input id="name" type="text" placeholder="Your name" required />
-      <input id="email" type="email" placeholder="you@email.com" required />
-      <input id="password" type="password" placeholder="Password (min 6 chars)" required />
-      <select id="subscription">
+    <form id="registerForm">
+      <label>Your name</label>
+      <input id="name" placeholder="Jane Doe" required>
+      <label>Username (optional)</label>
+      <input id="username" placeholder="janedoe">
+      <label>Email</label>
+      <input id="email" type="email" placeholder="you@email.com" required>
+      <label>Password (min 6 chars)</label>
+      <input id="password" type="password" required>
+      <label>Plan</label>
+      <select id="plan">
         <option value="free" selected>Free</option>
-        <option value="basic">Basic</option>
-        <option value="pro">Pro</option>
+        <option value="storyteller">Storyteller (3h)</option>
+        <option value="premium">Premium (6h)</option>
+        <option value="exclusive">Exclusive (10h)</option>
       </select>
-      <button type="submit" class="btn primary">Create account</button>
-      <div id="reg-status" class="status"></div>
-      <p>Already have an account? <a href="/auth/sign-in.html">Sign in</a></p>
+      <div style="display:flex;gap:10px;align-items:flex-start;margin-top:10px">
+        <input id="gdpr" type="checkbox" required>
+        <label for="gdpr">I agree to the <a href="/partials/legal.html" target="_blank">Terms & Privacy</a>.</label>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+        <button id="submit" class="btn primary" type="submit">Create account</button>
+        <a class="btn" href="/auth/sign-in.html">Already have an account? Sign in</a>
+      </div>
+      <div id="msg" style="margin-top:8px;min-height:1.2em"></div>
     </form>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <div id="site-footer"></div>
+
+  <script src="/js/header-loader.js"></script>
+  <script src="/js/footer-loader.js"></script>
+  <script src="/js/supabase-client.js"></script>
   <script>
-    const SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co"; // replace
-    const SUPABASE_ANON_KEY = "YOUR-ANON-KEY";                   // replace
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    document.getElementById('register-form').addEventListener('submit', async (e)=>{
+  (async ()=>{
+    const form = document.getElementById('registerForm');
+    const msg  = document.getElementById('msg');
+    form.addEventListener('submit', async (e)=>{
       e.preventDefault();
-      const status = document.getElementById('reg-status');
-      status.textContent = 'Creating account…';
-
+      msg.style.color = '#333'; msg.textContent = 'Creating…';
       const name = document.getElementById('name').value.trim();
+      const username = document.getElementById('username').value.trim() || null;
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
-      const subscription = document.getElementById('subscription').value;
+      const plan = document.getElementById('plan').value;
+      const gdpr = document.getElementById('gdpr').checked;
+      if (!gdpr) { msg.style.color='#a33'; msg.textContent='Please accept Terms & Privacy.'; return; }
 
-      try{
-        const { data, error } = await supabase.auth.signUp({
-          email, password,
-          options: { emailRedirectTo: "https://www.memoirapp.co/auth/sign-in.html" }
-        });
-        if (error) throw error;
-
-        const userId = data?.user?.id;
-        if (userId){
-          // Insert profile row that stores name + plan
-          const { error: pErr } = await supabase.from('profiles').insert({
-            id: userId, name, subscription_type: subscription
-          });
-          if (pErr) throw pErr;
+      const { data, error } = await MEMOIR_SB.auth.signUp({
+        email, password,
+        options: {
+          emailRedirectTo: location.origin + '/auth/sign-in.html',
+          data: { name, username, subscription_plan: plan }
         }
-
-        status.textContent = "Account created! Check your email to confirm, then sign in.";
-        setTimeout(()=>location.href="/auth/sign-in.html", 1200);
-      }catch(err){
-        status.textContent = err.message || "Something went wrong.";
-      }
+      });
+      if (error) { msg.style.color='#a33'; msg.textContent = error.message || 'Registration failed.'; return; }
+      msg.style.color='#2d6a4f'; msg.textContent = 'Account created! Please confirm via email, then sign in.';
+      setTimeout(()=> location.href='/auth/sign-in.html', 1200);
     });
+  })();
   </script>
 </body>
 </html>
