@@ -5,11 +5,27 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — Sign in</title>
 
-  <!-- Use the same global stylesheet as the rest of the site -->
-  <link rel="stylesheet" href="/partials/styles.css">
+  <!-- Try primary location (as per your repo screenshot) -->
+  <link id="memoir-css-1" rel="stylesheet" href="/partials/styles.css">
+
+  <!-- Also try root (some pages in your repo referenced /styles.css before) -->
+  <link id="memoir-css-2" rel="stylesheet" href="/styles.css">
+
+  <!-- Tiny fallback so form isn’t crammed if CSS fails to load -->
+  <style>
+    /* fallback only; gets overridden by your stylesheet if it loads */
+    body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;margin:0}
+    .container{max-width:720px;margin:40px auto;padding:16px}
+    .card{border:1px solid rgba(0,0,0,.1);border-radius:12px;padding:16px}
+    .field{margin:12px 0}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .btn{display:inline-block;padding:10px 14px;border-radius:999px;border:1px solid rgba(0,0,0,.15);text-decoration:none}
+    .btn.primary{background:#3b2f2a;color:#fff;border-color:#3b2f2a}
+    .error{color:#a33;margin-top:8px;min-height:1.2em}
+    .title{font-size:clamp(28px,3.2vw,40px);margin:10px 0 18px;font-weight:800}
+  </style>
 </head>
 <body>
-  <!-- header/footer injected by your loaders so the chrome matches other pages -->
   <div id="site-header"></div>
 
   <main class="container">
@@ -20,13 +36,13 @@
         <div class="field">
           <label for="email" data-i18n="loginEmailLabel">Email</label>
           <input id="email" name="email" type="email" autocomplete="username"
-                 required placeholder="you@email.com">
+                 required placeholder="you@email.com" style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(0,0,0,.2)">
         </div>
 
         <div class="field">
           <label for="password" data-i18n="loginPasswordLabel">Password</label>
           <input id="password" name="password" type="password" autocomplete="current-password"
-                 required placeholder="Your password">
+                 required placeholder="Your password" style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(0,0,0,.2)">
         </div>
 
         <div class="actions">
@@ -42,14 +58,37 @@
 
   <div id="site-footer"></div>
 
-  <!-- Load the same shared scripts you use elsewhere -->
+  <!-- Your shared loaders -->
   <script src="/js/header-loader.js"></script>
   <script src="/js/footer-loader.js"></script>
   <script src="/js/lang.js"></script>
+
+  <!-- Supabase client (reads URL/KEY from header.html) -->
   <script src="/js/supabase-client.js"></script>
 
   <script>
-    // Sign-in with Supabase Auth
+    // Log which stylesheet path is actually loading (helps diagnose)
+    (function(){
+      const l1 = document.getElementById('memoir-css-1');
+      const l2 = document.getElementById('memoir-css-2');
+
+      function checkLink(link){
+        if (!link || !link.sheet) return false;
+        try {
+          // Accessing cssRules throws if not loaded
+          const ok = !!link.sheet.cssRules;
+          return ok;
+        } catch { return true; } // some browsers block, but still loaded
+      }
+
+      setTimeout(()=>{
+        const ok1 = checkLink(l1);
+        const ok2 = checkLink(l2);
+        console.log('[styles] /partials/styles.css loaded:', ok1, ' /styles.css loaded:', ok2);
+      }, 0);
+    })();
+
+    // Supabase Sign-in
     (function(){
       const form = document.getElementById('loginForm');
       const emailEl = document.getElementById('email');
