@@ -1,4 +1,10 @@
 <header class="site-header">
+  <!-- Global Supabase config (available to every page that loads this header) -->
+  <script>
+    window.MEMOIR_SUPABASE_URL  = "https://fswxkujxusdozvmpyvzk.supabase.co";
+    window.MEMOIR_SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
+  </script>
+
   <div class="wrap">
     <a class="brand" href="/landing.html">
       <span class="logo"></span>
@@ -9,10 +15,10 @@
     </a>
 
     <nav class="nav">
-      <a id="navHome"     class="pill" href="/landing.html" data-i18n="navHome">Home</a>
-      <a id="navLogin"    class="pill" href="/login.html"   data-i18n="navLogin">Login</a>
-      <a id="navRecord"   class="pill" href="/record.html"  data-i18n="navRecord">Record</a>
-      <a id="navStories"  class="pill" href="/stories.html" data-i18n="navStories">My Stories</a>
+      <a id="navHome"     class="pill" href="/landing.html"  data-i18n="navHome">Home</a>
+      <a id="navLogin"    class="pill" href="/auth/sign-in.html" data-i18n="navLogin">Login</a>
+      <a id="navRecord"   class="pill" href="/record.html"   data-i18n="navRecord">Record</a>
+      <a id="navStories"  class="pill" href="/stories.html"  data-i18n="navStories">My Stories</a>
       <a id="navSettings" class="pill" href="/settings.html" data-i18n="navSettings">Settings</a>
 
       <!-- Language -->
