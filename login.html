@@ -4,247 +4,268 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — Login</title>
-  <meta name="theme-color" content="#f4ead9"/>
-  <link rel="stylesheet" href="/styles.css">
-  <style>
-    :root{
-      --bg:#f6f1ea; --card:#fffaf5; --ink:#3b2f2a; --muted:#7b6a62;
-      --accent:#8c5a3c; --accent2:#b17d55; --radius:18px;
-      --shadow:0 18px 40px rgba(59,47,42,.10),0 2px 8px rgba(59,47,42,.06);
-    }
-    body{background:var(--bg); color:var(--ink); margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-    .container{max-width:900px; margin:0 auto; padding:24px 16px 40px}
-    .title{font-size:clamp(28px,3.2vw,40px); margin:10px 0 18px; font-weight:800; text-align:center}
-    .card{background:var(--card); border:1px solid rgba(0,0,0,.08); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px}
-    .grid{display:grid; grid-template-columns:1fr; gap:16px}
-    .field{display:flex; flex-direction:column; gap:6px}
-    label{font-size:14px; color:var(--muted)}
-    input, select{
-      width:100%; padding:12px 14px; border-radius:12px; border:1px solid rgba(0,0,0,.15);
-      background:#fff; color:inherit; box-sizing:border-box
-    }
-    .actions{display:flex; gap:10px; align-items:center; margin-top:8px; flex-wrap:wrap}
-    .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 16px; border-radius:999px; border:1px solid rgba(0,0,0,.12); background:#fff; color:var(--ink); font-weight:700; cursor:pointer; text-decoration:none}
-    .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#fff; border:0}
-    .btn.ghost{background:transparent}
-    .error{margin-top:8px; color:#a23a3a; font-size:14px; min-height:1.1em}
-    .helper{color:var(--muted); font-size:14px; margin-top:4px}
 
-    /* Register reveal */
-    #registerPanel{max-height:0; overflow:hidden; transition:max-height .35s ease, opacity .25s ease; opacity:0}
-    #registerPanel.open{max-height:1200px; opacity:1}
-    .gdpr{display:flex; gap:10px; align-items:flex-start; font-size:14px; color:var(--muted)}
-    .gdpr input{width:auto}
-  </style>
+  <!-- Your site-wide stylesheet -->
+  <link rel="stylesheet" href="/partials/styles.css"/>
 
-  <!-- Inline Supabase config so we don't wait for header load -->
+  <!-- Supabase config (inline so it always runs on this page) -->
   <script>
-    // 🔧 REPLACE these with your project values (Supabase → Project Settings → API)
     window.MEMOIR_SUPABASE_URL  = "https://fswxkujxusdozvmpyvzk.supabase.co";
     window.MEMOIR_SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
   </script>
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <!-- Shared header -->
   <div id="site-header"></div>
 
-  <main class="container">
-    <h1 class="title" data-i18n="login.title">Welcome back</h1>
+  <main class="container" style="max-width:760px">
+    <h1 class="title" data-i18n="loginTitle">Sign in</h1>
 
-    <section class="card">
-      <!-- Sign-in -->
-      <form id="loginForm" novalidate class="grid">
+    <!-- Sign-in card -->
+    <section class="card" id="signinCard">
+      <form id="loginForm" novalidate>
         <div class="field">
-          <label for="identifier" data-i18n="login.identifierLabel">Email or username</label>
-          <input id="identifier" name="identifier" type="text" autocomplete="username"
-                 data-i18n-attr="placeholder:login.identifierPH"
-                 placeholder="you@example.com or username" required>
+          <label for="email" data-i18n="loginEmailLabel">Email</label>
+          <input id="email" name="email" type="email" autocomplete="username" required placeholder="you@email.com">
         </div>
+
         <div class="field">
-          <label for="password" data-i18n="login.passwordLabel">Password</label>
-          <input id="password" name="password" type="password" autocomplete="current-password"
-                 data-i18n-attr="placeholder:login.passwordPH"
-                 placeholder="Your password" required>
+          <label for="password" data-i18n="loginPasswordLabel">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Your password">
+        </div>
+
+        <div class="actions">
+          <button id="loginSubmit" class="btn primary" type="submit" data-i18n="loginSubmit">Sign in</button>
+          <button class="btn" type="button" id="openReset">Forgot your password?</button>
+          <button class="btn" type="button" id="openRegister">Create account</button>
+        </div>
+
+        <div id="loginError" class="error" role="status" aria-live="polite"></div>
+      </form>
+    </section>
+
+    <!-- Register (inline, hidden by default) -->
+    <section class="card" id="registerCard" hidden>
+      <h2 class="title" style="font-size:22px;margin-top:0">Create your account</h2>
+      <form id="registerForm" novalidate>
+        <div class="field">
+          <label for="reg_name">Your name</label>
+          <input id="reg_name" required placeholder="Your name">
+        </div>
+
+        <div class="field">
+          <label for="reg_username">Username (optional)</label>
+          <input id="reg_username" placeholder="your username">
+        </div>
+
+        <div class="field">
+          <label for="reg_email">Email</label>
+          <input id="reg_email" type="email" required placeholder="you@email.com">
+        </div>
+
+        <div class="field">
+          <label for="reg_password">Password (min 6 chars)</label>
+          <input id="reg_password" type="password" minlength="6" required>
+        </div>
+
+        <div class="field">
+          <label for="reg_plan">Plan</label>
+          <select id="reg_plan">
+            <option value="free" selected>Free</option>
+            <option value="storyteller">Storyteller (3h)</option>
+            <option value="premium">Premium (6h)</option>
+            <option value="exclusive">Exclusive (10h)</option>
+          </select>
+        </div>
+
+        <div class="field" style="display:flex;gap:10px;align-items:flex-start">
+          <input id="reg_gdpr" type="checkbox" required>
+          <label for="reg_gdpr">I agree to the <a href="/partials/legal.html" target="_blank">Terms & Privacy</a>.</label>
+        </div>
+
+        <div class="actions">
+          <button class="btn primary" type="submit">Create account</button>
+          <button class="btn" type="button" id="closeRegister">Back to sign in</button>
+        </div>
+
+        <div id="registerMsg" class="helper" role="status" aria-live="polite"></div>
+      </form>
+    </section>
+
+    <!-- Request reset (inline, hidden by default) -->
+    <section class="card" id="resetRequestCard" hidden>
+      <h2 class="title" style="font-size:22px;margin-top:0">Reset your password</h2>
+      <form id="resetRequestForm" novalidate>
+        <div class="field">
+          <label for="reset_email">Your email</label>
+          <input id="reset_email" type="email" required placeholder="you@email.com">
         </div>
         <div class="actions">
-          <button id="loginSubmit" class="btn primary" type="submit" data-i18n="login.submit">Sign in</button>
-          <button id="toggleRegister" class="btn" type="button" data-i18n="login.registerToggle">Register</button>
-          <a class="btn ghost" href="/auth/request-reset.html" data-i18n="login.forgot">Forgot password?</a>
-          <a class="btn ghost" href="/landing.html" data-i18n="login.cancel">Cancel</a>
+          <button class="btn primary" type="submit">Send reset link</button>
+          <button class="btn" type="button" id="closeReset">Back to sign in</button>
         </div>
-        <div id="loginError" class="error" role="status" aria-live="polite"></div>
-        <div class="helper" data-i18n="login.helper">Press Enter to sign in.</div>
+        <div id="resetMsg" class="helper" role="status" aria-live="polite"></div>
       </form>
+    </section>
 
-      <!-- Register (inline) -->
-      <div id="registerPanel" aria-hidden="true">
-        <hr style="border:none;border-top:1px dashed rgba(0,0,0,.1);margin:14px 0 10px">
-        <h2 class="title" style="font-size:22px; margin:0 0 8px;" data-i18n="register.title">Create your account</h2>
-
-        <form id="registerForm" class="grid" novalidate>
-          <div class="field">
-            <label for="reg_name" data-i18n="register.nameLabel">Your name</label>
-            <input id="reg_name" type="text" data-i18n-attr="placeholder:register.namePH" placeholder="Jane Doe" required>
-          </div>
-          <div class="field">
-            <label for="reg_username" data-i18n="register.usernameLabel">Username (optional)</label>
-            <input id="reg_username" type="text" data-i18n-attr="placeholder:register.usernamePH" placeholder="janedoe">
-          </div>
-          <div class="field">
-            <label for="reg_email" data-i18n="register.emailLabel">Email</label>
-            <input id="reg_email" type="email" data-i18n-attr="placeholder:register.emailPH" placeholder="you@email.com" required>
-          </div>
-          <div class="field">
-            <label for="reg_password" data-i18n="register.passwordLabel">Password (min 6 chars)</label>
-            <input id="reg_password" type="password" data-i18n-attr="placeholder:register.passwordPH" placeholder="Password" required>
-          </div>
-          <div class="field">
-            <label for="reg_plan" data-i18n="register.planLabel">Plan</label>
-            <select id="reg_plan">
-              <option value="free" selected data-i18n="register.planFree">Free</option>
-              <option value="basic" data-i18n="register.planBasic">Basic</option>
-              <option value="pro" data-i18n="register.planPro">Pro</option>
-            </select>
-          </div>
-          <div class="gdpr">
-            <input id="reg_gdpr" type="checkbox" required>
-            <label for="reg_gdpr" data-i18n="register.gdprText">
-              I agree to the <a href="/terms.html" target="_blank">Terms</a> and <a href="/privacy.html" target="_blank">Privacy Policy</a>,
-              and consent to the processing of my data for account creation and service delivery.
-            </label>
-          </div>
-          <div class="actions">
-            <button id="registerSubmit" class="btn primary" type="submit" data-i18n="register.submit">Create account</button>
-          </div>
-          <div id="registerError" class="error" role="status" aria-live="polite"></div>
-        </form>
-      </div>
+    <!-- New password (auto-shown when arriving from email link) -->
+    <section class="card" id="newPasswordCard" hidden>
+      <h2 class="title" style="font-size:22px;margin-top:0">Set a new password</h2>
+      <form id="newPassForm" novalidate>
+        <div class="field">
+          <label for="new_password">New password</label>
+          <input id="new_password" type="password" minlength="6" required>
+        </div>
+        <div class="actions">
+          <button class="btn primary" type="submit">Update password</button>
+          <button class="btn" type="button" id="closeNewPass">Back to sign in</button>
+        </div>
+        <div id="newPassMsg" class="helper" role="status" aria-live="polite"></div>
+      </form>
     </section>
   </main>
 
   <!-- Shared footer -->
   <div id="site-footer"></div>
 
-  <!-- Libraries -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- i18n bridge (keeps translations working even if your lang.js is minimal) -->
-  <script src="/js/i18n-bridge.js"></script>
-
-  <!-- Your shared header/footer -->
+  <!-- Shared loaders + i18n -->
   <script src="/js/header-loader.js"></script>
   <script src="/js/footer-loader.js"></script>
+  <script src="/js/lang.js"></script>
 
   <script>
-    /* ---------- Helpers ---------- */
-    function getSupabase(){
-      const url = window.MEMOIR_SUPABASE_URL;
-      const key = window.MEMOIR_SUPABASE_ANON;
-      if (!window.supabase) { alert('Supabase library not loaded.'); return null; }
-      if (!url || !key) { alert('Supabase is not configured. Fill MEMOIR_SUPABASE_URL and MEMOIR_SUPABASE_ANON at the top of LOGIN.html.'); return null; }
-      return window.supabase.createClient(url, key);
+    // Create Supabase client (local to this page)
+    const SB = supabase.createClient(window.MEMOIR_SUPABASE_URL, window.MEMOIR_SUPABASE_ANON);
+
+    // UI helpers
+    const $ = (sel) => document.querySelector(sel);
+    function show(id){ $(id).hidden = false; }
+    function hide(id){ $(id).hidden = true; }
+    function only(id){
+      ['#signinCard','#registerCard','#resetRequestCard','#newPasswordCard'].forEach(s => hide(s));
+      show(id);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // Show/hide Register panel (always works, independent of Supabase)
-    const panel = document.getElementById('registerPanel');
-    document.getElementById('toggleRegister').addEventListener('click', ()=>{
-      const open = panel.classList.toggle('open');
-      panel.setAttribute('aria-hidden', String(!open));
-      if(open) document.getElementById('reg_name').focus();
-    });
+    // 1) Sign-in
+    (function(){
+      const form   = $('#loginForm');
+      const email  = $('#email');
+      const pass   = $('#password');
+      const err    = $('#loginError');
+      const submit = $('#loginSubmit');
 
-    // Resolve username -> email via secure RPC (created earlier)
-    async function resolveEmail(sb, identifier){
-      const id = (identifier||'').trim();
-      if (!id) return null;
-      if (id.includes('@')) return id;
-      const { data, error } = await sb.rpc('email_for_username', { p_username: id });
-      if (error) throw error;
-      return data || null;
-    }
-
-    /* ---------- Sign in ---------- */
-    const loginForm   = document.getElementById('loginForm');
-    const loginError  = document.getElementById('loginError');
-    const loginSubmit = document.getElementById('loginSubmit');
-
-    loginForm.addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      loginError.textContent='';
-
-      const sb = getSupabase(); if (!sb) return;
-      const identifier = document.getElementById('identifier').value;
-      const password   = document.getElementById('password').value;
-      if(!identifier || !password){ loginError.textContent = 'Please fill email/username and password.'; return; }
-
-      loginSubmit.disabled=true; loginSubmit.setAttribute('aria-busy','true');
-      try{
-        const email = await resolveEmail(sb, identifier);
-        if(!email) throw new Error('We could not find that user.');
-        const { error } = await sb.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        location.href = '/stories.html';
-      }catch(err){
-        loginError.textContent = err.message || 'Sign in failed. Please try again.';
-      }finally{
-        loginSubmit.disabled=false; loginSubmit.removeAttribute('aria-busy');
-      }
-    });
-
-    /* ---------- Register (metadata only; DB trigger creates profiles row) ---------- */
-    const registerForm   = document.getElementById('registerForm');
-    const registerError  = document.getElementById('registerError');
-    const registerSubmit = document.getElementById('registerSubmit');
-
-    registerForm.addEventListener('submit', async (e)=>{
-      e.preventDefault(); registerError.textContent='';
-
-      const sb = getSupabase(); if (!sb) return;
-      const name      = document.getElementById('reg_name').value.trim();
-      const username  = document.getElementById('reg_username').value.trim() || null;
-      const email     = document.getElementById('reg_email').value.trim();
-      const password  = document.getElementById('reg_password').value;
-      const plan      = document.getElementById('reg_plan').value;
-      const gdprOk    = document.getElementById('reg_gdpr').checked;
-      if(!gdprOk){ registerError.textContent = 'Please agree to the Terms and Privacy Policy.'; return; }
-
-      registerSubmit.disabled=true; registerSubmit.setAttribute('aria-busy','true');
-      try{
-        const sign = await sb.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: location.origin + '/LOGIN.html',
-            data: {
-              name,
-              username,
-              subscription_type: plan,
-              gdpr_consent: true
-            }
-          }
-        });
-
-        if (sign.error) {
-          if (sign.error.message?.includes('fetch')) throw new Error('Network error: cannot reach Supabase. Check URL/key & HTTPS.');
-          if (sign.error.code === 'user_already_exists') throw new Error('An account already exists for this email.');
-          throw sign.error;
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        err.textContent = '';
+        submit.disabled = true;
+        try{
+          const { error } = await SB.auth.signInWithPassword({
+            email: email.value.trim(),
+            password: pass.value
+          });
+          if (error) throw error;
+          location.href = '/stories.html';
+        }catch(ex){
+          err.textContent = ex?.message || 'Sign in failed.';
+        }finally{
+          submit.disabled = false;
         }
+      });
+    })();
 
-        // No client insert here — DB trigger will create the profiles row
+    // 2) Toggle Register & Reset panels
+    $('#openRegister').addEventListener('click', ()=> only('#registerCard'));
+    $('#closeRegister').addEventListener('click', ()=> only('#signinCard'));
+    $('#openReset').addEventListener('click', ()=> only('#resetRequestCard'));
+    $('#closeReset').addEventListener('click', ()=> only('#signinCard'));
+    $('#closeNewPass').addEventListener('click', ()=> only('#signinCard'));
 
-        registerError.style.color = '#2d6a4f';
-        registerError.textContent = 'Account created! Check your email to confirm, then sign in.';
-        setTimeout(()=>location.href='/LOGIN.html', 1500);
-      }catch(err){
-        registerError.style.color = '#a23a3a';
-        registerError.textContent = err.message || 'Registration failed.';
-      }finally{
-        registerSubmit.disabled=false; registerSubmit.removeAttribute('aria-busy');
-      }
-    });
+    // 3) Register (Create account)
+    (function(){
+      const form = $('#registerForm');
+      const msg  = $('#registerMsg');
 
-    // Optional: make a settings sign-in button navigate (if present)
-    document.getElementById('settings-signin')?.addEventListener('click', ()=>{ location.href='/LOGIN.html'; });
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        msg.style.color = '#444'; msg.textContent = 'Creating…';
+
+        const name     = $('#reg_name').value.trim();
+        const username = $('#reg_username').value.trim() || null;
+        const email    = $('#reg_email').value.trim();
+        const password = $('#reg_password').value;
+        const plan     = $('#reg_plan').value;
+        const consent  = $('#reg_gdpr').checked;
+        if (!consent){ msg.style.color='#a33'; msg.textContent='Please accept Terms & Privacy.'; return; }
+
+        try{
+          const { error } = await SB.auth.signUp({
+            email, password,
+            options: {
+              emailRedirectTo: location.origin + '/login.html',
+              data: { name, username, subscription_plan: plan }
+            }
+          });
+          if (error) throw error;
+          msg.style.color = '#2d6a4f';
+          msg.textContent = 'Account created. Please confirm via the email we sent you, then sign in.';
+          setTimeout(()=> only('#signinCard'), 1200);
+        }catch(ex){
+          msg.style.color = '#a33';
+          msg.textContent = ex?.message || 'Registration failed.';
+        }
+      });
+    })();
+
+    // 4) Request password reset (send email)
+    (function(){
+      const form = $('#resetRequestForm');
+      const msg  = $('#resetMsg');
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        msg.style.color='#444'; msg.textContent='Sending reset email…';
+        try{
+          const email = $('#reset_email').value.trim();
+          const { error } = await SB.auth.resetPasswordForEmail(email, {
+            redirectTo: location.origin + '/login.html'
+          });
+          if (error) throw error;
+          msg.style.color = '#2d6a4f';
+          msg.textContent = 'Check your inbox for a reset link.';
+        }catch(ex){
+          msg.style.color = '#a33';
+          msg.textContent = ex?.message || 'Could not send reset email.';
+        }
+      });
+    })();
+
+    // 5) If we arrive from the email link, show "Set new password"
+    (async function(){
+      // Supabase adds a recovery session when user arrives via the link
+      const hash = location.hash || '';
+      const isRecovery = hash.includes('type=recovery');
+      if (isRecovery) only('#newPasswordCard');
+
+      const form = $('#newPassForm');
+      const msg  = $('#newPassMsg');
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        msg.style.color='#444'; msg.textContent='Updating…';
+        try{
+          const newPassword = $('#new_password').value;
+          const { error } = await SB.auth.updateUser({ password: newPassword });
+          if (error) throw error;
+          msg.style.color='#2d6a4f';
+          msg.textContent = 'Password updated. You can sign in now.';
+          setTimeout(()=> only('#signinCard'), 800);
+        }catch(ex){
+          msg.style.color='#a33';
+          msg.textContent = ex?.message || 'Could not update password.';
+        }
+      });
+    })();
   </script>
 </body>
 </html>
