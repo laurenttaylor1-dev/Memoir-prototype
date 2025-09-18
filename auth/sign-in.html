@@ -2,42 +2,47 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Sign in — Memoir</title>
-  <link rel="stylesheet" href="/styles.css">
+  <title>Memoir — Sign in</title>
+  <link rel="stylesheet" href="/partials/styles.css"><!-- if your CSS is elsewhere, keep your existing link -->
 </head>
 <body>
-  <main style="display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;height:100vh;text-align:center;">
+  <div id="site-header"></div>
+
+  <main class="container" style="max-width:640px;margin:40px auto;padding:16px">
     <h1>Sign in</h1>
-    <form id="signin-form" style="display:flex;flex-direction:column;gap:10px;min-width:min(420px,82vw);max-width:420px;">
-      <input id="email" type="email" placeholder="you@email.com" required />
-      <input id="password" type="password" placeholder="Password" required />
-      <button type="submit" class="btn primary">Sign in</button>
-      <div id="signin-status" class="status"></div>
-      <p>No account? <a href="/auth/register.html">Register</a></p>
+    <form id="loginForm">
+      <label>Email</label>
+      <input id="email" type="email" placeholder="you@email.com" required>
+      <label>Password</label>
+      <input id="password" type="password" placeholder="Your password" required>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+        <button id="loginSubmit" class="btn primary" type="submit">Sign in</button>
+        <a class="btn" href="/auth/request-reset.html">Forgot password?</a>
+        <a class="btn" href="/auth/register.html">Create account</a>
+      </div>
+      <div id="loginError" style="color:#a33;margin-top:8px;min-height:1.2em"></div>
     </form>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    // TODO: replace with your project values
-    const SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co";
-    const SUPABASE_ANON_KEY = "YOUR-ANON-KEY";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  <div id="site-footer"></div>
 
-    document.getElementById('signin-form').addEventListener('submit', async (e)=>{
+  <script src="/js/header-loader.js"></script>
+  <script src="/js/footer-loader.js"></script>
+  <script src="/js/supabase-client.js"></script>
+  <script>
+  (async ()=>{
+    const form = document.getElementById('loginForm');
+    const err  = document.getElementById('loginError');
+    form.addEventListener('submit', async (e)=>{
       e.preventDefault();
-      const status = document.getElementById('signin-status');
-      status.textContent = 'Signing in…';
+      err.textContent='';
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
-      try{
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        location.href = "/stories.html"; // your app entry
-      }catch(err){
-        status.textContent = err.message || "Unable to sign in.";
-      }
+      const { error } = await MEMOIR_SB.auth.signInWithPassword({ email, password });
+      if (error) { err.textContent = error.message || 'Sign in failed.'; return; }
+      location.href = '/stories.html';
     });
+  })();
   </script>
 </body>
 </html>
