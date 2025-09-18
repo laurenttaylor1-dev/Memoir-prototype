@@ -1,48 +1,80 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — Sign in</title>
-  <link rel="stylesheet" href="/partials/styles.css"><!-- if your CSS is elsewhere, keep your existing link -->
+
+  <!-- Use the same global stylesheet as the rest of the site -->
+  <link rel="stylesheet" href="/partials/styles.css">
 </head>
 <body>
+  <!-- header/footer injected by your loaders so the chrome matches other pages -->
   <div id="site-header"></div>
 
-  <main class="container" style="max-width:640px;margin:40px auto;padding:16px">
-    <h1>Sign in</h1>
-    <form id="loginForm">
-      <label>Email</label>
-      <input id="email" type="email" placeholder="you@email.com" required>
-      <label>Password</label>
-      <input id="password" type="password" placeholder="Your password" required>
-      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
-        <button id="loginSubmit" class="btn primary" type="submit">Sign in</button>
-        <a class="btn" href="/auth/request-reset.html">Forgot password?</a>
-        <a class="btn" href="/auth/register.html">Create account</a>
-      </div>
-      <div id="loginError" style="color:#a33;margin-top:8px;min-height:1.2em"></div>
-    </form>
+  <main class="container">
+    <h1 class="title" data-i18n="loginTitle">Sign in</h1>
+
+    <section class="card">
+      <form id="loginForm" novalidate>
+        <div class="field">
+          <label for="email" data-i18n="loginEmailLabel">Email</label>
+          <input id="email" name="email" type="email" autocomplete="username"
+                 required placeholder="you@email.com">
+        </div>
+
+        <div class="field">
+          <label for="password" data-i18n="loginPasswordLabel">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password"
+                 required placeholder="Your password">
+        </div>
+
+        <div class="actions">
+          <button id="loginSubmit" class="btn primary" type="submit" data-i18n="loginSubmit">Sign in</button>
+          <a class="btn" href="/auth/request-reset.html">Forgot password?</a>
+          <a class="btn" href="/auth/register.html">Create account</a>
+        </div>
+
+        <div id="loginError" class="error" role="status" aria-live="polite"></div>
+      </form>
+    </section>
   </main>
 
   <div id="site-footer"></div>
 
+  <!-- Load the same shared scripts you use elsewhere -->
   <script src="/js/header-loader.js"></script>
   <script src="/js/footer-loader.js"></script>
+  <script src="/js/lang.js"></script>
   <script src="/js/supabase-client.js"></script>
+
   <script>
-  (async ()=>{
-    const form = document.getElementById('loginForm');
-    const err  = document.getElementById('loginError');
-    form.addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      err.textContent='';
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const { error } = await MEMOIR_SB.auth.signInWithPassword({ email, password });
-      if (error) { err.textContent = error.message || 'Sign in failed.'; return; }
-      location.href = '/stories.html';
-    });
-  })();
+    // Sign-in with Supabase Auth
+    (function(){
+      const form = document.getElementById('loginForm');
+      const emailEl = document.getElementById('email');
+      const passEl  = document.getElementById('password');
+      const errEl   = document.getElementById('loginError');
+      const submit  = document.getElementById('loginSubmit');
+
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        errEl.textContent = '';
+        submit.disabled = true;
+
+        try{
+          const email = emailEl.value.trim();
+          const password = passEl.value;
+          const { error } = await MEMOIR_SB.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          window.location.href = '/stories.html';
+        }catch(err){
+          errEl.textContent = err?.message || 'Sign in failed. Please try again.';
+        }finally{
+          submit.disabled = false;
+        }
+      });
+    })();
   </script>
 </body>
 </html>
