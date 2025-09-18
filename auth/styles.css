@@ -1,80 +1,319 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Memoir — Sign in</title>
+/* =========================================================
+   Memoir — Global Styles (header, footer, cards, grids)
+   ========================================================= */
 
-  <!-- Use the site-wide stylesheet (root path) -->
-  <link rel="stylesheet" href="/styles.css">
-</head>
-<body>
-  <!-- header/footer injected by your loaders so the chrome matches other pages -->
-  <div id="site-header"></div>
+/* -------- Theme tokens -------- */
+:root{
+  --bg:#f6f1ea;             /* warm cream */
+  --card:#fffaf5;
+  --ink:#3b2f2a;            /* dark brown */
+  --muted:#7b6a62;
+  --accent:#8c5a3c;         /* vintage brown */
+  --accent2:#b17d55;
+  --radius:18px;
+  --shadow:0 18px 40px rgba(59,47,42,.10), 0 2px 8px rgba(59,47,42,.06);
+}
 
-  <main class="container">
-    <h1 class="title" data-i18n="loginTitle">Sign in</h1>
+/* -------- Base -------- */
+*{ box-sizing: border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+a{ color:inherit; }
+.container{ max-width:1200px; margin:0 auto; padding:20px 16px 28px; }
 
-    <section class="card">
-      <form id="loginForm" novalidate>
-        <div class="field">
-          <label for="email" data-i18n="loginEmailLabel">Email</label>
-          <input id="email" name="email" type="email" autocomplete="username"
-                 required placeholder="you@email.com">
-        </div>
+/* Utilities */
+.muted{ color:var(--muted); }
+.section-title{ font-size:clamp(22px,2.6vw,28px); margin:26px 0 10px; }
+.center{ text-align:center; }
 
-        <div class="field">
-          <label for="password" data-i18n="loginPasswordLabel">Password</label>
-          <input id="password" name="password" type="password" autocomplete="current-password"
-                 required placeholder="Your password">
-        </div>
+/* -------- Cards / Inputs / Buttons -------- */
+.card,
+.mk-card{ background:var(--card); border:1px solid rgba(0,0,0,.08); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px; }
 
-        <div class="actions">
-          <button id="loginSubmit" class="btn primary" type="submit" data-i18n="loginSubmit">Sign in</button>
-          <a class="btn" href="/auth/request-reset.html">Forgot password?</a>
-          <a class="btn" href="/auth/register.html">Create account</a>
-        </div>
+.mini-card{ background:#fff; border:1px solid rgba(0,0,0,.08); border-radius:16px; padding:18px; box-shadow:0 8px 20px rgba(0,0,0,.06); }
+.mini-card h3{ margin:0 0 6px; }
+.mini-card h4{ margin:0 0 6px; font-size:16px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+.mini-card p{ margin:0 0 10px; font-size:15px; line-height:1.45; color:var(--ink); }
 
-        <div id="loginError" class="error" role="status" aria-live="polite"></div>
-      </form>
-    </section>
-  </main>
+input, select, textarea{
+  width:100%;
+  padding:12px 14px;
+  border-radius:12px;
+  border:1px solid rgba(0,0,0,.15);
+  background:#fff;
+  color:inherit;
+}
+textarea{ min-height:110px; resize:vertical; }
 
-  <div id="site-footer"></div>
+.pill{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:12px 16px; border-radius:999px;
+  border:1px solid rgba(0,0,0,.12); background:#fff;
+  color:var(--ink); text-decoration:none; font-weight:700;
+  cursor:pointer;
+}
+.pill.primary{ background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#fff; border:0; }
 
-  <!-- Shared loaders + Supabase -->
-  <script src="/js/header-loader.js"></script>
-  <script src="/js/footer-loader.js"></script>
-  <script src="/js/lang.js"></script>
-  <script src="/js/supabase-client.js"></script>
+/* =========================================================
+   Header (shared via /partials/header.html)
+   ========================================================= */
+.site-header{ background:#f3eadf; border-bottom:1px solid rgba(0,0,0,.06); position:sticky; top:0; z-index:50; }
+.site-header .wrap{
+  max-width:1200px; margin:0 auto; padding:12px 16px;
+  display:flex; align-items:center; gap:16px;
+}
+.brand{ display:flex; align-items:center; gap:10px; color:#3b2f2a; text-decoration:none; }
+.logo{ width:28px; height:28px; border-radius:8px; background:linear-gradient(135deg,#8c5a3c,#b17d55); }
+.brand-text small{ display:block; font-size:12px; color:#7b6a62; }
 
-  <script>
-    // Sign-in with Supabase Auth
-    (function(){
-      const form = document.getElementById('loginForm');
-      const emailEl = document.getElementById('email');
-      const passEl  = document.getElementById('password');
-      const errEl   = document.getElementById('loginError');
-      const submit  = document.getElementById('loginSubmit');
+.nav{
+  margin-left:auto; display:flex; align-items:center; gap:10px;
+  justify-content:flex-end; flex-wrap:nowrap; min-width:0;
+}
 
-      form.addEventListener('submit', async (e)=>{
-        e.preventDefault();
-        errEl.textContent = '';
-        submit.disabled = true;
+/* Language dropdown (stack-safe) */
+.lang{ position:relative; z-index:20; }
+.lang-toggle{ position:relative; z-index:21; }
+.lang-menu{
+  position:absolute; right:0; top:calc(100% + 8px);
+  min-width:180px; background:#fff; border:1px solid rgba(0,0,0,.12);
+  border-radius:12px; box-shadow:0 18px 36px rgba(0,0,0,.08);
+  padding:6px; display:none; z-index:1000;
+}
+.lang-menu.open{ display:block; }
+.lang-menu button{
+  width:100%; text-align:left; border:0; background:transparent;
+  padding:10px 12px; border-radius:8px; cursor:pointer;
+}
+.lang-menu button:hover{ background:#f6efe8; }
 
-        try{
-          const email = emailEl.value.trim();
-          const password = passEl.value;
-          const { error } = await MEMOIR_SB.auth.signInWithPassword({ email, password });
-          if (error) throw error;
-          window.location.href = '/stories.html';
-        }catch(err){
-          errEl.textContent = err?.message || 'Sign in failed. Please try again.';
-        }finally{
-          submit.disabled = false;
-        }
-      });
-    })();
-  </script>
-</body>
-</html>
+/* =========================================================
+   Footer (simple centered sentence + legal link)
+   ========================================================= */
+.site-footer{ background:transparent; margin-top:28px; }
+.site-footer .site-footer-wrap{
+  max-width:1200px; margin:0 auto; padding:18px 16px 36px;
+}
+.site-footer .foot-flex{
+  display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap;
+}
+.site-footer p{ margin:0; }
+.site-footer a{ text-decoration:underline; }
+
+/* =========================================================
+   Landing helpers (so pages don’t need inline CSS)
+   ========================================================= */
+
+/* Hero grid next to image */
+.hero-grid{ display:grid; grid-template-columns:1.08fr .92fr; gap:22px; align-items:stretch; }
+@media (max-width:980px){ .hero-grid{ grid-template-columns:1fr; } }
+
+.hero-img{ background:var(--card); border:1px solid rgba(0,0,0,.06); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
+.hero-img img{ display:block; width:100%; height:100%; object-fit:cover; }
+
+.hero-panel{ background:var(--card); border:1px solid rgba(0,0,0,.08); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px; display:flex; flex-direction:column; }
+.hero-kicker{ font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+
+/* Force TWO lines across languages */
+.hero-title{ margin:6px 0 12px; font-weight:800; line-height:1.12; }
+.hero-title .force-two{ display:block; line-height:1.12; }
+.hero-title .force-two span{ display:block; }
+@media (min-width:981px){ .hero-title{ font-size: clamp(36px, 3.8vw, 46px); } }
+@media (max-width:980px){ .hero-title{ font-size: clamp(30px, 6.5vw, 40px); } }
+
+.gradient{ background:linear-gradient(90deg,var(--accent),var(--accent2)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.hero-blurb{ color:var(--muted); font-size:18px; line-height:1.5; max-width:60ch; }
+
+.hero-actions{ margin-top:14px; display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+@media (max-width:640px){ .hero-actions{ grid-template-columns:1fr; } }
+
+/* Why Memoir */
+.feat-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+@media (max-width:980px){ .feat-grid{ grid-template-columns:1fr; } }
+
+/* Pricing grid: 4 -> 2x2 -> 1 */
+.pricing-grid{
+  display:grid;
+  grid-template-columns: repeat(4, minmax(260px, 1fr));
+  gap:16px;
+  align-items:stretch;
+}
+@media (max-width:1200px){
+  .pricing-grid{ grid-template-columns: repeat(2, minmax(280px, 1fr)); }
+}
+@media (max-width:640px){
+  .pricing-grid{ grid-template-columns: 1fr; }
+}
+/* Plan cards */
+.plan{ background:var(--card); border:1px solid rgba(0,0,0,.08); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px; display:flex; flex-direction:column; }
+.plan-name{ margin:0 0 6px; }
+.price{ font-weight:800; margin-bottom:8px; }
+.plan-body{ flex:1 1 auto; }
+.plan-cta{ margin-top:12px; }
+.plan ul{ margin:8px 0 0 18px; }
+
+/* =========================================================
+   Stories page helpers
+   ========================================================= */
+.list{ display:grid; gap:16px; }
+.story-card{ background:var(--card); border:1px solid rgba(0,0,0,.08); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px; }
+.story-card h3{ margin:0 0 6px; }
+.story-card .meta{ color:var(--muted); font-size:14px; margin-bottom:8px; }
+.story-card .actions{ display:flex; gap:10px; margin-top:10px; }
+.empty{ padding:40px; text-align:center; color:var(--muted); font-size:16px; }
+
+/* =========================================================
+   Record page bits (keeps layout tidy)
+   ========================================================= */
+.grid{ display:grid; grid-template-columns:420px 1fr; gap:20px; align-items:start; }
+@media (max-width:980px){ .grid{ grid-template-columns:1fr; } }
+.label{ font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin:12px 0 6px; }
+
+/* Big round mic */
+.micZone{ display:flex; flex-direction:column; align-items:center; gap:10px; }
+.mic{
+  width:220px; height:220px; border-radius:999px; border:0;
+  background:radial-gradient(70% 70% at 50% 30%, #b17d55, #8c5a3c);
+  color:#fff; font-weight:800; font-size:20px; cursor:pointer;
+  box-shadow:0 20px 60px rgba(140,90,60,.35);
+}
+.mic.pulse{ animation:pulse 1.6s infinite ease-in-out; }
+@keyframes pulse{ 0%{transform:scale(1)} 50%{transform:scale(1.04)} 100%{transform:scale(1)} }
+.timer{ font-weight:800; letter-spacing:.06em; }
+
+.transcript{ min-height:200px; border-radius:12px; border:1px solid rgba(0,0,0,.15); background:#fff; padding:12px; }
+.hint{ font-size:12px; color:var(--muted); }
+
+/* FREE / GUIDED segmented control idea (optional) */
+.segment{
+  display:inline-flex; background:#fff; border:1px solid rgba(0,0,0,.12); border-radius:999px; overflow:hidden;
+}
+.segment button{
+  padding:10px 14px; border:0; background:transparent; cursor:pointer; font-weight:600;
+}
+.segment button.active{ background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#fff; }
+
+/* =========================================================
+   Settings page helpers
+   ========================================================= */
+.settings-grid{ display:grid; grid-template-columns:1fr; gap:16px; }
+.settings-grid .card h3{ margin:0 0 8px; }
+
+/* Keep body copy visible (no accidental clamping) */
+.no-clamp, .card p, .mini-card p{
+  display:block !important;
+  overflow:visible !important;
+  text-overflow:unset !important;
+  white-space:normal !important;
+  -webkit-line-clamp:unset !important;
+  -webkit-box-orient:unset !important;
+}
+
+/* ==== Header & language menu (robust) ==== */
+.site-header{position:sticky;top:0;z-index:1000;background:#f3eadf;border-bottom:1px solid rgba(0,0,0,.06)}
+.site-header .wrap{max-width:1200px;margin:0 auto;padding:12px 16px;
+  display:flex;align-items:center;gap:16px}
+.site-header .brand{display:flex;align-items:center;gap:10px;color:#3b2f2a;text-decoration:none;flex:0 0 auto}
+.site-header .brand .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#8c5a3c,#b17d55)}
+.site-header .brand-text small{display:block;font-size:12px;color:#7b6a62}
+
+.site-header .nav{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:nowrap}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;
+  border:1px solid rgba(0,0,0,.12);background:#fff;color:#3b2f2a;text-decoration:none;font-weight:600;white-space:nowrap}
+
+.lang{position:relative;flex:0 0 auto;z-index:21}          /* keep above other content */
+.lang-toggle{position:relative;z-index:22}
+.lang-menu{position:absolute;right:0;top:calc(100% + 8px);
+  min-width:180px;background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:12px;
+  box-shadow:0 18px 36px rgba(0,0,0,.08);padding:6px}
+.lang-menu[hidden]{display:none}
+.lang-menu .lang-item{width:100%;text-align:left;border:0;background:transparent;
+  padding:10px 12px;border-radius:8px;cursor:pointer}
+.lang-menu .lang-item:hover{background:#f6efe8}
+
+/* Prevent ancestors from clipping the dropdown; useful if a parent had overflow hidden */
+.site-header, .site-header .wrap, .site-header .nav, .lang { overflow: visible !important; }
+
+/* Footer centering */
+.site-footer { background: transparent; }
+.site-footer .site-footer-wrap { max-width: 1200px; margin: 0 auto; padding: 20px 16px; }
+.site-footer .foot,
+#site-footer .foot { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; text-align: center; }
+.site-footer .foot a { text-decoration: none; color: inherit; font-weight: 600; }
+
+/* --- language dropdown clickability guards (header) --- */
+.site-header .lang { position: relative; z-index: 50; }
+.site-header .lang-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 51; }
+.site-header .lang-toggle { position: relative; z-index: 52; }
+
+/* --- Footer centering & width guard --- */
+.site-footer { background: transparent; }
+.site-footer .site-footer-wrap,
+.site-footer .foot-inner,
+.site-footer .foot-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.site-footer .foot-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  text-align: center;
+}
+.site-footer .foot-about { text-align: center; }
+
+/* In case the loader only injects a single paragraph: */
+#site-footer { text-align: center; }
+
+/* --- Header: keep controls usable on phones --- */
+.site-header { position: sticky; top: 0; z-index: 1000; background:#f3eadf; }
+.site-header .wrap { display:flex; align-items:center; gap:12px; max-width:1200px; margin:0 auto; padding:10px 16px; }
+.site-header .brand { flex:0 0 auto; display:flex; align-items:center; gap:10px; color:#3b2f2a; text-decoration:none; }
+.site-header .nav   { flex:1 1 auto; display:flex; align-items:center; gap:10px; justify-content:flex-end; min-width:0; flex-wrap:wrap; }
+
+.pill { display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:999px; border:1px solid rgba(0,0,0,.12); background:#fff; color:#3b2f2a; text-decoration:none; font-weight:600; white-space:nowrap; }
+
+.lang { position:relative; z-index: 20; }
+.lang-menu {
+  position:absolute; right:0; top:calc(100% + 8px);
+  min-width: 180px; background:#fff; border:1px solid rgba(0,0,0,.12);
+  border-radius:12px; box-shadow:0 18px 36px rgba(0,0,0,.08);
+  padding:6px; z-index: 1001;
+}
+.lang-menu[hidden]{ display:none; }
+
+/* Small screens: allow wrapping and slightly smaller chips so nothing overlaps */
+@media (max-width: 780px) {
+  .site-header .nav { justify-content:flex-start; gap:8px; }
+  .pill { padding:8px 10px; font-size: 14px; }
+}
+
+/* Extra guard: if something below overlaps, keep header clickable */
+.site-header, .site-header * { pointer-events:auto; }
+
+/* --- Language menu must be clickable & visible --- */
+.site-header { position: sticky; top: 0; z-index: 1000; background: #f3eadf; overflow: visible; }
+.site-header .wrap { overflow: visible; }
+.lang { position: relative; z-index: 1001; }
+.lang-menu { z-index: 1002; }
+.lang-menu[hidden]{ display: none !important; }
+/* If any ancestor accidentally clips dropdown */
+.site-header, .site-header * { pointer-events: auto; }
+
+/* --- Footer centering guard (works with your loader or plain HTML) --- */
+.site-footer { background: transparent; }
+.site-footer .site-footer-wrap,
+.site-footer .foot-inner,
+.site-footer .foot-grid,
+#site-footer > * {
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
