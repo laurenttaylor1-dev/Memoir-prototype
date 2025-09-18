@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Memoir — Record</title>
+  <link rel="stylesheet" href="/partials/styles.css">
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main class="container" style="max-width:700px;margin:32px auto;padding:16px">
+    <h1>Upload an audio file</h1>
+    <input id="audioFile" type="file" accept="audio/*">
+    <button id="uploadBtn" class="btn primary" style="margin-top:10px">Create story & upload</button>
+    <div id="msg" style="margin-top:10px;min-height:1.2em"></div>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <script src="/js/header-loader.js"></script>
+  <script src="/js/footer-loader.js"></script>
+  <script src="/js/supabase-client.js"></script>
+  <script>
+  (async ()=>{
+    const { data: { user } } = await MEMOIR_SB.auth.getUser();
+    if (!user) { location.href = '/auth/sign-in.html'; return; }
+
+    const msg = document.getElementById('msg');
+    document.getElementById('uploadBtn').addEventListener('click', async ()=>{
+      try{
+        const file = document.getElementById('audioFile').files[0];
+        if(!file) { msg.textContent='Choose a file first.'; return; }
+
+        // 1) story
+        const { data: story, error: sErr } = await MEMOIR_SB
+          .from('stories')
+          .insert({ author_id: user.id, title: file.name, visibility: 'private' })
+          .select().single();
+        if (sErr) throw sErr;
+
+        // 2) upload audio
+        const path = await memoirUploadAudio(file, user.id);
+
+        // 3) link asset
+        const { error: aErr } = await MEMOIR_SB
+          .from('story_assets')
+          .insert({ story_id: story.id, kind: 'audio', path, mime: file.type });
+        if (aErr) throw aErr;
+
+        msg.style.color='#2d6a4f'; msg.textContent='Uploaded! Open My Stories to see it.';
+      }catch(e){
+        msg.style.color='#a33'; msg.textContent = e.message || 'Upload failed';
+      }
+    });
+  })();
+  </script>
+</body>
+</html>
