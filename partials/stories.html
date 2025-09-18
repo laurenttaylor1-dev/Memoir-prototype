@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Memoir — My Stories</title>
+  <link rel="stylesheet" href="/partials/styles.css">
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main class="container" style="max-width:900px;margin:32px auto;padding:16px">
+    <h1>My Stories</h1>
+    <ul id="stories"></ul>
+    <div id="msg" style="margin-top:8px;min-height:1.2em"></div>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <script src="/js/header-loader.js"></script>
+  <script src="/js/footer-loader.js"></script>
+  <script src="/js/supabase-client.js"></script>
+  <script>
+  (async ()=>{
+    const { data: { user } } = await MEMOIR_SB.auth.getUser();
+    if (!user) { location.href = '/auth/sign-in.html'; return; }
+
+    const { data, error } = await MEMOIR_SB
+      .from('stories')
+      .select('id,title,summary,created_at')
+      .order('created_at', { ascending:false });
+
+    const list = document.getElementById('stories');
+    const msg  = document.getElementById('msg');
+    if (error) { msg.textContent = error.message; return; }
+    list.innerHTML = (data||[]).map(s => `<li><strong>${s.title||'Untitled'}</strong> — ${new Date(s.created_at).toLocaleString()}</li>`).join('') || '<li>No stories yet.</li>';
+  })();
+  </script>
+</body>
+</html>
