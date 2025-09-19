@@ -47,7 +47,7 @@
   <div id="site-header"></div>
 
   <main class="container">
-    <h1 class="title" id="pageTitle" data-i18n="recordTitle">Record</h1>
+    <h1 class="title" id="pageTitle">Record</h1>
 
     <section class="grid">
       <!-- Left: capture -->
@@ -55,48 +55,48 @@
         <p id="planNote" class="muted planNote"></p>
 
         <div class="micZone">
-          <button id="mic" class="mic" aria-pressed="false" data-i18n="recordBtn">Record</button>
+          <button id="mic" class="mic" aria-pressed="false">Record</button>
           <div class="muted"><span class="timer" id="timer">00:00</span></div>
           <audio id="preview" controls style="display:none"></audio>
           <div id="recMsg" class="muted" style="min-height:1.2em"></div>
         </div>
 
         <div class="tabs">
-          <button id="tabFree" class="tab active" data-i18n="tabFree">Free</button>
-          <button id="tabGuided" class="tab" data-i18n="tabGuided">Guided</button>
+          <button id="tabFree" class="tab active">Free</button>
+          <button id="tabGuided" class="tab">Guided</button>
         </div>
 
-        <div class="label" data-i18n="promptsLabel">Today's suggested prompts</div>
+        <div class="label">Today's suggested prompts</div>
         <div class="row" style="justify-content:space-between">
           <div id="prompts" class="chips"></div>
-          <button id="refreshPrompts" class="btn" data-i18n="promptsRefresh">Suggest other prompts</button>
+          <button id="refreshPrompts" class="btn">Suggest other prompts</button>
         </div>
 
-        <div class="label" data-i18n="notesLabel">Notes (optional)</div>
-        <textarea id="notes" data-i18n-attr="placeholder:notesPlaceholder" placeholder="Add a quick note…"></textarea>
+        <div class="label">Notes (optional)</div>
+        <textarea id="notes" placeholder="Add a quick note…"></textarea>
 
         <div class="row" style="margin-top:12px">
-          <a href="/stories.html" class="btn" data-i18n="viewStories">My Stories</a>
+          <a href="/stories.html" class="btn">My Stories</a>
         </div>
       </div>
 
       <!-- Right: metadata + transcript -->
       <div class="card">
-        <div class="label" data-i18n="titleLabel">Title</div>
-        <input id="title" type="text" data-i18n-attr="placeholder:titlePlaceholder" placeholder="Story title"/>
+        <div class="label">Title</div>
+        <input id="title" type="text" placeholder="Story title"/>
 
-        <div class="label" data-i18n="whenLabel">When did this happen?</div>
-        <input id="when" type="text" data-i18n-attr="placeholder:whenPlaceholder" placeholder='e.g. "summer 1945", "early 2018", "15 Feb 1972"' />
+        <div class="label">When did this happen?</div>
+        <input id="when" type="text" placeholder='e.g. "summer 1945", "early 2018", "15 Feb 1972"' />
 
-        <div class="label" data-i18n="photoLabel">Add photo (optional)</div>
+        <div class="label">Add photo (optional)</div>
         <input id="photo" type="file" accept="image/*" />
 
-        <div class="label" style="margin-top:14px" data-i18n="transcriptLabel">Transcript</div>
-        <div id="transcript" class="transcript" aria-live="polite" data-i18n="transcriptEmpty">Your words will appear here…</div>
+        <div class="label" style="margin-top:14px">Transcript</div>
+        <div id="transcript" class="transcript" aria-live="polite">Your words will appear here…</div>
         <div class="hint" id="asrHint"></div>
 
         <div class="row" style="margin-top:14px">
-          <button id="saveBtn" class="btn primary" data-i18n="saveStory">Save story</button>
+          <button id="saveBtn" class="btn primary">Save story</button>
         </div>
       </div>
     </section>
@@ -141,7 +141,7 @@
       }
     })();
 
-    // Prompts + tabs (as-is)
+    // Prompts + tabs
     const TOPIC_WORDS = {
       en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
       fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
@@ -170,7 +170,7 @@
       t.classList.add('active');
     });
 
-    // --- Recorder with 2-minute cap for free plan ---
+    // --- Recorder with auto-upload + story creation ---
     const micBtn   = document.getElementById('mic');
     const timerEl  = document.getElementById('timer');
     const msgEl    = document.getElementById('recMsg');
@@ -190,7 +190,6 @@
       tickHandle = setInterval(()=>{
         const sec = ((Date.now()-startedAt)/1000)|0;
         timerEl.textContent = fmt(sec);
-
         if (currentPlan === 'free' && sec >= 120) {
           msgEl.className = 'muted warn';
           msgEl.textContent = 'Reached 2-minute limit on Free plan — stopping.';
@@ -198,11 +197,7 @@
         }
       }, 200);
     }
-
-    function stopTimer() {
-      clearInterval(tickHandle);
-      tickHandle = null;
-    }
+    function stopTimer() { clearInterval(tickHandle); tickHandle = null; }
 
     async function startRecording(){
       msgEl.className='muted';
@@ -210,14 +205,13 @@
       chunks = [];
       preview.style.display = 'none';
       preview.src = '';
-
       try{
         mediaStream = await navigator.mediaDevices.getUserMedia({ audio:true });
         const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : undefined;
         recorder = new MediaRecorder(mediaStream, mime ? { mimeType: mime } : undefined);
 
         recorder.ondataavailable = (e)=>{ if (e.data?.size) chunks.push(e.data); };
-        recorder.onstop = ()=>{
+        recorder.onstop = async ()=>{
           stopTimer();
           mediaStream.getTracks().forEach(t=>t.stop());
           const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
@@ -228,35 +222,68 @@
           micBtn.classList.remove('pulse');
           micBtn.setAttribute('aria-pressed','false');
 
-          // TODO: When you want, upload `blob` here to Supabase Storage.
-          // For example (after creating a story row):
-          // const ext = 'webm';
-          // const path = `user/${user.id}/audio/${crypto.randomUUID()}.${ext}`;
-          // await SB.storage.from('story-media').upload(path, blob, { contentType: blob.type });
+          // ---- AUTO-CREATE STORY + UPLOAD ----
+          try {
+            const { data: { user } } = await SB.auth.getUser();
+            if (!user) { msgEl.className='muted warn'; msgEl.textContent='Please sign in again.'; return; }
+
+            // 1) Create story row
+            const title = document.getElementById('title').value.trim() || 'Untitled';
+            const when  = document.getElementById('when').value.trim() || null;
+            const notes = document.getElementById('notes').value.trim() || null;
+
+            const ins = await SB.from('stories')
+              .insert({ title, when_text: when, notes, visibility: 'private' })
+              .select()
+              .single();
+            if (ins.error) throw ins.error;
+            const story = ins.data;
+
+            // 2) Upload audio to Storage
+            const path = `user/${user.id}/audio/${crypto.randomUUID()}.webm`;
+            const up = await SB.storage.from('story-media').upload(path, blob, { contentType: blob.type });
+            if (up.error) throw up.error;
+
+            // 3) Link asset
+            const asset = await SB.from('story_assets')
+              .insert({ story_id: story.id, kind: 'audio', path, mime: blob.type })
+              .select()
+              .single();
+            if (asset.error) throw asset.error;
+
+            // 4) Optional: create empty text row for later AI rewrite
+            await SB.from('story_texts')
+              .insert({ story_id: story.id, original_text: null, rewritten_text: null })
+              .select().single().catch(()=>{ /* ignore if table not present */ });
+
+            msgEl.className = 'ok';
+            msgEl.innerHTML = `Uploaded and saved! <a href="/stories.html">Go to My Stories</a>`;
+          } catch (e) {
+            console.error(e);
+            msgEl.className='muted warn';
+            msgEl.textContent = 'Upload failed: ' + (e.message||e);
+          }
+          // ------------------------------------
+
         };
 
-        recorder.start(250); // gather data every 250ms
+        recorder.start(250);
         startTimer();
-
         micBtn.textContent = 'Stop';
         micBtn.classList.add('pulse');
         micBtn.setAttribute('aria-pressed','true');
+
       }catch(e){
         msgEl.className = 'muted warn';
         msgEl.textContent = 'Microphone error: ' + (e.message || e);
       }
     }
-
     function stopRecording(){
       try { recorder?.state === 'recording' && recorder.stop(); } catch {}
     }
-
     micBtn.addEventListener('click', ()=>{
-      if (recorder && recorder.state === 'recording') {
-        stopRecording();
-      } else {
-        startRecording();
-      }
+      if (recorder && recorder.state === 'recording') stopRecording();
+      else startRecording();
     });
   </script>
 </body>
