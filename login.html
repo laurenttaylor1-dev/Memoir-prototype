@@ -29,29 +29,30 @@
     .btn.ghost{background:transparent}
     .error{margin-top:8px; color:#a23a3a; font-size:14px; min-height:1.1em}
     .helper{color:var(--muted); font-size:14px; margin-top:4px}
-    .notice{margin:0 auto 12px; max-width:900px; padding:10px 14px; border-radius:12px; background:#e9f7ef; color:#1b5e20; border:1px solid #c7ebd2}
-    .notice.err{background:#fdecea; color:#8a1f17; border-color:#f5c6c1}
 
-    /* Register reveal */
-    #registerPanel{max-height:0; overflow:hidden; transition:max-height .35s ease, opacity .25s ease; opacity:0}
-    #registerPanel.open{max-height:1200px; opacity:1}
+    /* Reveal panels */
+    #registerPanel, #resetPanel{max-height:0; overflow:hidden; transition:max-height .35s ease, opacity .25s ease; opacity:0}
+    #registerPanel.open, #resetPanel.open{max-height:1200px; opacity:1}
     .gdpr{display:flex; gap:10px; align-items:flex-start; font-size:14px; color:var(--muted)}
     .gdpr input{width:auto}
+
+    /* Top notice */
+    .notice{margin:10px auto 0; max-width:900px; padding:10px 14px; border-radius:12px;
+      background:#e9f7ef; color:#1b5e20; border:1px solid #c7ebd2; display:none}
   </style>
 
-  <!-- Inline Supabase config (guaranteed to run on this page) -->
+  <!-- Inline Supabase config -->
   <script>
     window.MEMOIR_SUPABASE_URL  = "https://fswxkujxusdozvmpyvzk.supabase.co";
     window.MEMOIR_SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
   </script>
-  <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="site-header"></div>
 
-  <!-- confirmation / recovery notices -->
-  <div id="topNotice" class="notice" style="display:none"></div>
+  <!-- Confirmation / recovery banner -->
+  <div id="topNotice" class="notice"></div>
 
   <main class="container">
     <h1 class="title" data-i18n="login.title">Welcome back</h1>
@@ -74,6 +75,7 @@
         <div class="actions">
           <button id="loginSubmit" class="btn primary" type="submit" data-i18n="login.submit">Sign in</button>
           <button id="toggleRegister" class="btn" type="button" data-i18n="login.registerToggle">Register</button>
+          <button id="toggleReset" class="btn ghost" type="button" data-i18n="login.forgot">Forgot password?</button>
           <a class="btn ghost" href="/landing.html" data-i18n="login.cancel">Cancel</a>
         </div>
         <div id="loginError" class="error" role="status" aria-live="polite"></div>
@@ -106,8 +108,8 @@
             <label for="reg_plan" data-i18n="register.planLabel">Plan</label>
             <select id="reg_plan">
               <option value="free" selected data-i18n="register.planFree">Free</option>
-              <option value="storyteller" data-i18n="register.planBasic">Storyteller (3h/mo)</option>
-              <option value="premium" data-i18n="register.planPro">Premium Storyteller (6h/mo)</option>
+              <option value="storyteller">Storyteller (3h/mo)</option>
+              <option value="premium">Premium Storyteller (6h/mo)</option>
               <option value="exclusive">Exclusive Storyteller (10h/mo)</option>
             </select>
           </div>
@@ -124,6 +126,23 @@
           <div id="registerError" class="error" role="status" aria-live="polite"></div>
         </form>
       </div>
+
+      <!-- Reset password (inline) -->
+      <div id="resetPanel" aria-hidden="true">
+        <hr style="border:none;border-top:1px dashed rgba(0,0,0,.1);margin:14px 0 10px">
+        <h2 class="title" style="font-size:22px; margin:0 0 8px;">Reset your password</h2>
+        <form id="resetForm" class="grid" novalidate>
+          <div class="field">
+            <label for="reset_email">Your email</label>
+            <input id="reset_email" type="email" placeholder="you@email.com" required>
+          </div>
+          <div class="actions">
+            <button class="btn primary" type="submit">Send reset link</button>
+            <button class="btn" type="button" id="closeReset">Close</button>
+          </div>
+          <div id="resetMsg" class="helper" role="status" aria-live="polite"></div>
+        </form>
+      </div>
     </section>
   </main>
 
@@ -133,21 +152,41 @@
   <script src="/js/footer-loader.js"></script>
 
   <script>
-    // ------------- Supabase client -------------
-    const SB = window.supabase.createClient(
-      window.MEMOIR_SUPABASE_URL,
-      window.MEMOIR_SUPABASE_ANON
-    );
+    const SB = supabase.createClient(window.MEMOIR_SUPABASE_URL, window.MEMOIR_SUPABASE_ANON);
 
-    // Show/hide Register panel
-    const regPanel = document.getElementById('registerPanel');
+    // Top banner for confirmation/recovery
+    (async function(){
+      const n = document.getElementById('topNotice');
+      const hash = location.hash || '';
+      if (hash.includes('type=signup')) {
+        const { data: { user } } = await SB.auth.getUser();
+        n.textContent = user ? 'Email confirmed — you are signed in.' : 'Email confirmed — you can sign in now.';
+        n.style.display = 'block';
+        if (user) setTimeout(()=> location.href='/settings.html', 1200);
+      } else if (hash.includes('type=recovery')) {
+        n.textContent = 'Open this page on your device to set a new password (Settings will reflect the change).';
+        n.style.display = 'block';
+      }
+    })();
+
+    // Toggle panels
+    const regPanel   = document.getElementById('registerPanel');
+    const resetPanel = document.getElementById('resetPanel');
     document.getElementById('toggleRegister').addEventListener('click', ()=>{
       const open = regPanel.classList.toggle('open');
       regPanel.setAttribute('aria-hidden', String(!open));
       if(open) document.getElementById('reg_name').focus();
     });
+    document.getElementById('toggleReset').addEventListener('click', ()=>{
+      const open = resetPanel.classList.toggle('open');
+      resetPanel.setAttribute('aria-hidden', String(!open));
+      if(open) document.getElementById('reset_email').focus();
+    });
+    document.getElementById('closeReset').addEventListener('click', ()=>{
+      resetPanel.classList.remove('open'); resetPanel.setAttribute('aria-hidden','true');
+    });
 
-    // Username -> email (optional RPC; if missing, we just use email)
+    // Optional username -> email RPC
     async function resolveEmail(identifier){
       const id = (identifier||'').trim();
       if (!id) return null;
@@ -159,29 +198,7 @@
       }catch(e){ console.warn('[RPC] failed', e); return null; }
     }
 
-    // ------------- Email confirmation / recovery banners -------------
-    (async function handleAuthCallbacks(){
-      const box = document.getElementById('topNotice');
-      const hash = location.hash || '';
-      if (hash.includes('type=signup')) {
-        // After clicking confirm in email, Supabase usually signs the user in.
-        const { data: { user } } = await SB.auth.getUser();
-        if (user) {
-          box.textContent = 'Email confirmed — you are now signed in.';
-          box.style.display = 'block';
-          setTimeout(()=> location.href = '/settings.html', 1200);
-        } else {
-          box.textContent = 'Email confirmed — you can now sign in.';
-          box.style.display = 'block';
-        }
-      } else if (hash.includes('type=recovery')) {
-        box.classList.add('notice'); // already has
-        box.textContent = 'Please set a new password (open the Settings page to manage your account).';
-        box.style.display = 'block';
-      }
-    })();
-
-    // ------------- Sign in -------------
+    // Sign in
     (function(){
       const form = document.getElementById('loginForm');
       const err  = document.getElementById('loginError');
@@ -189,20 +206,15 @@
 
       form.addEventListener('submit', async (e)=>{
         e.preventDefault();
-        err.textContent = '';
-        btn.disabled = true; btn.setAttribute('aria-busy','true');
+        err.textContent = ''; btn.disabled = true; btn.setAttribute('aria-busy','true');
         try{
           const identifier = document.getElementById('identifier').value;
           const password   = document.getElementById('password').value;
           if(!identifier || !password){ err.textContent='Please fill email/username and password.'; return; }
-
           let email = identifier.includes('@') ? identifier.trim() : await resolveEmail(identifier);
           if(!email){ err.textContent='We could not find that user.'; return; }
-
           const { error } = await SB.auth.signInWithPassword({ email, password });
           if (error) throw error;
-
-          // Logged in — go somewhere meaningful
           location.href = '/settings.html';
         }catch(ex){
           err.textContent = ex?.message || 'Sign in failed. Please try again.';
@@ -212,7 +224,7 @@
       });
     })();
 
-    // ------------- Register -------------
+    // Register
     (function(){
       const form = document.getElementById('registerForm');
       const err  = document.getElementById('registerError');
@@ -234,18 +246,37 @@
             email, password,
             options: {
               emailRedirectTo: location.origin + '/login.html#type=signup',
-              data: { name, username, subscription_plan: plan, gdpr_consent: true }
+              data: { full_name: name, username, subscription_plan: plan, gdpr_consent: true }
             }
           });
           if (error) throw error;
 
           err.style.color = '#1b5e20';
-          err.textContent = 'Account created! Please confirm via email, then return here.';
-          // keep the panel open so the message is visible
+          err.textContent = 'Account created! Please confirm via email, then sign in.';
         }catch(ex){
           err.textContent = ex?.message || 'Registration failed.';
         }finally{
           btn.disabled = false; btn.removeAttribute('aria-busy');
+        }
+      });
+    })();
+
+    // Reset password
+    (function(){
+      const form = document.getElementById('resetForm');
+      const msg  = document.getElementById('resetMsg');
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        msg.textContent = 'Sending…';
+        try{
+          const email = document.getElementById('reset_email').value.trim();
+          const { error } = await SB.auth.resetPasswordForEmail(email, {
+            redirectTo: location.origin + '/login.html#type=recovery'
+          });
+          if (error) throw error;
+          msg.textContent = 'Check your inbox for a reset link.';
+        }catch(ex){
+          msg.textContent = ex?.message || 'Could not send reset email.';
         }
       });
     })();
