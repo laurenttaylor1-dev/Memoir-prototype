@@ -18,6 +18,7 @@
     .pill.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:0}
     .muted{color:var(--muted)}
     .list{margin:0 0 0 18px}
+    .badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#efe7de;font-size:12px}
   </style>
 </head>
 <body>
@@ -27,71 +28,178 @@
     <h1 class="title" data-i18n="settingsTitle">Settings</h1>
 
     <section class="grid">
-      <div class="card">
+      <!-- Account -->
+      <div class="card" id="accountCard">
         <h3 data-i18n="settingsAccount">Account</h3>
-        <p class="muted" data-i18n="settingsAccountCopy">Manage your sign-in and personal details.</p>
-        <button class="pill" data-i18n="settingsSignIn">Sign in</button>
-      </div>
-
-      <div class="card" id="subscribe">
-        <h3 data-i18n="settingsSub">Subscription</h3>
-        <p class="muted" data-i18n="settingsSubCopy">Choose or change your plan.</p>
-        <div class="list">
-          <p><strong data-i18n="planStoryTitle">Storyteller — €6.99/month</strong> — <a href="/api/checkout?price=storyteller" class="pill primary" data-i18n="ctaSubscribe">Subscribe</a></p>
-          <p><strong data-i18n="planFamilyTitle">Family — €8.99/month</strong> — <a href="/api/checkout?price=family" class="pill primary" data-i18n="ctaSubscribe">Subscribe</a></p>
-          <p><strong data-i18n="planExclTitle">Exclusive — €11.99/month</strong> — <a href="/api/checkout?price=exclusive" class="pill primary" data-i18n="ctaSubscribe">Subscribe</a></p>
+        <p class="muted" id="accountCopy">Manage your sign-in and personal details.</p>
+        <div id="accountArea">
+          <!-- filled by JS -->
         </div>
       </div>
 
+      <!-- Subscription -->
+      <div class="card" id="subscribe">
+        <h3 data-i18n="settingsSub">Subscription</h3>
+        <p class="muted" data-i18n="settingsSubCopy">Choose or change your plan.</p>
+        <div class="list" id="plansArea">
+          <!-- filled by JS -->
+        </div>
+      </div>
+
+      <!-- Billing -->
       <div class="card">
         <h3 data-i18n="settingsBilling">Billing</h3>
         <p class="muted" data-i18n="settingsBillingCopy">View invoices and next renewal.</p>
-        <button class="pill" data-i18n="settingsManageBilling">Manage billing</button>
+        <a class="pill" href="/api/billing-portal" id="billingBtn" aria-disabled="true">Manage billing</a>
       </div>
 
+      <!-- FAQ -->
       <div class="card">
         <h3 data-i18n="settingsFaq">FAQ</h3>
         <ul class="list">
-          <li data-i18n="faqQ1">Is there a free plan?</li>
-          <li data-i18n="faqQ2">Which languages are supported?</li>
-          <li data-i18n="faqQ3">How is transcription done?</li>
+          <li>Is there a free plan? — Yes, with a 2-minute recording cap and read-only family sharing.</li>
+          <li>Which languages are supported? — English, French, Dutch, Spanish (more coming).</li>
+          <li>How is transcription done? — Secure automated transcription with monthly quotas by plan.</li>
         </ul>
       </div>
 
-      <!-- 5) Detailed plan descriptions -->
+      <!-- Plan details -->
       <div class="card" style="grid-column:1/-1">
         <h3 data-i18n="settingsPlanDetails">Subscription details</h3>
         <div class="grid">
           <div class="card">
-            <h4 data-i18n="planStoryTitle">Storyteller — €6.99/month</h4>
+            <h4>Storyteller — €8.99/month</h4>
             <ul class="list">
-              <li data-i18n="planStoryB1"></li>
-              <li data-i18n="planStoryB2"></li>
-              <li data-i18n="planStoryB3"></li>
+              <li>Up to 3 hours of transcription / month</li>
+              <li>Share “My Stories” with up to 4 family members (read-only)</li>
+              <li>Priority support</li>
             </ul>
           </div>
           <div class="card">
-            <h4 data-i18n="planFamilyTitle">Family — €8.99/month</h4>
+            <h4>Premium Storyteller — €11.99/month</h4>
             <ul class="list">
-              <li data-i18n="planFamilyB1"></li>
-              <li data-i18n="planFamilyB2"></li>
-              <li data-i18n="planFamilyB3"></li>
+              <li>Up to 6 hours of transcription / month</li>
+              <li>Share “My Stories” with up to 4 family members (read-only)</li>
+              <li>Priority support + faster processing</li>
             </ul>
           </div>
           <div class="card">
-            <h4 data-i18n="planExclTitle">Exclusive — €11.99/month</h4>
+            <h4>Exclusive Storyteller — €15.99/month</h4>
             <ul class="list">
-              <li data-i18n="planExclB1"></li>
-              <li data-i18n="planExclB2"></li>
-              <li data-i18n="planExclB3"></li>
+              <li>Up to 10 hours of transcription / month</li>
+              <li>Share “My Stories” with up to 4 family members (read-only)</li>
+              <li>Highest priority & early features</li>
             </ul>
           </div>
         </div>
+        <p class="muted" style="margin-top:8px">Family members can view the owner’s stories but cannot record (free users can record up to 2 minutes).</p>
       </div>
     </section>
   </main>
 
   <div id="site-footer"></div>
+
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // Use the same config as on login; if absent, we can still show "Sign in" UI.
+    const SB = window.MEMOIR_SUPABASE_URL && window.MEMOIR_SUPABASE_ANON
+      ? supabase.createClient(window.MEMOIR_SUPABASE_URL, window.MEMOIR_SUPABASE_ANON)
+      : null;
+
+    function fmtMinutes(sec){ return Math.floor(sec/60) + ' min'; }
+    function el(html){ const d=document.createElement('div'); d.innerHTML=html.trim(); return d.firstChild; }
+
+    (async function init(){
+      const accountArea = document.getElementById('accountArea');
+      const plansArea   = document.getElementById('plansArea');
+      const billingBtn  = document.getElementById('billingBtn');
+
+      if (!SB){
+        accountArea.innerHTML = `<p>You’re not signed in. <a class="pill primary" href="/login.html">Sign in</a></p>`;
+        plansArea.innerHTML   = `<p class="muted">Sign in to manage your subscription.</p>`;
+        billingBtn.setAttribute('aria-disabled','true');
+        return;
+      }
+
+      const { data: { user } } = await SB.auth.getUser();
+
+      if (!user){
+        accountArea.innerHTML = `<p>You’re not signed in. <a class="pill primary" href="/login.html">Sign in</a></p>`;
+        plansArea.innerHTML   = `<p class="muted">Sign in to manage your subscription.</p>`;
+        billingBtn.setAttribute('aria-disabled','true');
+        return;
+      }
+
+      // Logged-in view
+      billingBtn.removeAttribute('aria-disabled');
+
+      // Fetch profile (expects table public.profiles with these columns)
+      let profile = null, pErr = null;
+      try{
+        const { data, error } = await SB
+          .from('profiles')
+          .select('full_name, username, subscription_plan, subscription_status, used_seconds, quota_seconds, next_reset_at')
+          .eq('user_id', user.id)
+          .single();
+        profile = data; pErr = error;
+      }catch(e){ pErr = e; }
+
+      // Account block
+      const name = profile?.full_name || '(no name set)';
+      const uname = profile?.username ? ` <span class="badge">@${profile.username}</span>` : '';
+      const plan  = (profile?.subscription_plan || 'free').toUpperCase();
+      const status = profile?.subscription_status || 'free';
+      const used  = profile?.used_seconds ?? 0;
+      const quota = profile?.quota_seconds ?? 0;
+      const next  = profile?.next_reset_at ? new Date(profile.next_reset_at).toLocaleString() : '—';
+
+      accountArea.innerHTML = `
+        <p><strong>${name}</strong>${uname}<br>
+           <span class="muted">${user.email}</span></p>
+        <p>Plan: <strong>${plan}</strong> <span class="badge">${status}</span></p>
+        <p>Usage this month: <strong>${fmtMinutes(used)}</strong> / ${fmtMinutes(quota)} · resets: ${next}</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+          <a class="pill" href="/login.html">Switch account</a>
+          <button class="pill" id="signOutBtn">Sign out</button>
+        </div>
+        ${pErr ? `<p class="muted">Profile lookup error: ${pErr.message}</p>` : ''}
+      `;
+
+      document.getElementById('signOutBtn').addEventListener('click', async ()=>{
+        await SB.auth.signOut();
+        location.href = '/login.html';
+      });
+
+      // Plans block (keeps your /api/checkout pattern)
+      const current = (profile?.subscription_plan || 'free');
+      const planBtn = (slug, label, price) =>
+        `<p><strong>${label} — €${price}/month</strong>
+           — <a class="pill primary" href="/api/checkout?price=${slug}">${current===slug?'Change billing method':'Subscribe'}</a>
+           ${current===slug?'<span class="badge">current</span>':''}
+         </p>`;
+
+      plansArea.innerHTML = [
+        planBtn('storyteller','Storyteller (3h/mo)','8.99'),
+        planBtn('premium','Premium Storyteller (6h/mo)','11.99'),
+        planBtn('exclusive','Exclusive Storyteller (10h/mo)','15.99'),
+        `<p><strong>Free</strong> — <button id="switchFree" class="pill">Switch to Free</button></p>`,
+        `<hr style="border:none;border-top:1px dashed rgba(0,0,0,.12)">`,
+        `<p class="muted">Family sharing: add up to 4 read-only members who can view your “My Stories”.
+           Non-paid members can still record up to 2 minutes.</p>`
+      ].join('');
+
+      // Optional: let users switch to Free in-app (no Stripe). This only updates profile.
+      document.getElementById('switchFree').addEventListener('click', async ()=>{
+        const { error } = await SB
+          .from('profiles')
+          .update({ subscription_plan: 'free', subscription_status: 'free' })
+          .eq('user_id', user.id);
+        if (error) { alert('Could not switch to Free: ' + error.message); return; }
+        location.reload();
+      });
+    })();
+  </script>
 
   <script src="/js/lang.js"></script>
   <script src="/js/header-loader.js"></script>
