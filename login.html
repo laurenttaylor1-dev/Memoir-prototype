@@ -17,6 +17,8 @@
     .title{font-size:clamp(28px,3.2vw,40px); margin:10px 0 18px; font-weight:800; text-align:center}
     .card{background:var(--card); border:1px solid rgba(0,0,0,.08); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px}
     .grid{display:grid; grid-template-columns:1fr; gap:16px}
+    .row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:700px){.row-2{grid-template-columns:1fr}}
     .field{display:flex; flex-direction:column; gap:6px}
     label{font-size:14px; color:var(--muted)}
     input, select{
@@ -30,18 +32,14 @@
     .error{margin-top:8px; color:#a23a3a; font-size:14px; min-height:1.1em}
     .helper{color:var(--muted); font-size:14px; margin-top:4px}
 
-    /* Reveal panels */
     #registerPanel, #resetPanel{max-height:0; overflow:hidden; transition:max-height .35s ease, opacity .25s ease; opacity:0}
     #registerPanel.open, #resetPanel.open{max-height:1200px; opacity:1}
     .gdpr{display:flex; gap:10px; align-items:flex-start; font-size:14px; color:var(--muted)}
     .gdpr input{width:auto}
-
-    /* Top notice */
     .notice{margin:10px auto 0; max-width:900px; padding:10px 14px; border-radius:12px;
       background:#e9f7ef; color:#1b5e20; border:1px solid #c7ebd2; display:none}
   </style>
 
-  <!-- Inline Supabase config -->
   <script>
     window.MEMOIR_SUPABASE_URL  = "https://fswxkujxusdozvmpyvzk.supabase.co";
     window.MEMOIR_SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
@@ -50,64 +48,63 @@
 </head>
 <body>
   <div id="site-header"></div>
-
-  <!-- Confirmation / recovery banner -->
   <div id="topNotice" class="notice"></div>
 
   <main class="container">
     <h1 class="title" data-i18n="login.title">Welcome back</h1>
 
     <section class="card">
-      <!-- Sign-in -->
       <form id="loginForm" novalidate class="grid">
         <div class="field">
-          <label for="identifier" data-i18n="login.identifierLabel">Email or username</label>
-          <input id="identifier" name="identifier" type="text" autocomplete="username"
-                 data-i18n-attr="placeholder:login.identifierPH"
-                 placeholder="you@example.com or username" required>
+          <label for="identifier">Email or username</label>
+          <input id="identifier" name="identifier" type="text" autocomplete="username" placeholder="you@example.com or username" required>
         </div>
         <div class="field">
-          <label for="password" data-i18n="login.passwordLabel">Password</label>
-          <input id="password" name="password" type="password" autocomplete="current-password"
-                 data-i18n-attr="placeholder:login.passwordPH"
-                 placeholder="Your password" required>
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Your password" required>
         </div>
         <div class="actions">
-          <button id="loginSubmit" class="btn primary" type="submit" data-i18n="login.submit">Sign in</button>
-          <button id="toggleRegister" class="btn" type="button" data-i18n="login.registerToggle">Register</button>
-          <button id="toggleReset" class="btn ghost" type="button" data-i18n="login.forgot">Forgot password?</button>
-          <a class="btn ghost" href="/landing.html" data-i18n="login.cancel">Cancel</a>
+          <button id="loginSubmit" class="btn primary" type="submit">Sign in</button>
+          <button id="toggleRegister" class="btn" type="button">Register</button>
+          <button id="toggleReset" class="btn ghost" type="button">Forgot password?</button>
+          <a class="btn ghost" href="/landing.html">Cancel</a>
         </div>
         <div id="loginError" class="error" role="status" aria-live="polite"></div>
-        <div class="helper" data-i18n="login.helper">Press Enter to sign in.</div>
+        <div class="helper">Press Enter to sign in.</div>
       </form>
 
-      <!-- Register (inline) -->
+      <!-- Register -->
       <div id="registerPanel" aria-hidden="true">
         <hr style="border:none;border-top:1px dashed rgba(0,0,0,.1);margin:14px 0 10px">
-        <h2 class="title" style="font-size:22px; margin:0 0 8px;" data-i18n="register.title">Create your account</h2>
+        <h2 class="title" style="font-size:22px; margin:0 0 8px;">Create your account</h2>
 
         <form id="registerForm" class="grid" novalidate>
-          <div class="field">
-            <label for="reg_name" data-i18n="register.nameLabel">Your name</label>
-            <input id="reg_name" type="text" data-i18n-attr="placeholder:register.namePH" placeholder="Jane Doe" required>
+          <div class="row-2">
+            <div class="field">
+              <label for="reg_first">First name</label>
+              <input id="reg_first" type="text" placeholder="Jane" required>
+            </div>
+            <div class="field">
+              <label for="reg_last">Last name</label>
+              <input id="reg_last" type="text" placeholder="Doe" required>
+            </div>
           </div>
           <div class="field">
-            <label for="reg_username" data-i18n="register.usernameLabel">Username (optional)</label>
-            <input id="reg_username" type="text" data-i18n-attr="placeholder:register.usernamePH" placeholder="janedoe">
+            <label for="reg_username">Username (optional)</label>
+            <input id="reg_username" type="text" placeholder="janedoe">
           </div>
           <div class="field">
-            <label for="reg_email" data-i18n="register.emailLabel">Email</label>
-            <input id="reg_email" type="email" data-i18n-attr="placeholder:register.emailPH" placeholder="you@email.com" required>
+            <label for="reg_email">Email</label>
+            <input id="reg_email" type="email" placeholder="you@email.com" required>
           </div>
           <div class="field">
-            <label for="reg_password" data-i18n="register.passwordLabel">Password (min 6 chars)</label>
-            <input id="reg_password" type="password" data-i18n-attr="placeholder:register.passwordPH" placeholder="Password" required>
+            <label for="reg_password">Password (min 6 chars)</label>
+            <input id="reg_password" type="password" placeholder="Password" required>
           </div>
           <div class="field">
-            <label for="reg_plan" data-i18n="register.planLabel">Plan</label>
+            <label for="reg_plan">Plan</label>
             <select id="reg_plan">
-              <option value="free" selected data-i18n="register.planFree">Free</option>
+              <option value="free" selected>Free</option>
               <option value="storyteller">Storyteller (3h/mo)</option>
               <option value="premium">Premium Storyteller (6h/mo)</option>
               <option value="exclusive">Exclusive Storyteller (10h/mo)</option>
@@ -115,19 +112,18 @@
           </div>
           <div class="gdpr">
             <input id="reg_gdpr" type="checkbox" required>
-            <label for="reg_gdpr" data-i18n="register.gdprText">
-              I agree to the <a href="/terms.html" target="_blank">Terms</a> and <a href="/privacy.html" target="_blank">Privacy Policy</a>,
-              and consent to the processing of my data for account creation and service delivery.
+            <label for="reg_gdpr">
+              I agree to the <a href="/terms.html" target="_blank">Terms</a> and <a href="/privacy.html" target="_blank">Privacy Policy</a>.
             </label>
           </div>
           <div class="actions">
-            <button id="registerSubmit" class="btn primary" type="submit" data-i18n="register.submit">Create account</button>
+            <button id="registerSubmit" class="btn primary" type="submit">Create account</button>
           </div>
           <div id="registerError" class="error" role="status" aria-live="polite"></div>
         </form>
       </div>
 
-      <!-- Reset password (inline) -->
+      <!-- Reset -->
       <div id="resetPanel" aria-hidden="true">
         <hr style="border:none;border-top:1px dashed rgba(0,0,0,.1);margin:14px 0 10px">
         <h2 class="title" style="font-size:22px; margin:0 0 8px;">Reset your password</h2>
@@ -150,7 +146,6 @@
 
   <script src="/js/header-loader.js"></script>
   <script src="/js/footer-loader.js"></script>
-
   <script>
     const SB = supabase.createClient(window.MEMOIR_SUPABASE_URL, window.MEMOIR_SUPABASE_ANON);
 
@@ -164,7 +159,7 @@
         n.style.display = 'block';
         if (user) setTimeout(()=> location.href='/settings.html', 1200);
       } else if (hash.includes('type=recovery')) {
-        n.textContent = 'Open this page on your device to set a new password (Settings will reflect the change).';
+        n.textContent = 'Open this page to set a new password (Settings will reflect the change).';
         n.style.display = 'block';
       }
     })();
@@ -175,7 +170,7 @@
     document.getElementById('toggleRegister').addEventListener('click', ()=>{
       const open = regPanel.classList.toggle('open');
       regPanel.setAttribute('aria-hidden', String(!open));
-      if(open) document.getElementById('reg_name').focus();
+      if(open) document.getElementById('reg_first').focus();
     });
     document.getElementById('toggleReset').addEventListener('click', ()=>{
       const open = resetPanel.classList.toggle('open');
@@ -186,7 +181,7 @@
       resetPanel.classList.remove('open'); resetPanel.setAttribute('aria-hidden','true');
     });
 
-    // Optional username -> email RPC
+    // Optional username -> email
     async function resolveEmail(identifier){
       const id = (identifier||'').trim();
       if (!id) return null;
@@ -203,10 +198,8 @@
       const form = document.getElementById('loginForm');
       const err  = document.getElementById('loginError');
       const btn  = document.getElementById('loginSubmit');
-
       form.addEventListener('submit', async (e)=>{
-        e.preventDefault();
-        err.textContent = ''; btn.disabled = true; btn.setAttribute('aria-busy','true');
+        e.preventDefault(); err.textContent=''; btn.disabled=true; btn.setAttribute('aria-busy','true');
         try{
           const identifier = document.getElementById('identifier').value;
           const password   = document.getElementById('password').value;
@@ -216,68 +209,59 @@
           const { error } = await SB.auth.signInWithPassword({ email, password });
           if (error) throw error;
           location.href = '/settings.html';
-        }catch(ex){
-          err.textContent = ex?.message || 'Sign in failed. Please try again.';
-        }finally{
-          btn.disabled = false; btn.removeAttribute('aria-busy');
-        }
+        }catch(ex){ err.textContent = ex?.message || 'Sign in failed. Please try again.'; }
+        finally{ btn.disabled=false; btn.removeAttribute('aria-busy'); }
       });
     })();
 
-    // Register
+    // Register (first/last name)
     (function(){
       const form = document.getElementById('registerForm');
       const err  = document.getElementById('registerError');
       const btn  = document.getElementById('registerSubmit');
-
       form.addEventListener('submit', async (e)=>{
         e.preventDefault(); err.textContent=''; err.style.color='#a23a3a';
-        btn.disabled = true; btn.setAttribute('aria-busy','true');
+        btn.disabled=true; btn.setAttribute('aria-busy','true');
         try{
-          const name      = document.getElementById('reg_name').value.trim();
+          const first     = document.getElementById('reg_first').value.trim();
+          const last      = document.getElementById('reg_last').value.trim();
           const username  = document.getElementById('reg_username').value.trim() || null;
           const email     = document.getElementById('reg_email').value.trim();
           const password  = document.getElementById('reg_password').value;
           const plan      = document.getElementById('reg_plan').value;
           const gdprOk    = document.getElementById('reg_gdpr').checked;
-          if(!gdprOk) { err.textContent='Please agree to the Terms and Privacy Policy.'; return; }
+          if(!gdprOk){ err.textContent='Please agree to the Terms and Privacy Policy.'; return; }
+
+          const full_name = `${first} ${last}`.trim();
 
           const { error } = await SB.auth.signUp({
             email, password,
             options: {
               emailRedirectTo: location.origin + '/login.html#type=signup',
-              data: { full_name: name, username, subscription_plan: plan, gdpr_consent: true }
+              data: { first_name:first, last_name:last, full_name, username, subscription_plan: plan, gdpr_consent: true }
             }
           });
           if (error) throw error;
 
-          err.style.color = '#1b5e20';
-          err.textContent = 'Account created! Please confirm via email, then sign in.';
-        }catch(ex){
-          err.textContent = ex?.message || 'Registration failed.';
-        }finally{
-          btn.disabled = false; btn.removeAttribute('aria-busy');
-        }
+          err.style.color='#1b5e20';
+          err.textContent='Account created! Please confirm via email, then sign in.';
+        }catch(ex){ err.textContent = ex?.message || 'Registration failed.'; }
+        finally{ btn.disabled=false; btn.removeAttribute('aria-busy'); }
       });
     })();
 
-    // Reset password
+    // Reset
     (function(){
       const form = document.getElementById('resetForm');
       const msg  = document.getElementById('resetMsg');
       form.addEventListener('submit', async (e)=>{
-        e.preventDefault();
-        msg.textContent = 'Sending…';
+        e.preventDefault(); msg.textContent='Sending…';
         try{
           const email = document.getElementById('reset_email').value.trim();
-          const { error } = await SB.auth.resetPasswordForEmail(email, {
-            redirectTo: location.origin + '/login.html#type=recovery'
-          });
+          const { error } = await SB.auth.resetPasswordForEmail(email, { redirectTo: location.origin + '/login.html#type=recovery' });
           if (error) throw error;
           msg.textContent = 'Check your inbox for a reset link.';
-        }catch(ex){
-          msg.textContent = ex?.message || 'Could not send reset email.';
-        }
+        }catch(ex){ msg.textContent = ex?.message || 'Could not send reset email.'; }
       });
     })();
   </script>
