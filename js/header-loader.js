@@ -3,7 +3,7 @@
   const slot = document.getElementById('site-header');
   if (!slot) return;
 
-  // 1) Inject header partial
+  // Inject header partial
   try {
     const res = await fetch('/partials/header.html', { cache: 'no-store' });
     if (!res.ok) throw new Error('header fetch failed');
@@ -28,14 +28,13 @@
       </header>`;
   }
 
-  // 2) Language menu (robust)
+  // Language menu (unchanged)
   const wrap   = document.getElementById('lang-menu') || slot.querySelector('.lang, [data-lang-wrap]');
   const toggle = document.getElementById('lang-toggle') || slot.querySelector('[data-lang-toggle], .lang-toggle');
   const menu   = document.getElementById('lang-dropdown') || slot.querySelector('.lang-menu,[data-lang-menu]');
   const items  = menu ? menu.querySelectorAll('.lang-item,[data-lang]') : [];
   const I18N   = window.MEMOIR_I18N;
   const getLang = () => (I18N?.getLang?.() || localStorage.getItem('memoir.lang') || 'en');
-
   function setLabelFrom(code) {
     const map = { en:'🇬🇧 English', fr:'🇫🇷 Français', nl:'🇧🇪 Nederlands', es:'🇪🇸 Español' };
     const label = map[code] || map.en;
@@ -45,7 +44,6 @@
     if (flagEl) flagEl.textContent = flag;
     if (nameEl) nameEl.textContent = rest.join(' ');
   }
-
   if (toggle && menu) {
     toggle.addEventListener('click', (e) => {
       e.preventDefault(); e.stopPropagation();
@@ -77,59 +75,77 @@
     });
     document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') { menu.hidden = true; menu.classList.remove('open'); toggle.setAttribute('aria-expanded','false'); }});
     setLabelFrom(getLang());
-  } else {
-    console.warn('[header-loader] lang controls not found');
   }
 
-  // 3) Session pill (Supabase)
-  const SUPA_URL = window.MEMOIR_SUPABASE_URL;
-  const SUPA_KEY = window.MEMOIR_SUPABASE_ANON;
-  let supa = null;
-  if (window.supabase && SUPA_URL && SUPA_KEY) {
-    supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+  // ---- Session pill with Supabase ----
+  const SUPA_URL = window.MEMOIR_SUPABASE_URL || "https://fswxkujxusdozvmpyvzk.supabase.co";
+  const SUPA_KEY = window.MEMOIR_SUPABASE_ANON || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
+
+  async function ensureSupabase() {
+    if (window.supabase && window.supabase.createClient) return;
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+      s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    });
   }
 
-  // inject a right-side session pill (keeps your <nav> intact)
   const nav = slot.querySelector('.nav');
   const pill = document.createElement('span');
+  pill.id = 'session-pill';
   pill.className = 'pill';
   pill.style.marginLeft = '8px';
-  pill.style.opacity = '0.9';
-  pill.id = 'session-pill';
+  pill.style.opacity = '0.95';
 
   function showSignedOut() {
     pill.innerHTML = `<a class="pill" href="/login.html">Sign in</a>`;
+    nav && nav.appendChild(pill);
   }
+
+  let sb = null;
   async function renderSession() {
-    if (!supa || !nav) return;
-    const { data: { user } } = await supa.auth.getUser();
-    if (user) {
-      const email = user.email || 'account';
+    try {
+      await ensureSupabase();
+      if (!sb) {
+        sb = window.supabase.createClient(SUPA_URL, SUPA_KEY, {
+          auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+        });
+        // react to state changes
+        sb.auth.onAuthStateChange(() => renderSession());
+      }
+
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) return showSignedOut();
+
+      // Try to fetch profile name
+      let label = user.email || 'account';
+      try {
+        const { data } = await sb.from('profiles').select('full_name').eq('user_id', user.id).single();
+        if (data?.full_name) {
+          const first = (data.full_name || '').split(/\s+/)[0];
+          label = `${first} (${user.email})`;
+        }
+      } catch {}
+
       pill.innerHTML = `
-        <span class="muted" style="font-weight:600">Signed in as ${email}</span>
+        <span class="muted" style="font-weight:600">Signed in as ${label}</span>
         <a class="pill" href="/settings.html">Settings</a>
         <button class="pill" id="session-signout">Sign out</button>
       `;
-      nav.appendChild(pill);
+      nav && nav.appendChild(pill);
       pill.querySelector('#session-signout')?.addEventListener('click', async ()=>{
-        await supa.auth.signOut();
+        await sb.auth.signOut();
         location.href = '/login.html';
       });
-    } else {
+    } catch (e) {
+      console.warn('[header-loader] session render failed', e);
       showSignedOut();
-      nav.appendChild(pill);
     }
   }
 
-  if (supa) {
-    renderSession();
-    // update on tab focus (in case session changes elsewhere)
-    window.addEventListener('focus', renderSession);
-    try {
-      // live listener (optional)
-      supa.auth.onAuthStateChange(() => renderSession());
-    } catch {}
-  }
+  await renderSession();
+  window.addEventListener('focus', renderSession);
 
   console.log('[header-loader] loaded');
 })();
