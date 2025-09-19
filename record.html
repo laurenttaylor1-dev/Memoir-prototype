@@ -32,17 +32,26 @@
     textarea{min-height:110px;resize:vertical}
     .transcript{min-height:200px;border-radius:12px;border:1px solid rgba(0,0,0,.15);background:#fff;padding:12px}
     .hint{font-size:12px;color:var(--muted)}
+    .planNote{margin:6px 0 0}
   </style>
+  <!-- Supabase config fallback -->
+  <script>
+    window.MEMOIR_SUPABASE_URL  = window.MEMOIR_SUPABASE_URL  || "https://fswxkujxusdozvmpyvzk.supabase.co";
+    window.MEMOIR_SUPABASE_ANON = window.MEMOIR_SUPABASE_ANON || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="site-header"></div>
 
   <main class="container">
-    <h1 class="title" data-i18n="recordTitle">Record</h1>
+    <h1 class="title" id="pageTitle" data-i18n="recordTitle">Record</h1>
 
     <section class="grid">
       <!-- Left: capture -->
       <div class="card">
+        <p id="planNote" class="muted planNote"></p>
+
         <div class="micZone">
           <button id="mic" class="mic" aria-pressed="false" data-i18n="recordBtn">Record</button>
           <div class="muted"><span class="timer" id="timer">00:00</span></div>
@@ -96,7 +105,40 @@
   <script src="/js/footer-loader.js"></script>
 
   <script>
-    // Simple prompts + tab toggle (layout only)
+    const SB = supabase.createClient(window.MEMOIR_SUPABASE_URL, window.MEMOIR_SUPABASE_ANON);
+    let currentPlan = 'free';
+
+    function firstName(n){ return (n||'').trim().split(/\s+/)[0] || ''; }
+
+    // Personalize + plan note
+    (async function init(){
+      const title = document.getElementById('pageTitle');
+      const note  = document.getElementById('planNote');
+
+      const { data: { user } } = await SB.auth.getUser();
+      if (!user){ title.textContent='Record'; return; }
+
+      let profile = null;
+      try{
+        const { data } = await SB.from('profiles')
+          .select('full_name, subscription_plan')
+          .eq('user_id', user.id).single();
+        profile = data || {};
+      }catch{}
+
+      if (profile?.full_name){
+        title.textContent = 'Record, ' + firstName(profile.full_name);
+      }
+      currentPlan = profile?.subscription_plan || 'free';
+
+      if (currentPlan === 'free'){
+        note.textContent = 'Free plan: recordings over 2 minutes are not allowed. Upgrade in Settings for higher limits.';
+      } else {
+        note.textContent = `Plan: ${currentPlan}`;
+      }
+    })();
+
+    // Prompts + tabs (your existing behavior)
     const TOPIC_WORDS = {
       en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
       fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
@@ -114,20 +156,20 @@
         wrap.appendChild(b);
       });
     }
-    function applyLangToRecord(code){
-      renderPrompts(code);
-    }
+    function applyLangToRecord(code){ renderPrompts(code); }
     window.addEventListener('memoir:lang',e=>applyLangToRecord(e.detail.code));
     document.addEventListener('DOMContentLoaded',()=>applyLangToRecord(window.MEMOIR_I18N?.getLang?.()||'en'));
-    document.getElementById('refreshPrompts').onclick=()=>applyLangToRecord(window.MEMOIR_I18N?.getLang?.()||'en');
 
-    // Tabs (visual demo)
+    // Visual tabs (unchanged)
     const tabFree=document.getElementById('tabFree');
     const tabGuided=document.getElementById('tabGuided');
     [tabFree,tabGuided].forEach(t=>t.onclick=()=>{
       [tabFree,tabGuided].forEach(x=>x.classList.remove('active'));
       t.classList.add('active');
     });
+
+    // NOTE: When you wire up recording/upload logic, you can enforce the 2-min cap like this:
+    // if(currentPlan==='free' && audioDurationSeconds > 120){ show message and block upload }
   </script>
 </body>
 </html>
