@@ -20,7 +20,7 @@
     .story-card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:16px}
     .story-card h3{margin:0 0 6px}
     .meta{color:var(--muted);font-size:14px;margin-bottom:8px}
-    .actions{display:flex;gap:10px;margin-top:10px}
+    .actions{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
     .pill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;color:#3b2f2a;text-decoration:none;font-weight:600;cursor:pointer}
     .pill.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:0}
     .empty{padding:40px;text-align:center;color:var(--muted);font-size:16px}
@@ -28,7 +28,6 @@
     input[type=email]{padding:10px 12px;border-radius:12px;border:1px solid rgba(0,0,0,.15);background:#fff}
     .muted{color:var(--muted)}
   </style>
-  <!-- Supabase config fallback (in case header doesn’t set it on this page) -->
   <script>
     window.MEMOIR_SUPABASE_URL  = window.MEMOIR_SUPABASE_URL  || "https://fswxkujxusdozvmpyvzk.supabase.co";
     window.MEMOIR_SUPABASE_ANON = window.MEMOIR_SUPABASE_ANON || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
@@ -39,23 +38,21 @@
   <div id="site-header"></div>
 
   <main class="container">
-    <h1 class="title" id="pageTitle" data-i18n="storiesTitle">My Stories</h1>
+    <h1 class="title" id="pageTitle">My Stories</h1>
 
     <section class="topbar">
       <div class="stats">
         <div class="stat">
           <div class="num" id="countStories">0</div>
-          <div class="muted" data-i18n="statStories">Stories</div>
+          <div class="muted">Stories</div>
         </div>
         <div class="stat">
           <div class="num" id="countFamily">0</div>
-          <div class="muted" data-i18n="statFamily">Family Members</div>
+          <div class="muted">Family Members</div>
         </div>
       </div>
       <div class="library">
-        <div class="muted" data-i18n="libraryBlurb">Your stories will appear in your private library here.</div>
-
-        <!-- Invite family (fits inside the library card) -->
+        <div class="muted">Your stories will appear in your private library here.</div>
         <div class="row">
           <input id="inviteEmail" type="email" placeholder="family@email.com" />
           <button id="inviteBtn" class="pill primary">Invite</button>
@@ -65,119 +62,104 @@
     </section>
 
     <section class="list" id="storiesList">
-      <div class="empty" data-i18n="storiesEmpty">No stories yet. Record your first one!</div>
+      <div class="empty">No stories yet. Record your first one!</div>
     </section>
   </main>
 
   <div id="site-footer"></div>
 
-  <script src="/js/lang.js"></script>
   <script src="/js/header-loader.js"></script>
   <script src="/js/footer-loader.js"></script>
   <script>
     const SB = supabase.createClient(window.MEMOIR_SUPABASE_URL, window.MEMOIR_SUPABASE_ANON);
-
     const listEl = document.getElementById('storiesList');
     function firstName(full){ return (full||'').trim().split(/\s+/)[0] || ''; }
 
     async function loadEverything(){
-      // 1) Auth
       const { data: { user } } = await SB.auth.getUser();
       if (!user){
         document.getElementById('pageTitle').textContent = 'My Stories';
         listEl.innerHTML = '<div class="empty">Please <a href="/login.html">sign in</a>.</div>';
         return;
       }
-
-      // 2) Profile for personalization
-      let profile = null;
+      // Profile
       try{
-        const { data } = await SB.from('profiles')
-          .select('full_name').eq('user_id', user.id).single();
-        profile = data || {};
+        const { data } = await SB.from('profiles').select('full_name').eq('user_id', user.id).single();
+        if (data?.full_name) document.getElementById('pageTitle').textContent = 'My Stories, ' + firstName(data.full_name);
       }catch{}
-      if (profile?.full_name){
-        document.getElementById('pageTitle').textContent =
-          'My Stories, ' + firstName(profile.full_name);
-      }
 
-      // 3) Stories
+      // Stories
       try{
-        const { data, error } = await SB
-          .from('stories')
-          .select('id,title,created_at,visibility')
-          .order('created_at', { ascending:false });
+        const { data, error } = await SB.from('stories').select('id,title,created_at,visibility').order('created_at',{ascending:false});
         if (error) throw error;
-
         document.getElementById('countStories').textContent = String(data?.length || 0);
-
         if (!data || !data.length){
           listEl.innerHTML = '<div class="empty">No stories yet. Record your first one!</div>';
         } else {
-          listEl.innerHTML = data.map(s => {
+          listEl.innerHTML = data.map(s=>{
             const when = new Date(s.created_at).toLocaleString();
             const title = s.title || 'Untitled';
             const vis = s.visibility || 'private';
             return `
-              <article class="story-card">
+              <article class="story-card" data-id="${s.id}">
                 <h3>${title}</h3>
                 <div class="meta">${when} · ${vis}</div>
                 <div class="actions">
+                  <button class="pill" data-rewrite="1">Rewrite with AI</button>
                   <a class="pill" href="/record.html">Continue</a>
-                  <button class="pill">${'Export'}</button>
-                  <button class="pill">${'Delete'}</button>
                 </div>
+                <div class="muted" data-msg style="margin-top:6px;min-height:1.1em"></div>
               </article>
             `;
           }).join('');
+          // wire rewrite buttons
+          listEl.querySelectorAll('[data-rewrite]').forEach(btn=>{
+            btn.addEventListener('click', async ()=>{
+              const card = btn.closest('.story-card');
+              const id = card?.dataset?.id;
+              const msg = card?.querySelector('[data-msg]');
+              if (!id || !msg) return;
+              msg.textContent='Rewriting…';
+              try{
+                const res = await fetch('/api/rewrite', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ story_id: id }) });
+                if (!res.ok) throw new Error('Server error');
+                const json = await res.json();
+                msg.textContent = json.message || 'Done.';
+              }catch(e){ msg.textContent = 'Could not rewrite: ' + (e.message||e); }
+            });
+          });
         }
       }catch(e){
         listEl.innerHTML = `<div class="empty">Could not load stories: ${e.message}</div>`;
       }
 
-      // 4) Family count
+      // Family count (optional)
       try{
-        const { data, error } = await SB
-          .from('family_invites')
-          .select('id,status')
-          .eq('owner_id', user.id);
+        const { data, error } = await SB.from('family_invites').select('id,status').order('created_at',{ascending:false});
         if (error) throw error;
         const accepted = (data||[]).filter(i => (i.status||'pending') !== 'revoked');
         document.getElementById('countFamily').textContent = String(accepted.length);
-      }catch(e){
-        // Table not ready yet — leave count as 0
-        console.warn('family_invites not available yet:', e.message);
-      }
+      }catch{}
     }
 
     // Invite action
     document.getElementById('inviteBtn').addEventListener('click', async ()=>{
       const msg = document.getElementById('inviteMsg');
-      msg.textContent = '';
       const email = document.getElementById('inviteEmail').value.trim();
-      if (!email){ msg.textContent = 'Enter an email.'; return; }
-
+      if (!email){ msg.textContent='Enter an email.'; return; }
       const { data: { user } } = await SB.auth.getUser();
       if (!user){ msg.textContent='Please sign in first.'; return; }
-
-      msg.textContent = 'Sending…';
+      msg.textContent='Sending…';
       try{
         const res = await SB.from('family_invites').insert({ owner_id: user.id, email, status:'pending' });
         if (res.error) throw res.error;
-        msg.textContent = 'Invite saved. We’ll email instructions when mail is configured.';
+        msg.textContent='Invite saved. We’ll email instructions when mail is configured.';
         document.getElementById('inviteEmail').value='';
-        // refresh family count
         loadEverything();
-      }catch(e){
-        msg.textContent = 'Could not save invite: ' + e.message;
-      }
+      }catch(e){ msg.textContent = 'Could not save invite: ' + e.message; }
     });
 
-    async function renderStories(){
-      await loadEverything();
-    }
-    document.addEventListener('DOMContentLoaded', renderStories);
-    window.addEventListener('memoir:lang', renderStories);
+    document.addEventListener('DOMContentLoaded', loadEverything);
   </script>
 </body>
 </html>
