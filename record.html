@@ -33,8 +33,10 @@
     .transcript{min-height:200px;border-radius:12px;border:1px solid rgba(0,0,0,.15);background:#fff;padding:12px}
     .hint{font-size:12px;color:var(--muted)}
     .planNote{margin:6px 0 0}
+    .warn{color:#8a1f17}
+    .ok{color:#1b5e20}
+    audio{width:100%; margin-top:10px}
   </style>
-  <!-- Supabase config fallback -->
   <script>
     window.MEMOIR_SUPABASE_URL  = window.MEMOIR_SUPABASE_URL  || "https://fswxkujxusdozvmpyvzk.supabase.co";
     window.MEMOIR_SUPABASE_ANON = window.MEMOIR_SUPABASE_ANON || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
@@ -55,6 +57,8 @@
         <div class="micZone">
           <button id="mic" class="mic" aria-pressed="false" data-i18n="recordBtn">Record</button>
           <div class="muted"><span class="timer" id="timer">00:00</span></div>
+          <audio id="preview" controls style="display:none"></audio>
+          <div id="recMsg" class="muted" style="min-height:1.2em"></div>
         </div>
 
         <div class="tabs">
@@ -107,7 +111,6 @@
   <script>
     const SB = supabase.createClient(window.MEMOIR_SUPABASE_URL, window.MEMOIR_SUPABASE_ANON);
     let currentPlan = 'free';
-
     function firstName(n){ return (n||'').trim().split(/\s+/)[0] || ''; }
 
     // Personalize + plan note
@@ -138,7 +141,7 @@
       }
     })();
 
-    // Prompts + tabs (your existing behavior)
+    // Prompts + tabs (as-is)
     const TOPIC_WORDS = {
       en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
       fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
@@ -160,7 +163,6 @@
     window.addEventListener('memoir:lang',e=>applyLangToRecord(e.detail.code));
     document.addEventListener('DOMContentLoaded',()=>applyLangToRecord(window.MEMOIR_I18N?.getLang?.()||'en'));
 
-    // Visual tabs (unchanged)
     const tabFree=document.getElementById('tabFree');
     const tabGuided=document.getElementById('tabGuided');
     [tabFree,tabGuided].forEach(t=>t.onclick=()=>{
@@ -168,8 +170,94 @@
       t.classList.add('active');
     });
 
-    // NOTE: When you wire up recording/upload logic, you can enforce the 2-min cap like this:
-    // if(currentPlan==='free' && audioDurationSeconds > 120){ show message and block upload }
+    // --- Recorder with 2-minute cap for free plan ---
+    const micBtn   = document.getElementById('mic');
+    const timerEl  = document.getElementById('timer');
+    const msgEl    = document.getElementById('recMsg');
+    const preview  = document.getElementById('preview');
+
+    let mediaStream = null;
+    let recorder    = null;
+    let chunks      = [];
+    let startedAt   = 0;
+    let tickHandle  = null;
+
+    function fmt(s){ s = Math.max(0, s|0); const m = (s/60)|0; const r = (s%60); return `${String(m).padStart(2,'0')}:${String(r).padStart(2,'0')}`; }
+
+    function startTimer() {
+      startedAt = Date.now();
+      clearInterval(tickHandle);
+      tickHandle = setInterval(()=>{
+        const sec = ((Date.now()-startedAt)/1000)|0;
+        timerEl.textContent = fmt(sec);
+
+        if (currentPlan === 'free' && sec >= 120) {
+          msgEl.className = 'muted warn';
+          msgEl.textContent = 'Reached 2-minute limit on Free plan — stopping.';
+          stopRecording();
+        }
+      }, 200);
+    }
+
+    function stopTimer() {
+      clearInterval(tickHandle);
+      tickHandle = null;
+    }
+
+    async function startRecording(){
+      msgEl.className='muted';
+      msgEl.textContent='';
+      chunks = [];
+      preview.style.display = 'none';
+      preview.src = '';
+
+      try{
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio:true });
+        const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : undefined;
+        recorder = new MediaRecorder(mediaStream, mime ? { mimeType: mime } : undefined);
+
+        recorder.ondataavailable = (e)=>{ if (e.data?.size) chunks.push(e.data); };
+        recorder.onstop = ()=>{
+          stopTimer();
+          mediaStream.getTracks().forEach(t=>t.stop());
+          const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+          const url = URL.createObjectURL(blob);
+          preview.src = url;
+          preview.style.display = 'block';
+          micBtn.textContent = 'Record';
+          micBtn.classList.remove('pulse');
+          micBtn.setAttribute('aria-pressed','false');
+
+          // TODO: When you want, upload `blob` here to Supabase Storage.
+          // For example (after creating a story row):
+          // const ext = 'webm';
+          // const path = `user/${user.id}/audio/${crypto.randomUUID()}.${ext}`;
+          // await SB.storage.from('story-media').upload(path, blob, { contentType: blob.type });
+        };
+
+        recorder.start(250); // gather data every 250ms
+        startTimer();
+
+        micBtn.textContent = 'Stop';
+        micBtn.classList.add('pulse');
+        micBtn.setAttribute('aria-pressed','true');
+      }catch(e){
+        msgEl.className = 'muted warn';
+        msgEl.textContent = 'Microphone error: ' + (e.message || e);
+      }
+    }
+
+    function stopRecording(){
+      try { recorder?.state === 'recording' && recorder.stop(); } catch {}
+    }
+
+    micBtn.addEventListener('click', ()=>{
+      if (recorder && recorder.state === 'recording') {
+        stopRecording();
+      } else {
+        startRecording();
+      }
+    });
   </script>
 </body>
 </html>
