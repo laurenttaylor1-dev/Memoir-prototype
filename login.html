@@ -39,7 +39,6 @@
 
   <!-- Inline Supabase config so we don't wait for header load -->
   <script>
-    // 🔧 REPLACE these with your project values (Supabase → Project Settings → API)
     window.MEMOIR_SUPABASE_URL  = "https://fswxkujxusdozvmpyvzk.supabase.co";
     window.MEMOIR_SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
   </script>
@@ -125,11 +124,8 @@
   <!-- Shared footer -->
   <div id="site-footer"></div>
 
-  <!-- Libraries -->
+  <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- i18n bridge (keeps translations working even if your lang.js is minimal) -->
-  <script src="/js/i18n-bridge.js"></script>
 
   <!-- Your shared header/footer -->
   <script src="/js/header-loader.js"></script>
@@ -141,11 +137,11 @@
       const url = window.MEMOIR_SUPABASE_URL;
       const key = window.MEMOIR_SUPABASE_ANON;
       if (!window.supabase) { alert('Supabase library not loaded.'); return null; }
-      if (!url || !key) { alert('Supabase is not configured. Fill MEMOIR_SUPABASE_URL and MEMOIR_SUPABASE_ANON at the top of LOGIN.html.'); return null; }
+      if (!url || !key) { alert('Supabase is not configured.'); return null; }
       return window.supabase.createClient(url, key);
     }
 
-    // Show/hide Register panel (always works, independent of Supabase)
+    // Show/hide Register panel (keeps your exact animation)
     const panel = document.getElementById('registerPanel');
     document.getElementById('toggleRegister').addEventListener('click', ()=>{
       const open = panel.classList.toggle('open');
@@ -153,14 +149,24 @@
       if(open) document.getElementById('reg_name').focus();
     });
 
-    // Resolve username -> email via secure RPC (created earlier)
+    // Resolve username -> email via RPC if available; otherwise fall back to treating it as email
     async function resolveEmail(sb, identifier){
       const id = (identifier||'').trim();
       if (!id) return null;
       if (id.includes('@')) return id;
-      const { data, error } = await sb.rpc('email_for_username', { p_username: id });
-      if (error) throw error;
-      return data || null;
+      // Try RPC; if it doesn't exist yet, just return null (which triggers "user not found")
+      try{
+        const { data, error } = await sb.rpc('email_for_username', { p_username: id });
+        if (error) {
+          // If function is missing, allow sign-in to fail gracefully rather than breaking UI
+          console.warn('[login] email_for_username RPC not available:', error.message);
+          return null;
+        }
+        return data || null;
+      }catch(e){
+        console.warn('[login] RPC failed:', e?.message);
+        return null;
+      }
     }
 
     /* ---------- Sign in ---------- */
@@ -179,7 +185,7 @@
 
       loginSubmit.disabled=true; loginSubmit.setAttribute('aria-busy','true');
       try{
-        const email = await resolveEmail(sb, identifier);
+        let email = identifier.includes('@') ? identifier.trim() : await resolveEmail(sb, identifier);
         if(!email) throw new Error('We could not find that user.');
         const { error } = await sb.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -191,7 +197,7 @@
       }
     });
 
-    /* ---------- Register (metadata only; DB trigger creates profiles row) ---------- */
+    /* ---------- Register (Supabase Auth) ---------- */
     const registerForm   = document.getElementById('registerForm');
     const registerError  = document.getElementById('registerError');
     const registerSubmit = document.getElementById('registerSubmit');
@@ -210,11 +216,12 @@
 
       registerSubmit.disabled=true; registerSubmit.setAttribute('aria-busy','true');
       try{
-        const sign = await sb.auth.signUp({
+        const { data, error } = await sb.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: location.origin + '/LOGIN.html',
+            // After confirming email, bring users back here to sign in
+            emailRedirectTo: location.origin + '/login.html',
             data: {
               name,
               username,
@@ -224,17 +231,16 @@
           }
         });
 
-        if (sign.error) {
-          if (sign.error.message?.includes('fetch')) throw new Error('Network error: cannot reach Supabase. Check URL/key & HTTPS.');
-          if (sign.error.code === 'user_already_exists') throw new Error('An account already exists for this email.');
-          throw sign.error;
+        if (error) {
+          if (error.message?.includes('fetch')) throw new Error('Network error: cannot reach Supabase. Check URL/key & HTTPS.');
+          if (error.code === 'user_already_exists') throw new Error('An account already exists for this email.');
+          throw error;
         }
-
-        // No client insert here — DB trigger will create the profiles row
 
         registerError.style.color = '#2d6a4f';
         registerError.textContent = 'Account created! Check your email to confirm, then sign in.';
-        setTimeout(()=>location.href='/LOGIN.html', 1500);
+        // Keep panel open so the message is visible; optionally auto-close:
+        // setTimeout(()=> panel.classList.remove('open'), 1500);
       }catch(err){
         registerError.style.color = '#a23a3a';
         registerError.textContent = err.message || 'Registration failed.';
@@ -243,8 +249,8 @@
       }
     });
 
-    // Optional: make a settings sign-in button navigate (if present)
-    document.getElementById('settings-signin')?.addEventListener('click', ()=>{ location.href='/LOGIN.html'; });
+    // Shared header/footer (after all logic to keep your layout)
+    // If you have lang/i18n scripts, include them as you already do elsewhere.
   </script>
 </body>
 </html>
