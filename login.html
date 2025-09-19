@@ -31,7 +31,6 @@
     .btn.ghost{background:transparent}
     .error{margin-top:8px; color:#a23a3a; font-size:14px; min-height:1.1em}
     .helper{color:var(--muted); font-size:14px; margin-top:4px}
-
     #registerPanel, #resetPanel{max-height:0; overflow:hidden; transition:max-height .35s ease, opacity .25s ease; opacity:0}
     #registerPanel.open, #resetPanel.open{max-height:1200px; opacity:1}
     .gdpr{display:flex; gap:10px; align-items:flex-start; font-size:14px; color:var(--muted)}
@@ -40,6 +39,7 @@
       background:#e9f7ef; color:#1b5e20; border:1px solid #c7ebd2; display:none}
   </style>
 
+  <!-- Supabase project -->
   <script>
     window.MEMOIR_SUPABASE_URL  = "https://fswxkujxusdozvmpyvzk.supabase.co";
     window.MEMOIR_SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
@@ -51,13 +51,14 @@
   <div id="topNotice" class="notice"></div>
 
   <main class="container">
-    <h1 class="title" data-i18n="login.title">Welcome back</h1>
+    <h1 class="title">Welcome back</h1>
 
     <section class="card">
+      <!-- Sign-in -->
       <form id="loginForm" novalidate class="grid">
         <div class="field">
-          <label for="identifier">Email or username</label>
-          <input id="identifier" name="identifier" type="text" autocomplete="username" placeholder="you@example.com or username" required>
+          <label for="identifier">Email</label>
+          <input id="identifier" name="identifier" type="email" autocomplete="username" placeholder="you@example.com" required>
         </div>
         <div class="field">
           <label for="password">Password</label>
@@ -88,10 +89,6 @@
               <label for="reg_last">Last name</label>
               <input id="reg_last" type="text" placeholder="Doe" required>
             </div>
-          </div>
-          <div class="field">
-            <label for="reg_username">Username (optional)</label>
-            <input id="reg_username" type="text" placeholder="janedoe">
           </div>
           <div class="field">
             <label for="reg_email">Email</label>
@@ -146,10 +143,15 @@
 
   <script src="/js/header-loader.js"></script>
   <script src="/js/footer-loader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const SB = supabase.createClient(window.MEMOIR_SUPABASE_URL, window.MEMOIR_SUPABASE_ANON);
+    const SB = supabase.createClient(
+      window.MEMOIR_SUPABASE_URL,
+      window.MEMOIR_SUPABASE_ANON,
+      { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
+    );
 
-    // Top banner for confirmation/recovery
+    // Confirmation / recovery banner
     (async function(){
       const n = document.getElementById('topNotice');
       const hash = location.hash || '';
@@ -181,18 +183,6 @@
       resetPanel.classList.remove('open'); resetPanel.setAttribute('aria-hidden','true');
     });
 
-    // Optional username -> email
-    async function resolveEmail(identifier){
-      const id = (identifier||'').trim();
-      if (!id) return null;
-      if (id.includes('@')) return id;
-      try{
-        const { data, error } = await SB.rpc('email_for_username', { p_username: id });
-        if (error) { console.warn('[RPC] email_for_username:', error.message); return null; }
-        return data || null;
-      }catch(e){ console.warn('[RPC] failed', e); return null; }
-    }
-
     // Sign in
     (function(){
       const form = document.getElementById('loginForm');
@@ -201,11 +191,9 @@
       form.addEventListener('submit', async (e)=>{
         e.preventDefault(); err.textContent=''; btn.disabled=true; btn.setAttribute('aria-busy','true');
         try{
-          const identifier = document.getElementById('identifier').value;
-          const password   = document.getElementById('password').value;
-          if(!identifier || !password){ err.textContent='Please fill email/username and password.'; return; }
-          let email = identifier.includes('@') ? identifier.trim() : await resolveEmail(identifier);
-          if(!email){ err.textContent='We could not find that user.'; return; }
+          const email    = document.getElementById('identifier').value.trim();
+          const password = document.getElementById('password').value;
+          if(!email || !password){ err.textContent='Please fill email and password.'; return; }
           const { error } = await SB.auth.signInWithPassword({ email, password });
           if (error) throw error;
           location.href = '/settings.html';
@@ -214,39 +202,53 @@
       });
     })();
 
-    // Register (first/last name)
+    // Register — replace the whole panel with a success block
     (function(){
       const form = document.getElementById('registerForm');
+      const panel = document.getElementById('registerPanel');
       const err  = document.getElementById('registerError');
       const btn  = document.getElementById('registerSubmit');
+
       form.addEventListener('submit', async (e)=>{
         e.preventDefault(); err.textContent=''; err.style.color='#a23a3a';
         btn.disabled=true; btn.setAttribute('aria-busy','true');
         try{
           const first     = document.getElementById('reg_first').value.trim();
           const last      = document.getElementById('reg_last').value.trim();
-          const username  = document.getElementById('reg_username').value.trim() || null;
           const email     = document.getElementById('reg_email').value.trim();
           const password  = document.getElementById('reg_password').value;
           const plan      = document.getElementById('reg_plan').value;
           const gdprOk    = document.getElementById('reg_gdpr').checked;
           if(!gdprOk){ err.textContent='Please agree to the Terms and Privacy Policy.'; return; }
-
           const full_name = `${first} ${last}`.trim();
 
           const { error } = await SB.auth.signUp({
             email, password,
             options: {
               emailRedirectTo: location.origin + '/login.html#type=signup',
-              data: { first_name:first, last_name:last, full_name, username, subscription_plan: plan, gdpr_consent: true }
+              data: { first_name:first, last_name:last, full_name, subscription_plan: plan, gdpr_consent: true }
             }
           });
           if (error) throw error;
 
-          err.style.color='#1b5e20';
-          err.textContent='Account created! Please confirm via email, then sign in.';
-        }catch(ex){ err.textContent = ex?.message || 'Registration failed.'; }
-        finally{ btn.disabled=false; btn.removeAttribute('aria-busy'); }
+          // Replace the entire register panel with a big success message
+          panel.classList.add('open'); // ensure it's visible
+          panel.setAttribute('aria-hidden','false');
+          panel.innerHTML = `
+            <div class="card" style="background:#e9f7ef;border-color:#c7ebd2">
+              <h2 class="title" style="font-size:22px;margin:0 0 8px;">Account created</h2>
+              <p class="helper" style="color:#1b5e20">Please check your email to confirm your account. After confirming, you’ll be signed in automatically.</p>
+              <div class="actions" style="margin-top:10px">
+                <a class="btn primary" href="/login.html">Back to sign in</a>
+              </div>
+            </div>
+          `;
+          window.scrollTo({ top: panel.offsetTop - 20, behavior: 'smooth' });
+        }catch(ex){
+          err.textContent = ex?.message || 'Registration failed.';
+        }finally{
+          btn.disabled=false; btn.removeAttribute('aria-busy');
+        }
       });
     })();
 
