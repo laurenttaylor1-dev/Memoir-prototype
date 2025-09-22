@@ -78,10 +78,14 @@
   }
 
   // ---- Session pill with Supabase ----
-  const SUPA_URL = window.MEMOIR_SUPABASE_URL || "https://fswxkujxusdozvmpyvzk.supabase.co";
-  const SUPA_KEY = window.MEMOIR_SUPABASE_ANON || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
+  const SUPA_URL = window.MEMOIR_SUPABASE_URL || window.SUPABASE_URL || "https://fswxkujxusdozvmpyvzk.supabase.co";
+  const SUPA_KEY = window.MEMOIR_SUPABASE_ANON || window.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9zZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
 
   async function ensureSupabase() {
+    if (window.memoirEnsureSupabase) {
+      await window.memoirEnsureSupabase();
+      return;
+    }
     if (window.supabase && window.supabase.createClient) return;
     await new Promise((resolve, reject) => {
       const s = document.createElement('script');
@@ -108,9 +112,12 @@
     try {
       await ensureSupabase();
       if (!sb) {
-        sb = window.supabase.createClient(SUPA_URL, SUPA_KEY, {
-          auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-        });
+        const create = window.memoirCreateSupabaseClient;
+        sb = create
+          ? create({ auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } })
+          : window.supabase.createClient(SUPA_URL, SUPA_KEY, {
+              auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+            });
         // react to state changes
         sb.auth.onAuthStateChange(() => renderSession());
       }

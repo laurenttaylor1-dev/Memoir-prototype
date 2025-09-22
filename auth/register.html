@@ -4,6 +4,7 @@
   <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Register — Memoir</title>
   <link rel="stylesheet" href="/styles.css">
+  <script src="/js/memoir-supabase.js"></script>
 </head>
 <body>
   <main style="display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;height:100vh;text-align:center;">
@@ -23,44 +24,60 @@
     </form>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const SUPABASE_URL = "https://fswxkujxusdozvmpyvzk.supabase.co"; // replace
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";                   // replace
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    document.getElementById('register-form').addEventListener('submit', async (e)=>{
-      e.preventDefault();
+    (async function(){
       const status = document.getElementById('reg-status');
-      status.textContent = 'Creating account…';
-
-      const name = document.getElementById('name').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const subscription = document.getElementById('subscription').value;
-
-      try{
-        const { data, error } = await supabase.auth.signUp({
-          email, password,
-          options: { emailRedirectTo: "https://www.memoirapp.co/auth/sign-in.html" }
-        });
-        if (error) throw error;
-
-        const userId = data?.user?.id;
-        if (userId){
-          // Insert profile row that stores name + plan
-          const { error: pErr } = await supabase.from('profiles').insert({
-            id: userId, name, subscription_type: subscription
-          });
-          if (pErr) throw pErr;
-        }
-
-        status.textContent = "Account created! Check your email to confirm, then sign in.";
-        setTimeout(()=>location.href="/auth/sign-in.html", 1200);
-      }catch(err){
-        status.textContent = err.message || "Something went wrong.";
+      const ensure = window.memoirEnsureSupabase ? window.memoirEnsureSupabase() : Promise.resolve(window.supabase);
+      let supabase;
+      try {
+        await ensure;
+        const createClient = window.memoirCreateSupabaseClient;
+        supabase = createClient
+          ? createClient()
+          : window.supabase.createClient(
+              window.MEMOIR_SUPABASE_URL || window.SUPABASE_URL,
+              window.MEMOIR_SUPABASE_ANON || window.SUPABASE_ANON_KEY
+            );
+      } catch (err) {
+        console.error('[register] supabase failed to load', err);
+        if (status) status.textContent = 'Unable to connect. Please refresh the page.';
+        return;
       }
-    });
+
+      document.getElementById('register-form').addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        status.textContent = 'Creating account…';
+
+        const name = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const subscription = document.getElementById('subscription').value;
+
+        try{
+          const { data, error } = await supabase.auth.signUp({
+            email, password,
+            options: { emailRedirectTo: `${location.origin}/auth/sign-in.html` }
+          });
+          if (error) throw error;
+
+          const userId = data?.user?.id;
+          if (userId){
+            const { error: pErr } = await supabase.from('profiles').insert({
+              user_id: userId,
+              full_name: name,
+              subscription_plan: subscription
+            });
+            if (pErr) throw pErr;
+          }
+
+          status.textContent = 'Account created! Check your email to confirm, then sign in.';
+          setTimeout(()=>location.href='/auth/sign-in.html', 1200);
+        }catch(err){
+          status.textContent = err.message || 'Something went wrong.';
+        }
+      });
+    })();
   </script>
+
 </body>
 </html>
