@@ -12,7 +12,7 @@ const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
 const I18N = {
   en:{brand:"MEMOIR APP",tagline:"Preserve your memories forever",
-      "nav.home":"Home","nav.login":"Login","nav.record":"Record","nav.stories":"My Stories","nav.pricing":"Pricing","nav.faq":"FAQ",
+      "nav.home":"Home","nav.login":"Sign in","nav.record":"Record","nav.stories":"My Stories","nav.pricing":"Pricing","nav.faq":"FAQ",
       "hero.title":"Preserve Your Memories Forever","hero.lede":"Record once, keep for generations. Start a recording in one tap, add a title and “when it happened”, then share safely with your family.",
       "cta.startRecording":"Start Recording","cta.myStories":"My Stories",
       "feat.1.title":"Smart Transcription","feat.1.text":"Server-side Whisper for accurate EN/FR/NL/ES.",

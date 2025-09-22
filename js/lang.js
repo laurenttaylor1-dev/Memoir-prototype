@@ -13,7 +13,7 @@
     en: {
       // Header
       navHome: 'Home',
-      navLogin: 'Login',
+      navLogin: 'Sign in',
       navRecord: 'Record',
       navStories: 'My Stories',
       navSettings: 'Settings',
