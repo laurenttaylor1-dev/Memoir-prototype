@@ -22,7 +22,8 @@
           </a>
           <nav class="nav">
             <a class="pill" href="/landing.html">Home</a>
-            <a class="pill" href="/login.html">Login</a>
+            <a class="pill" href="/record.html">Record</a>
+            <a class="pill" href="/stories.html">My Stories</a>
           </nav>
         </div>
       </header>`;
@@ -94,13 +95,24 @@
   const nav = slot.querySelector('.nav');
   const pill = document.createElement('span');
   pill.id = 'session-pill';
-  pill.className = 'pill';
-  pill.style.marginLeft = '8px';
+  pill.style.display = 'inline-flex';
+  pill.style.alignItems = 'center';
+  pill.style.gap = '8px';
+  pill.style.marginLeft = '12px';
   pill.style.opacity = '0.95';
+  pill.style.flexWrap = 'wrap';
+  pill.style.justifyContent = 'flex-end';
 
   function showSignedOut() {
-    pill.innerHTML = `<a class="pill" href="/login.html">Sign in</a>`;
-    nav && nav.appendChild(pill);
+    pill.className = 'session-guest';
+    pill.innerHTML = '';
+    const link = document.createElement('a');
+    link.className = 'pill primary';
+    link.href = '/login.html';
+    link.textContent = I18N?.t?.('navLogin', getLang()) || 'Sign in';
+    link.setAttribute('data-i18n', 'navLogin');
+    pill.appendChild(link);
+    if (nav && !nav.contains(pill)) nav.appendChild(pill);
   }
 
   let sb = null;
@@ -128,12 +140,13 @@
         }
       } catch {}
 
+      pill.className = 'pill session-auth';
       pill.innerHTML = `
         <span class="muted" style="font-weight:600">Signed in as ${label}</span>
         <a class="pill" href="/settings.html">Settings</a>
         <button class="pill" id="session-signout">Sign out</button>
       `;
-      nav && nav.appendChild(pill);
+      if (nav && !nav.contains(pill)) nav.appendChild(pill);
       pill.querySelector('#session-signout')?.addEventListener('click', async ()=>{
         await sb.auth.signOut();
         location.href = '/login.html';

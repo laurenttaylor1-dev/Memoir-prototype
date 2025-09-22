@@ -170,19 +170,44 @@
       t.classList.add('active');
     });
 
-    // --- Recorder with auto-upload + story creation ---
+    // --- Recorder + Whisper transcription + assets ---
     const micBtn   = document.getElementById('mic');
     const timerEl  = document.getElementById('timer');
     const msgEl    = document.getElementById('recMsg');
     const preview  = document.getElementById('preview');
+    const transcriptBox = document.getElementById('transcript');
+    const asrHint  = document.getElementById('asrHint');
+    const photoInput = document.getElementById('photo');
+    const saveBtn  = document.getElementById('saveBtn');
+    const titleInput = document.getElementById('title');
+    const whenInput  = document.getElementById('when');
+    const notesInput = document.getElementById('notes');
+    const transcriptPlaceholder = 'Your words will appear here…';
 
     let mediaStream = null;
     let recorder    = null;
     let chunks      = [];
     let startedAt   = 0;
     let tickHandle  = null;
+    let pendingAudio = null;
+    let pendingTranscript = '';
+    let pendingTranscribing = false;
+    let previewUrl = null;
 
     function fmt(s){ s = Math.max(0, s|0); const m = (s/60)|0; const r = (s%60); return `${String(m).padStart(2,'0')}:${String(r).padStart(2,'0')}`; }
+    function getLangCode(){ return window.MEMOIR_I18N?.getLang?.() || localStorage.getItem('memoir.lang') || 'en'; }
+    function getTranscriptText(){
+      const text = (transcriptBox.textContent || '').trim();
+      if (!text || text === transcriptPlaceholder) return '';
+      return text;
+    }
+    function hasStoryContent(){
+      return !!pendingAudio || !!getTranscriptText() || !!notesInput.value.trim() || (photoInput.files && photoInput.files.length>0);
+    }
+    function updateSaveState(){
+      saveBtn.disabled = pendingTranscribing || !hasStoryContent();
+    }
+    updateSaveState();
 
     function startTimer() {
       startedAt = Date.now();
@@ -199,72 +224,78 @@
     }
     function stopTimer() { clearInterval(tickHandle); tickHandle = null; }
 
+    async function transcribeWithWhisper(blob){
+      if (!blob) return;
+      pendingTranscribing = true;
+      updateSaveState();
+      transcriptBox.textContent = 'Transcribing with Whisper AI…';
+      asrHint.textContent = 'Please wait while we create your transcript.';
+      try {
+        const form = new FormData();
+        form.append('audio', blob, 'recording.webm');
+        form.append('language', getLangCode());
+        const res = await fetch('/api/transcribe-chunk', { method:'POST', body: form });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || data?.detail || 'Transcription failed');
+        const text = (data.partial || data.text || '').trim();
+        if (text) {
+          pendingTranscript = text;
+          transcriptBox.textContent = text;
+          asrHint.textContent = 'Transcribed automatically with Whisper AI. Edit before saving if needed.';
+        } else {
+          pendingTranscript = '';
+          transcriptBox.textContent = 'No speech detected.';
+          asrHint.textContent = 'Try recording again if this looks incorrect.';
+        }
+      } catch (err) {
+        console.error(err);
+        pendingTranscript = '';
+        transcriptBox.textContent = 'Transcription unavailable.';
+        asrHint.textContent = 'We could not reach Whisper AI. You can still save the audio.';
+      } finally {
+        pendingTranscribing = false;
+        updateSaveState();
+      }
+    }
+
     async function startRecording(){
       msgEl.className='muted';
       msgEl.textContent='';
       chunks = [];
+      pendingAudio = null;
+      pendingTranscript = '';
+      if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = null; }
       preview.style.display = 'none';
       preview.src = '';
+      transcriptBox.textContent = transcriptPlaceholder;
+      asrHint.textContent = '';
+      updateSaveState();
       try{
         mediaStream = await navigator.mediaDevices.getUserMedia({ audio:true });
         const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : undefined;
         recorder = new MediaRecorder(mediaStream, mime ? { mimeType: mime } : undefined);
 
         recorder.ondataavailable = (e)=>{ if (e.data?.size) chunks.push(e.data); };
-        recorder.onstop = async ()=>{
+        recorder.onstop = ()=>{
           stopTimer();
           mediaStream.getTracks().forEach(t=>t.stop());
           const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
-          const url = URL.createObjectURL(blob);
-          preview.src = url;
+          if (previewUrl) { URL.revokeObjectURL(previewUrl); }
+          previewUrl = URL.createObjectURL(blob);
+          preview.src = previewUrl;
           preview.style.display = 'block';
           micBtn.textContent = 'Record';
           micBtn.classList.remove('pulse');
           micBtn.setAttribute('aria-pressed','false');
 
-          // ---- AUTO-CREATE STORY + UPLOAD ----
-          try {
-            const { data: { user } } = await SB.auth.getUser();
-            if (!user) { msgEl.className='muted warn'; msgEl.textContent='Please sign in again.'; return; }
-
-            // 1) Create story row
-            const title = document.getElementById('title').value.trim() || 'Untitled';
-            const when  = document.getElementById('when').value.trim() || null;
-            const notes = document.getElementById('notes').value.trim() || null;
-
-            const ins = await SB.from('stories')
-              .insert({ title, when_text: when, notes, visibility: 'private' })
-              .select()
-              .single();
-            if (ins.error) throw ins.error;
-            const story = ins.data;
-
-            // 2) Upload audio to Storage
-            const path = `user/${user.id}/audio/${crypto.randomUUID()}.webm`;
-            const up = await SB.storage.from('story-media').upload(path, blob, { contentType: blob.type });
-            if (up.error) throw up.error;
-
-            // 3) Link asset
-            const asset = await SB.from('story_assets')
-              .insert({ story_id: story.id, kind: 'audio', path, mime: blob.type })
-              .select()
-              .single();
-            if (asset.error) throw asset.error;
-
-            // 4) Optional: create empty text row for later AI rewrite
-            await SB.from('story_texts')
-              .insert({ story_id: story.id, original_text: null, rewritten_text: null })
-              .select().single().catch(()=>{ /* ignore if table not present */ });
-
-            msgEl.className = 'ok';
-            msgEl.innerHTML = `Uploaded and saved! <a href="/stories.html">Go to My Stories</a>`;
-          } catch (e) {
-            console.error(e);
-            msgEl.className='muted warn';
-            msgEl.textContent = 'Upload failed: ' + (e.message||e);
-          }
-          // ------------------------------------
-
+          pendingAudio = blob;
+          msgEl.className = 'muted';
+          msgEl.textContent = 'Recording ready. Review details, then press “Save story”.';
+          transcribeWithWhisper(blob);
+          updateSaveState();
+          chunks = [];
+          recorder = null;
+          mediaStream = null;
         };
 
         recorder.start(250);
@@ -281,10 +312,101 @@
     function stopRecording(){
       try { recorder?.state === 'recording' && recorder.stop(); } catch {}
     }
+
+    function sanitizeName(name){
+      return name ? name.replace(/[^a-z0-9\.]+/gi,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').toLowerCase() : 'upload';
+    }
+
+    async function saveStory(){
+      if (saveBtn.disabled) return;
+      saveBtn.disabled = true;
+      const originalLabel = saveBtn.textContent;
+      saveBtn.textContent = 'Saving…';
+      msgEl.className = 'muted';
+      msgEl.textContent = 'Saving your story…';
+
+      try {
+        const { data: { user } } = await SB.auth.getUser();
+        if (!user) throw new Error('Please sign in again.');
+
+        const title = titleInput.value.trim() || 'Untitled';
+        const when  = whenInput.value.trim() || null;
+        const notes = notesInput.value.trim() || null;
+
+        const ins = await SB.from('stories')
+          .insert({ title, when_text: when, notes, visibility: 'private' })
+          .select()
+          .single();
+        if (ins.error) throw ins.error;
+        const story = ins.data;
+
+        if (pendingAudio) {
+          msgEl.textContent = 'Uploading audio…';
+          const audioMime = pendingAudio.type || 'audio/webm';
+          const audioPath = `user/${user.id}/audio/${crypto.randomUUID()}.webm`;
+          const up = await SB.storage.from('story-media').upload(audioPath, pendingAudio, { contentType: audioMime });
+          if (up.error) throw up.error;
+          const asset = await SB.from('story_assets')
+            .insert({ story_id: story.id, kind: 'audio', path: audioPath, mime: audioMime })
+            .select()
+            .single();
+          if (asset.error) throw asset.error;
+        }
+
+        const photoFile = photoInput.files?.[0];
+        if (photoFile) {
+          msgEl.textContent = 'Uploading photo…';
+          const photoMime = photoFile.type || 'image/jpeg';
+          const photoPath = `user/${user.id}/images/${crypto.randomUUID()}-${sanitizeName(photoFile.name)}`;
+          const upImg = await SB.storage.from('story-media').upload(photoPath, photoFile, { contentType: photoMime });
+          if (upImg.error) throw upImg.error;
+          const photoAsset = await SB.from('story_assets')
+            .insert({ story_id: story.id, kind: 'image', path: photoPath, mime: photoMime })
+            .select()
+            .single();
+          if (photoAsset.error) throw photoAsset.error;
+        }
+
+        const transcriptText = pendingTranscript || getTranscriptText();
+        if (transcriptText) {
+          await SB.from('story_texts')
+            .upsert({ story_id: story.id, original_text: transcriptText, rewritten_text: null }, { onConflict: 'story_id' })
+            .select()
+            .single()
+            .catch(()=>{});
+        }
+
+        msgEl.className = 'ok';
+        msgEl.innerHTML = `Story saved! <a href="/stories.html">Go to My Stories</a>`;
+
+        pendingAudio = null;
+        pendingTranscript = '';
+        if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = null; }
+        preview.style.display = 'none';
+        preview.src = '';
+        transcriptBox.textContent = transcriptPlaceholder;
+        asrHint.textContent = '';
+        notesInput.value = '';
+        titleInput.value = '';
+        whenInput.value = '';
+        photoInput.value = '';
+      } catch (e) {
+        console.error(e);
+        msgEl.className = 'muted warn';
+        msgEl.textContent = 'Save failed: ' + (e.message || e);
+      } finally {
+        saveBtn.textContent = originalLabel;
+        updateSaveState();
+      }
+    }
+
     micBtn.addEventListener('click', ()=>{
       if (recorder && recorder.state === 'recording') stopRecording();
       else startRecording();
     });
+    saveBtn.addEventListener('click', saveStory);
+    notesInput.addEventListener('input', updateSaveState);
+    photoInput.addEventListener('change', updateSaveState);
   </script>
 </body>
 </html>
