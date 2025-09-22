@@ -4,8 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — Settings</title>
-  <link rel="stylesheet" href="/styles.css"/>
-
+  <link rel="stylesheet" href="/styles.css">
   <style>
     :root{--bg:#f6f1ea;--card:#fffaf5;--ink:#3b2f2a;--muted:#7b6a62;--accent:#8c5a3c;--accent2:#b17d55;--radius:18px;--shadow:0 18px 40px rgba(59,47,42,.10),0 2px 8px rgba(59,47,42,.06)}
     body{background:var(--bg);color:var(--ink);margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
@@ -22,13 +21,12 @@
     .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .ok{color:#1b5e20}
     .warn{color:#8a1f17}
-    .hint{font-size:12px;color:#7b6a62;margin-top:8px}
   </style>
 
-  <!-- Project keys (inline so every page has them) -->
+  <!-- Project keys -->
   <script>
-    window.MEMOIR_SUPABASE_URL  = "https://fswxkujxusdozvmpyvzk.supabase.co";
-    window.MEMOIR_SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
+    window.MEMOIR_SUPABASE_URL  = window.MEMOIR_SUPABASE_URL  || "https://fswxkujxusdozvmpyvzk.supabase.co";
+    window.MEMOIR_SUPABASE_ANON = window.MEMOIR_SUPABASE_ANON || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -44,7 +42,6 @@
         <h3>Account</h3>
         <p class="muted" id="accountBlurb">Checking your session…</p>
         <div class="row" id="accountActions" style="margin-top:8px"></div>
-        <div id="accountHint" class="hint"></div>
       </div>
 
       <!-- Subscription -->
@@ -70,8 +67,8 @@
         <h3>FAQ</h3>
         <ul class="list">
           <li>Is there a free plan? — Yes, with a 2-minute per recording cap.</li>
-          <li>Which languages are supported? — English, French, Dutch, Spanish (UI); stories can be any language.</li>
-          <li>How is transcription done? — Automatic transcription on save (beta).</li>
+          <li>Which languages are supported? — English, French, Dutch, Spanish for UI; stories can be any language.</li>
+          <li>How is transcription done? — We’ll add automatic transcription on save (coming in beta).</li>
         </ul>
       </div>
 
@@ -113,107 +110,69 @@
   <script src="/js/header-loader.js"></script>
   <script src="/js/footer-loader.js"></script>
   <script>
-    // ---------- Utilities ----------
-    const ui = {
-      title: document.getElementById('pageTitle'),
-      blurb: document.getElementById('accountBlurb'),
-      acts:  document.getElementById('accountActions'),
-      sub:   document.getElementById('subBlurb'),
-      hint:  document.getElementById('accountHint'),
-    };
-    function showError(msg, hint='') {
-      ui.blurb.innerHTML = `<span class="warn">${msg}</span>`;
-      ui.acts.innerHTML = `<a class="pill primary" href="/login.html">Go to Login</a>`;
-      ui.hint.textContent = hint;
-    }
+    // Create client with session persistence + URL detection
+    const SB = supabase.createClient(
+      window.MEMOIR_SUPABASE_URL,
+      window.MEMOIR_SUPABASE_ANON,
+      { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
+    );
+
+    const pageTitle    = document.getElementById('pageTitle');
+    const accountBlurb = document.getElementById('accountBlurb');
+    const accountActs  = document.getElementById('accountActions');
+    const subBlurb     = document.getElementById('subBlurb');
+
     function firstName(full){ return (full||'').trim().split(/\s+/)[0] || ''; }
 
-    const SUPA_URL = (window.MEMOIR_SUPABASE_URL || "").trim();
-    const SUPA_ANON= (window.MEMOIR_SUPABASE_ANON|| "").trim();
+    async function renderSettings(){
+      // Read session
+      const { data: { user }, error } = await SB.auth.getUser();
 
-    if (!window.supabase || !window.supabase.createClient) {
-      showError('Supabase library failed to load.',
-                'Check the CDN script tag or any ad-blockers.');
-    }
-
-    if (!SUPA_URL || !/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(SUPA_URL)) {
-      showError('Supabase URL is missing/invalid on this page.',
-                'Ensure MEMOIR_SUPABASE_URL is set before scripts.');
-    }
-
-    // Create client with persistent session + URL detection
-    const SB = window.supabase.createClient(SUPA_URL, SUPA_ANON, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-    });
-
-    // Defensive timeout wrapper so UI never “hangs”
-    function withTimeout(promise, ms, label='operation') {
-      return Promise.race([
-        promise,
-        new Promise((_, rej)=>setTimeout(()=>rej(new Error(`${label} timed out after ${ms}ms`)), ms))
-      ]);
-    }
-
-    async function renderSettings() {
-      try {
-        ui.blurb.textContent = 'Checking your session…';
-        ui.hint.textContent  = '';
-
-        // 1) Local session (no network)
-        const { data: sessData } = await SB.auth.getSession();
-
-        // 2) Network validation with timeout
-        const { data: userData } = await withTimeout(SB.auth.getUser(), 6000, 'getUser');
-        const user = userData?.user || sessData?.session?.user;
-
-        if (!user) {
-          ui.blurb.innerHTML = 'You are <strong class="warn">not signed in</strong>.';
-          ui.acts.innerHTML = `<a class="pill primary" href="/login.html">Sign in</a>`;
-          ui.sub.textContent = 'Sign in to see or change your plan.';
-          ui.hint.textContent = 'If you just confirmed by email, make sure the link returned to this exact domain.';
-          return;
-        }
-
-        // 3) Fetch profile (name + plan). If it fails, still show email.
-        let profile = null;
-        try {
-          const { data, error } = await withTimeout(
-            SB.from('profiles').select('full_name, subscription_plan').eq('user_id', user.id).single(),
-            6000,
-            'load profile'
-          );
-          if (error) throw error;
-          profile = data;
-        } catch (e) {
-          console.warn('[settings] profile fetch failed:', e);
-        }
-
-        const full = profile?.full_name || user.email || 'Your account';
-        ui.blurb.innerHTML = `Signed in as <strong class="ok">${full}</strong> (${user.email})`;
-        ui.acts.innerHTML = `
-          <a class="pill" href="/stories.html">My Stories</a>
-          <a class="pill" href="/record.html">Record</a>
-          <button class="pill" id="signOutBtn">Sign out</button>
+      if (!user || error) {
+        pageTitle.textContent = 'Settings';
+        accountBlurb.innerHTML = 'You are <strong class="warn">not signed in</strong>.';
+        accountActs.innerHTML = `
+          <a class="pill primary" href="/login.html">Sign in</a>
         `;
-        document.getElementById('signOutBtn').onclick = async ()=>{
-          await SB.auth.signOut();
-          location.href = '/login.html';
-        };
-
-        const plan = profile?.subscription_plan || 'free';
-        ui.sub.textContent = `Current plan: ${plan}`;
-      } catch (err) {
-        console.error('[settings] session error:', err);
-        showError(
-          'Could not verify your session.',
-          'Supabase Auth → URL Configuration: set Site URL to your live domain (e.g. https://memoir-prototype.vercel.app) and add any others under Additional Redirect URLs. Then sign in again.'
-        );
+        subBlurb.textContent = 'Sign in to see or change your plan.';
+        return;
       }
+
+      // Fetch profile for name + plan
+      let profile = null;
+      try {
+        const { data } = await SB
+          .from('profiles')
+          .select('full_name, subscription_plan')
+          .eq('user_id', user.id)
+          .single();
+        profile = data || {};
+      } catch {}
+
+      const full = profile?.full_name || user.email || 'Your account';
+      pageTitle.textContent = 'Settings';
+      accountBlurb.innerHTML = `Signed in as <strong class="ok">${full}</strong> (${user.email})`;
+      accountActs.innerHTML = `
+        <a class="pill" href="/stories.html">My Stories</a>
+        <a class="pill" href="/record.html">Record</a>
+        <button class="pill" id="signOutBtn">Sign out</button>
+      `;
+      document.getElementById('signOutBtn').onclick = async ()=>{
+        await SB.auth.signOut();
+        location.href = '/login.html';
+      };
+
+      // Plan status
+      const plan = profile?.subscription_plan || 'free';
+      subBlurb.textContent = `Current plan: ${plan}`;
     }
 
+    // Render on load and when we regain focus (helps after email confirmation)
     document.addEventListener('DOMContentLoaded', renderSettings);
     window.addEventListener('focus', renderSettings);
-    SB.auth.onAuthStateChange(renderSettings);
+
+    // Also re-render if the auth state changes on this tab
+    SB.auth.onAuthStateChange((_event, _session) => { renderSettings(); });
   </script>
 </body>
 </html>
