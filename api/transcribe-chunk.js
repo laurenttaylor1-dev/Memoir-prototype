@@ -23,7 +23,8 @@ export default async function handler(req,res){
       return res.status(400).json({ error:'chunk_failed', detail: t });
     }
     const out = await r.json(); // { text: "..." }
-    res.json({ partial: out.text || '' });
+    const text = out.text || '';
+    res.json({ text, partial: text });
   }catch(e){
     console.error(e);
     res.status(500).json({ error:String(e) });

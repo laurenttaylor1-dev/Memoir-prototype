@@ -43,7 +43,7 @@ export default async function handler(req, res) {
     if (!story_id) return res.status(400).json({ error: 'Provide either text or story_id' });
 
     const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-    const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE;
+    const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE;
     if (!SUPABASE_URL || !SERVICE_ROLE) return res.status(500).json({ error: 'Supabase env missing' });
 
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
