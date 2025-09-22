@@ -23,12 +23,8 @@
     .warn{color:#8a1f17}
   </style>
 
-  <!-- Project keys -->
-  <script>
-    window.MEMOIR_SUPABASE_URL  = window.MEMOIR_SUPABASE_URL  || "https://fswxkujxusdozvmpyvzk.supabase.co";
-    window.MEMOIR_SUPABASE_ANON = window.MEMOIR_SUPABASE_ANON || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
-  </script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Shared Supabase config -->
+  <script src="/js/memoir-supabase.js"></script>
 </head>
 <body>
   <div id="site-header"></div>
@@ -110,69 +106,78 @@
   <script src="/js/header-loader.js"></script>
   <script src="/js/footer-loader.js"></script>
   <script>
-    // Create client with session persistence + URL detection
-    const SB = supabase.createClient(
-      window.MEMOIR_SUPABASE_URL,
-      window.MEMOIR_SUPABASE_ANON,
-      { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
-    );
-
-    const pageTitle    = document.getElementById('pageTitle');
-    const accountBlurb = document.getElementById('accountBlurb');
-    const accountActs  = document.getElementById('accountActions');
-    const subBlurb     = document.getElementById('subBlurb');
-
-    function firstName(full){ return (full||'').trim().split(/\s+/)[0] || ''; }
-
-    async function renderSettings(){
-      // Read session
-      const { data: { user }, error } = await SB.auth.getUser();
-
-      if (!user || error) {
-        pageTitle.textContent = 'Settings';
-        accountBlurb.innerHTML = 'You are <strong class="warn">not signed in</strong>.';
-        accountActs.innerHTML = `
-          <a class="pill primary" href="/login.html">Sign in</a>
-        `;
-        subBlurb.textContent = 'Sign in to see or change your plan.';
+    (async function(){
+      const ensure = window.memoirEnsureSupabase ? window.memoirEnsureSupabase() : Promise.resolve(window.supabase);
+      let SB;
+      try {
+        await ensure;
+        const createClient = window.memoirCreateSupabaseClient;
+        SB = createClient
+          ? createClient({ auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } })
+          : window.supabase.createClient(
+              window.MEMOIR_SUPABASE_URL || window.SUPABASE_URL,
+              window.MEMOIR_SUPABASE_ANON || window.SUPABASE_ANON_KEY,
+              { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
+            );
+        window.MEMOIR_SUPABASE_CLIENT = SB;
+      } catch (err) {
+        console.error('[settings] supabase failed to load', err);
+        const blurb = document.getElementById('accountBlurb');
+        if (blurb) blurb.textContent = 'Unable to connect to your account. Please refresh the page.';
         return;
       }
 
-      // Fetch profile for name + plan
-      let profile = null;
-      try {
-        const { data } = await SB
-          .from('profiles')
-          .select('full_name, subscription_plan')
-          .eq('user_id', user.id)
-          .single();
-        profile = data || {};
-      } catch {}
+      const pageTitle    = document.getElementById('pageTitle');
+      const accountBlurb = document.getElementById('accountBlurb');
+      const accountActs  = document.getElementById('accountActions');
+      const subBlurb     = document.getElementById('subBlurb');
 
-      const full = profile?.full_name || user.email || 'Your account';
-      pageTitle.textContent = 'Settings';
-      accountBlurb.innerHTML = `Signed in as <strong class="ok">${full}</strong> (${user.email})`;
-      accountActs.innerHTML = `
-        <a class="pill" href="/stories.html">My Stories</a>
-        <a class="pill" href="/record.html">Record</a>
-        <button class="pill" id="signOutBtn">Sign out</button>
-      `;
-      document.getElementById('signOutBtn').onclick = async ()=>{
-        await SB.auth.signOut();
-        location.href = '/login.html';
-      };
+      function firstName(full){ return (full||'').trim().split(/\s+/)[0] || ''; }
 
-      // Plan status
-      const plan = profile?.subscription_plan || 'free';
-      subBlurb.textContent = `Current plan: ${plan}`;
-    }
+      async function renderSettings(){
+        const { data: { user }, error } = await SB.auth.getUser();
 
-    // Render on load and when we regain focus (helps after email confirmation)
-    document.addEventListener('DOMContentLoaded', renderSettings);
-    window.addEventListener('focus', renderSettings);
+        if (!user || error) {
+          pageTitle.textContent = 'Settings';
+          accountBlurb.innerHTML = 'You are <strong class="warn">not signed in</strong>.';
+          accountActs.innerHTML = `
+            <a class="pill primary" href="/login.html">Sign in</a>
+          `;
+          subBlurb.textContent = 'Sign in to see or change your plan.';
+          return;
+        }
 
-    // Also re-render if the auth state changes on this tab
-    SB.auth.onAuthStateChange((_event, _session) => { renderSettings(); });
+        let profile = null;
+        try {
+          const { data } = await SB
+            .from('profiles')
+            .select('full_name, subscription_plan')
+            .eq('user_id', user.id)
+            .single();
+          profile = data || {};
+        } catch {}
+
+        const full = profile?.full_name || user.email || 'Your account';
+        pageTitle.textContent = 'Settings';
+        accountBlurb.innerHTML = `Signed in as <strong class="ok">${full}</strong> (${user.email})`;
+        accountActs.innerHTML = `
+          <a class="pill" href="/stories.html">My Stories</a>
+          <a class="pill" href="/record.html">Record</a>
+          <button class="pill" id="signOutBtn">Sign out</button>
+        `;
+        document.getElementById('signOutBtn').onclick = async ()=>{
+          await SB.auth.signOut();
+          location.href = '/login.html';
+        };
+
+        const plan = profile?.subscription_plan || 'free';
+        subBlurb.textContent = `Current plan: ${plan}`;
+      }
+
+      document.addEventListener('DOMContentLoaded', renderSettings);
+      window.addEventListener('focus', renderSettings);
+      SB.auth.onAuthStateChange(() => { renderSettings(); });
+    })();
   </script>
 </body>
 </html>

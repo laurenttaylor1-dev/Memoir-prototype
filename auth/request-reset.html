@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Reset password — Memoir</title>
   <link rel="stylesheet" href="/styles.css"/>
+  <script src="/js/memoir-supabase.js"></script>
 </head>
 <body>
   <div id="site-header"></div>
@@ -22,26 +23,44 @@
 
   <div id="site-footer"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/header-loader.js"></script>
   <script src="/js/footer-loader.js"></script>
   <script>
-    const supabase = window.supabase.createClient(window.MEMOIR_SUPABASE_URL, window.MEMOIR_SUPABASE_ANON);
-    document.getElementById('req-form').addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      const status = document.getElementById('status');
-      const email  = document.getElementById('email').value.trim();
-      status.textContent = 'Sending…';
-      try{
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: location.origin + '/auth/reset-password.html'
-        });
-        if (error) throw error;
-        status.textContent = 'Check your inbox for a reset link.';
-      }catch(err){
-        status.textContent = err.message || 'Could not send reset email.';
+    (async function(){
+      const statusEl = document.getElementById('status');
+      const ensure = window.memoirEnsureSupabase ? window.memoirEnsureSupabase() : Promise.resolve(window.supabase);
+      let supabase;
+      try {
+        await ensure;
+        const createClient = window.memoirCreateSupabaseClient;
+        supabase = createClient
+          ? createClient()
+          : window.supabase.createClient(
+              window.MEMOIR_SUPABASE_URL || window.SUPABASE_URL,
+              window.MEMOIR_SUPABASE_ANON || window.SUPABASE_ANON_KEY
+            );
+      } catch (err) {
+        console.error('[request-reset] supabase failed to load', err);
+        if (statusEl) statusEl.textContent = 'Unable to connect. Please refresh the page.';
+        return;
       }
-    });
+
+      document.getElementById('req-form').addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        const status = document.getElementById('status');
+        const email  = document.getElementById('email').value.trim();
+        status.textContent = 'Sending…';
+        try{
+          const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: location.origin + '/auth/reset-password.html'
+          });
+          if (error) throw error;
+          status.textContent = 'Check your inbox for a reset link.';
+        }catch(err){
+          status.textContent = err.message || 'Could not send reset email.';
+        }
+      });
+    })();
   </script>
 </body>
 </html>

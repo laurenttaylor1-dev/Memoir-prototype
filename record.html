@@ -37,11 +37,7 @@
     .ok{color:#1b5e20}
     audio{width:100%; margin-top:10px}
   </style>
-  <script>
-    window.MEMOIR_SUPABASE_URL  = window.MEMOIR_SUPABASE_URL  || "https://fswxkujxusdozvmpyvzk.supabase.co";
-    window.MEMOIR_SUPABASE_ANON = window.MEMOIR_SUPABASE_ANON || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
-  </script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/memoir-supabase.js"></script>
 </head>
 <body>
   <div id="site-header"></div>
@@ -109,182 +105,203 @@
   <script src="/js/footer-loader.js"></script>
 
   <script>
-    const SB = supabase.createClient(window.MEMOIR_SUPABASE_URL, window.MEMOIR_SUPABASE_ANON);
-    let currentPlan = 'free';
-    function firstName(n){ return (n||'').trim().split(/\s+/)[0] || ''; }
-
-    // Personalize + plan note
-    (async function init(){
-      const title = document.getElementById('pageTitle');
-      const note  = document.getElementById('planNote');
-
-      const { data: { user } } = await SB.auth.getUser();
-      if (!user){ title.textContent='Record'; return; }
-
-      let profile = null;
-      try{
-        const { data } = await SB.from('profiles')
-          .select('full_name, subscription_plan')
-          .eq('user_id', user.id).single();
-        profile = data || {};
-      }catch{}
-
-      if (profile?.full_name){
-        title.textContent = 'Record, ' + firstName(profile.full_name);
+    (async function(){
+      const ensure = window.memoirEnsureSupabase ? window.memoirEnsureSupabase() : Promise.resolve(window.supabase);
+      let SB;
+      try {
+        await ensure;
+        const createClient = window.memoirCreateSupabaseClient;
+        SB = createClient
+          ? createClient()
+          : window.supabase.createClient(
+              window.MEMOIR_SUPABASE_URL || window.SUPABASE_URL,
+              window.MEMOIR_SUPABASE_ANON || window.SUPABASE_ANON_KEY
+            );
+        window.MEMOIR_SUPABASE_CLIENT = window.MEMOIR_SUPABASE_CLIENT || SB;
+      } catch (err) {
+        console.error('[record] supabase failed to load', err);
+        const note = document.getElementById('planNote');
+        if (note) note.textContent = 'Unable to connect to Supabase. Recording is unavailable.';
+        return;
       }
-      currentPlan = profile?.subscription_plan || 'free';
 
-      if (currentPlan === 'free'){
-        note.textContent = 'Free plan: recordings over 2 minutes are not allowed. Upgrade in Settings for higher limits.';
-      } else {
-        note.textContent = `Plan: ${currentPlan}`;
-      }
-    })();
+      let currentPlan = 'free';
+      function firstName(n){ return (n||'').trim().split(/\s+/)[0] || ''; }
 
-    // Prompts + tabs
-    const TOPIC_WORDS = {
-      en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
-      fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
-      es:["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Momentos clave"],
-      nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
-    };
-    function renderPrompts(code){
-      const words=(TOPIC_WORDS[code]||TOPIC_WORDS.en);
-      const shuffled=[...words].sort(()=>Math.random()-0.5).slice(0,4);
-      const wrap=document.getElementById('prompts'); wrap.innerHTML='';
-      shuffled.forEach(w=>{
-        const b=document.createElement('button');
-        b.className='chip'; b.textContent=w;
-        b.onclick=()=>{ document.getElementById('title').value=w; };
-        wrap.appendChild(b);
-      });
-    }
-    function applyLangToRecord(code){ renderPrompts(code); }
-    window.addEventListener('memoir:lang',e=>applyLangToRecord(e.detail.code));
-    document.addEventListener('DOMContentLoaded',()=>applyLangToRecord(window.MEMOIR_I18N?.getLang?.()||'en'));
 
-    const tabFree=document.getElementById('tabFree');
-    const tabGuided=document.getElementById('tabGuided');
-    [tabFree,tabGuided].forEach(t=>t.onclick=()=>{
-      [tabFree,tabGuided].forEach(x=>x.classList.remove('active'));
-      t.classList.add('active');
-    });
+          // Personalize + plan note
+          (async function init(){
+            const title = document.getElementById('pageTitle');
+            const note  = document.getElementById('planNote');
 
-    // --- Recorder with auto-upload + story creation ---
-    const micBtn   = document.getElementById('mic');
-    const timerEl  = document.getElementById('timer');
-    const msgEl    = document.getElementById('recMsg');
-    const preview  = document.getElementById('preview');
-
-    let mediaStream = null;
-    let recorder    = null;
-    let chunks      = [];
-    let startedAt   = 0;
-    let tickHandle  = null;
-
-    function fmt(s){ s = Math.max(0, s|0); const m = (s/60)|0; const r = (s%60); return `${String(m).padStart(2,'0')}:${String(r).padStart(2,'0')}`; }
-
-    function startTimer() {
-      startedAt = Date.now();
-      clearInterval(tickHandle);
-      tickHandle = setInterval(()=>{
-        const sec = ((Date.now()-startedAt)/1000)|0;
-        timerEl.textContent = fmt(sec);
-        if (currentPlan === 'free' && sec >= 120) {
-          msgEl.className = 'muted warn';
-          msgEl.textContent = 'Reached 2-minute limit on Free plan — stopping.';
-          stopRecording();
-        }
-      }, 200);
-    }
-    function stopTimer() { clearInterval(tickHandle); tickHandle = null; }
-
-    async function startRecording(){
-      msgEl.className='muted';
-      msgEl.textContent='';
-      chunks = [];
-      preview.style.display = 'none';
-      preview.src = '';
-      try{
-        mediaStream = await navigator.mediaDevices.getUserMedia({ audio:true });
-        const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : undefined;
-        recorder = new MediaRecorder(mediaStream, mime ? { mimeType: mime } : undefined);
-
-        recorder.ondataavailable = (e)=>{ if (e.data?.size) chunks.push(e.data); };
-        recorder.onstop = async ()=>{
-          stopTimer();
-          mediaStream.getTracks().forEach(t=>t.stop());
-          const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
-          const url = URL.createObjectURL(blob);
-          preview.src = url;
-          preview.style.display = 'block';
-          micBtn.textContent = 'Record';
-          micBtn.classList.remove('pulse');
-          micBtn.setAttribute('aria-pressed','false');
-
-          // ---- AUTO-CREATE STORY + UPLOAD ----
-          try {
             const { data: { user } } = await SB.auth.getUser();
-            if (!user) { msgEl.className='muted warn'; msgEl.textContent='Please sign in again.'; return; }
+            if (!user){ title.textContent='Record'; return; }
 
-            // 1) Create story row
-            const title = document.getElementById('title').value.trim() || 'Untitled';
-            const when  = document.getElementById('when').value.trim() || null;
-            const notes = document.getElementById('notes').value.trim() || null;
+            let profile = null;
+            try{
+              const { data } = await SB.from('profiles')
+                .select('full_name, subscription_plan')
+                .eq('user_id', user.id).single();
+              profile = data || {};
+            }catch{}
 
-            const ins = await SB.from('stories')
-              .insert({ title, when_text: when, notes, visibility: 'private' })
-              .select()
-              .single();
-            if (ins.error) throw ins.error;
-            const story = ins.data;
+            if (profile?.full_name){
+              title.textContent = 'Record, ' + firstName(profile.full_name);
+            }
+            currentPlan = profile?.subscription_plan || 'free';
 
-            // 2) Upload audio to Storage
-            const path = `user/${user.id}/audio/${crypto.randomUUID()}.webm`;
-            const up = await SB.storage.from('story-media').upload(path, blob, { contentType: blob.type });
-            if (up.error) throw up.error;
+            if (currentPlan === 'free'){
+              note.textContent = 'Free plan: recordings over 2 minutes are not allowed. Upgrade in Settings for higher limits.';
+            } else {
+              note.textContent = `Plan: ${currentPlan}`;
+            }
+          })();
 
-            // 3) Link asset
-            const asset = await SB.from('story_assets')
-              .insert({ story_id: story.id, kind: 'audio', path, mime: blob.type })
-              .select()
-              .single();
-            if (asset.error) throw asset.error;
-
-            // 4) Optional: create empty text row for later AI rewrite
-            await SB.from('story_texts')
-              .insert({ story_id: story.id, original_text: null, rewritten_text: null })
-              .select().single().catch(()=>{ /* ignore if table not present */ });
-
-            msgEl.className = 'ok';
-            msgEl.innerHTML = `Uploaded and saved! <a href="/stories.html">Go to My Stories</a>`;
-          } catch (e) {
-            console.error(e);
-            msgEl.className='muted warn';
-            msgEl.textContent = 'Upload failed: ' + (e.message||e);
+          // Prompts + tabs
+          const TOPIC_WORDS = {
+            en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
+            fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
+            es:["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Momentos clave"],
+            nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
+          };
+          function renderPrompts(code){
+            const words=(TOPIC_WORDS[code]||TOPIC_WORDS.en);
+            const shuffled=[...words].sort(()=>Math.random()-0.5).slice(0,4);
+            const wrap=document.getElementById('prompts'); wrap.innerHTML='';
+            shuffled.forEach(w=>{
+              const b=document.createElement('button');
+              b.className='chip'; b.textContent=w;
+              b.onclick=()=>{ document.getElementById('title').value=w; };
+              wrap.appendChild(b);
+            });
           }
-          // ------------------------------------
+          function applyLangToRecord(code){ renderPrompts(code); }
+          window.addEventListener('memoir:lang',e=>applyLangToRecord(e.detail.code));
+          document.addEventListener('DOMContentLoaded',()=>applyLangToRecord(window.MEMOIR_I18N?.getLang?.()||'en'));
 
-        };
+          const tabFree=document.getElementById('tabFree');
+          const tabGuided=document.getElementById('tabGuided');
+          [tabFree,tabGuided].forEach(t=>t.onclick=()=>{
+            [tabFree,tabGuided].forEach(x=>x.classList.remove('active'));
+            t.classList.add('active');
+          });
 
-        recorder.start(250);
-        startTimer();
-        micBtn.textContent = 'Stop';
-        micBtn.classList.add('pulse');
-        micBtn.setAttribute('aria-pressed','true');
+          // --- Recorder with auto-upload + story creation ---
+          const micBtn   = document.getElementById('mic');
+          const timerEl  = document.getElementById('timer');
+          const msgEl    = document.getElementById('recMsg');
+          const preview  = document.getElementById('preview');
 
-      }catch(e){
-        msgEl.className = 'muted warn';
-        msgEl.textContent = 'Microphone error: ' + (e.message || e);
-      }
-    }
-    function stopRecording(){
-      try { recorder?.state === 'recording' && recorder.stop(); } catch {}
-    }
-    micBtn.addEventListener('click', ()=>{
-      if (recorder && recorder.state === 'recording') stopRecording();
-      else startRecording();
-    });
+          let mediaStream = null;
+          let recorder    = null;
+          let chunks      = [];
+          let startedAt   = 0;
+          let tickHandle  = null;
+
+          function fmt(s){ s = Math.max(0, s|0); const m = (s/60)|0; const r = (s%60); return `${String(m).padStart(2,'0')}:${String(r).padStart(2,'0')}`; }
+
+          function startTimer() {
+            startedAt = Date.now();
+            clearInterval(tickHandle);
+            tickHandle = setInterval(()=>{
+              const sec = ((Date.now()-startedAt)/1000)|0;
+              timerEl.textContent = fmt(sec);
+              if (currentPlan === 'free' && sec >= 120) {
+                msgEl.className = 'muted warn';
+                msgEl.textContent = 'Reached 2-minute limit on Free plan — stopping.';
+                stopRecording();
+              }
+            }, 200);
+          }
+          function stopTimer() { clearInterval(tickHandle); tickHandle = null; }
+
+          async function startRecording(){
+            msgEl.className='muted';
+            msgEl.textContent='';
+            chunks = [];
+            preview.style.display = 'none';
+            preview.src = '';
+            try{
+              mediaStream = await navigator.mediaDevices.getUserMedia({ audio:true });
+              const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : undefined;
+              recorder = new MediaRecorder(mediaStream, mime ? { mimeType: mime } : undefined);
+
+              recorder.ondataavailable = (e)=>{ if (e.data?.size) chunks.push(e.data); };
+              recorder.onstop = async ()=>{
+                stopTimer();
+                mediaStream.getTracks().forEach(t=>t.stop());
+                const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+                const url = URL.createObjectURL(blob);
+                preview.src = url;
+                preview.style.display = 'block';
+                micBtn.textContent = 'Record';
+                micBtn.classList.remove('pulse');
+                micBtn.setAttribute('aria-pressed','false');
+
+                // ---- AUTO-CREATE STORY + UPLOAD ----
+                try {
+                  const { data: { user } } = await SB.auth.getUser();
+                  if (!user) { msgEl.className='muted warn'; msgEl.textContent='Please sign in again.'; return; }
+
+                  // 1) Create story row
+                  const title = document.getElementById('title').value.trim() || 'Untitled';
+                  const when  = document.getElementById('when').value.trim() || null;
+                  const notes = document.getElementById('notes').value.trim() || null;
+
+                  const ins = await SB.from('stories')
+                    .insert({ title, when_text: when, notes, visibility: 'private' })
+                    .select()
+                    .single();
+                  if (ins.error) throw ins.error;
+                  const story = ins.data;
+
+                  // 2) Upload audio to Storage
+                  const path = `user/${user.id}/audio/${crypto.randomUUID()}.webm`;
+                  const up = await SB.storage.from('story-media').upload(path, blob, { contentType: blob.type });
+                  if (up.error) throw up.error;
+
+                  // 3) Link asset
+                  const asset = await SB.from('story_assets')
+                    .insert({ story_id: story.id, kind: 'audio', path, mime: blob.type })
+                    .select()
+                    .single();
+                  if (asset.error) throw asset.error;
+
+                  // 4) Optional: create empty text row for later AI rewrite
+                  await SB.from('story_texts')
+                    .insert({ story_id: story.id, original_text: null, rewritten_text: null })
+                    .select().single().catch(()=>{ /* ignore if table not present */ });
+
+                  msgEl.className = 'ok';
+                  msgEl.innerHTML = `Uploaded and saved! <a href="/stories.html">Go to My Stories</a>`;
+                } catch (e) {
+                  console.error(e);
+                  msgEl.className='muted warn';
+                  msgEl.textContent = 'Upload failed: ' + (e.message||e);
+                }
+                // ------------------------------------
+
+              };
+
+              recorder.start(250);
+              startTimer();
+              micBtn.textContent = 'Stop';
+              micBtn.classList.add('pulse');
+              micBtn.setAttribute('aria-pressed','true');
+
+            }catch(e){
+              msgEl.className = 'muted warn';
+              msgEl.textContent = 'Microphone error: ' + (e.message || e);
+            }
+          }
+          function stopRecording(){
+            try { recorder?.state === 'recording' && recorder.stop(); } catch {}
+          }
+          micBtn.addEventListener('click', ()=>{
+            if (recorder && recorder.state === 'recording') stopRecording();
+            else startRecording();
+          });
+    })();
   </script>
 </body>
 </html>

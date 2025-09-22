@@ -4,6 +4,7 @@
   <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Sign in — Memoir</title>
   <link rel="stylesheet" href="/styles.css">
+  <script src="/js/memoir-supabase.js"></script>
 </head>
 <body>
   <main style="display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;height:100vh;text-align:center;">
@@ -17,27 +18,41 @@
     </form>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // TODO: replace with your project values
-    const SUPABASE_URL = "https://fswxkujxusdozvmpyvzk.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    document.getElementById('signin-form').addEventListener('submit', async (e)=>{
-      e.preventDefault();
+    (async function(){
       const status = document.getElementById('signin-status');
-      status.textContent = 'Signing in…';
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      try{
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        location.href = "/stories.html"; // your app entry
-      }catch(err){
-        status.textContent = err.message || "Unable to sign in.";
+      const ensure = window.memoirEnsureSupabase ? window.memoirEnsureSupabase() : Promise.resolve(window.supabase);
+      let supabase;
+      try {
+        await ensure;
+        const createClient = window.memoirCreateSupabaseClient;
+        supabase = createClient
+          ? createClient()
+          : window.supabase.createClient(
+              window.MEMOIR_SUPABASE_URL || window.SUPABASE_URL,
+              window.MEMOIR_SUPABASE_ANON || window.SUPABASE_ANON_KEY
+            );
+      } catch (err) {
+        console.error('[sign-in] supabase failed to load', err);
+        if (status) status.textContent = 'Unable to connect. Please refresh the page.';
+        return;
       }
-    });
+
+      document.getElementById('signin-form').addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        status.textContent = 'Signing in…';
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        try{
+          const { error } = await supabase.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          location.href = '/stories.html';
+        }catch(err){
+          status.textContent = err.message || 'Unable to sign in.';
+        }
+      });
+    })();
   </script>
+
 </body>
 </html>
