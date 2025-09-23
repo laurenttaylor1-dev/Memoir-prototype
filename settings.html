@@ -4,152 +4,176 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — Settings</title>
+  <meta name="theme-color" content="#f4ead9"/>
   <link rel="stylesheet" href="/styles.css">
   <style>
-    :root{--bg:#f6f1ea;--card:#fffaf5;--ink:#3b2f2a;--muted:#7b6a62;--accent:#8c5a3c;--accent2:#b17d55;--radius:18px;--shadow:0 18px 40px rgba(59,47,42,.10),0 2px 8px rgba(59,47,42,.06)}
-    body{background:var(--bg);color:var(--ink);margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-    .container{max-width:1100px;margin:0 auto;padding:20px 16px 28px}
-    .title{font-size:clamp(26px,3vw,38px);margin:8px 0 16px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    @media (max-width:900px){.grid{grid-template-columns:1fr}}
-    .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
-    .card h3{margin:0 0 10px}
-    .pill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;color:#3b2f2a;text-decoration:none;font-weight:600;cursor:pointer}
-    .pill.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:0}
+    :root{
+      --bg:#f6f1ea; --card:#fffaf5; --ink:#3b2f2a; --muted:#7b6a62;
+      --accent:#8c5a3c; --accent2:#b17d55; --radius:22px;
+      --shadow:0 18px 40px rgba(59,47,42,.10),0 2px 8px rgba(59,47,42,.06);
+    }
+    body{background:var(--bg); color:var(--ink); margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    .container{max-width:900px; margin:0 auto; padding:24px 16px 40px}
+    h1{font-size:clamp(28px,3.2vw,42px); margin:10px 0 18px; font-weight:800}
+    .card{background:var(--card); border:1px solid rgba(0,0,0,.08); border-radius:var(--radius); box-shadow:var(--shadow); padding:22px}
+    .row{display:flex; gap:16px; align-items:center; justify-content:space-between; flex-wrap:wrap}
     .muted{color:var(--muted)}
-    .list{margin:0 0 0 18px}
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .ok{color:#1b5e20}
-    .warn{color:#8a1f17}
+    .btn{display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:999px; border:1px solid rgba(0,0,0,.12); background:#fff; color:var(--ink); font-weight:700; cursor:pointer; text-decoration:none}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#fff; border:0}
+    .error{color:#a23a3a; margin-top:10px}
+    .notice{margin:10px 0 18px; padding:10px 14px; border-radius:12px; background:#e9f7ef; color:#1b5e20; border:1px solid #c7ebd2; display:none}
+    .kv{display:grid; grid-template-columns:160px 1fr; gap:10px; margin-top:14px}
+    code.small{font-size:12px; color:var(--muted)}
   </style>
 
-  <!-- Project keys -->
+  <!-- If login.html already set these, we reuse; otherwise define here -->
   <script>
-    window.MEMOIR_SUPABASE_URL  = window.MEMOIR_SUPABASE_URL  || "https://fswxkujxusdozvmpyvzk.supabase.co";
-    window.MEMOIR_SUPABASE_ANON = window.MEMOIR_SUPABASE_ANON || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
+    (function ensureSupabaseEnv(){
+      if (!window.MEMOIR_SUPABASE_URL) {
+        window.MEMOIR_SUPABASE_URL  = "https://fswxkujxusdozvmpyvzk.supabase.co";
+      }
+      if (!window.MEMOIR_SUPABASE_ANON) {
+        window.MEMOIR_SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
+      }
+    })();
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="site-header"></div>
 
   <main class="container">
-    <h1 class="title" id="pageTitle" data-i18n="settingsTitle">Settings</h1>
+    <h1>Settings</h1>
+    <div id="topNotice" class="notice"></div>
 
-    <section class="grid">
-      <!-- Account -->
-      <div class="card" id="accountCard">
-        <h3 data-i18n="settingsAccount">Account</h3>
-        <p class="muted" id="accountBlurb" data-i18n="settingsAccountChecking">Checking your session…</p>
-        <div class="row" id="accountActions" style="margin-top:8px"></div>
-      </div>
+    <section class="card" id="acctCard">
+      <h2 style="margin:0 0 6px">Account</h2>
+      <div id="acctStatus" class="muted">Checking your session…</div>
 
-      <!-- Subscription -->
-      <div class="card" id="subCard">
-        <h3 data-i18n="settingsSubscription">Subscription</h3>
-        <p class="muted" id="subBlurb" data-i18n="settingsSubscriptionIntro">Choose or change your plan.</p>
-        <div class="list" id="subPlans">
-          <p>
-            <strong data-i18n="settingsPlanStorytellerLabel">Storyteller — €8.99/month</strong>
-            — <a href="/api/checkout?price=storyteller" class="pill primary" data-i18n="settingsPlanButton">Subscribe</a>
-          </p>
-          <p>
-            <strong data-i18n="settingsPlanPremiumLabel">Premium Storyteller — €11.99/month</strong>
-            — <a href="/api/checkout?price=premium" class="pill primary" data-i18n="settingsPlanButton">Subscribe</a>
-          </p>
-          <p>
-            <strong data-i18n="settingsPlanExclusiveLabel">Exclusive Storyteller — €15.99/month</strong>
-            — <a href="/api/checkout?price=exclusive" class="pill primary" data-i18n="settingsPlanButton">Subscribe</a>
-          </p>
+      <div id="acctBody" style="display:none">
+        <div class="kv">
+          <div class="muted">Email</div>
+          <div id="acctEmail">—</div>
+
+          <div class="muted">User ID</div>
+          <div><code class="small" id="acctId">—</code></div>
+
+          <div class="muted">Created</div>
+          <div id="acctCreated">—</div>
         </div>
-      </div>
 
-      <!-- Billing -->
-      <div class="card">
-        <h3 data-i18n="settingsBilling">Billing</h3>
-        <p class="muted" data-i18n="settingsBillingCopy">View invoices and next renewal.</p>
-        <a class="pill" href="/api/billing-portal" data-i18n="settingsBillingManage">Manage billing</a>
-      </div>
+        <div class="row" style="margin-top:16px">
+          <a class="btn" href="/login.html">Back to login</a>
+          <button id="btnSignOut" class="btn primary" type="button">Sign out</button>
+        </div>
 
-      <!-- FAQ -->
-      <div class="card">
-        <h3 data-i18n="settingsFaq">Help & FAQ</h3>
-        <ul class="list">
-          <li data-i18n="settingsFaqItem1">Is there a free plan? — Yes, with a 2-minute per recording cap.</li>
-          <li data-i18n="settingsFaqItem2">Which languages are supported? — English, French, Dutch, Spanish for UI; stories can be any language.</li>
-          <li data-i18n="settingsFaqItem3">How is transcription done? — We’ll add automatic transcription on save (coming in beta).</li>
-        </ul>
+        <div id="acctErr" class="error"></div>
       </div>
     </section>
   </main>
 
   <div id="site-footer"></div>
 
-  <script src="/js/lang.js"></script>
-  <script src="/js/header-loader.js"></script>
-  <script src="/js/footer-loader.js"></script>
+  <script src="/js/header-loader.js" defer></script>
+  <script src="/js/footer-loader.js" defer></script>
+  <!-- Load Supabase once -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
   <script>
-    const SB = supabase.createClient(
-      window.MEMOIR_SUPABASE_URL,
-      window.MEMOIR_SUPABASE_ANON,
-      { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
-    );
-    const I18N = window.MEMOIR_I18N;
+    document.addEventListener('DOMContentLoaded', () => {
+      const statusEl = document.getElementById('acctStatus');
+      const bodyEl   = document.getElementById('acctBody');
+      const errEl    = document.getElementById('acctErr');
+      const noticeEl = document.getElementById('topNotice');
 
-    const pageTitle    = document.getElementById('pageTitle');
-    const accountBlurb = document.getElementById('accountBlurb');
-    const accountActs  = document.getElementById('accountActions');
-    const subBlurb     = document.getElementById('subBlurb');
+      let SB = null;
 
-    function firstName(full){ return (full||'').trim().split(/\s+/)[0] || ''; }
-    function getLangCode(){ return I18N?.getLang?.() || localStorage.getItem('memoir.lang') || 'en'; }
-    function tr(key, vars, fallback=''){ return I18N?.translate?.(key, vars, getLangCode()) || I18N?.translate?.(key, vars, 'en') || I18N?.t?.(key, getLangCode()) || I18N?.t?.(key, 'en') || fallback; }
-    function planLabel(code){ return tr(`planLabel_${code}`, null, code); }
-
-    async function renderSettings(){
-      const { data, error } = await SB.auth.getUser();
-      const user = data?.user || null;
-
-      if (!user || error) {
-        pageTitle.textContent = tr('settingsTitle', null, 'Settings');
-        accountBlurb.innerHTML = tr('settingsAccountSignedOut', null, 'You are <strong class="warn">not signed in</strong>.');
-        accountActs.innerHTML = `<a class="pill primary" href="/login.html">${tr('settingsAccountActionsSignIn', null, 'Sign in')}</a>`;
-        subBlurb.textContent = tr('settingsSubscriptionSignIn', null, 'Sign in to see or change your plan.');
+      // 1) Init client safely
+      try {
+        if (!window.supabase || !window.supabase.createClient) {
+          throw new Error('Supabase SDK not loaded');
+        }
+        SB = window.supabase.createClient(
+          window.MEMOIR_SUPABASE_URL,
+          window.MEMOIR_SUPABASE_ANON,
+          { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true } }
+        );
+      } catch (e) {
+        console.error('[settings] Supabase init failed:', e);
+        statusEl.textContent = 'Could not load authentication — try refreshing.';
         return;
       }
 
-      let profile = null;
-      try {
-        const { data } = await SB
-          .from('profiles')
-          .select('full_name, subscription_plan')
-          .eq('user_id', user.id)
-          .single();
-        profile = data || {};
-      } catch {}
+      // 2) Handle hash messages from confirm/recovery
+      (async function handleHash(){
+        const h = location.hash || '';
+        if (!h) return;
+        if (h.includes('type=recovery')) {
+          noticeEl.textContent = 'Set a new password below (once signed in, it will reflect here).';
+          noticeEl.style.display = 'block';
+        } else if (h.includes('type=signup')) {
+          noticeEl.textContent = 'Email confirmed.';
+          noticeEl.style.display = 'block';
+        }
+      })();
 
-      const full = profile?.full_name || user.email || 'Your account';
-      pageTitle.textContent = tr('settingsTitle', null, 'Settings');
-      accountBlurb.innerHTML = tr('settingsAccountSignedIn', { name: full, email: user.email }, `Signed in as <strong class="ok">${full}</strong> (${user.email})`);
-      accountActs.innerHTML = `
-        <a class="pill" href="/stories.html">${tr('settingsAccountActionsStories', null, 'My Stories')}</a>
-        <a class="pill" href="/record.html">${tr('settingsAccountActionsRecord', null, 'Record')}</a>
-        <button class="pill" id="signOutBtn">${tr('settingsAccountActionsSignOut', null, 'Sign out')}</button>
-      `;
-      accountActs.querySelector('#signOutBtn')?.addEventListener('click', async () => {
-        await SB.auth.signOut();
-        location.href = '/login.html';
+      // 3) Resolve session with a timeout (prevents endless "Checking…")
+      const withTimeout = (p, ms=8000) =>
+        Promise.race([p, new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),ms))]);
+
+      async function loadSession() {
+        try {
+          const { data } = await withTimeout(SB.auth.getSession());
+          const session = data?.session || null;
+
+          // If no session -> go to login with return URL
+          if (!session) {
+            const ret = encodeURIComponent(location.pathname);
+            location.href = `/login.html?return=${ret}`;
+            return;
+          }
+
+          // We have a session: render user info
+          const user = session.user;
+          statusEl.style.display = 'none';
+          bodyEl.style.display = 'block';
+          document.getElementById('acctEmail').textContent   = user.email || '—';
+          document.getElementById('acctId').textContent      = user.id || '—';
+          document.getElementById('acctCreated').textContent = user.created_at ? new Date(user.created_at).toLocaleString() : '—';
+        } catch (e) {
+          console.error('[settings] getSession error:', e);
+          statusEl.textContent = e?.message === 'timeout'
+            ? 'Auth is slow to respond. Please refresh.'
+            : 'Could not check your session.';
+        }
+      }
+
+      // 4) Also react to auth state changes (e.g., right after redirect)
+      SB.auth.onAuthStateChange((_event, session) => {
+        if (session) {
+          statusEl.style.display = 'none';
+          bodyEl.style.display = 'block';
+          const user = session.user;
+          document.getElementById('acctEmail').textContent   = user.email || '—';
+          document.getElementById('acctId').textContent      = user.id || '—';
+          document.getElementById('acctCreated').textContent = user.created_at ? new Date(user.created_at).toLocaleString() : '—';
+        }
       });
 
-      const plan = profile?.subscription_plan || 'free';
-      subBlurb.textContent = tr('settingsSubscriptionCurrent', { plan: planLabel(plan) }, `Current plan: ${plan}`);
-    }
+      // 5) Sign out
+      document.getElementById('btnSignOut')?.addEventListener('click', async () => {
+        errEl.textContent = '';
+        try {
+          const { error } = await SB.auth.signOut();
+          if (error) throw error;
+          location.href = '/login.html';
+        } catch (ex) {
+          errEl.textContent = ex?.message || 'Could not sign out.';
+        }
+      });
 
-    document.addEventListener('DOMContentLoaded', renderSettings);
-    window.addEventListener('focus', renderSettings);
-    window.addEventListener('memoir:lang', renderSettings);
-
-    SB.auth.onAuthStateChange(() => { renderSettings(); });
+      // Fire initial load
+      loadSession();
+    });
   </script>
 </body>
 </html>
