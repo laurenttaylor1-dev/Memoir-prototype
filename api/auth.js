@@ -1,11 +1,13 @@
+import { getSupabaseUrl, getSupabaseAnonKey } from './_config.js';
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "method_not_allowed" });
   }
 
-  const base = (process.env.SUPABASE_URL || "").replace(/\/+$/, "");
-  const apikey = process.env.SUPABASE_ANON_KEY || "";
+  const base = (getSupabaseUrl() || "").replace(/\/+$/, "");
+  const apikey = getSupabaseAnonKey() || "";
   const { action, email, password, redirectTo } = req.body || {};
 
   const headers = {
