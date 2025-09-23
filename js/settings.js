@@ -31,7 +31,9 @@
   async function loadSession() {
     statusEl.textContent = 'Checking your session…';
     try {
-      const supa = await window.MEMOIR_AUTH.ensureClient();
+      const auth = window.MEMOIR_AUTH;
+      if (!auth?.ensureClient) throw new Error('Auth client missing');
+      const supa = await auth.ensureClient();
 
       const h = location.hash || '';
       if (h.includes('type=recovery')) { noticeEl.textContent='Set a new password below (once signed in, it will reflect here).'; noticeEl.style.display='block'; }
@@ -55,7 +57,8 @@
           .eq('user_id', currentUser.id)
           .maybeSingle();
         currentPlan = prof?.subscription_plan || 'free';
-      } catch (_) { currentPlan = 'free'; }
+      } catch { currentPlan = 'free'; }
+
       subBlurb.textContent = `Current plan: ${currentPlan}`;
       document.querySelectorAll('#subControls .pill[data-plan]')
         .forEach(b => b.setAttribute('data-active', String(b.dataset.plan === currentPlan)));
@@ -119,7 +122,7 @@
     dangerMsg.textContent = 'Processing…';
     try {
       const supa = await window.MEMOIR_AUTH.ensureClient();
-      try { await supa.from('profiles').delete().eq('user_id', currentUser.id); } catch (_){}
+      try { await supa.from('profiles').delete().eq('user_id', currentUser.id); } catch {}
       await supa.auth.signOut();
       dangerMsg.textContent = 'Profile removed (if present). Redirecting…';
       setTimeout(() => location.href = '/login.html', 700);
