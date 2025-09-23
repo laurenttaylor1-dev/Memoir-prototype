@@ -314,6 +314,16 @@
         if (ins.error) throw ins.error;
         const story = ins.data;
 
+        // Immediately after inserting the story:
+        const notesVal = notesInput.value.trim() || null;
+        const whenVal  = whenInput.value.trim()  || null;
+
+        // Only call update if there is something to store; it's cheap either way.
+        await supa
+          .from('stories')
+          .update({ notes: notesVal, when_text: whenVal })
+          .eq('id', story.id);
+        
         if (pendingAudio){
           msgEl.textContent = tr('recordUploadingAudio', null, 'Uploading audio…');
           const audioMime = pendingAudio.type || 'audio/webm';
