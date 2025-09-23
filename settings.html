@@ -5,28 +5,25 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — Settings</title>
   <meta name="theme-color" content="#f4ead9"/>
+
+  <!-- Supabase config via meta (same as login) -->
+  <meta name="supabase-url"  content="https://fswxkujxusdozvmpyvzk.supabase.co">
+  <meta name="supabase-anon" content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI">
+
   <link rel="stylesheet" href="/styles.css">
   <style>
-    :root{
-      --bg:#f6f1ea; --card:#fffaf5; --ink:#3b2f2a; --muted:#7b6a62;
-      --accent:#8c5a3c; --accent2:#b17d55; --danger:#b33a3a;
-      --radius:22px; --shadow:0 18px 40px rgba(59,47,42,.10),0 2px 8px rgba(59,47,42,.06);
-    }
+    :root{ --bg:#f6f1ea; --card:#fffaf5; --ink:#3b2f2a; --muted:#7b6a62; --accent:#8c5a3c; --accent2:#b17d55; --danger:#b33a3a; --radius:22px; --shadow:0 18px 40px rgba(59,47,42,.10),0 2px 8px rgba(59,47,42,.06) }
     body{background:var(--bg); color:var(--ink); margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
     .container{max-width:980px; margin:0 auto; padding:24px 16px 60px}
     h1{font-size:clamp(28px,3.2vw,42px); margin:10px 0 18px; font-weight:800}
     h2{margin:0 0 8px}
     .card{background:var(--card); border:1px solid rgba(0,0,0,.08); border-radius:var(--radius); box-shadow:var(--shadow); padding:22px}
-    .grid{display:grid; gap:18px}
-    .two{grid-template-columns:1fr 1fr}
-    @media (max-width:800px){.two{grid-template-columns:1fr}}
     .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
     .muted{color:var(--muted)}
     .pill{display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:999px; border:1px solid rgba(0,0,0,.12); background:#fff; color:var(--ink); font-weight:700; cursor:pointer; text-decoration:none}
     .pill.primary{background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#fff; border:0}
     .pill.ghost{background:transparent}
     .pill.danger{background:#fff; border-color:rgba(179,58,58,.35); color:var(--danger)}
-    .error{color:#a23a3a}
     .notice{margin:10px 0 18px; padding:10px 14px; border-radius:12px; background:#e9f7ef; color:#1b5e20; border:1px solid #c7ebd2; display:none}
     .kv{display:grid; grid-template-columns:160px 1fr; gap:10px; margin-top:8px}
     code.small{font-size:12px; color:var(--muted)}
@@ -35,24 +32,12 @@
     .plans .pill[data-active="true"]{outline:2px solid var(--accent2)}
     .dangerBox{background:#fff5f5; border-color:#f3c5c5}
   </style>
-
-  <!-- Ensure Supabase env (fallbacks in case login.html didn't set them) -->
-  <script>
-    (function ensureSupabaseEnv(){
-      if (!window.MEMOIR_SUPABASE_URL) {
-        window.MEMOIR_SUPABASE_URL = "https://fswxkujxusdozvmpyvzk.supabase.co";
-      }
-      if (!window.MEMOIR_SUPABASE_ANON) {
-        window.MEMOIR_SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
-      }
-    })();
-  </script>
 </head>
 <body>
   <div id="site-header"></div>
 
   <main class="container">
-    <h1 id="pageTitle">Settings</h1>
+    <h1>Settings</h1>
     <div id="topNotice" class="notice"></div>
 
     <!-- Account -->
@@ -78,7 +63,7 @@
           <button id="btnSignOut" class="pill primary" type="button">Sign out</button>
         </div>
 
-        <div id="acctErr" class="error" style="margin-top:8px"></div>
+        <div id="acctErr" class="muted" style="margin-top:8px"></div>
       </div>
     </section>
 
@@ -119,7 +104,7 @@
     <!-- Danger zone -->
     <section class="card section dangerBox" id="dangerCard">
       <h2>Danger zone</h2>
-      <p class="muted" style="margin:6px 0 12px">Delete your profile from Memoir. This signs you out. (Your stories remain unless your account is fully removed by support.)</p>
+      <p class="muted" style="margin:6px 0 12px">Delete your profile from Memoir. This signs you out.</p>
       <button id="btnDeleteProfile" class="pill danger">Delete profile</button>
       <div id="dangerMsg" class="muted" style="margin-top:8px"></div>
     </section>
@@ -127,177 +112,10 @@
 
   <div id="site-footer"></div>
 
+  <!-- External scripts only (CSP-safe) -->
   <script src="/js/header-loader.js" defer></script>
   <script src="/js/footer-loader.js" defer></script>
-  <script>
-    /* --- Supabase bootstrap (lazy, robust) --- */
-    (function(){
-      const SUPA_URL = window.MEMOIR_SUPABASE_URL;
-      const SUPA_KEY = window.MEMOIR_SUPABASE_ANON;
-
-      const statusEl   = document.getElementById('acctStatus');
-      const bodyEl     = document.getElementById('acctBody');
-      const errEl      = document.getElementById('acctErr');
-      const noticeEl   = document.getElementById('topNotice');
-      const emailEl    = document.getElementById('acctEmail');
-      const idEl       = document.getElementById('acctId');
-      const createdEl  = document.getElementById('acctCreated');
-      const subBlurb   = document.getElementById('subBlurb');
-      const subControls= document.getElementById('subControls');
-      const subMsg     = document.getElementById('subMsg');
-      const secMsg     = document.getElementById('secMsg');
-      const dangerMsg  = document.getElementById('dangerMsg');
-
-      let SB=null, loader=null, authBound=false, currentUser=null, currentPlan='free';
-
-      function loadSDK(){
-        if (window.supabase?.createClient) return Promise.resolve();
-        if (loader) return loader;
-        loader = new Promise((resolve,reject)=>{
-          const s=document.createElement('script');
-          s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-          s.onload=()=>resolve();
-          s.onerror=()=>{ s.remove(); loader=null; reject(new Error('Supabase SDK failed to load.')); };
-          document.head.appendChild(s);
-        });
-        return loader;
-      }
-
-      async function ensureClient(){
-        if (SB) return SB;
-        await loadSDK();
-        if (!window.supabase?.createClient) throw new Error('Supabase SDK unavailable.');
-        SB = window.supabase.createClient(SUPA_URL, SUPA_KEY, { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true } });
-        if (!authBound){
-          authBound = true;
-          SB.auth.onAuthStateChange((_e, session)=>{
-            if (session?.user){ currentUser = session.user; renderUser(); }
-          });
-        }
-        return SB;
-      }
-
-      function renderUser(){
-        if (!currentUser) return;
-        statusEl.style.display='none';
-        bodyEl.style.display='block';
-        emailEl.textContent   = currentUser.email || '—';
-        idEl.textContent      = currentUser.id || '—';
-        createdEl.textContent = currentUser.created_at ? new Date(currentUser.created_at).toLocaleString() : '—';
-        subControls.style.display = 'block';
-      }
-
-      async function loadSession(){
-        try{
-          const supa = await ensureClient();
-
-          // hash info
-          const h = location.hash || '';
-          if (h.includes('type=recovery')) { noticeEl.textContent='Set a new password below (once signed in, it will reflect here).'; noticeEl.style.display='block'; }
-          if (h.includes('type=signup'))   { noticeEl.textContent='Email confirmed.'; noticeEl.style.display='block'; }
-
-          const withTimeout=(p,ms=8000)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),ms))]);
-          const { data } = await withTimeout(supa.auth.getSession(),8000);
-          const session = data?.session || null;
-          if (!session){
-            // not signed in → go to login, keep return
-            const ret = encodeURIComponent(location.pathname);
-            location.href = `/login.html?return=${ret}`;
-            return;
-          }
-          currentUser = session.user;
-          renderUser();
-
-          // try to read subscription plan
-          try{
-            const { data: prof } = await supa.from('profiles').select('subscription_plan').eq('user_id', currentUser.id).maybeSingle();
-            currentPlan = prof?.subscription_plan || 'free';
-            subBlurb.textContent = `Current plan: ${currentPlan}`;
-            // mark active button
-            document.querySelectorAll('#subControls .pill[data-plan]').forEach(btn=>{
-              btn.setAttribute('data-active', String(btn.dataset.plan===currentPlan));
-            });
-          }catch(e){
-            console.warn('[settings] profiles read failed', e);
-            subBlurb.textContent = 'Current plan: free';
-          }
-        }catch(e){
-          console.error('[settings] session load failed', e);
-          statusEl.textContent = e?.message==='timeout' ? 'Auth is slow to respond. Please refresh.' : 'Could not check your session.';
-        }
-      }
-
-      // plan change
-      document.querySelectorAll('#subControls .pill[data-plan]').forEach(btn=>{
-        btn.addEventListener('click', async ()=>{
-          subMsg.textContent='';
-          const plan = btn.dataset.plan;
-          try{
-            const supa = await ensureClient();
-            // upsert profile (table may or may not exist)
-            const { error } = await supa.from('profiles')
-              .upsert({ user_id: currentUser.id, subscription_plan: plan }, { onConflict: 'user_id' });
-            if (error) throw error;
-            currentPlan = plan;
-            subBlurb.textContent = `Current plan: ${currentPlan}`;
-            document.querySelectorAll('#subControls .pill[data-plan]').forEach(b=>b.setAttribute('data-active', String(b.dataset.plan===plan)));
-            subMsg.textContent = 'Plan updated.';
-          }catch(ex){
-            console.warn('[settings] plan update failed', ex);
-            subMsg.textContent = 'Could not update plan. (Profile table may not exist.)';
-          }
-        });
-      });
-
-      // reset password
-      document.getElementById('btnResetPwd')?.addEventListener('click', async ()=>{
-        secMsg.textContent='Sending…';
-        try{
-          const supa = await ensureClient();
-          const { error } = await supa.auth.resetPasswordForEmail(currentUser.email, { redirectTo: location.origin + '/login.html#type=recovery' });
-          if (error) throw error;
-          secMsg.textContent='Check your inbox for a reset link.';
-        }catch(ex){
-          secMsg.textContent= ex?.message || 'Could not send reset email.';
-        }
-      });
-
-      // sign out
-      document.getElementById('btnSignOut')?.addEventListener('click', async ()=>{
-        errEl.textContent='';
-        try{
-          const supa = await ensureClient();
-          const { error } = await supa.auth.signOut();
-          if (error) throw error;
-          location.href = '/login.html';
-        }catch(ex){
-          errEl.textContent = ex?.message || 'Could not sign out.';
-        }
-      });
-
-      // delete profile
-      document.getElementById('btnDeleteProfile')?.addEventListener('click', async ()=>{
-        dangerMsg.textContent='Processing…';
-        try{
-          const supa = await ensureClient();
-          // best-effort delete profile row
-          try{
-            await supa.from('profiles').delete().eq('user_id', currentUser.id);
-          }catch(_){} // ignore if table missing
-          await supa.auth.signOut();
-          dangerMsg.textContent='Profile removed (if present). Redirecting…';
-          setTimeout(()=> location.href='/login.html', 700);
-        }catch(ex){
-          dangerMsg.textContent= ex?.message || 'Could not delete profile.';
-        }
-      });
-
-      document.addEventListener('DOMContentLoaded', ()=>{
-        statusEl.textContent='Checking your session…';
-        loadSession();
-        window.addEventListener('focus', loadSession);
-      });
-    })();
-  </script>
+  <script src="/js/auth-client.js" defer></script>
+  <script src="/js/settings.js" defer></script>
 </body>
 </html>
