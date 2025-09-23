@@ -5,18 +5,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — Settings</title>
   <meta name="theme-color" content="#f4ead9"/>
-
-  <!-- Supabase config (same as other pages) -->
-  <meta name="supabase-url"  content="https://fswxkujxusdozvmpyvzk.supabase.co">
-  <meta name="supabase-anon" content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI">
-
   <link rel="stylesheet" href="/styles.css">
   <style>
     :root{ --bg:#f6f1ea; --card:#fffaf5; --ink:#3b2f2a; --muted:#7b6a62; --accent:#8c5a3c; --accent2:#b17d55; --danger:#b33a3a; --radius:22px; --shadow:0 18px 40px rgba(59,47,42,.10),0 2px 8px rgba(59,47,42,.06) }
     body{background:var(--bg); color:var(--ink); margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
     .container{max-width:980px; margin:0 auto; padding:24px 16px 60px}
-    h1{font-size:clamp(28px,3.2vw,42px); margin:10px 0 6px; font-weight:800}
-    .hello{margin:0 0 18px; color:var(--muted)}
+    h1{font-size:clamp(28px,3.2vw,42px); margin:10px 0 18px; font-weight:800}
     h2{margin:0 0 8px}
     .card{background:var(--card); border:1px solid rgba(0,0,0,.08); border-radius:var(--radius); box-shadow:var(--shadow); padding:22px}
     .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
@@ -38,9 +32,7 @@
   <div id="site-header"></div>
 
   <main class="container">
-    <h1 data-i18n="settingsTitle">Settings</h1>
-    <p id="helloLine" class="hello"></p>
-
+    <h1 id="settingsTitle" data-i18n="settingsTitle">Settings</h1>
     <div id="topNotice" class="notice"></div>
 
     <!-- Account -->
@@ -62,29 +54,24 @@
 
         <div class="row" style="margin-top:12px">
           <a class="pill" href="/stories.html" data-i18n="settingsAccountActionsStories">My Stories</a>
-          <a class="pill" href="/record.html"  data-i18n="settingsAccountActionsRecord">Record</a>
+          <a class="pill" href="/record.html" data-i18n="settingsAccountActionsRecord">Record</a>
           <button id="btnSignOut" class="pill primary" type="button" data-i18n="settingsAccountActionsSignOut">Sign out</button>
         </div>
 
         <div id="acctErr" class="muted" style="margin-top:8px"></div>
-      </div>
-
-      <div id="acctSignedOut" class="row" style="display:none;margin-top:10px">
-        <a class="pill primary" href="/login.html" data-i18n="settingsAccountActionsSignIn">Sign in</a>
       </div>
     </section>
 
     <!-- Subscription -->
     <section class="card section" id="subCard">
       <h2 data-i18n="settingsSubscription">Subscription</h2>
-      <div id="subBlurb" class="muted" data-i18n="settingsSubscriptionIntro">Choose or change your plan.</div>
+      <div id="subBlurb" class="muted" data-i18n="settingsSubscriptionSignIn">Sign in to see or change your plan.</div>
       <div id="subControls" style="display:none; margin-top:8px">
-        <div id="currentPlan" class="muted" style="margin-bottom:8px"></div>
         <div class="plans">
-          <button class="pill" data-plan="free" data-i18n="planLabel_free">Free</button>
+          <button class="pill" data-plan="free"        data-i18n="planLabel_free">Free</button>
           <button class="pill" data-plan="storyteller" data-i18n="planLabel_storyteller">Storyteller</button>
-          <button class="pill" data-plan="premium" data-i18n="planLabel_premium">Premium Storyteller</button>
-          <button class="pill" data-plan="exclusive" data-i18n="planLabel_exclusive">Exclusive Storyteller</button>
+          <button class="pill" data-plan="premium"     data-i18n="planLabel_premium">Premium Storyteller</button>
+          <button class="pill" data-plan="exclusive"   data-i18n="planLabel_exclusive">Exclusive Storyteller</button>
         </div>
         <div id="subMsg" class="muted" style="margin-top:8px"></div>
       </div>
@@ -92,28 +79,20 @@
 
     <!-- Security -->
     <section class="card section" id="securityCard">
-      <h2 data-i18n="settingsBilling">Billing</h2>
+      <h2>Security</h2>
       <div class="row">
-        <a class="pill" href="/checkout.html" data-i18n="settingsBillingManage">Manage billing</a>
-      </div>
-      <div class="muted" style="margin-top:8px" data-i18n="settingsBillingCopy">View invoices and next renewal.</div>
-
-      <hr style="border:none;border-top:1px dashed rgba(0,0,0,.1);margin:16px 0 12px">
-
-      <h2 data-i18n="settingsAccount">Account</h2>
-      <div class="row">
-        <a class="pill" href="/auth/request-reset.html">Reset password</a>
+        <button id="btnResetPwd" class="pill">Send password reset link</button>
       </div>
       <div id="secMsg" class="muted" style="margin-top:8px"></div>
     </section>
 
     <!-- Legal -->
     <section class="card section" id="legalCard">
-      <h2 data-i18n="footerLegal">Legal & Policies</h2>
+      <h2>Legal</h2>
       <div class="row">
         <a class="pill" href="/terms.html" target="_blank">Terms</a>
         <a class="pill" href="/privacy.html" target="_blank">Privacy Policy</a>
-        <a class="pill ghost" href="/landing.html">Home</a>
+        <a class="pill ghost" href="/landing.html">Back to Home</a>
       </div>
     </section>
 
@@ -128,157 +107,11 @@
 
   <div id="site-footer"></div>
 
-  <!-- External scripts -->
+  <!-- Order matters: auth-client first, then header (which uses it), then settings logic -->
   <script src="/js/lang.js" defer></script>
+  <script src="/js/auth-client.js" defer></script>
   <script src="/js/header-loader.js" defer></script>
   <script src="/js/footer-loader.js" defer></script>
-  <script src="/js/auth-client.js" defer></script>
-
-  <script>
-    // Small utility i18n helpers
-    const I18N = window.MEMOIR_I18N;
-    const getLang = () => (I18N?.getLang?.() || localStorage.getItem('memoir.lang') || 'en');
-    const tr = (key, vars, fallback='') =>
-      I18N?.translate?.(key, vars, getLang()) ||
-      I18N?.translate?.(key, vars, 'en') ||
-      I18N?.t?.(key, getLang()) ||
-      I18N?.t?.(key, 'en') ||
-      fallback;
-
-    const helloLine   = document.getElementById('helloLine');
-    const acctStatus  = document.getElementById('acctStatus');
-    const acctBody    = document.getElementById('acctBody');
-    const acctOutRow  = document.getElementById('acctSignedOut');
-    const acctEmail   = document.getElementById('acctEmail');
-    const acctId      = document.getElementById('acctId');
-    const acctCreated = document.getElementById('acctCreated');
-    const acctErr     = document.getElementById('acctErr');
-    const btnSignOut  = document.getElementById('btnSignOut');
-
-    const subBlurb    = document.getElementById('subBlurb');
-    const subControls = document.getElementById('subControls');
-    const subMsg      = document.getElementById('subMsg');
-    const currentPlanEl = document.getElementById('currentPlan');
-
-    function firstName(n){ return (n||'').trim().split(/\s+/)[0] || ''; }
-    function planLabel(code){ return tr(`planLabel_${code}`, null, code); }
-
-    async function loadSettings(){
-      try {
-        const supa = await window.MEMOIR_AUTH.ensureClient();
-        const { data } = await supa.auth.getUser();
-        const user = data?.user || null;
-
-        if (!user){
-          // Signed out
-          helloLine.textContent = '';
-          acctStatus.innerHTML = tr('settingsAccountSignedOut', null, 'You are not signed in.');
-          acctBody.style.display = 'none';
-          acctOutRow.style.display = 'flex';
-          subBlurb.setAttribute('data-i18n','settingsSubscriptionSignIn');
-          subBlurb.textContent = tr('settingsSubscriptionSignIn', null, 'Sign in to see or change your plan.');
-          subControls.style.display = 'none';
-          return;
-        }
-
-        // Signed in → personalize
-        const email = user.email || '—';
-        const created = user.created_at ? new Date(user.created_at).toLocaleString() : '—';
-
-        // Load profile to get name + plan
-        let fullName = '';
-        let plan = 'free';
-        try{
-          const { data: profile } = await supa.from('profiles')
-            .select('full_name, subscription_plan')
-            .eq('user_id', user.id)
-            .single();
-          fullName = profile?.full_name || '';
-          plan = profile?.subscription_plan || 'free';
-        }catch{}
-
-        const fname = firstName(fullName);
-        // Welcome line
-        helloLine.textContent = fname ? tr('recordGreeting', { name: fname }, `Welcome back, ${fname}`) : '';
-
-        // Account box
-        acctStatus.innerHTML = tr('settingsAccountSignedIn',
-          { name: fullName || email, email },
-          `Signed in as ${fullName || email}`);
-        acctEmail.textContent = email;
-        acctId.textContent = user.id || '—';
-        acctCreated.textContent = created;
-        acctBody.style.display = 'block';
-        acctOutRow.style.display = 'none';
-        acctErr.textContent = '';
-
-        // Plan box
-        subBlurb.textContent = tr('settingsSubscriptionIntro', null, 'Choose or change your plan.');
-        subControls.style.display = 'block';
-        currentPlanEl.textContent = tr('settingsSubscriptionCurrent', { plan: planLabel(plan) }, `Current plan: ${plan}`);
-
-        // Plan pills
-        document.querySelectorAll('.plans .pill').forEach(p => {
-          p.dataset.active = (p.dataset.plan === plan) ? 'true' : 'false';
-          p.onclick = async () => {
-            try{
-              p.disabled = true;
-              subMsg.textContent = 'Saving…';
-              const upd = await supa.from('profiles')
-                .update({ subscription_plan: p.dataset.plan })
-                .eq('user_id', user.id);
-              if (upd.error) throw upd.error;
-              document.querySelectorAll('.plans .pill').forEach(x => x.dataset.active = (x === p ? 'true' : 'false'));
-              currentPlanEl.textContent = tr('settingsSubscriptionCurrent', { plan: planLabel(p.dataset.plan) }, `Current plan: ${p.dataset.plan}`);
-              subMsg.textContent = 'Saved.';
-            }catch(e){
-              subMsg.textContent = e.message || 'Could not update plan.';
-            }finally{
-              p.disabled = false;
-            }
-          };
-        });
-
-        // Sign out
-        btnSignOut.onclick = async () => {
-          try{
-            await supa.auth.signOut();
-            location.href = '/login.html';
-          }catch(e){
-            acctErr.textContent = e.message || 'Could not sign out.';
-          }
-        };
-
-        // Danger zone: delete profile (simple example)
-        document.getElementById('btnDeleteProfile').onclick = async () => {
-          const ok = confirm('Delete your profile and sign out?');
-          if (!ok) return;
-          const msg = document.getElementById('dangerMsg');
-          msg.textContent = 'Deleting…';
-          try{
-            await supa.from('profiles').delete().eq('user_id', user.id);
-            await supa.auth.signOut();
-            location.href = '/';
-          }catch(e){
-            msg.textContent = e.message || 'Could not delete profile.';
-          }
-        };
-      } catch (e) {
-        console.warn('[settings] init failed', e);
-        acctStatus.textContent = 'Error loading settings.';
-      }
-    }
-
-    // Re-apply translations when language changes
-    window.addEventListener('memoir:lang', () => {
-      window.MEMOIR_I18N?.applyAll?.(document);
-      loadSettings();
-    });
-
-    document.addEventListener('DOMContentLoaded', () => {
-      window.MEMOIR_I18N?.applyAll?.(document);
-      loadSettings();
-    });
-  </script>
+  <script src="/js/settings.js" defer></script>
 </body>
 </html>
