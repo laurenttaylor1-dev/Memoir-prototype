@@ -4,12 +4,12 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — Login</title>
-  <meta name="theme-color" content="#f4ead9"/>
 
-  <!-- Supabase config via meta (CSP-friendly, no inline JS) -->
+  <!-- Supabase config via meta (same project values) -->
   <meta name="supabase-url"  content="https://fswxkujxusdozvmpyvzk.supabase.co">
   <meta name="supabase-anon" content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI">
 
+  <meta name="theme-color" content="#f4ead9"/>
   <link rel="stylesheet" href="/styles.css">
   <style>
     :root{
@@ -36,8 +36,8 @@
     .btn.ghost{background:transparent}
     .error{margin-top:8px; color:#a23a3a; font-size:14px; min-height:1.1em}
     .helper{color:var(--muted); font-size:14px; margin-top:4px}
-    #registerPanel, #resetPanel{max-height:0; overflow:hidden; transition:max-height .35s ease, opacity .25s ease; opacity:0}
-    #registerPanel.open, #resetPanel.open{max-height:1200px; opacity:1}
+    #registerPanel{max-height:0; overflow:hidden; transition:max-height .35s ease, opacity .25s ease; opacity:0}
+    #registerPanel.open{max-height:1200px; opacity:1}
     .gdpr{display:flex; gap:10px; align-items:flex-start; font-size:14px; color:var(--muted)}
     .gdpr input{width:auto}
     .notice{margin:10px auto 0; max-width:900px; padding:10px 14px; border-radius:12px;
@@ -65,14 +65,14 @@
         <div class="actions">
           <button id="loginSubmit" class="btn primary" type="submit">Sign in</button>
           <button id="toggleRegister" class="btn" type="button">Register</button>
-          <button id="toggleReset" class="btn ghost" type="button">Forgot password?</button>
+          <a class="btn ghost" href="/auth/request-reset.html">Forgot password?</a>
           <a class="btn ghost" href="/landing.html">Cancel</a>
         </div>
         <div id="loginError" class="error" role="status" aria-live="polite"></div>
         <div class="helper">Press Enter to sign in.</div>
       </form>
 
-      <!-- Register -->
+      <!-- Register (inline, optional) -->
       <div id="registerPanel" aria-hidden="true">
         <hr style="border:none;border-top:1px dashed rgba(0,0,0,.1);margin:14px 0 10px">
         <h2 class="title" style="font-size:22px; margin:0 0 8px;">Create your account</h2>
@@ -100,49 +100,4 @@
             <label for="reg_plan">Plan</label>
             <select id="reg_plan">
               <option value="free" selected>Free</option>
-              <option value="storyteller">Storyteller (3h/mo)</option>
-              <option value="premium">Premium Storyteller (6h/mo)</option>
-              <option value="exclusive">Exclusive Storyteller (10h/mo)</option>
-            </select>
-          </div>
-          <div class="gdpr">
-            <input id="reg_gdpr" type="checkbox" required>
-            <label for="reg_gdpr">
-              I agree to the <a href="/terms.html" target="_blank">Terms</a> and <a href="/privacy.html" target="_blank">Privacy Policy</a>.
-            </label>
-          </div>
-          <div class="actions">
-            <button id="registerSubmit" class="btn primary" type="submit">Create account</button>
-          </div>
-          <div id="registerError" class="error" role="status" aria-live="polite"></div>
-        </form>
-      </div>
-
-      <!-- Reset -->
-      <div id="resetPanel" aria-hidden="true">
-        <hr style="border:none;border-top:1px dashed rgba(0,0,0,.1);margin:14px 0 10px">
-        <h2 class="title" style="font-size:22px; margin:0 0 8px;">Reset your password</h2>
-        <form id="resetForm" class="grid" novalidate>
-          <div class="field">
-            <label for="reset_email">Your email</label>
-            <input id="reset_email" type="email" placeholder="you@email.com" required>
-          </div>
-          <div class="actions">
-            <button class="btn primary" type="submit">Send reset link</button>
-            <button class="btn" type="button" id="closeReset">Close</button>
-          </div>
-          <div id="resetMsg" class="helper" role="status" aria-live="polite"></div>
-        </form>
-      </div>
-    </section>
-  </main>
-
-  <div id="site-footer"></div>
-
-  <!-- All scripts are external (CSP-safe) -->
-  <script src="/js/header-loader.js" defer></script>
-  <script src="/js/footer-loader.js" defer></script>
-  <script src="/js/auth-client.js" defer></script>
-  <script src="/js/login.js" defer></script>
-</body>
-</html>
+              <option value="storyteller">Storyteller (3
