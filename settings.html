@@ -187,7 +187,46 @@
         subControls.style.display = 'block';
       }
 
-      async function loadSession(){
+      const SESSION_TIMEOUT = 8000;
+      const TIMEOUT_RETRY_LIMIT = 2;
+      const TIMEOUT_RETRY_DELAY = 1400;
+      let loadingSession = false;
+
+      async function getSessionWithFallback(supa){
+        const timeoutMarker = Symbol('timeout');
+        const result = await Promise.race([
+          supa.auth.getSession(),
+          new Promise(resolve => setTimeout(() => resolve(timeoutMarker), SESSION_TIMEOUT))
+        ]);
+
+        let session = null;
+        let timedOut = false;
+
+        if (result === timeoutMarker) {
+          timedOut = true;
+        } else {
+          const { data, error } = result || {};
+          if (error) throw error;
+          session = data?.session || null;
+        }
+
+        if (!session) {
+          const { data, error } = await supa.auth.getUser();
+          if (error) throw error;
+          const user = data?.user || null;
+          if (user) {
+            session = { user };
+            timedOut = false; // we have the user, so treat as success
+          }
+        }
+
+        return { session, timedOut };
+      }
+
+      async function loadSession(attempt=0){
+        if (typeof attempt !== 'number') attempt = 0;
+        if (loadingSession) return;
+        loadingSession = true;
         try{
           const supa = await ensureClient();
 
@@ -196,12 +235,19 @@
           if (h.includes('type=recovery')) { noticeEl.textContent='Set a new password below (once signed in, it will reflect here).'; noticeEl.style.display='block'; }
           if (h.includes('type=signup'))   { noticeEl.textContent='Email confirmed.'; noticeEl.style.display='block'; }
 
-          const withTimeout=(p,ms=8000)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),ms))]);
-          const { data } = await withTimeout(supa.auth.getSession(),8000);
-          const session = data?.session || null;
+          const { session, timedOut } = await getSessionWithFallback(supa);
           if (!session){
+            if (timedOut) {
+              if (attempt < TIMEOUT_RETRY_LIMIT) {
+                statusEl.textContent = 'Still checking your session…';
+                setTimeout(() => loadSession(attempt + 1), TIMEOUT_RETRY_DELAY);
+              } else {
+                statusEl.textContent = 'Auth is slow to respond. Please refresh.';
+              }
+              return;
+            }
             // not signed in → go to login, keep return
-            const ret = encodeURIComponent(location.pathname);
+            const ret = encodeURIComponent(location.pathname + location.search);
             location.href = `/login.html?return=${ret}`;
             return;
           }
@@ -223,7 +269,9 @@
           }
         }catch(e){
           console.error('[settings] session load failed', e);
-          statusEl.textContent = e?.message==='timeout' ? 'Auth is slow to respond. Please refresh.' : 'Could not check your session.';
+          statusEl.textContent = 'Could not check your session.';
+        } finally {
+          loadingSession = false;
         }
       }
 
