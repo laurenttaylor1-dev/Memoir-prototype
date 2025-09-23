@@ -28,36 +28,41 @@
     input[type=email]{padding:10px 12px;border-radius:12px;border:1px solid rgba(0,0,0,.15);background:#fff}
     .muted{color:var(--muted)}
   </style>
+  <script>
+    window.MEMOIR_SUPABASE_URL  = window.MEMOIR_SUPABASE_URL  || "https://fswxkujxusdozvmpyvzk.supabase.co";
+    window.MEMOIR_SUPABASE_ANON = window.MEMOIR_SUPABASE_ANON || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
+  </script>
+  <script src="/js/supabase-client.js" defer></script>
 </head>
 <body>
   <div id="site-header"></div>
 
   <main class="container">
-    <h1 class="title" id="pageTitle">My Stories</h1>
+    <h1 class="title" id="pageTitle" data-i18n="storiesTitle">My Stories</h1>
 
     <section class="topbar">
       <div class="stats">
         <div class="stat">
           <div class="num" id="countStories">0</div>
-          <div class="muted">Stories</div>
+          <div class="muted" data-i18n="storiesCountLabel">Stories</div>
         </div>
         <div class="stat">
           <div class="num" id="countFamily">0</div>
-          <div class="muted">Family Members</div>
+          <div class="muted" data-i18n="storiesFamilyLabel">Family Members</div>
         </div>
       </div>
       <div class="library">
-        <div class="muted">Your stories will appear in your private library here.</div>
+        <div class="muted" data-i18n="storiesLibraryIntro">Your stories will appear in your private library here.</div>
         <div class="row">
-          <input id="inviteEmail" type="email" placeholder="family@email.com" />
-          <button id="inviteBtn" class="pill primary">Invite</button>
+          <input id="inviteEmail" type="email" data-i18n-attr="placeholder:storiesInvitePlaceholder" placeholder="family@email.com" />
+          <button id="inviteBtn" class="pill primary" data-i18n="storiesInviteButton">Invite</button>
         </div>
         <div id="inviteMsg" class="muted" style="margin-top:6px"></div>
       </div>
     </section>
 
     <section class="list" id="storiesList">
-      <div class="empty">No stories yet. Record your first one!</div>
+      <div class="empty" data-i18n="storiesEmpty">No stories yet. Record your first one!</div>
     </section>
   </main>
 
@@ -66,12 +71,16 @@
   <script src="/js/lang.js"></script>
   <script src="/js/header-loader.js"></script>
   <script src="/js/footer-loader.js"></script>
-  <script src="/js/auth-client.js"></script>
 
   <script>
     const I18N = window.MEMOIR_I18N;
-    const tr = (k,v,f='') => I18N?.translate?.(k,v,localStorage.getItem('memoir.lang')||'en') || I18N?.t?.(k,localStorage.getItem('memoir.lang')||'en') || f;
-    const getLang = () => (I18N?.getLang?.() || localStorage.getItem('memoir.lang') || 'en');
+    const getLangCode = () => (I18N?.getLang?.() || localStorage.getItem('memoir.lang') || 'en');
+    const tr = (key, vars, fallback='') =>
+      I18N?.translate?.(key, vars, getLangCode()) ||
+      I18N?.translate?.(key, vars, 'en') ||
+      I18N?.t?.(key, getLangCode()) ||
+      I18N?.t?.(key, 'en') || fallback;
+    function firstName(full){ return (full||'').trim().split(/\s+/)[0] || ''; }
 
     const listEl = document.getElementById('storiesList');
     const inviteEmail = document.getElementById('inviteEmail');
@@ -81,52 +90,47 @@
     const countStoriesEl = document.getElementById('countStories');
     const countFamilyEl = document.getElementById('countFamily');
 
-    let currentFirstName = '';
-
-    function firstName(full){ return (full||'').trim().split(/\s+/)[0] || ''; }
-    function possessive(name){ if (!name) return ''; const s = name.trim(); return s.endsWith('s')||s.endsWith('S')?`${s}’`:`${s}’s`; }
-
-    function updateStoriesTitle(){
-      if (currentFirstName){
-        pageTitle.textContent = `${possessive(currentFirstName)} ${tr('storiesTitle', null, 'Stories')}`;
-      } else {
-        pageTitle.textContent = tr('storiesTitle', null, 'My Stories');
-      }
+    function updatePageTitle(fname){
+      pageTitle.textContent = fname
+        ? tr('storiesGreeting', { name: fname }, `My Stories, ${fname}`)
+        : tr('storiesTitle', null, 'My Stories');
     }
 
-    function renderEmpty(message){
-      listEl.innerHTML = `<div class="empty">${message}</div>`;
-    }
+    let SB = null;
+    async function ensureSB(){ SB = SB || await window.getSupabase(); return SB; }
 
     async function loadEverything(){
-      const supa = await window.MEMOIR_AUTH.ensureClient();
+      const supa = await ensureSB();
       const { data } = await supa.auth.getUser();
       const user = data?.user || null;
+
       if (!user){
-        currentFirstName = '';
-        updateStoriesTitle();
+        updatePageTitle('');
         countStoriesEl.textContent = '0';
         countFamilyEl.textContent = '0';
-        renderEmpty(tr('storiesNeedSignIn', null, 'Please <a href="/login.html">sign in</a>.'));
+        listEl.innerHTML = `<div class="empty">${tr('storiesNeedSignIn', null, 'Please <a href="/login.html">sign in</a>.')}</div>`;
         return;
       }
 
+      // Personalize + nudge header to refresh its session pill
       try {
         const { data: profile } = await supa.from('profiles').select('full_name').eq('user_id', user.id).single();
-        currentFirstName = profile?.full_name ? firstName(profile.full_name) : '';
-      } catch { currentFirstName = ''; }
-      updateStoriesTitle();
+        updatePageTitle(firstName(profile?.full_name || ''));
+      } catch {
+        updatePageTitle('');
+      }
+      window.dispatchEvent(new Event('focus'));
 
+      // Stories
       try {
-        const { data: stories, error } = await supa.from('stories')
+        const { data: rows, error } = await supa.from('stories')
           .select('id,title,created_at,visibility')
           .order('created_at', { ascending: false });
         if (error) throw error;
-
-        countStoriesEl.textContent = String(stories?.length || 0);
-
-        if (!stories || stories.length === 0){
-          renderEmpty(tr('storiesEmpty', null, 'No stories yet. Record your first one!'));
+        const stories = rows || [];
+        countStoriesEl.textContent = String(stories.length);
+        if (!stories.length){
+          listEl.innerHTML = `<div class="empty">${tr('storiesEmpty', null, 'No stories yet. Record your first one!')}</div>`;
         } else {
           listEl.innerHTML = stories.map(s => {
             const when = new Date(s.created_at).toLocaleString();
@@ -150,7 +154,6 @@
 
           listEl.querySelectorAll('[data-rewrite]').forEach(btn => {
             btn.addEventListener('click', async () => {
-              const supa = await window.MEMOIR_AUTH.ensureClient();
               const card = btn.closest('.story-card');
               const id = card?.dataset?.id;
               const msg = card?.querySelector('[data-msg]');
@@ -158,7 +161,8 @@
               msg.textContent = tr('storiesRewriteWorking', null, 'Rewriting…');
               try {
                 const res = await fetch('/api/rewrite', {
-                  method: 'POST', headers: { 'Content-Type': 'application/json' },
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ story_id: id })
                 });
                 if (!res.ok) throw new Error('Server error');
@@ -171,16 +175,14 @@
           });
         }
       } catch (e) {
-        renderEmpty(tr('storiesLoadError', { error: e.message || e }, `Could not load stories: ${e.message}`));
+        listEl.innerHTML = `<div class="empty">${tr('storiesLoadError', { error: e.message || e }, 'Could not load stories: ' + (e.message || e))}</div>`;
       }
 
+      // Invites
       try {
-        const supa = await window.MEMOIR_AUTH.ensureClient();
-        const { data, error } = await supa.from('family_invites')
-          .select('id,status')
-          .order('created_at', { ascending: false });
+        const { data: inv, error } = await supa.from('family_invites').select('id,status').order('created_at', { ascending: false });
         if (error) throw error;
-        const accepted = (data || []).filter(i => (i.status || 'pending') !== 'revoked');
+        const accepted = (inv || []).filter(i => (i.status || 'pending') !== 'revoked');
         countFamilyEl.textContent = String(accepted.length);
       } catch {
         countFamilyEl.textContent = '0';
@@ -188,9 +190,9 @@
     }
 
     inviteBtn.addEventListener('click', async () => {
+      const supa = await ensureSB();
       const email = inviteEmail.value.trim();
       if (!email){ inviteMsg.textContent = tr('storiesInviteEnterEmail', null, 'Enter an email.'); return; }
-      const supa = await window.MEMOIR_AUTH.ensureClient();
       const { data } = await supa.auth.getUser();
       const user = data?.user || null;
       if (!user){ inviteMsg.textContent = tr('storiesInviteSignIn', null, 'Please sign in first.'); return; }
@@ -206,7 +208,10 @@
       }
     });
 
-    document.addEventListener('DOMContentLoaded', loadEverything);
+    document.addEventListener('DOMContentLoaded', () => {
+      I18N?.applyAll?.(document);
+      loadEverything();
+    });
     window.addEventListener('memoir:lang', () => {
       I18N?.applyAll?.(document);
       loadEverything();
