@@ -89,67 +89,132 @@
   <script src="/js/header-loader.js"></script>
   <script src="/js/footer-loader.js"></script>
   <script>
-    const SB = supabase.createClient(
-      window.MEMOIR_SUPABASE_URL,
-      window.MEMOIR_SUPABASE_ANON,
-      { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
-    );
-    const I18N = window.MEMOIR_I18N;
+    (function(){
+      const SUPA_URL = window.MEMOIR_SUPABASE_URL;
+      const SUPA_KEY = window.MEMOIR_SUPABASE_ANON;
+      const I18N = window.MEMOIR_I18N;
 
-    const pageTitle    = document.getElementById('pageTitle');
-    const accountBlurb = document.getElementById('accountBlurb');
-    const accountActs  = document.getElementById('accountActions');
-    const subBlurb     = document.getElementById('subBlurb');
+      const pageTitle    = document.getElementById('pageTitle');
+      const accountBlurb = document.getElementById('accountBlurb');
+      const accountActs  = document.getElementById('accountActions');
+      const subBlurb     = document.getElementById('subBlurb');
 
-    function firstName(full){ return (full||'').trim().split(/\s+/)[0] || ''; }
-    function getLangCode(){ return I18N?.getLang?.() || localStorage.getItem('memoir.lang') || 'en'; }
-    function tr(key, vars, fallback=''){ return I18N?.translate?.(key, vars, getLangCode()) || I18N?.translate?.(key, vars, 'en') || I18N?.t?.(key, getLangCode()) || I18N?.t?.(key, 'en') || fallback; }
-    function planLabel(code){ return tr(`planLabel_${code}`, null, code); }
+      let SB = null;
+      let supabaseLoader = null;
+      let authListenerBound = false;
 
-    async function renderSettings(){
-      const { data, error } = await SB.auth.getUser();
-      const user = data?.user || null;
+      function loadSupabaseScript() {
+        if (window.supabase?.createClient) return Promise.resolve();
+        if (supabaseLoader) return supabaseLoader;
+        supabaseLoader = new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+          script.onload = () => resolve();
+          script.onerror = () => {
+            script.remove();
+            supabaseLoader = null;
+            reject(new Error('Supabase SDK failed to load.'));
+          };
+          document.head.appendChild(script);
+        });
+        return supabaseLoader;
+      }
 
-      if (!user || error) {
-        pageTitle.textContent = tr('settingsTitle', null, 'Settings');
+      async function ensureSupabase() {
+        if (SB) return SB;
+        try {
+          await loadSupabaseScript();
+          if (!window.supabase?.createClient) {
+            throw new Error('Supabase SDK unavailable.');
+          }
+          SB = window.supabase.createClient(
+            SUPA_URL,
+            SUPA_KEY,
+            { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
+          );
+          if (!authListenerBound) {
+            authListenerBound = true;
+            SB.auth.onAuthStateChange(() => { renderSettings(); });
+          }
+        } catch (err) {
+          console.error('[settings] Supabase client failed to init:', err);
+          throw new Error('Supabase unavailable.');
+        }
+        return SB;
+      }
+
+      function getLangCode(){ return I18N?.getLang?.() || localStorage.getItem('memoir.lang') || 'en'; }
+      function tr(key, vars, fallback=''){ return I18N?.translate?.(key, vars, getLangCode()) || I18N?.translate?.(key, vars, 'en') || I18N?.t?.(key, getLangCode()) || I18N?.t?.(key, 'en') || fallback; }
+      function planLabel(code){ return tr(`planLabel_${code}`, null, code); }
+
+      function showSignedOutUI() {
         accountBlurb.innerHTML = tr('settingsAccountSignedOut', null, 'You are <strong class="warn">not signed in</strong>.');
         accountActs.innerHTML = `<a class="pill primary" href="/login.html">${tr('settingsAccountActionsSignIn', null, 'Sign in')}</a>`;
         subBlurb.textContent = tr('settingsSubscriptionSignIn', null, 'Sign in to see or change your plan.');
-        return;
       }
 
-      let profile = null;
-      try {
-        const { data } = await SB
-          .from('profiles')
-          .select('full_name, subscription_plan')
-          .eq('user_id', user.id)
-          .single();
-        profile = data || {};
-      } catch {}
+      function showSupabaseErrorUI() {
+        accountBlurb.innerHTML = tr('settingsAccountSupabaseDown', null, 'We cannot reach the authentication service right now. Please refresh to try again.');
+        accountActs.innerHTML = `<button class="pill" type="button" id="settingsRetrySupabase">${tr('settingsAccountRetry', null, 'Retry')}</button>`;
+        accountActs.querySelector('#settingsRetrySupabase')?.addEventListener('click', () => { renderSettings(); });
+        subBlurb.textContent = tr('settingsSubscriptionSupabaseDown', null, 'Subscription options are unavailable until we can verify your session.');
+      }
 
-      const full = profile?.full_name || user.email || 'Your account';
-      pageTitle.textContent = tr('settingsTitle', null, 'Settings');
-      accountBlurb.innerHTML = tr('settingsAccountSignedIn', { name: full, email: user.email }, `Signed in as <strong class="ok">${full}</strong> (${user.email})`);
-      accountActs.innerHTML = `
-        <a class="pill" href="/stories.html">${tr('settingsAccountActionsStories', null, 'My Stories')}</a>
-        <a class="pill" href="/record.html">${tr('settingsAccountActionsRecord', null, 'Record')}</a>
-        <button class="pill" id="signOutBtn">${tr('settingsAccountActionsSignOut', null, 'Sign out')}</button>
-      `;
-      accountActs.querySelector('#signOutBtn')?.addEventListener('click', async () => {
-        await SB.auth.signOut();
-        location.href = '/login.html';
+      async function renderSettings(){
+        pageTitle.textContent = tr('settingsTitle', null, 'Settings');
+        try {
+          const supa = await ensureSupabase();
+          const { data, error } = await supa.auth.getUser();
+          const user = data?.user || null;
+
+          if (!user || error) {
+            showSignedOutUI();
+            return;
+          }
+
+          let profile = null;
+          try {
+            const { data: profileData } = await supa
+              .from('profiles')
+              .select('full_name, subscription_plan')
+              .eq('user_id', user.id)
+              .single();
+            profile = profileData || {};
+          } catch (profileErr) {
+            console.warn('[settings] profile fetch failed', profileErr);
+          }
+
+          const full = profile?.full_name || user.email || 'Your account';
+          accountBlurb.innerHTML = tr('settingsAccountSignedIn', { name: full, email: user.email }, `Signed in as <strong class="ok">${full}</strong> (${user.email})`);
+          accountActs.innerHTML = `
+            <a class="pill" href="/stories.html">${tr('settingsAccountActionsStories', null, 'My Stories')}</a>
+            <a class="pill" href="/record.html">${tr('settingsAccountActionsRecord', null, 'Record')}</a>
+            <button class="pill" id="signOutBtn">${tr('settingsAccountActionsSignOut', null, 'Sign out')}</button>
+          `;
+          accountActs.querySelector('#signOutBtn')?.addEventListener('click', async () => {
+            try {
+              const supaClient = await ensureSupabase();
+              await supaClient.auth.signOut();
+            } catch (signOutErr) {
+              console.warn('[settings] sign-out failed', signOutErr);
+            }
+            location.href = '/login.html';
+          });
+
+          const plan = profile?.subscription_plan || 'free';
+          subBlurb.textContent = tr('settingsSubscriptionCurrent', { plan: planLabel(plan) }, `Current plan: ${plan}`);
+        } catch (err) {
+          console.warn('[settings] render failed', err);
+          showSupabaseErrorUI();
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        renderSettings();
+        window.addEventListener('focus', renderSettings);
+        window.addEventListener('memoir:lang', renderSettings);
       });
-
-      const plan = profile?.subscription_plan || 'free';
-      subBlurb.textContent = tr('settingsSubscriptionCurrent', { plan: planLabel(plan) }, `Current plan: ${plan}`);
-    }
-
-    document.addEventListener('DOMContentLoaded', renderSettings);
-    window.addEventListener('focus', renderSettings);
-    window.addEventListener('memoir:lang', renderSettings);
-
-    SB.auth.onAuthStateChange(() => { renderSettings(); });
+    })();
   </script>
 </body>
 </html>

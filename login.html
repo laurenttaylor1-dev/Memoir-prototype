@@ -153,22 +153,51 @@
     document.addEventListener('DOMContentLoaded', () => {
       const errLoginEl = document.getElementById('loginError');
       let SB = null;
+      let supabaseLoader = null;
 
-      // Init client safely
-      try {
-        if (!window.supabase || !window.supabase.createClient) {
-          throw new Error('Supabase SDK not loaded.');
-        }
-        SB = window.supabase.createClient(
-          window.MEMOIR_SUPABASE_URL,
-          window.MEMOIR_SUPABASE_ANON,
-          { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
-        );
-      } catch (e) {
-        console.error('[login] Supabase client failed to init:', e);
-        // show a friendly message at the top of the form too
-        if (errLoginEl) errLoginEl.textContent = 'Supabase unavailable. Please refresh and try again.';
+      function loadSupabaseScript() {
+        if (window.supabase?.createClient) return Promise.resolve();
+        if (supabaseLoader) return supabaseLoader;
+        supabaseLoader = new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+          script.onload = () => resolve();
+          script.onerror = () => {
+            script.remove();
+            supabaseLoader = null;
+            reject(new Error('Supabase SDK failed to load.'));
+          };
+          document.head.appendChild(script);
+        });
+        return supabaseLoader;
       }
+
+      async function initSupabase() {
+        if (SB) return SB;
+        try {
+          await loadSupabaseScript();
+          if (!window.supabase?.createClient) {
+            throw new Error('Supabase SDK unavailable.');
+          }
+          SB = window.supabase.createClient(
+            window.MEMOIR_SUPABASE_URL,
+            window.MEMOIR_SUPABASE_ANON,
+            { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
+          );
+        } catch (e) {
+          console.error('[login] Supabase client failed to init:', e);
+          throw new Error('Supabase unavailable. Please refresh and try again.');
+        }
+        return SB;
+      }
+
+      (async () => {
+        try {
+          await initSupabase();
+        } catch (e) {
+          if (errLoginEl) errLoginEl.textContent = e.message;
+        }
+      })();
 
       // Confirmation / recovery banner
       (async function(){
@@ -176,9 +205,10 @@
         const hash = location.hash || '';
         if (!n) return;
         if (hash.includes('type=signup')) {
-          if (SB) {
+          const supa = await initSupabase().catch(() => null);
+          if (supa) {
             try {
-              const { data } = await SB.auth.getUser();
+              const { data } = await supa.auth.getUser();
               const user = data?.user || null;
               n.textContent = user ? 'Email confirmed — you are signed in.' : 'Email confirmed — you can sign in now.';
               n.style.display = 'block';
@@ -222,11 +252,11 @@
         form.addEventListener('submit', async (e)=>{
           e.preventDefault(); err.textContent=''; btn.disabled=true; btn.setAttribute('aria-busy','true');
           try{
-            if (!SB) throw new Error('Supabase unavailable. Please refresh and try again.');
+            const supa = await initSupabase();
             const email    = document.getElementById('identifier').value.trim();
             const password = document.getElementById('password').value;
             if(!email || !password){ err.textContent='Please fill email and password.'; return; }
-            const { error } = await SB.auth.signInWithPassword({ email, password });
+            const { error } = await supa.auth.signInWithPassword({ email, password });
             if (error) throw error;
             location.href = '/settings.html';
           }catch(ex){ err.textContent = ex?.message || 'Sign in failed. Please try again.'; }
@@ -245,7 +275,7 @@
           e.preventDefault(); err.textContent=''; err.style.color='#a23a3a';
           btn.disabled=true; btn.setAttribute('aria-busy','true');
           try{
-            if (!SB) throw new Error('Supabase unavailable. Please refresh and try again.');
+            const supa = await initSupabase();
             const first     = document.getElementById('reg_first').value.trim();
             const last      = document.getElementById('reg_last').value.trim();
             const email     = document.getElementById('reg_email').value.trim();
@@ -255,7 +285,7 @@
             if(!gdprOk){ err.textContent='Please agree to the Terms and Privacy Policy.'; return; }
             const full_name = `${first} ${last}`.trim();
 
-            const { error } = await SB.auth.signUp({
+            const { error } = await supa.auth.signUp({
               email, password,
               options: {
                 emailRedirectTo: location.origin + '/login.html#type=signup',
@@ -292,9 +322,9 @@
         form.addEventListener('submit', async (e)=>{
           e.preventDefault(); msg.textContent='Sending…';
           try{
-            if (!SB) throw new Error('Supabase unavailable. Please refresh and try again.');
+            const supa = await initSupabase();
             const email = document.getElementById('reset_email').value.trim();
-            const { error } = await SB.auth.resetPasswordForEmail(email, { redirectTo: location.origin + '/login.html#type=recovery' });
+            const { error } = await supa.auth.resetPasswordForEmail(email, { redirectTo: location.origin + '/login.html#type=recovery' });
             if (error) throw error;
             msg.textContent = 'Check your inbox for a reset link.';
           }catch(ex){ msg.textContent = ex?.message || 'Could not send reset email.'; }
