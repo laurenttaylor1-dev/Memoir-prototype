@@ -1,65 +1,83 @@
-// Minimal ElevenLabs proxy.
-// Requires Vercel env var: ELEVENLABS_API_KEY
+// api/voice.js
+// Vercel/Next.js Node runtime function to synthesize short snippets with ElevenLabs
+
+export const config = { api: { bodyParser: false } };
+
+const API_KEY  = process.env.ELEVENLABS_API_KEY;
+const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM'; // "Rachel" (public demo voice id)
+const MODEL_ID = process.env.ELEVENLABS_MODEL_ID || 'eleven_turbo_v2';      // or 'eleven_monolingual_v1'
+
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
-    return res.status(405).json({ error: 'Only POST allowed' });
-  }
-
   try {
-    // Accept either JSON body from edge/standard fetch
-    const body = req.body || (await new Promise((r) => {
-      let data = '';
-      req.on('data', (c) => (data += c));
-      req.on('end', () => {
-        try { r(JSON.parse(data || '{}')); } catch { r({}); }
-      });
-    }));
+    if (!API_KEY) return res.status(500).json({ error: 'missing_elevenlabs_key' });
 
-    const { text, voiceId, model = 'eleven_multilingual_v2' } = body || {};
-
-    if (!text || !String(text).trim()) {
-      return res.status(400).json({ error: 'missing_text' });
-    }
-    const apiKey = process.env.ELEVENLABS_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({ error: 'missing_server_api_key' });
+    if (req.method !== 'POST' && req.method !== 'GET') {
+      res.setHeader('Allow', 'GET, POST');
+      return res.status(405).json({ error: 'method_not_allowed' });
     }
 
-    // Default voice: Rachel (good general multilingual baseline)
-    // You can change this per language on the client by sending voiceId.
-    const vid = voiceId || '21m00Tcm4TlvDq8ikWAM';
+    // Accept either JSON ({ text }) or query (?text=)
+    let text = '';
+    if (req.method === 'GET') {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      text = url.searchParams.get('text') || '';
+    } else {
+      const raw = await readBody(req);
+      try {
+        const json = JSON.parse(raw || '{}');
+        text = (json.text || '').toString();
+      } catch {
+        text = '';
+      }
+    }
 
-    const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(vid)}`, {
+    text = (text || '').trim();
+    if (!text) return res.status(400).json({ error: 'missing_text' });
+
+    // Build ElevenLabs request
+    const endpoint = `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`;
+    const body = {
+      model_id: MODEL_ID,
+      text,
+      voice_settings: {
+        stability: 0.5,
+        similarity_boost: 0.75,
+        style: 0.1,
+        use_speaker_boost: true
+      }
+    };
+
+    const r = await fetch(endpoint, {
       method: 'POST',
       headers: {
-        'xi-api-key': apiKey,
+        'xi-api-key': API_KEY,
         'Content-Type': 'application/json',
-        'Accept': 'audio/mpeg',
+        'Accept': 'audio/mpeg'
       },
-      body: JSON.stringify({
-        text: String(text),
-        model_id: model,
-        voice_settings: {
-          stability: 0.4,
-          similarity_boost: 0.8,
-          style: 0.3,
-          use_speaker_boost: true
-        }
-      })
+      body: JSON.stringify(body)
     });
 
     if (!r.ok) {
-      const msg = await r.text().catch(() => '');
-      return res.status(r.status).json({ error: 'elevenlabs_error', detail: msg });
+      let detail = null;
+      try { detail = await r.json(); } catch { detail = await r.text(); }
+      return res.status(r.status).json({ error: 'tts_failed', detail });
     }
 
-    const arr = await r.arrayBuffer();
+    // Proxy audio bytes to the browser
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Cache-Control', 'no-store');
-    return res.status(200).send(Buffer.from(arr));
+    r.body.pipe(res);
   } catch (e) {
-    console.error('voice.js error:', e);
-    return res.status(500).json({ error: 'tts_server_error', detail: String(e) });
+    console.error('[voice] error', e);
+    res.status(500).json({ error: String(e?.message || e) });
   }
+}
+
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    const parts = [];
+    req.on('data', (c) => parts.push(c));
+    req.on('end', () => resolve(Buffer.concat(parts).toString('utf8')));
+    req.on('error', reject);
+  });
 }
