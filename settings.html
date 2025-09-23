@@ -34,88 +34,67 @@
   <div id="site-header"></div>
 
   <main class="container">
-    <h1 class="title" id="pageTitle">Settings</h1>
+    <h1 class="title" id="pageTitle" data-i18n="settingsTitle">Settings</h1>
 
     <section class="grid">
       <!-- Account -->
       <div class="card" id="accountCard">
-        <h3>Account</h3>
-        <p class="muted" id="accountBlurb">Checking your session…</p>
+        <h3 data-i18n="settingsAccount">Account</h3>
+        <p class="muted" id="accountBlurb" data-i18n="settingsAccountChecking">Checking your session…</p>
         <div class="row" id="accountActions" style="margin-top:8px"></div>
       </div>
 
       <!-- Subscription -->
       <div class="card" id="subCard">
-        <h3>Subscription</h3>
-        <p class="muted" id="subBlurb">Choose or change your plan.</p>
+        <h3 data-i18n="settingsSubscription">Subscription</h3>
+        <p class="muted" id="subBlurb" data-i18n="settingsSubscriptionIntro">Choose or change your plan.</p>
         <div class="list" id="subPlans">
-          <p><strong>Storyteller — €8.99/month</strong> — <a href="/api/checkout?price=storyteller" class="pill primary">Subscribe</a></p>
-          <p><strong>Premium Storyteller — €11.99/month</strong> — <a href="/api/checkout?price=premium" class="pill primary">Subscribe</a></p>
-          <p><strong>Exclusive Storyteller — €15.99/month</strong> — <a href="/api/checkout?price=exclusive" class="pill primary">Subscribe</a></p>
+          <p>
+            <strong data-i18n="settingsPlanStorytellerLabel">Storyteller — €8.99/month</strong>
+            — <a href="/api/checkout?price=storyteller" class="pill primary" data-i18n="settingsPlanButton">Subscribe</a>
+          </p>
+          <p>
+            <strong data-i18n="settingsPlanPremiumLabel">Premium Storyteller — €11.99/month</strong>
+            — <a href="/api/checkout?price=premium" class="pill primary" data-i18n="settingsPlanButton">Subscribe</a>
+          </p>
+          <p>
+            <strong data-i18n="settingsPlanExclusiveLabel">Exclusive Storyteller — €15.99/month</strong>
+            — <a href="/api/checkout?price=exclusive" class="pill primary" data-i18n="settingsPlanButton">Subscribe</a>
+          </p>
         </div>
       </div>
 
       <!-- Billing -->
       <div class="card">
-        <h3>Billing</h3>
-        <p class="muted">View invoices and next renewal.</p>
-        <a class="pill" href="/api/billing-portal">Manage billing</a>
+        <h3 data-i18n="settingsBilling">Billing</h3>
+        <p class="muted" data-i18n="settingsBillingCopy">View invoices and next renewal.</p>
+        <a class="pill" href="/api/billing-portal" data-i18n="settingsBillingManage">Manage billing</a>
       </div>
 
       <!-- FAQ -->
       <div class="card">
-        <h3>FAQ</h3>
+        <h3 data-i18n="settingsFaq">Help & FAQ</h3>
         <ul class="list">
-          <li>Is there a free plan? — Yes, with a 2-minute per recording cap.</li>
-          <li>Which languages are supported? — English, French, Dutch, Spanish for UI; stories can be any language.</li>
-          <li>How is transcription done? — We’ll add automatic transcription on save (coming in beta).</li>
+          <li data-i18n="settingsFaqItem1">Is there a free plan? — Yes, with a 2-minute per recording cap.</li>
+          <li data-i18n="settingsFaqItem2">Which languages are supported? — English, French, Dutch, Spanish for UI; stories can be any language.</li>
+          <li data-i18n="settingsFaqItem3">How is transcription done? — We’ll add automatic transcription on save (coming in beta).</li>
         </ul>
-      </div>
-
-      <!-- Plan details -->
-      <div class="card" style="grid-column:1/-1">
-        <h3>Subscription details</h3>
-        <div class="grid">
-          <div class="card">
-            <h4>Storyteller — €8.99/month</h4>
-            <ul class="list">
-              <li>3 hours transcription / month</li>
-              <li>Share with up to 4 family members (read-only)</li>
-              <li>Private library</li>
-            </ul>
-          </div>
-          <div class="card">
-            <h4>Premium Storyteller — €11.99/month</h4>
-            <ul class="list">
-              <li>6 hours transcription / month</li>
-              <li>Share with up to 4 family members (read-only)</li>
-              <li>Priority processing</li>
-            </ul>
-          </div>
-          <div class="card">
-            <h4>Exclusive Storyteller — €15.99/month</h4>
-            <ul class="list">
-              <li>10 hours transcription / month</li>
-              <li>Share with up to 4 family members (read-only)</li>
-              <li>Priority support</li>
-            </ul>
-          </div>
-        </div>
       </div>
     </section>
   </main>
 
   <div id="site-footer"></div>
 
+  <script src="/js/lang.js"></script>
   <script src="/js/header-loader.js"></script>
   <script src="/js/footer-loader.js"></script>
   <script>
-    // Create client with session persistence + URL detection
     const SB = supabase.createClient(
       window.MEMOIR_SUPABASE_URL,
       window.MEMOIR_SUPABASE_ANON,
       { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
     );
+    const I18N = window.MEMOIR_I18N;
 
     const pageTitle    = document.getElementById('pageTitle');
     const accountBlurb = document.getElementById('accountBlurb');
@@ -123,22 +102,21 @@
     const subBlurb     = document.getElementById('subBlurb');
 
     function firstName(full){ return (full||'').trim().split(/\s+/)[0] || ''; }
+    function getLangCode(){ return I18N?.getLang?.() || localStorage.getItem('memoir.lang') || 'en'; }
+    function tr(key, vars, fallback=''){ return I18N?.translate?.(key, vars, getLangCode()) || I18N?.translate?.(key, vars, 'en') || I18N?.t?.(key, getLangCode()) || I18N?.t?.(key, 'en') || fallback; }
+    function planLabel(code){ return tr(`planLabel_${code}`, null, code); }
 
     async function renderSettings(){
-      // Read session
       const { data: { user }, error } = await SB.auth.getUser();
 
       if (!user || error) {
-        pageTitle.textContent = 'Settings';
-        accountBlurb.innerHTML = 'You are <strong class="warn">not signed in</strong>.';
-        accountActs.innerHTML = `
-          <a class="pill primary" href="/login.html">Sign in</a>
-        `;
-        subBlurb.textContent = 'Sign in to see or change your plan.';
+        pageTitle.textContent = tr('settingsTitle', null, 'Settings');
+        accountBlurb.innerHTML = tr('settingsAccountSignedOut', null, 'You are <strong class="warn">not signed in</strong>.');
+        accountActs.innerHTML = `<a class="pill primary" href="/login.html">${tr('settingsAccountActionsSignIn', null, 'Sign in')}</a>`;
+        subBlurb.textContent = tr('settingsSubscriptionSignIn', null, 'Sign in to see or change your plan.');
         return;
       }
 
-      // Fetch profile for name + plan
       let profile = null;
       try {
         const { data } = await SB
@@ -150,29 +128,27 @@
       } catch {}
 
       const full = profile?.full_name || user.email || 'Your account';
-      pageTitle.textContent = 'Settings';
-      accountBlurb.innerHTML = `Signed in as <strong class="ok">${full}</strong> (${user.email})`;
+      pageTitle.textContent = tr('settingsTitle', null, 'Settings');
+      accountBlurb.innerHTML = tr('settingsAccountSignedIn', { name: full, email: user.email }, `Signed in as <strong class="ok">${full}</strong> (${user.email})`);
       accountActs.innerHTML = `
-        <a class="pill" href="/stories.html">My Stories</a>
-        <a class="pill" href="/record.html">Record</a>
-        <button class="pill" id="signOutBtn">Sign out</button>
+        <a class="pill" href="/stories.html">${tr('settingsAccountActionsStories', null, 'My Stories')}</a>
+        <a class="pill" href="/record.html">${tr('settingsAccountActionsRecord', null, 'Record')}</a>
+        <button class="pill" id="signOutBtn">${tr('settingsAccountActionsSignOut', null, 'Sign out')}</button>
       `;
-      document.getElementById('signOutBtn').onclick = async ()=>{
+      accountActs.querySelector('#signOutBtn')?.addEventListener('click', async () => {
         await SB.auth.signOut();
         location.href = '/login.html';
-      };
+      });
 
-      // Plan status
       const plan = profile?.subscription_plan || 'free';
-      subBlurb.textContent = `Current plan: ${plan}`;
+      subBlurb.textContent = tr('settingsSubscriptionCurrent', { plan: planLabel(plan) }, `Current plan: ${plan}`);
     }
 
-    // Render on load and when we regain focus (helps after email confirmation)
     document.addEventListener('DOMContentLoaded', renderSettings);
     window.addEventListener('focus', renderSettings);
+    window.addEventListener('memoir:lang', renderSettings);
 
-    // Also re-render if the auth state changes on this tab
-    SB.auth.onAuthStateChange((_event, _session) => { renderSettings(); });
+    SB.auth.onAuthStateChange(() => { renderSettings(); });
   </script>
 </body>
 </html>

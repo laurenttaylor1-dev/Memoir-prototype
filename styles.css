@@ -94,6 +94,16 @@ textarea{ min-height:110px; resize:vertical; }
 }
 .lang-menu button:hover{ background:#f6efe8; }
 
+.session-slot{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  min-width:0;
+}
+.session-slot[hidden]{
+  display:none !important;
+}
+
 /* =========================================================
    Footer (simple centered sentence + legal link)
    ========================================================= */

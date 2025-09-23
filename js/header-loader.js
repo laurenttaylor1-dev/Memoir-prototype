@@ -3,11 +3,23 @@
   const slot = document.getElementById('site-header');
   if (!slot) return;
 
+  const I18N = window.MEMOIR_I18N;
+  const getLang = () => (I18N?.getLang?.() || localStorage.getItem('memoir.lang') || 'en');
+
+  function localizeHeader(root){
+    try {
+      I18N?.applyAll?.(root || slot);
+    } catch (err) {
+      console.warn('[header-loader] localization skipped', err);
+    }
+  }
+
   // Inject header partial
   try {
     const res = await fetch('/partials/header.html', { cache: 'no-store' });
     if (!res.ok) throw new Error('header fetch failed');
     slot.innerHTML = await res.text();
+    localizeHeader(slot);
   } catch (e) {
     console.warn('[header-loader] failed, using minimal fallback', e);
     slot.innerHTML = `
@@ -16,17 +28,21 @@
           <a class="brand" href="/landing.html">
             <span class="logo"></span>
             <span class="brand-text">
-              <strong>MEMOIR APP</strong>
-              <small>Preserve your memories forever</small>
+              <strong data-i18n="brandTitle">MEMOIR APP</strong>
+              <small data-i18n="brandTagline">Preserve your memories forever</small>
             </span>
           </a>
           <nav class="nav">
-            <a class="pill" href="/landing.html">Home</a>
-            <a class="pill" href="/record.html">Record</a>
-            <a class="pill" href="/stories.html">My Stories</a>
+            <a class="pill" href="/landing.html" data-i18n="navHome">Home</a>
+            <a class="pill" href="/record.html" data-i18n="navRecord">Record</a>
+            <a class="pill" href="/stories.html" data-i18n="navStories">My Stories</a>
+            <div class="session-slot" id="session-slot">
+              <a class="pill primary" href="/login.html" data-i18n="navLogin">Sign in</a>
+            </div>
           </nav>
         </div>
       </header>`;
+    localizeHeader(slot);
   }
 
   // Language menu (unchanged)
@@ -34,8 +50,6 @@
   const toggle = document.getElementById('lang-toggle') || slot.querySelector('[data-lang-toggle], .lang-toggle');
   const menu   = document.getElementById('lang-dropdown') || slot.querySelector('.lang-menu,[data-lang-menu]');
   const items  = menu ? menu.querySelectorAll('.lang-item,[data-lang]') : [];
-  const I18N   = window.MEMOIR_I18N;
-  const getLang = () => (I18N?.getLang?.() || localStorage.getItem('memoir.lang') || 'en');
   function setLabelFrom(code) {
     const map = { en:'🇬🇧 English', fr:'🇫🇷 Français', nl:'🇧🇪 Nederlands', es:'🇪🇸 Español' };
     const label = map[code] || map.en;
@@ -92,27 +106,19 @@
     });
   }
 
-  const nav = slot.querySelector('.nav');
-  const pill = document.createElement('span');
-  pill.id = 'session-pill';
-  pill.style.display = 'inline-flex';
-  pill.style.alignItems = 'center';
-  pill.style.gap = '8px';
-  pill.style.marginLeft = '12px';
-  pill.style.opacity = '0.95';
-  pill.style.flexWrap = 'wrap';
-  pill.style.justifyContent = 'flex-end';
+  const sessionSlot = slot.querySelector('#session-slot');
 
   function showSignedOut() {
-    pill.className = 'session-guest';
-    pill.innerHTML = '';
-    const link = document.createElement('a');
-    link.className = 'pill primary';
-    link.href = '/login.html';
-    link.textContent = I18N?.t?.('navLogin', getLang()) || 'Sign in';
-    link.setAttribute('data-i18n', 'navLogin');
-    pill.appendChild(link);
-    if (nav && !nav.contains(pill)) nav.appendChild(pill);
+    if (!sessionSlot) return;
+    sessionSlot.hidden = false;
+    sessionSlot.innerHTML = '<a class="pill primary" href="/login.html" data-i18n="navLogin">Sign in</a>';
+    localizeHeader(sessionSlot);
+  }
+
+  function hideSession() {
+    if (!sessionSlot) return;
+    sessionSlot.hidden = true;
+    sessionSlot.innerHTML = '';
   }
 
   let sb = null;
@@ -128,29 +134,12 @@
       }
 
       const { data: { user } } = await sb.auth.getUser();
-      if (!user) return showSignedOut();
+      if (!user) {
+        showSignedOut();
+        return;
+      }
 
-      // Try to fetch profile name
-      let label = user.email || 'account';
-      try {
-        const { data } = await sb.from('profiles').select('full_name').eq('user_id', user.id).single();
-        if (data?.full_name) {
-          const first = (data.full_name || '').split(/\s+/)[0];
-          label = `${first} (${user.email})`;
-        }
-      } catch {}
-
-      pill.className = 'pill session-auth';
-      pill.innerHTML = `
-        <span class="muted" style="font-weight:600">Signed in as ${label}</span>
-        <a class="pill" href="/settings.html">Settings</a>
-        <button class="pill" id="session-signout">Sign out</button>
-      `;
-      if (nav && !nav.contains(pill)) nav.appendChild(pill);
-      pill.querySelector('#session-signout')?.addEventListener('click', async ()=>{
-        await sb.auth.signOut();
-        location.href = '/login.html';
-      });
+      hideSession();
     } catch (e) {
       console.warn('[header-loader] session render failed', e);
       showSignedOut();
@@ -159,6 +148,14 @@
 
   await renderSession();
   window.addEventListener('focus', renderSession);
+  window.addEventListener('memoir:lang', () => {
+    setLabelFrom(getLang());
+    if (sessionSlot && !sessionSlot.hidden) {
+      showSignedOut();
+    } else {
+      localizeHeader(slot);
+    }
+  });
 
   console.log('[header-loader] loaded');
 })();
