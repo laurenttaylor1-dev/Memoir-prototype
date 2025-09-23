@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — Record</title>
 
-  <!-- Supabase project config via meta (same values used elsewhere) -->
+  <!-- Supabase project config via meta -->
   <meta name="supabase-url"  content="https://fswxkujxusdozvmpyvzk.supabase.co">
   <meta name="supabase-anon" content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI">
 
@@ -47,7 +47,7 @@
   <div id="site-header"></div>
 
   <main class="container">
-    <h1 class="title" id="pageTitle" data-i18n="recordTitle">Record</h1>
+    <h1 class="title" id="pageTitle">Record</h1>
 
     <section class="grid">
       <!-- Left: capture -->
@@ -55,48 +55,51 @@
         <p id="planNote" class="muted planNote"></p>
 
         <div class="micZone">
-          <button id="mic" class="mic" aria-pressed="false" data-i18n="recordMicStart">Record</button>
+          <button id="mic" class="mic" aria-pressed="false">Record</button>
           <div class="muted"><span class="timer" id="timer">00:00</span></div>
           <audio id="preview" controls style="display:none"></audio>
+          <div class="row">
+            <button id="explainBtn" class="btn" type="button">🔊 Hear tips</button>
+          </div>
           <div id="recMsg" class="muted" style="min-height:1.2em"></div>
         </div>
 
         <div class="tabs">
-          <button id="tabFree" class="tab active" data-i18n="recordFree">Free</button>
-          <button id="tabGuided" class="tab" data-i18n="recordGuided">Guided</button>
+          <button id="tabFree" class="tab active">Free</button>
+          <button id="tabGuided" class="tab">Guided</button>
         </div>
 
-        <div class="label" data-i18n="recordPromptsTitle">Today's suggested prompts</div>
+        <div class="label">Today's suggested prompts</div>
         <div class="row" style="justify-content:space-between">
           <div id="prompts" class="chips"></div>
-          <button id="refreshPrompts" class="btn" data-i18n="recordPromptsRefresh">Suggest other prompts</button>
+          <button id="refreshPrompts" class="btn" type="button">Suggest other prompts</button>
         </div>
 
-        <div class="label" data-i18n="recordNotesLabel">Notes (optional)</div>
-        <textarea id="notes" data-i18n-attr="placeholder:recordNotesPlaceholder" placeholder="Add a quick note…"></textarea>
+        <div class="label">Notes (optional)</div>
+        <textarea id="notes" placeholder="Add a quick note…"></textarea>
 
         <div class="row" style="margin-top:12px">
-          <a href="/stories.html" class="btn" data-i18n="recordMyStories">My Stories</a>
+          <a href="/stories.html" class="btn">My Stories</a>
         </div>
       </div>
 
       <!-- Right: metadata + transcript -->
       <div class="card">
-        <div class="label" data-i18n="recordTitleLabel">Title</div>
-        <input id="title" type="text" data-i18n-attr="placeholder:recordTitlePlaceholder" placeholder="Story title"/>
+        <div class="label">Title</div>
+        <input id="title" type="text" placeholder="Story title"/>
 
-        <div class="label" data-i18n="recordWhenLabel">When did this happen?</div>
-        <input id="when" type="text" data-i18n-attr="placeholder:recordWhenPlaceholder" placeholder='e.g. "summer 1945", "early 2018", "15 Feb 1972"' />
+        <div class="label">When did this happen?</div>
+        <input id="when" type="text" placeholder='e.g. "summer 1945", "early 2018", "15 Feb 1972"' />
 
-        <div class="label" data-i18n="recordPhotoLabel">Add photo (optional)</div>
+        <div class="label" style="margin-top:14px">Add photo (optional)</div>
         <input id="photo" type="file" accept="image/*" />
 
-        <div class="label" style="margin-top:14px" data-i18n="recordTranscriptLabel">Transcript</div>
-        <div id="transcript" class="transcript" aria-live="polite" data-i18n="recordTranscriptPlaceholder">Your words will appear here…</div>
+        <div class="label" style="margin-top:14px">Transcript</div>
+        <div id="transcript" class="transcript" aria-live="polite">Your words will appear here…</div>
         <div class="hint" id="asrHint"></div>
 
         <div class="row" style="margin-top:14px">
-          <button id="saveBtn" class="btn primary" data-i18n="recordSaveButton">Save story</button>
+          <button id="saveBtn" class="btn primary" type="button">Save story</button>
         </div>
       </div>
     </section>
@@ -104,14 +107,14 @@
 
   <div id="site-footer"></div>
 
-  <!-- JS (order matters: lang -> header/footer -> auth -> page) -->
+  <!-- JS (order matters) -->
   <script src="/js/lang.js"></script>
   <script src="/js/header-loader.js"></script>
   <script src="/js/footer-loader.js"></script>
   <script src="/js/auth-client.js"></script>
 
   <script>
-    // ---------- Helpers / i18n ----------
+    // ---------- I18N helpers ----------
     const I18N = window.MEMOIR_I18N;
     const getLangCode = () => (I18N?.getLang?.() || localStorage.getItem('memoir.lang') || 'en');
     const tr = (key, vars, fallback='') =>
@@ -121,22 +124,39 @@
       I18N?.t?.(key, 'en') ||
       fallback;
 
+    // ---------- TTS helper (ElevenLabs) ----------
+    async function speak(text) {
+      try {
+        const resp = await fetch('/api/voice?text=' + encodeURIComponent(text));
+        if (!resp.ok) throw new Error('TTS failed');
+        const blob = await resp.blob(); // audio/mpeg
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        await audio.play().catch(()=>{}); // requires user gesture; we only call from click handlers
+      } catch (e) {
+        console.warn('[tts]', e);
+      }
+    }
+
     // ---------- DOM ----------
-    const pageTitle = document.getElementById('pageTitle');
-    const planNote = document.getElementById('planNote');
-    const micBtn = document.getElementById('mic');
-    const timerEl = document.getElementById('timer');
-    const msgEl = document.getElementById('recMsg');
-    const preview = document.getElementById('preview');
-    const transcriptBox = document.getElementById('transcript');
-    const asrHint = document.getElementById('asrHint');
-    const photoInput = document.getElementById('photo');
-    const saveBtn = document.getElementById('saveBtn');
-    const titleInput = document.getElementById('title');
-    const whenInput = document.getElementById('when');
-    const notesInput = document.getElementById('notes');
-    const tabFree = document.getElementById('tabFree');
-    const tabGuided = document.getElementById('tabGuided');
+    const pageTitle    = document.getElementById('pageTitle');
+    const planNote     = document.getElementById('planNote');
+    const micBtn       = document.getElementById('mic');
+    const timerEl      = document.getElementById('timer');
+    const msgEl        = document.getElementById('recMsg');
+    const preview      = document.getElementById('preview');
+    const transcriptBox= document.getElementById('transcript');
+    const asrHint      = document.getElementById('asrHint');
+    const photoInput   = document.getElementById('photo');
+    const saveBtn      = document.getElementById('saveBtn');
+    const titleInput   = document.getElementById('title');
+    const whenInput    = document.getElementById('when');
+    const notesInput   = document.getElementById('notes');
+    const tabFree      = document.getElementById('tabFree');
+    const tabGuided    = document.getElementById('tabGuided');
+    const promptsWrap  = document.getElementById('prompts');
+    const explainBtn   = document.getElementById('explainBtn');
+    const refreshPrompts = document.getElementById('refreshPrompts');
 
     // ---------- State ----------
     let currentPlan = 'free';
@@ -158,13 +178,10 @@
     function planLabel(code){ return tr(`planLabel_${code}`, null, code); }
     function fmt(sec){ sec = Math.max(0, sec|0); const m = (sec/60)|0; const r = (sec%60); return `${String(m).padStart(2,'0')}:${String(r).padStart(2,'0')}`; }
 
-    function updatePageTitle() {
+    function updatePageTitle(){
       if (!pageTitle) return;
-      if (currentFirstName) {
-        pageTitle.textContent = `${tr('recordTitle', null, 'Record')}, ${currentFirstName}`;
-      } else {
-        pageTitle.textContent = tr('recordTitle', null, 'Record');
-      }
+      const base = tr('recordTitle', null, 'Record');
+      pageTitle.textContent = currentFirstName ? `${base}, ${currentFirstName}` : base;
     }
     function updatePlanNote(){
       if (!planNote) return;
@@ -219,7 +236,6 @@
         form.append('audio', blob, 'recording.webm');
         form.append('language', getLangCode());
         const res = await fetch('/api/transcribe-chunk', { method:'POST', body: form });
-        // If the function is missing/failing, this will be !ok.
         if (!res.ok) throw new Error('Transcription service unavailable');
         const data = await res.json();
         const text = (data.partial || data.text || '').trim();
@@ -300,15 +316,13 @@
       msgEl.textContent = tr('recordSaving', null, 'Saving your story…');
 
       try {
-        // Supabase client (singleton)
         const supa = await window.MEMOIR_AUTH.ensureClient();
         const { data: userData } = await supa.auth.getUser();
         const user = userData?.user || null;
         if (!user) throw new Error(tr('recordSignInRequired', null, 'Please sign in again.'));
 
         const title = titleInput.value.trim() || tr('recordUntitled', null, 'Untitled');
-        // NOTE: to avoid schema errors, we DO NOT send optional columns (notes/when_text)
-        // If you add those columns, feel free to include them.
+
         const ins = await supa.from('stories')
           .insert({ title, visibility: 'private' })
           .select()
@@ -316,16 +330,11 @@
         if (ins.error) throw ins.error;
         const story = ins.data;
 
-        // Immediately after inserting the story:
+        // NEW: update optional fields now that you added the columns
         const notesVal = notesInput.value.trim() || null;
         const whenVal  = whenInput.value.trim()  || null;
+        await supa.from('stories').update({ notes: notesVal, when_text: whenVal }).eq('id', story.id);
 
-        // Only call update if there is something to store; it's cheap either way.
-        await supa
-          .from('stories')
-          .update({ notes: notesVal, when_text: whenVal })
-          .eq('id', story.id);
-        
         if (pendingAudio){
           msgEl.textContent = tr('recordUploadingAudio', null, 'Uploading audio…');
           const audioMime = pendingAudio.type || 'audio/webm';
@@ -362,9 +371,6 @@
             .catch(()=>{});
         }
 
-        // We keep notes/when in the UI for later, but we do NOT send them unless your DB has those columns.
-        // If you later add columns `notes` and `when_text`, you can call: supa.from('stories').update({ notes, when_text }).eq('id', story.id)
-
         msgEl.className = 'ok';
         msgEl.innerHTML = tr('recordSaveSuccess', null, 'Story saved! <a href="/stories.html">Go to My Stories</a>');
 
@@ -373,12 +379,13 @@
         pendingTranscript = '';
         if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = null; }
         preview.style.display = 'none'; preview.src = '';
-        refreshTranscriptPlaceholder(true);
+        transcriptBox.textContent = transcriptPlaceholder;
         asrHint.textContent = '';
         notesInput.value = '';
         titleInput.value = '';
         whenInput.value = '';
         photoInput.value = '';
+        updateSaveState();
       } catch (e) {
         console.error(e);
         msgEl.className = 'muted warn';
@@ -386,32 +393,56 @@
       } finally {
         isSaving = false;
         saveBtn.textContent = originalLabel;
-        updateSaveState();
       }
     }
 
-    // Simple prompt generator (unchanged)
+    // Prompts
     const TOPIC_WORDS = {
       en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning-points"],
       fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
       es:["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Momentos clave"],
       nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
     };
+    const GUIDED_QUESTIONS = {
+      en:[ "Where and when does this memory take place?","Who were you with?","What happened, step by step?","What did you feel at the time?","How did this experience change you?" ],
+      fr:[ "Où et quand se passe ce souvenir ?","Avec qui étiez-vous ?","Que s’est-il passé, étape par étape ?","Qu’avez-vous ressenti à ce moment-là ?","Comment cette expérience vous a-t-elle changé ?" ],
+      es:[ "¿Dónde y cuándo ocurrió este recuerdo?","¿Con quién estabas?","¿Qué pasó, paso a paso?","¿Qué sentiste en ese momento?","¿Cómo te cambió esta experiencia?" ],
+      nl:[ "Waar en wanneer vond deze herinnering plaats?","Met wie was je?","Wat gebeurde er, stap voor stap?","Wat voelde je op dat moment?","Hoe heeft deze ervaring je veranderd?" ]
+    };
+
     function renderPrompts(code){
       const words = TOPIC_WORDS[code] || TOPIC_WORDS.en;
-      const wrap = document.getElementById('prompts');
-      wrap.innerHTML = '';
+      promptsWrap.innerHTML = '';
       [...words].sort(()=>Math.random()-0.5).slice(0,4).forEach(w => {
         const b = document.createElement('button');
-        b.className = 'chip';
-        b.type = 'button';
-        b.textContent = w;
+        b.className = 'chip'; b.type = 'button'; b.textContent = w;
         b.onclick = () => { titleInput.value = w; };
-        wrap.appendChild(b);
+        promptsWrap.appendChild(b);
       });
     }
+    function renderGuided(code){
+      const qs = GUIDED_QUESTIONS[code] || GUIDED_QUESTIONS.en;
+      promptsWrap.innerHTML = '';
+      qs.forEach(q => {
+        const b = document.createElement('button');
+        b.className = 'chip'; b.type = 'button'; b.textContent = q;
+        b.onclick = () => {
+          const base = getTranscriptText();
+          const glue = base ? '\n\n' : '';
+          transcriptBox.textContent = `${base}${glue}${q}`;
+          pendingTranscript = transcriptBox.textContent;
+          updateSaveState();
+          speak(q); // read aloud on click (user gesture)
+        };
+        promptsWrap.appendChild(b);
+      });
+    }
+
     function applyLang(code){
-      renderPrompts(code);
+      // tab-sensitive render
+      if (tabGuided.classList.contains('active')) renderGuided(code);
+      else renderPrompts(code);
+
       refreshTranscriptPlaceholder();
       updateMicLabel();
       updatePageTitle();
@@ -429,6 +460,7 @@
         if (!user){
           hasSession = false; currentFirstName=''; currentPlan='free';
           updatePageTitle(); updatePlanNote();
+          applyLang(getLangCode());
           return;
         }
         hasSession = true;
@@ -441,6 +473,7 @@
           currentPlan = profile?.subscription_plan || 'free';
         } catch { currentPlan = 'free'; }
         updatePageTitle(); updatePlanNote();
+        applyLang(getLangCode());
       } catch (e) {
         console.warn('[record] init supabase failed', e);
       }
@@ -449,13 +482,34 @@
     // Event wiring
     function bootstrap(){
       updateSaveState();
-      tabFree.addEventListener('click', () => { tabFree.classList.add('active'); tabGuided.classList.remove('active'); });
-      tabGuided.addEventListener('click', () => { tabGuided.classList.add('active'); tabFree.classList.remove('active'); });
-      micBtn.addEventListener('click', () => { (recorder && recorder.state === 'recording') ? stopRecording() : startRecording(); });
+
+      tabFree.addEventListener('click', () => {
+        tabFree.classList.add('active'); tabGuided.classList.remove('active');
+        renderPrompts(getLangCode());
+      });
+      tabGuided.addEventListener('click', () => {
+        tabGuided.classList.add('active'); tabFree.classList.remove('active');
+        renderGuided(getLangCode());
+      });
+      refreshPrompts.addEventListener('click', () => {
+        if (tabGuided.classList.contains('active')) renderGuided(getLangCode());
+        else renderPrompts(getLangCode());
+      });
+
+      micBtn.addEventListener('click', () => {
+        (recorder && recorder.state === 'recording') ? stopRecording() : startRecording();
+      });
+
+      explainBtn.addEventListener('click', () => {
+        speak('Tap the large record button and start speaking. When you stop, we will transcribe your voice and you can save your story with a title, notes, and an optional photo.');
+      });
+
       saveBtn.addEventListener('click', saveStory);
       notesInput.addEventListener('input', updateSaveState);
       photoInput.addEventListener('change', updateSaveState);
+
       window.addEventListener('memoir:lang', (e) => applyLang(e.detail?.code || getLangCode()));
+
       applyLang(getLangCode());
       init();
     }
