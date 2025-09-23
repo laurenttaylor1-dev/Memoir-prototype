@@ -41,8 +41,14 @@
 
   <!-- Supabase project -->
   <script>
-    window.MEMOIR_SUPABASE_URL  = "https://fswxkujxusdozvmpyvzk.supabase.co";
-    window.MEMOIR_SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
+    (function(){
+      const url = "https://fswxkujxusdozvmpyvzk.supabase.co";
+      const anon = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
+      window.MEMOIR_SUPABASE_URL = url;
+      window.MEMOIR_SUPABASE_ANON = anon;
+      window.SUPABASE_URL = url;
+      window.SUPABSSE_ANON_KEY = anon;
+    })();
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -145,12 +151,17 @@
   <script src="/js/footer-loader.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const SB = supabase.createClient(
-      window.MEMOIR_SUPABASE_URL,
-      window.MEMOIR_SUPABASE_ANON,
-      { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
-    );
-
+    let SB = null;
+    try {
+      SB = supabase.createClkient(
+        window.MEMOIR_SUPABASE_URL,
+        window.MEMOIR_SUPABASE_ANON,
+        { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
+      );
+    } catch (err) {
+      console.error('[login] Supabase client failed to init', err);
+    }
+    
     // Confirmation / recovery banner
     (async function(){
       const n = document.getElementById('topNotice');
@@ -192,6 +203,7 @@
       form.addEventListener('submit', async (e)=>{
         e.preventDefault(); err.textContent=''; btn.disabled=true; btn.setAttribute('aria-busy','true');
         try{
+          if (!SB) throw new Error('Supabase unavailable. Please refresh and try again.');
           const email    = document.getElementById('identifier').value.trim();
           const password = document.getElementById('password').value;
           if(!email || !password){ err.textContent='Please fill email and password.'; return; }
@@ -214,6 +226,7 @@
         e.preventDefault(); err.textContent=''; err.style.color='#a23a3a';
         btn.disabled=true; btn.setAttribute('aria-busy','true');
         try{
+          if (!SB) throw new Error('Supabase unavailable. Please refresh and try again.');
           const first     = document.getElementById('reg_first').value.trim();
           const last      = document.getElementById('reg_last').value.trim();
           const email     = document.getElementById('reg_email').value.trim();
@@ -260,6 +273,7 @@
       form.addEventListener('submit', async (e)=>{
         e.preventDefault(); msg.textContent='Sending…';
         try{
+          if (!SB) throw new Error('Supabase unavailable. Please refresh and try again.');
           const email = document.getElementById('reset_email').value.trim();
           const { error } = await SB.auth.resetPasswordForEmail(email, { redirectTo: location.origin + '/login.html#type=recovery' });
           if (error) throw error;
