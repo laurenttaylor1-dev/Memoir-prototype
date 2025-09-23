@@ -4,6 +4,11 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Reset password — Memoir</title>
+
+  <!-- Supabase config via meta (same values used elsewhere) -->
+  <meta name="supabase-url"  content="https://fswxkujxusdozvmpyvzk.supabase.co">
+  <meta name="supabase-anon" content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI">
+
   <link rel="stylesheet" href="/styles.css"/>
 </head>
 <body>
@@ -12,7 +17,7 @@
   <main style="min-height:calc(100vh - 160px);display:flex;align-items:center;justify-content:center;">
     <section style="width:100%;max-width:520px;padding:24px;">
       <h1 class="title" style="text-align:center;margin:0 0 18px;">Reset your password</h1>
-      <form id="req-form" class="login-card" style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:18px;box-shadow:0 18px 40px rgba(59,47,42,.10),0 2px 8px rgba(59,47,42,.06);padding:18px;">
+      <form id="req-form" class="login-card" style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:18px;box-shadow:0 18px 40px rgba(59,47,42,.10),0 2px 8px rgba(59,47,42,.06);padding:18px;" novalidate>
         <div class="field"><input id="email" type="email" placeholder="you@email.com" required/></div>
         <div class="actions"><button class="btn primary" type="submit" style="flex:1">Send reset link</button></div>
         <div id="status" class="status" style="margin-top:10px;min-height:1.1em;"></div>
@@ -22,26 +27,10 @@
 
   <div id="site-footer"></div>
 
-  <script src="/js/supabase-client.js" defer></script>
-  <script src="/js/header-loader.js"></script>
-  <script src="/js/footer-loader.js"></script>
-  <script>
-    const supabase = window.supabase.createClient(window.MEMOIR_SUPABASE_URL, window.MEMOIR_SUPABASE_ANON);
-    document.getElementById('req-form').addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      const status = document.getElementById('status');
-      const email  = document.getElementById('email').value.trim();
-      status.textContent = 'Sending…';
-      try{
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: location.origin + '/auth/reset-password.html'
-        });
-        if (error) throw error;
-        status.textContent = 'Check your inbox for a reset link.';
-      }catch(err){
-        status.textContent = err.message || 'Could not send reset email.';
-      }
-    });
-  </script>
+  <!-- External scripts only (no inline SDK/client) -->
+  <script src="/js/header-loader.js" defer></script>
+  <script src="/js/footer-loader.js" defer></script>
+  <script src="/js/auth-client.js" defer></script>
+  <script src="/js/auth-request-reset.js" defer></script>
 </body>
 </html>
