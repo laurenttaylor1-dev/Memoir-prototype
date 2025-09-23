@@ -41,8 +41,8 @@
     (function(){
       const url = "https://fswxkujxusdozvmpyvzk.supabase.co";
       const anon = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
-      window.MEMOIR_SUPABASE_URL = window.MEMOIR_SUPABASE_URL  url;
-      window.MEMOIR_SUPABASE_ANON = window.MEMOIR_SUPABASE_ANON  anon;
+      window.MEMOIR_SUPABASE_URL = window.MEMOIR_SUPABASE_URL || url;
+      window.MEMOIR_SUPABASE_ANON = window.MEMOIR_SUPABASE_ANON || anon;
       window.SUPABASE_URL = window.MEMOIR_SUPABASE_URL;
       window.SUPABASE_ANON_KEY = window.MEMOIR_SUPABASE_ANON;
     })();  </script>
