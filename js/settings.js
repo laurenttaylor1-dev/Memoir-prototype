@@ -1,138 +1,92 @@
 // /js/settings.js
-(function () {
-  const qs = id => document.getElementById(id);
+(function(){
+  const I18N = window.MEMOIR_I18N;
+  const tr = (k, vars, fb) => I18N?.translate?.(k, vars) ?? fb ?? k;
 
-  const statusEl   = qs('acctStatus');
-  const bodyEl     = qs('acctBody');
-  const errEl      = qs('acctErr');
-  const noticeEl   = qs('topNotice');
-  const emailEl    = qs('acctEmail');
-  const idEl       = qs('acctId');
-  const createdEl  = qs('acctCreated');
-  const subBlurb   = qs('subBlurb');
-  const subControls= qs('subControls');
-  const subMsg     = qs('subMsg');
-  const secMsg     = qs('secMsg');
-  const dangerMsg  = qs('dangerMsg');
+  const titleEl    = document.getElementById('settingsTitle');
+  const statusEl   = document.getElementById('acctStatus');
+  const bodyEl     = document.getElementById('acctBody');
+  const errEl      = document.getElementById('acctErr');
+  const subBlurb   = document.getElementById('subBlurb');
+  const subCtrls   = document.getElementById('subControls');
 
-  let currentUser = null;
-  let currentPlan = 'free';
+  const emailEl    = document.getElementById('acctEmail');
+  const idEl       = document.getElementById('acctId');
+  const createdEl  = document.getElementById('acctCreated');
 
-  function renderUser() {
-    if (!currentUser) return;
-    statusEl.style.display = 'none';
-    bodyEl.style.display   = 'block';
-    emailEl.textContent    = currentUser.email || '—';
-    idEl.textContent       = currentUser.id || '—';
-    createdEl.textContent  = currentUser.created_at ? new Date(currentUser.created_at).toLocaleString() : '—';
-    subControls.style.display = 'block';
-  }
+  const btnSignOut = document.getElementById('btnSignOut');
+  const btnReset   = document.getElementById('btnResetPwd');
 
-  async function loadSession() {
-    statusEl.textContent = 'Checking your session…';
-    try {
-      const auth = window.MEMOIR_AUTH;
-      if (!auth?.ensureClient) throw new Error('Auth client missing');
-      const supa = await auth.ensureClient();
+  function firstName(n){ return (n||'').trim().split(/\s+/)[0] || ''; }
+  const withTimeout = (p, ms=9000) => Promise.race([p, new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),ms))]);
 
-      const h = location.hash || '';
-      if (h.includes('type=recovery')) { noticeEl.textContent='Set a new password below (once signed in, it will reflect here).'; noticeEl.style.display='block'; }
-      else if (h.includes('type=signup')) { noticeEl.textContent='Email confirmed.'; noticeEl.style.display='block'; }
-
-      const { data, error } = await supa.auth.getSession();
-      if (error) throw error;
-      const session = data?.session || null;
-      if (!session) {
-        const ret = encodeURIComponent(location.pathname);
-        location.href = `/login.html?return=${ret}`;
-        return;
-      }
-      currentUser = session.user;
-      renderUser();
-
-      // best-effort profile read
-      try {
-        const { data: prof } = await supa.from('profiles')
-          .select('subscription_plan')
-          .eq('user_id', currentUser.id)
-          .maybeSingle();
-        currentPlan = prof?.subscription_plan || 'free';
-      } catch { currentPlan = 'free'; }
-
-      subBlurb.textContent = `Current plan: ${currentPlan}`;
-      document.querySelectorAll('#subControls .pill[data-plan]')
-        .forEach(b => b.setAttribute('data-active', String(b.dataset.plan === currentPlan)));
-    } catch (e) {
-      console.error('[settings] session load failed', e);
-      statusEl.textContent = 'Could not check your session.';
-    }
-  }
-
-  // plan change
-  document.querySelectorAll('#subControls .pill[data-plan]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      subMsg.textContent = '';
-      const plan = btn.dataset.plan;
-      try {
-        const supa = await window.MEMOIR_AUTH.ensureClient();
-        const { error } = await supa.from('profiles')
-          .upsert({ user_id: currentUser.id, subscription_plan: plan }, { onConflict: 'user_id' });
-        if (error) throw error;
-        currentPlan = plan;
-        subBlurb.textContent = `Current plan: ${currentPlan}`;
-        document.querySelectorAll('#subControls .pill[data-plan]')
-          .forEach(b => b.setAttribute('data-active', String(b.dataset.plan === plan)));
-        subMsg.textContent = 'Plan updated.';
-      } catch (ex) {
-        subMsg.textContent = 'Could not update plan. (Profile table may not exist.)';
-      }
-    });
-  });
-
-  // reset password
-  qs('btnResetPwd')?.addEventListener('click', async () => {
-    secMsg.textContent = 'Sending…';
+  async function load(){
     try {
       const supa = await window.MEMOIR_AUTH.ensureClient();
-      const { error } = await supa.auth.resetPasswordForEmail(currentUser.email, {
-        redirectTo: location.origin + '/login.html#type=recovery'
-      });
-      if (error) throw error;
-      secMsg.textContent = 'Check your inbox for a reset link.';
-    } catch (ex) {
-      secMsg.textContent = ex?.message || 'Could not send reset email.';
-    }
-  });
+      const { data } = await withTimeout(supa.auth.getUser());
+      const user = data?.user || null;
 
-  // sign out
-  qs('btnSignOut')?.addEventListener('click', async () => {
+      if (!user) {
+        statusEl.innerHTML = tr('settingsAccountSignedOut', null, 'You are <strong class="warn">not signed in</strong>.');
+        bodyEl.style.display = 'none';
+        subBlurb.textContent = tr('settingsSubscriptionSignIn', null, 'Sign in to see or change your plan.');
+        subCtrls.style.display = 'none';
+        return;
+      }
+
+      // Profile & greeting
+      let profile=null;
+      try {
+        const { data: p } = await supa.from('profiles').select('full_name, subscription_plan').eq('user_id', user.id).single();
+        profile = p || {};
+      } catch {}
+
+      const name = profile?.full_name || user.email || '';
+      const fname = firstName(name);
+      // "Welcome back, {name}"
+      titleEl.textContent = fname ? `${tr('settingsTitle',null,'Settings')} — ${tr('recordGreeting',{name:fname},`Welcome back, ${fname}`)}` : tr('settingsTitle',null,'Settings');
+
+      statusEl.style.display = 'none';
+      bodyEl.style.display = 'block';
+      emailEl.textContent   = user.email || '—';
+      idEl.textContent      = user.id || '—';
+      createdEl.textContent = user.created_at ? new Date(user.created_at).toLocaleString() : '—';
+
+      const plan = profile?.subscription_plan || 'free';
+      subBlurb.textContent = tr('settingsSubscriptionCurrent', { plan: tr(`planLabel_${plan}`, null, plan) }, `Current plan: ${plan}`);
+      subCtrls.style.display = 'block';
+    } catch (e) {
+      console.error('[settings] load failed', e);
+      statusEl.textContent = e?.message === 'timeout' ? 'Auth is slow to respond. Please refresh.' : 'Could not check your session.';
+      bodyEl.style.display = 'none';
+      subCtrls.style.display = 'none';
+    }
+  }
+
+  btnSignOut?.addEventListener('click', async ()=>{
     errEl.textContent = '';
-    try {
+    try{
       const supa = await window.MEMOIR_AUTH.ensureClient();
       const { error } = await supa.auth.signOut();
       if (error) throw error;
       location.href = '/login.html';
-    } catch (ex) {
-      errEl.textContent = ex?.message || 'Could not sign out.';
-    }
+    }catch(ex){ errEl.textContent = ex?.message || 'Could not sign out.'; }
   });
 
-  // delete profile
-  qs('btnDeleteProfile')?.addEventListener('click', async () => {
-    dangerMsg.textContent = 'Processing…';
-    try {
-      const supa = await window.MEMOIR_AUTH.ensureClient();
-      try { await supa.from('profiles').delete().eq('user_id', currentUser.id); } catch {}
-      await supa.auth.signOut();
-      dangerMsg.textContent = 'Profile removed (if present). Redirecting…';
-      setTimeout(() => location.href = '/login.html', 700);
-    } catch (ex) {
-      dangerMsg.textContent = ex?.message || 'Could not delete profile.';
-    }
+  btnReset?.addEventListener('click', async ()=>{
+    const supa = await window.MEMOIR_AUTH.ensureClient();
+    const { data } = await supa.auth.getUser();
+    const user = data?.user || null;
+    const secMsg = document.getElementById('secMsg');
+    if (!user){ secMsg.textContent = 'Please sign in first.'; return; }
+    try{
+      const { error } = await supa.auth.resetPasswordForEmail(user.email, { redirectTo: location.origin + '/auth/reset-password.html' });
+      if (error) throw error;
+      secMsg.textContent = 'Check your inbox for a reset link.';
+    }catch(err){ secMsg.textContent = err?.message || 'Could not send reset email.'; }
   });
 
-  document.addEventListener('DOMContentLoaded', () => {
-    loadSession();
-    window.addEventListener('focus', loadSession);
-  });
+  document.addEventListener('DOMContentLoaded', load);
+  window.addEventListener('focus', load);
+  window.addEventListener('memoir:lang', load);
 })();
