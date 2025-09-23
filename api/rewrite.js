@@ -1,10 +1,11 @@
 // /api/rewrite.js
 import { createClient } from '@supabase/supabase-js';
+import { getOpenAiKey, getSupabaseUrl } from './_config.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   try {
-    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+    const OPENAI_API_KEY = getOpenAiKey;
     if (!OPENAI_API_KEY) return res.status(500).json({ error: 'Missing OPENAI_API_KEY' });
 
     const {
@@ -42,8 +43,8 @@ export default async function handler(req, res) {
     // Otherwise, story mode: fetch story from Supabase and save rewritten_text
     if (!story_id) return res.status(400).json({ error: 'Provide either text or story_id' });
 
-    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-    const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE;
+    const SUPABASE_URL = getSupabaseUrl();
+    const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE || process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!SUPABASE_URL || !SERVICE_ROLE) return res.status(500).json({ error: 'Supabase env missing' });
 
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
