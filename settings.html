@@ -4,217 +4,230 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — Settings</title>
+  <meta name="theme-color" content="#f4ead9"/>
   <link rel="stylesheet" href="/styles.css">
   <style>
-    :root{--bg:#f6f1ea;--card:#fffaf5;--ink:#3b2f2a;--muted:#7b6a62;--accent:#8c5a3c;--accent2:#b17d55;--radius:18px;--shadow:0 18px 40px rgba(59,47,42,.10),0 2px 8px rgba(59,47,42,.06)}
-    body{background:var(--bg);color:var(--ink);margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-    .container{max-width:1100px;margin:0 auto;padding:20px 16px 28px}
-    .title{font-size:clamp(26px,3vw,38px);margin:8px 0 16px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    @media (max-width:900px){.grid{grid-template-columns:1fr}}
-    .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
-    .card h3{margin:0 0 10px}
-    .pill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;color:#3b2f2a;text-decoration:none;font-weight:600;cursor:pointer}
-    .pill.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:0}
+    :root{
+      --bg:#f6f1ea; --card:#fffaf5; --ink:#3b2f2a; --muted:#7b6a62;
+      --accent:#8c5a3c; --accent2:#b17d55; --radius:22px;
+      --shadow:0 18px 40px rgba(59,47,42,.10),0 2px 8px rgba(59,47,42,.06);
+    }
+    body{background:var(--bg); color:var(--ink); margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    .container{max-width:900px; margin:0 auto; padding:24px 16px 40px}
+    h1{font-size:clamp(28px,3.2vw,42px); margin:10px 0 18px; font-weight:800}
+    .card{background:var(--card); border:1px solid rgba(0,0,0,.08); border-radius:var(--radius); box-shadow:var(--shadow); padding:22px}
+    .row{display:flex; gap:16px; align-items:center; justify-content:space-between; flex-wrap:wrap}
     .muted{color:var(--muted)}
-    .list{margin:0 0 0 18px}
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .ok{color:#1b5e20}
-    .warn{color:#8a1f17}
+    .btn{display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:999px; border:1px solid rgba(0,0,0,.12); background:#fff; color:var(--ink); font-weight:700; cursor:pointer; text-decoration:none}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#fff; border:0}
+    .error{color:#a23a3a; margin-top:10px}
+    .notice{margin:10px 0 18px; padding:10px 14px; border-radius:12px; background:#e9f7ef; color:#1b5e20; border:1px solid #c7ebd2; display:none}
+    .kv{display:grid; grid-template-columns:160px 1fr; gap:10px; margin-top:14px}
+    code.small{font-size:12px; color:var(--muted)}
   </style>
 
-  <!-- Project keys -->
+  <!-- If login.html already set these, we reuse; otherwise define here -->
   <script>
-    window.MEMOIR_SUPABASE_URL  = window.MEMOIR_SUPABASE_URL  || "https://fswxkujxusdozvmpyvzk.supabase.co";
-    window.MEMOIR_SUPABASE_ANON = window.MEMOIR_SUPABASE_ANON || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
+    (function ensureSupabaseEnv(){
+      if (!window.MEMOIR_SUPABASE_URL) {
+        window.MEMOIR_SUPABASE_URL  = "https://fswxkujxusdozvmpyvzk.supabase.co";
+      }
+      if (!window.MEMOIR_SUPABASE_ANON) {
+        window.MEMOIR_SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
+      }
+    })();
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="site-header"></div>
 
   <main class="container">
-    <h1 class="title" id="pageTitle" data-i18n="settingsTitle">Settings</h1>
+    <h1>Settings</h1>
+    <div id="topNotice" class="notice"></div>
 
-    <section class="grid">
-      <!-- Account -->
-      <div class="card" id="accountCard">
-        <h3 data-i18n="settingsAccount">Account</h3>
-        <p class="muted" id="accountBlurb" data-i18n="settingsAccountChecking">Checking your session…</p>
-        <div class="row" id="accountActions" style="margin-top:8px"></div>
-      </div>
+    <section class="card" id="acctCard">
+      <h2 style="margin:0 0 6px">Account</h2>
+      <div id="acctStatus" class="muted">Checking your session…</div>
 
-      <!-- Subscription -->
-      <div class="card" id="subCard">
-        <h3 data-i18n="settingsSubscription">Subscription</h3>
-        <p class="muted" id="subBlurb" data-i18n="settingsSubscriptionIntro">Choose or change your plan.</p>
-        <div class="list" id="subPlans">
-          <p>
-            <strong data-i18n="settingsPlanStorytellerLabel">Storyteller — €8.99/month</strong>
-            — <a href="/api/checkout?price=storyteller" class="pill primary" data-i18n="settingsPlanButton">Subscribe</a>
-          </p>
-          <p>
-            <strong data-i18n="settingsPlanPremiumLabel">Premium Storyteller — €11.99/month</strong>
-            — <a href="/api/checkout?price=premium" class="pill primary" data-i18n="settingsPlanButton">Subscribe</a>
-          </p>
-          <p>
-            <strong data-i18n="settingsPlanExclusiveLabel">Exclusive Storyteller — €15.99/month</strong>
-            — <a href="/api/checkout?price=exclusive" class="pill primary" data-i18n="settingsPlanButton">Subscribe</a>
-          </p>
+      <div id="acctBody" style="display:none">
+        <div class="kv">
+          <div class="muted">Email</div>
+          <div id="acctEmail">—</div>
+
+          <div class="muted">User ID</div>
+          <div><code class="small" id="acctId">—</code></div>
+
+          <div class="muted">Created</div>
+          <div id="acctCreated">—</div>
         </div>
-      </div>
 
-      <!-- Billing -->
-      <div class="card">
-        <h3 data-i18n="settingsBilling">Billing</h3>
-        <p class="muted" data-i18n="settingsBillingCopy">View invoices and next renewal.</p>
-        <a class="pill" href="/api/billing-portal" data-i18n="settingsBillingManage">Manage billing</a>
-      </div>
+        <div class="row" style="margin-top:16px">
+          <a class="btn" href="/login.html">Back to login</a>
+          <button id="btnSignOut" class="btn primary" type="button">Sign out</button>
+        </div>
 
-      <!-- FAQ -->
-      <div class="card">
-        <h3 data-i18n="settingsFaq">Help & FAQ</h3>
-        <ul class="list">
-          <li data-i18n="settingsFaqItem1">Is there a free plan? — Yes, with a 2-minute per recording cap.</li>
-          <li data-i18n="settingsFaqItem2">Which languages are supported? — English, French, Dutch, Spanish for UI; stories can be any language.</li>
-          <li data-i18n="settingsFaqItem3">How is transcription done? — We’ll add automatic transcription on save (coming in beta).</li>
-        </ul>
+        <div id="acctErr" class="error"></div>
       </div>
     </section>
   </main>
 
   <div id="site-footer"></div>
 
-  <script src="/js/lang.js"></script>
-  <script src="/js/header-loader.js"></script>
-  <script src="/js/footer-loader.js"></script>
+  <script src="/js/header-loader.js" defer></script>
+  <script src="/js/footer-loader.js" defer></script>
+  <!-- Load Supabase once -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
   <script>
-    (function(){
-      const SUPA_URL = window.MEMOIR_SUPABASE_URL;
-      const SUPA_KEY = window.MEMOIR_SUPABASE_ANON;
-      const I18N = window.MEMOIR_I18N;
+/* --- settings auth bootstrap (merged) --- */
+(function(){
+  const SUPA_URL = window.MEMOIR_SUPABASE_URL;
+  const SUPA_KEY = window.MEMOIR_SUPABASE_ANON;
+  const I18N     = window.MEMOIR_I18N;
 
-      const pageTitle    = document.getElementById('pageTitle');
-      const accountBlurb = document.getElementById('accountBlurb');
-      const accountActs  = document.getElementById('accountActions');
-      const subBlurb     = document.getElementById('subBlurb');
+  const statusEl  = document.getElementById('acctStatus');
+  const bodyEl    = document.getElementById('acctBody');
+  const errEl     = document.getElementById('acctErr');
+  const noticeEl  = document.getElementById('topNotice');
+  const emailEl   = document.getElementById('acctEmail');
+  const idEl      = document.getElementById('acctId');
+  const createdEl = document.getElementById('acctCreated');
 
-      let SB = null;
-      let supabaseLoader = null;
-      let authListenerBound = false;
+  let SB = null;
+  let supabaseLoader = null;
+  let authListenerBound = false;
 
-      function loadSupabaseScript() {
-        if (window.supabase?.createClient) return Promise.resolve();
-        if (supabaseLoader) return supabaseLoader;
-        supabaseLoader = new Promise((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-          script.onload = () => resolve();
-          script.onerror = () => {
-            script.remove();
-            supabaseLoader = null;
-            reject(new Error('Supabase SDK failed to load.'));
-          };
-          document.head.appendChild(script);
-        });
-        return supabaseLoader;
-      }
+  // ---------- helpers ----------
+  function t(key, vars, fallback=''){
+    const lang = I18N?.getLang?.() || localStorage.getItem('memoir.lang') || 'en';
+    const tr = I18N?.translate?.(key, vars, lang) || I18N?.translate?.(key, vars, 'en') ||
+               I18N?.t?.(key, lang) || I18N?.t?.(key, 'en');
+    return tr || fallback;
+  }
 
-      async function ensureSupabase() {
-        if (SB) return SB;
-        try {
-          await loadSupabaseScript();
-          if (!window.supabase?.createClient) {
-            throw new Error('Supabase SDK unavailable.');
-          }
-          SB = window.supabase.createClient(
-            SUPA_URL,
-            SUPA_KEY,
-            { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
-          );
-          if (!authListenerBound) {
-            authListenerBound = true;
-            SB.auth.onAuthStateChange(() => { renderSettings(); });
-          }
-        } catch (err) {
-          console.error('[settings] Supabase client failed to init:', err);
-          throw new Error('Supabase unavailable.');
-        }
-        return SB;
-      }
+  function withTimeout(promise, ms=8000){
+    return Promise.race([promise, new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),ms))]);
+  }
 
-      function getLangCode(){ return I18N?.getLang?.() || localStorage.getItem('memoir.lang') || 'en'; }
-      function tr(key, vars, fallback=''){ return I18N?.translate?.(key, vars, getLangCode()) || I18N?.translate?.(key, vars, 'en') || I18N?.t?.(key, getLangCode()) || I18N?.t?.(key, 'en') || fallback; }
-      function planLabel(code){ return tr(`planLabel_${code}`, null, code); }
+  function loadSupabaseScript() {
+    if (window.supabase?.createClient) return Promise.resolve();
+    if (supabaseLoader) return supabaseLoader;
+    supabaseLoader = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+      script.onload = () => resolve();
+      script.onerror = () => { script.remove(); supabaseLoader = null; reject(new Error('Supabase SDK failed to load.')); };
+      document.head.appendChild(script);
+    });
+    return supabaseLoader;
+  }
 
-      function showSignedOutUI() {
-        accountBlurb.innerHTML = tr('settingsAccountSignedOut', null, 'You are <strong class="warn">not signed in</strong>.');
-        accountActs.innerHTML = `<a class="pill primary" href="/login.html">${tr('settingsAccountActionsSignIn', null, 'Sign in')}</a>`;
-        subBlurb.textContent = tr('settingsSubscriptionSignIn', null, 'Sign in to see or change your plan.');
-      }
-
-      function showSupabaseErrorUI() {
-        accountBlurb.innerHTML = tr('settingsAccountSupabaseDown', null, 'We cannot reach the authentication service right now. Please refresh to try again.');
-        accountActs.innerHTML = `<button class="pill" type="button" id="settingsRetrySupabase">${tr('settingsAccountRetry', null, 'Retry')}</button>`;
-        accountActs.querySelector('#settingsRetrySupabase')?.addEventListener('click', () => { renderSettings(); });
-        subBlurb.textContent = tr('settingsSubscriptionSupabaseDown', null, 'Subscription options are unavailable until we can verify your session.');
-      }
-
-      async function renderSettings(){
-        pageTitle.textContent = tr('settingsTitle', null, 'Settings');
-        try {
-          const supa = await ensureSupabase();
-          const { data, error } = await supa.auth.getUser();
-          const user = data?.user || null;
-
-          if (!user || error) {
-            showSignedOutUI();
-            return;
-          }
-
-          let profile = null;
-          try {
-            const { data: profileData } = await supa
-              .from('profiles')
-              .select('full_name, subscription_plan')
-              .eq('user_id', user.id)
-              .single();
-            profile = profileData || {};
-          } catch (profileErr) {
-            console.warn('[settings] profile fetch failed', profileErr);
-          }
-
-          const full = profile?.full_name || user.email || 'Your account';
-          accountBlurb.innerHTML = tr('settingsAccountSignedIn', { name: full, email: user.email }, `Signed in as <strong class="ok">${full}</strong> (${user.email})`);
-          accountActs.innerHTML = `
-            <a class="pill" href="/stories.html">${tr('settingsAccountActionsStories', null, 'My Stories')}</a>
-            <a class="pill" href="/record.html">${tr('settingsAccountActionsRecord', null, 'Record')}</a>
-            <button class="pill" id="signOutBtn">${tr('settingsAccountActionsSignOut', null, 'Sign out')}</button>
-          `;
-          accountActs.querySelector('#signOutBtn')?.addEventListener('click', async () => {
-            try {
-              const supaClient = await ensureSupabase();
-              await supaClient.auth.signOut();
-            } catch (signOutErr) {
-              console.warn('[settings] sign-out failed', signOutErr);
-            }
-            location.href = '/login.html';
-          });
-
-          const plan = profile?.subscription_plan || 'free';
-          subBlurb.textContent = tr('settingsSubscriptionCurrent', { plan: planLabel(plan) }, `Current plan: ${plan}`);
-        } catch (err) {
-          console.warn('[settings] render failed', err);
-          showSupabaseErrorUI();
-        }
-      }
-
-      document.addEventListener('DOMContentLoaded', () => {
-        renderSettings();
-        window.addEventListener('focus', renderSettings);
-        window.addEventListener('memoir:lang', renderSettings);
+  async function ensureSupabase(){
+    if (SB) return SB;
+    await loadSupabaseScript();
+    if (!window.supabase?.createClient) throw new Error('Supabase SDK unavailable.');
+    SB = window.supabase.createClient(
+      SUPA_URL, SUPA_KEY,
+      { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true } }
+    );
+    if (!authListenerBound) {
+      authListenerBound = true;
+      SB.auth.onAuthStateChange((_evt, session) => {
+        if (session) renderUser(session.user);
       });
-    })();
+    }
+    return SB;
+  }
+
+  function showSignedOut(){
+    // Redirect to login, keep return URL
+    const ret = encodeURIComponent(location.pathname);
+    location.href = `/login.html?return=${ret}`;
+  }
+
+  function showSupabaseError(){
+    statusEl.textContent = t('settingsAccountSupabaseDown', null, 'We cannot reach the authentication service right now. Please refresh to try again.');
+  }
+
+  function renderUser(user){
+    statusEl.style.display = 'none';
+    bodyEl.style.display   = 'block';
+    emailEl.textContent    = user?.email || '—';
+    idEl.textContent       = user?.id || '—';
+    createdEl.textContent  = user?.created_at ? new Date(user.created_at).toLocaleString() : '—';
+  }
+
+  async function fetchProfile(supa, userId){
+    try{
+      const { data } = await supa
+        .from('profiles')
+        .select('full_name, subscription_plan')
+        .eq('user_id', userId)
+        .single();
+      return data || null;
+    }catch(e){
+      console.warn('[settings] profile fetch failed', e);
+      return null;
+    }
+  }
+
+  async function loadSession(){
+    try{
+      const supa = await ensureSupabase();
+
+      // Messages from confirm/recovery redirects
+      const h = location.hash || '';
+      if (h.includes('type=recovery')) {
+        noticeEl.textContent = 'Set a new password below (once signed in, it will reflect here).';
+        noticeEl.style.display = 'block';
+      } else if (h.includes('type=signup')) {
+        noticeEl.textContent = 'Email confirmed.';
+        noticeEl.style.display = 'block';
+      }
+
+      const { data } = await withTimeout(supa.auth.getSession(), 8000);
+      const session = data?.session || null;
+      if (!session) return showSignedOut();
+
+      // Render base user info
+      const user = session.user;
+      renderUser(user);
+
+      // Optional: enrich with profile (not strictly needed for the page to work)
+      const profile = await fetchProfile(supa, user.id);
+      if (profile?.full_name && profile.full_name !== user.email) {
+        emailEl.textContent = `${profile.full_name} (${user.email})`;
+      }
+    }catch(e){
+      console.error('[settings] session load failed', e);
+      statusEl.textContent = e?.message === 'timeout'
+        ? 'Auth is slow to respond. Please refresh.'
+        : 'Could not check your session.';
+    }
+  }
+
+  // sign-out button (matches your current HTML id)
+  document.getElementById('btnSignOut')?.addEventListener('click', async ()=>{
+    errEl.textContent = '';
+    try{
+      const supa = await ensureSupabase();
+      const { error } = await supa.auth.signOut();
+      if (error) throw error;
+      location.href = '/login.html';
+    }catch(ex){
+      errEl.textContent = ex?.message || 'Could not sign out.';
+    }
+  });
+
+  // boot
+  document.addEventListener('DOMContentLoaded', ()=>{
+    statusEl.textContent = 'Checking your session…';
+    loadSession();
+    // re-check on focus + language changes if you use i18n
+    window.addEventListener('focus', loadSession);
+    window.addEventListener('memoir:lang', loadSession);
+  });
+})();
   </script>
 </body>
 </html>
