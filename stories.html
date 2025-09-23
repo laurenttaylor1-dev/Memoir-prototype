@@ -4,11 +4,6 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — My Stories</title>
-
-  <!-- Supabase config via meta (CSP-friendly) -->
-  <meta name="supabase-url"  content="https://fswxkujxusdozvmpyvzk.supabase.co">
-  <meta name="supabase-anon" content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI">
-
   <link rel="stylesheet" href="/styles.css">
   <style>
     :root{--bg:#f6f1ea;--card:#fffaf5;--ink:#3b2f2a;--muted:#7b6a62;--accent:#8c5a3c;--accent2:#b17d55;--radius:18px;--shadow:0 18px 40px rgba(59,47,42,.10),0 2px 8px rgba(59,47,42,.06)}
@@ -38,41 +33,184 @@
   <div id="site-header"></div>
 
   <main class="container">
-    <h1 class="title" id="pageTitle" data-i18n="storiesTitle">My Stories</h1>
+    <h1 class="title" id="pageTitle">My Stories</h1>
 
     <section class="topbar">
       <div class="stats">
         <div class="stat">
           <div class="num" id="countStories">0</div>
-          <div class="muted" data-i18n="storiesCountLabel">Stories</div>
+          <div class="muted">Stories</div>
         </div>
         <div class="stat">
           <div class="num" id="countFamily">0</div>
-          <div class="muted" data-i18n="storiesFamilyLabel">Family Members</div>
+          <div class="muted">Family Members</div>
         </div>
       </div>
       <div class="library">
-        <div class="muted" data-i18n="storiesLibraryIntro">Your stories will appear in your private library here.</div>
+        <div class="muted">Your stories will appear in your private library here.</div>
         <div class="row">
-          <input id="inviteEmail" type="email" data-i18n-attr="placeholder:storiesInvitePlaceholder" placeholder="family@email.com" />
-          <button id="inviteBtn" class="pill primary" data-i18n="storiesInviteButton">Invite</button>
+          <input id="inviteEmail" type="email" placeholder="family@email.com" />
+          <button id="inviteBtn" class="pill primary">Invite</button>
         </div>
         <div id="inviteMsg" class="muted" style="margin-top:6px"></div>
       </div>
     </section>
 
     <section class="list" id="storiesList">
-      <div class="empty" data-i18n="storiesEmpty">No stories yet. Record your first one!</div>
+      <div class="empty">No stories yet. Record your first one!</div>
     </section>
   </main>
 
   <div id="site-footer"></div>
 
-  <!-- External scripts only (CSP-safe, no SDK direct include here) -->
-  <script src="/js/lang.js" defer></script>
-  <script src="/js/header-loader.js" defer></script>
-  <script src="/js/footer-loader.js" defer></script>
-  <script src="/js/auth-client.js" defer></script>
-  <script src="/js/stories.js" defer></script>
+  <script src="/js/lang.js"></script>
+  <script src="/js/header-loader.js"></script>
+  <script src="/js/footer-loader.js"></script>
+  <script src="/js/auth-client.js"></script>
+
+  <script>
+    const I18N = window.MEMOIR_I18N;
+    const tr = (k,v,f='') => I18N?.translate?.(k,v,localStorage.getItem('memoir.lang')||'en') || I18N?.t?.(k,localStorage.getItem('memoir.lang')||'en') || f;
+    const getLang = () => (I18N?.getLang?.() || localStorage.getItem('memoir.lang') || 'en');
+
+    const listEl = document.getElementById('storiesList');
+    const inviteEmail = document.getElementById('inviteEmail');
+    const inviteBtn = document.getElementById('inviteBtn');
+    const inviteMsg = document.getElementById('inviteMsg');
+    const pageTitle = document.getElementById('pageTitle');
+    const countStoriesEl = document.getElementById('countStories');
+    const countFamilyEl = document.getElementById('countFamily');
+
+    let currentFirstName = '';
+
+    function firstName(full){ return (full||'').trim().split(/\s+/)[0] || ''; }
+    function possessive(name){ if (!name) return ''; const s = name.trim(); return s.endsWith('s')||s.endsWith('S')?`${s}’`:`${s}’s`; }
+
+    function updateStoriesTitle(){
+      if (currentFirstName){
+        pageTitle.textContent = `${possessive(currentFirstName)} ${tr('storiesTitle', null, 'Stories')}`;
+      } else {
+        pageTitle.textContent = tr('storiesTitle', null, 'My Stories');
+      }
+    }
+
+    function renderEmpty(message){
+      listEl.innerHTML = `<div class="empty">${message}</div>`;
+    }
+
+    async function loadEverything(){
+      const supa = await window.MEMOIR_AUTH.ensureClient();
+      const { data } = await supa.auth.getUser();
+      const user = data?.user || null;
+      if (!user){
+        currentFirstName = '';
+        updateStoriesTitle();
+        countStoriesEl.textContent = '0';
+        countFamilyEl.textContent = '0';
+        renderEmpty(tr('storiesNeedSignIn', null, 'Please <a href="/login.html">sign in</a>.'));
+        return;
+      }
+
+      try {
+        const { data: profile } = await supa.from('profiles').select('full_name').eq('user_id', user.id).single();
+        currentFirstName = profile?.full_name ? firstName(profile.full_name) : '';
+      } catch { currentFirstName = ''; }
+      updateStoriesTitle();
+
+      try {
+        const { data: stories, error } = await supa.from('stories')
+          .select('id,title,created_at,visibility')
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+
+        countStoriesEl.textContent = String(stories?.length || 0);
+
+        if (!stories || stories.length === 0){
+          renderEmpty(tr('storiesEmpty', null, 'No stories yet. Record your first one!'));
+        } else {
+          listEl.innerHTML = stories.map(s => {
+            const when = new Date(s.created_at).toLocaleString();
+            const title = s.title || tr('storiesUntitled', null, 'Untitled');
+            const vis = s.visibility || 'private';
+            const visibilityLabel = tr(`storiesVisibility_${vis}`, null, vis);
+            const rewriteLabel = tr('storiesRewriteButton', null, 'Rewrite with AI');
+            const continueLabel = tr('storiesContinueButton', null, 'Continue');
+            return `
+              <article class="story-card" data-id="${s.id}">
+                <h3>${title}</h3>
+                <div class="meta">${when} · ${visibilityLabel}</div>
+                <div class="actions">
+                  <button class="pill" data-rewrite="1">${rewriteLabel}</button>
+                  <a class="pill" href="/record.html">${continueLabel}</a>
+                </div>
+                <div class="muted" data-msg style="margin-top:6px;min-height:1.1em"></div>
+              </article>
+            `;
+          }).join('');
+
+          listEl.querySelectorAll('[data-rewrite]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const supa = await window.MEMOIR_AUTH.ensureClient();
+              const card = btn.closest('.story-card');
+              const id = card?.dataset?.id;
+              const msg = card?.querySelector('[data-msg]');
+              if (!id || !msg) return;
+              msg.textContent = tr('storiesRewriteWorking', null, 'Rewriting…');
+              try {
+                const res = await fetch('/api/rewrite', {
+                  method: 'POST', headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ story_id: id })
+                });
+                if (!res.ok) throw new Error('Server error');
+                const json = await res.json();
+                msg.textContent = json.message || tr('storiesRewriteDone', null, 'Done.');
+              } catch (e) {
+                msg.textContent = tr('storiesRewriteFailed', { error: e.message || e }, 'Could not rewrite: ' + (e.message || e));
+              }
+            });
+          });
+        }
+      } catch (e) {
+        renderEmpty(tr('storiesLoadError', { error: e.message || e }, `Could not load stories: ${e.message}`));
+      }
+
+      try {
+        const supa = await window.MEMOIR_AUTH.ensureClient();
+        const { data, error } = await supa.from('family_invites')
+          .select('id,status')
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        const accepted = (data || []).filter(i => (i.status || 'pending') !== 'revoked');
+        countFamilyEl.textContent = String(accepted.length);
+      } catch {
+        countFamilyEl.textContent = '0';
+      }
+    }
+
+    inviteBtn.addEventListener('click', async () => {
+      const email = inviteEmail.value.trim();
+      if (!email){ inviteMsg.textContent = tr('storiesInviteEnterEmail', null, 'Enter an email.'); return; }
+      const supa = await window.MEMOIR_AUTH.ensureClient();
+      const { data } = await supa.auth.getUser();
+      const user = data?.user || null;
+      if (!user){ inviteMsg.textContent = tr('storiesInviteSignIn', null, 'Please sign in first.'); return; }
+      inviteMsg.textContent = tr('storiesInviteSending', null, 'Sending…');
+      try {
+        const res = await supa.from('family_invites').insert({ owner_id: user.id, email, status: 'pending' });
+        if (res.error) throw res.error;
+        inviteMsg.textContent = tr('storiesInviteSaved', null, 'Invite saved. We’ll email instructions when mail is configured.');
+        inviteEmail.value = '';
+        loadEverything();
+      } catch (e) {
+        inviteMsg.textContent = tr('storiesInviteError', { error: e.message || e }, 'Could not save invite: ' + (e.message || e));
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', loadEverything);
+    window.addEventListener('memoir:lang', () => {
+      I18N?.applyAll?.(document);
+      loadEverything();
+    });
+  </script>
 </body>
 </html>
