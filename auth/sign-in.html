@@ -19,11 +19,21 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // TODO: replace with your project values
     const SUPABASE_URL = "https://fswxkujxusdozvmpyvzk.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+    window.MEMOIR_SUPABASE_URL = SUPABASE_URL;
+    window.MEMOIR_SUPABASE_ANON = SUPABASE_ANON_KEY;
+    window.SUPABASE_URL = SUPABASE_URL;
+    window.SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
+    let supabaseClient = null;
+    try {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {persistSession:true, autoRefreshToken: true, detectSessionInUrl: true }
+      });
+    } catch (err) {
+      console.error('[auth/sign-in] Supabase client failed to init', err);
+    }
+    
     document.getElementById('signin-form').addEventListener('submit', async (e)=>{
       e.preventDefault();
       const status = document.getElementById('signin-status');
@@ -31,7 +41,8 @@
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       try{
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (!supabaseClient) throw new Error('Supabase unavailable. Please refresh and try again.');
+        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
         if (error) throw error;
         location.href = "/stories.html"; // your app entry
       }catch(err){
