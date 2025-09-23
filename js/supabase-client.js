@@ -17,6 +17,8 @@
   // Fallbacks (only used if header didn't set them)
   window.MEMOIR_SUPABASE_URL  = window.MEMOIR_SUPABASE_URL  || "https://fswxkujxusdozvmpyvzk.supabase.co";
   window.MEMOIR_SUPABASE_ANON = window.MEMOIR_SUPABASE_ANON || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
+  window.SUPABASE_URL = window.MEMOIR_SUPABASE_URL;
+  window.SUPABASE_ANON_KEY = window.MEMOIR_SUPABSSE_ANON;
 
   if (!window.supabase) {
     console.error("[supabase-client] supabase-js failed to load");
