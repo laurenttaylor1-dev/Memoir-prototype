@@ -3,64 +3,45 @@
 <head>
   <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Register — Memoir</title>
+
+  <!-- Supabase config via meta (CSP-friendly, same project values) -->
+  <meta name="supabase-url"  content="https://fswxkujxusdozvmpyvzk.supabase.co">
+  <meta name="supabase-anon" content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI">
+
   <link rel="stylesheet" href="/styles.css">
+  <style>
+    :root{--bg:#f6f1ea;--card:#fffaf5;--ink:#3b2f2a;--muted:#7b6a62;--accent:#8c5a3c;--accent2:#b17d55;--radius:18px;--shadow:0 18px 40px rgba(59,47,42,.10),0 2px 8px rgba(59,47,42,.06)}
+    body{background:var(--bg);color:var(--ink);margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    main{display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:16px}
+    form{display:flex;flex-direction:column;gap:10px;min-width:min(420px,92vw);max-width:420px;margin:0 auto;background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+    input, select{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(0,0,0,.15);background:#fff;color:inherit;box-sizing:border-box}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;color:var(--ink);font-weight:700;cursor:pointer;text-decoration:none}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:0}
+    .muted{color:var(--muted)}
+    .status{min-height:1.1em;font-size:14px;margin-top:6px}
+  </style>
 </head>
 <body>
-  <main style="display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;height:100vh;text-align:center;">
+  <main>
     <h1>Create your account</h1>
-    <form id="register-form" style="display:flex;flex-direction:column;gap:10px;min-width:min(420px,82vw);max-width:420px;">
+    <form id="register-form" novalidate>
       <input id="name" type="text" placeholder="Your name" required />
       <input id="email" type="email" placeholder="you@email.com" required />
       <input id="password" type="password" placeholder="Password (min 6 chars)" required />
       <select id="subscription">
         <option value="free" selected>Free</option>
-        <option value="basic">Basic</option>
-        <option value="pro">Pro</option>
+        <option value="storyteller">Storyteller (3h/mo)</option>
+        <option value="premium">Premium Storyteller (6h/mo)</option>
+        <option value="exclusive">Exclusive Storyteller (10h/mo)</option>
       </select>
       <button type="submit" class="btn primary">Create account</button>
-      <div id="reg-status" class="status"></div>
-      <p>Already have an account? <a href="/auth/sign-in.html">Sign in</a></p>
+      <div id="reg-status" class="status muted"></div>
+      <p class="muted">Already have an account? <a href="/auth/sign-in.html">Sign in</a></p>
     </form>
   </main>
 
-  <script src="/js/supabase-client.js" defer></script>
-  <script>
-    const SUPABASE_URL = "https://fswxkujxusdozvmpyvzk.supabase.co"; // replace
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";                   // replace
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    document.getElementById('register-form').addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      const status = document.getElementById('reg-status');
-      status.textContent = 'Creating account…';
-
-      const name = document.getElementById('name').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const subscription = document.getElementById('subscription').value;
-
-      try{
-        const { data, error } = await supabase.auth.signUp({
-          email, password,
-          options: { emailRedirectTo: "https://www.memoirapp.co/auth/sign-in.html" }
-        });
-        if (error) throw error;
-
-        const userId = data?.user?.id;
-        if (userId){
-          // Insert profile row that stores name + plan
-          const { error: pErr } = await supabase.from('profiles').insert({
-            id: userId, name, subscription_type: subscription
-          });
-          if (pErr) throw pErr;
-        }
-
-        status.textContent = "Account created! Check your email to confirm, then sign in.";
-        setTimeout(()=>location.href="/auth/sign-in.html", 1200);
-      }catch(err){
-        status.textContent = err.message || "Something went wrong.";
-      }
-    });
-  </script>
+  <!-- External scripts only -->
+  <script src="/js/auth-client.js" defer></script>
+  <script src="/js/auth-register.js" defer></script>
 </body>
 </html>
