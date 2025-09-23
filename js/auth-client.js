@@ -1,81 +1,78 @@
 // /js/auth-client.js
-// Shared Supabase singleton + SDK loader (CSP-safe, no inline code)
+(() => {
+  const STATE = {
+    loader: null,
+    client: null,
+    config: null,
+  };
 
-(function () {
-  const META_URL  = document.querySelector('meta[name="supabase-url"]');
-  const META_ANON = document.querySelector('meta[name="supabase-anon"]');
+  // Where to load the SDK from
+  const SDK_URL = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
 
-  const SUPA_URL = META_URL?.content || '';
-  const SUPA_KEY = META_ANON?.content || '';
+  function readMeta(name) {
+    const el = document.querySelector(`meta[name="${name}"]`);
+    return el ? (el.getAttribute('content') || '').trim() : '';
+    // must be present in each HTML file OR use the window fallbacks below
+  }
 
-  let SB = null;
-  let SDK_LOADING = null;
+  function readConfig() {
+    if (STATE.config) return STATE.config;
 
-// Accept 200 or 401 (and anything < 500) as "reachable".
-// Only treat true network/CORS failures as unreachable.
-function probeConnectivity() {
-  const { SUPA_URL } = window.MEMOIR_AUTH?.config || {};
-  const base = SUPA_URL || document.querySelector('meta[name="supabase-url"]')?.content || '';
-  if (!base) return Promise.resolve(false);
+    // 1) Preferred: meta tags (CSP-safe)
+    let url = readMeta('supabase-url');
+    let anon = readMeta('supabase-anon');
 
-  return fetch(`${base}/auth/v1/health`, { mode: 'cors' })
-    .then(res => {
-      // If we got a response at all, Supabase is reachable.
-      // Many projects return 401 here—consider that OK.
-      return res.status < 500;
-    })
-    .catch(() => false);
-}
+    // 2) Fallback: window globals (if you set them elsewhere)
+    if (!url)  url  = (window.MEMOIR_SUPABASE_URL || window.SUPABASE_URL || '').trim();
+    if (!anon) anon = (window.MEMOIR_SUPABASE_ANON || window.SUPABASE_ANON_KEY || '').trim();
 
-  function loadSDK() {
-    if (window.supabase?.createClient) return Promise.resolve();
-    if (SDK_LOADING) return SDK_LOADING;
+    STATE.config = { url, anon };
+    return STATE.config;
+  }
 
-    SDK_LOADING = new Promise(async (resolve, reject) => {
-      // Try jsDelivr (allowed by CSP)
+  async function loadSDK() {
+    if (window.supabase?.createClient) return;
+    if (STATE.loader) return STATE.loader;
+    STATE.loader = new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+      s.src = SDK_URL;
+      s.async = true;
       s.onload = () => resolve();
-      s.onerror = async () => {
-        s.remove();
-        // Fallback to ESM (also allowed by CSP in your header)
-        try {
-          const mod = await import('https://esm.sh/@supabase/supabase-js@2?bundle');
-          window.supabase = { createClient: mod.createClient };
-          resolve();
-        } catch (e) {
-          reject(new Error('Supabase SDK failed to load (CDN + ESM).'));
-        }
-      };
+      s.onerror = () => reject(new Error('Failed to load supabase-js SDK'));
       document.head.appendChild(s);
     });
+    return STATE.loader;
+  }
 
-    return SDK_LOADING;
+  function validateConfig(cfg) {
+    if (!cfg?.url)  throw new Error('supabaseUrl is required.');
+    if (!cfg?.anon) throw new Error('supabaseAnonKey is required.');
   }
 
   async function ensureClient() {
-    if (window.__MEMOIR_SB) return (SB = window.__MEMOIR_SB);
+    if (STATE.client) return STATE.client;
+
+    const cfg = readConfig();
+    validateConfig(cfg);
     await loadSDK();
-    if (!window.supabase?.createClient) throw new Error('Supabase SDK unavailable');
-    SB = window.supabase.createClient(
-      SUPA_URL,
-      SUPA_KEY,
-      { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
-    );
-    window.__MEMOIR_SB = SB;
-    return SB;
+
+    STATE.client = window.supabase.createClient(cfg.url, cfg.anon, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+    });
+    return STATE.client;
   }
 
-  function getReturnPath() {
-    const u = new URL(location.href);
-    return u.searchParams.get('return') || '/settings.html';
+  // Small helper frequently needed by pages
+  async function getUser() {
+    const supa = await ensureClient();
+    const { data } = await supa.auth.getUser();
+    return data?.user || null;
   }
 
-  // Expose a tiny API
+  // expose a single API
   window.MEMOIR_AUTH = {
     ensureClient,
-    probeConnectivity,
-    getReturnPath,
-    get config() { return { SUPA_URL, SUPA_KEY }; }
+    getUser,
+    get config() { return readConfig(); },
   };
 })();
