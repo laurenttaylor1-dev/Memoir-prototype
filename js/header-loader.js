@@ -7,11 +7,8 @@
   const getLang = () => (I18N?.getLang?.() || localStorage.getItem('memoir.lang') || 'en');
 
   function localizeHeader(root){
-    try {
-      I18N?.applyAll?.(root || slot);
-    } catch (err) {
-      console.warn('[header-loader] localization skipped', err);
-    }
+    try { I18N?.applyAll?.(root || slot); }
+    catch (err) { console.warn('[header-loader] localization skipped', err); }
   }
 
   // Inject header partial
@@ -45,7 +42,7 @@
     localizeHeader(slot);
   }
 
-  // Language menu (unchanged)
+  // Language menu
   const wrap   = document.getElementById('lang-menu') || slot.querySelector('.lang, [data-lang-wrap]');
   const toggle = document.getElementById('lang-toggle') || slot.querySelector('[data-lang-toggle], .lang-toggle');
   const menu   = document.getElementById('lang-dropdown') || slot.querySelector('.lang-menu,[data-lang-menu]');
@@ -92,24 +89,7 @@
     setLabelFrom(getLang());
   }
 
-  // ---- Session pill with Supabase ----
-  const SUPA_URL = window.MEMOIR_SUPABASE_URL || "https://fswxkujxusdozvmpyvzk.supabase.co";
-  const SUPA_KEY = window.MEMOIR_SUPABASE_ANON || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
-  window.MEMOIR_SUPABASE_URL = SUPA_URL;
-  window.MEMOIR_SUPABASE_ANON = SUPA_KEY;
-  window.SUPABASE_URL = SUPA_URL;
-  window.SUPABASE_ANON_KEY = SUPA_KEY
-  
-  async function ensureSupabase() {
-    if (window.supabase && window.supabase.createClient) return;
-    await new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-      s.onload = resolve; s.onerror = reject;
-      document.head.appendChild(s);
-    });
-  }
-
+  // ---- Session pill (reuse global Supabase client; DO NOT load SDK here) ----
   const sessionSlot = slot.querySelector('#session-slot');
 
   function showSignedOut() {
@@ -125,26 +105,20 @@
     sessionSlot.innerHTML = '';
   }
 
-  let sb = null;
   async function renderSession() {
     try {
-      await ensureSupabase();
-      if (!sb) {
-        sb = window.supabase.createClient(SUPA_URL, SUPA_KEY, {
-          auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-        });
-        // react to state changes
-        sb.auth.onAuthStateChange(() => renderSession());
-      }
-
-      const { data } = await sb.auth.getUser();
-      const user = data?.user || null;
-      if (!user) {
+      const auth = window.MEMOIR_AUTH;
+      if (!auth || !auth.ensureClient) {
+        // If the singleton isn't present on this page, just show "Sign in"
         showSignedOut();
         return;
       }
-
-      hideSession();
+      const sb = await auth.ensureClient();
+      const { data, error } = await sb.auth.getSession();
+      if (error) throw error;
+      const session = data?.session || null;
+      if (!session) showSignedOut();
+      else hideSession();
     } catch (e) {
       console.warn('[header-loader] session render failed', e);
       showSignedOut();
