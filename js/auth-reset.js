@@ -4,23 +4,15 @@
 
   async function ensureRecoverySession() {
     const supa = await window.MEMOIR_AUTH.ensureClient();
-
-    // If the page was opened from the email link, detectSessionInUrl (in the singleton)
-    // should have already processed the hash and created a short-lived recovery session.
-    // We verify and show a friendly status if it isn't present.
     const { data, error } = await supa.auth.getSession();
     if (error) throw error;
-    const session = data?.session || null;
-    return { supa, session };
+    return { supa, session: data?.session || null };
   }
 
   document.addEventListener('DOMContentLoaded', () => {
     const form   = $('newpass-form');
     const status = $('status');
     const btn    = $('updateBtn');
-
-    // Initial hint
-    status.textContent = 'If you reached this page from the email link, you can set a new password now.';
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -37,7 +29,7 @@
       try {
         const { supa, session } = await ensureRecoverySession();
         if (!session) {
-          status.textContent = 'Recovery session not found. Please open this page from the password reset email link again.';
+          status.textContent = 'Recovery session not found. Please reopen this page via the password reset email link.';
           return;
         }
 
@@ -45,9 +37,9 @@
         if (error) throw error;
 
         status.textContent = 'Password updated. Redirecting to sign in…';
-        setTimeout(() => (location.href = '/login.html#type=recovery'), 1000);
+        setTimeout(() => (location.href = '/login.html#type=recovery'), 1200);
       } catch (err) {
-        console.error('[reset-password] update error', err);
+        console.error('[reset-password] error', err);
         status.textContent = err?.message || 'Could not update password.';
       } finally {
         btn.disabled = false;
