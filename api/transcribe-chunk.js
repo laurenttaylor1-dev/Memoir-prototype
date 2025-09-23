@@ -1,4 +1,8 @@
 // api/transcribe-chunk.js
+import { getOpenAiKey } from './_config.js';
+
+const TRANSCRIBE_MODEL = process.env.OPENAI_TRANCRIBE_MODEL || 'gpt-4o-mini-transcribe';
+
 export const config = { api: { bodyParser: false } }; // we expect multipart form
 
 export default async function handler(req,res){
@@ -13,16 +17,28 @@ export default async function handler(req,res){
 
     // Call OpenAI for a quick partial
     // For very low latency you can choose a faster transcribe model if enabled in your account.
+    const apiKey = getOpenAiKey();
+    if (!apiKey) {
+      return res.status(500).json({ error: 'missing_openai_key' });
+    }
+
+    const preparedForm = await buildFormForOpenAi(audioFile, language);
+    
     const r = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method:'POST',
-      headers:{ 'Authorization':`Bearer ${process.env.OPENAI_API_KEY}` },
-      body: formDataForOpenAI(audioFile, language)
+      headers:{ 'Authorization':`Bearer ${apiKey}` },
+      body: preparedForm
     });
     if(!r.ok){
       const t = await r.text();
-      return res.status(400).json({ error:'chunk_failed', detail: t });
+      return res.status(r.status).json({ error:'chunk_failed', detail: t });
     }
-    const out = await r.json(); // { text: "..." }
+    let out
+    try {
+      out = await r.json();
+    } catch (err) {
+      return res.status(500).json({ error:'invalid_open_ai_response', detail: String(err) });
+    }
     res.json({ partial: out.text || '' });
   }catch(e){
     console.error(e);
@@ -40,10 +56,19 @@ async function readFormData(req){
   return new FormData(await new Response(buff, { headers:{ 'Content-Type': ct } }).formData());
 }
 
-function formDataForOpenAI(file, language){
+async function buildFormForOpenAi(file, language){
   const fd = new FormData();
-  fd.append('model', 'whisper-1'); // or a streaming-capable variant if/when available
-  fd.append('file', file, 'chunk.webm');
+  fd.append('model', TRANSCRIBE_MODEL);
+  fd.append('reponse_format', 'json');
+  fd.append('temperature', '0');
+  const name = file?.name || 'chunk.webm';
+  const mime = file?.type || 'audio/webm';
+  if (file && typeof file.arrayBuffer === 'function') {
+    const buffer = await file.arrayBuffer();
+    fd.append('file', new Blob([buffer], { type: mime }), name);
+  } else {
+    fd.append('file', file, name);
+  }
   fd.append('language', language);
   return fd;
 }
