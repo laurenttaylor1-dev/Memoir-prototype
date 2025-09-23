@@ -100,4 +100,32 @@
             <label for="reg_plan">Plan</label>
             <select id="reg_plan">
               <option value="free" selected>Free</option>
-              <option value="storyteller">Storyteller (3
+              <option value="storyteller">Storyteller (3h/mo)</option>
+              <option value="premium">Premium Storyteller (6h/mo)</option>
+              <option value="exclusive">Exclusive Storyteller (10h/mo)</option>
+            </select>
+          </div>
+          <div class="gdpr">
+            <input id="reg_gdpr" type="checkbox" required>
+            <label for="reg_gdpr">
+              I agree to the <a href="/terms.html" target="_blank">Terms</a> and <a href="/privacy.html" target="_blank">Privacy Policy</a>.
+            </label>
+          </div>
+          <div class="actions">
+            <button id="registerSubmit" class="btn primary" type="submit">Create account</button>
+          </div>
+          <div id="registerError" class="error" role="status" aria-live="polite"></div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <!-- Scripts (CSP-safe) -->
+  <script src="/js/header-loader.js" defer></script>
+  <script src="/js/footer-loader.js" defer></script>
+  <script src="/js/auth-client.js" defer></script>
+  <script src="/js/login.js" defer></script>
+</body>
+</html>
