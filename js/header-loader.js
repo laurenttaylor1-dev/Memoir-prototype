@@ -7,8 +7,7 @@
   const getLang = () => (I18N?.getLang?.() || localStorage.getItem('memoir.lang') || 'en');
 
   function localizeHeader(root){
-    try { I18N?.applyAll?.(root || slot); }
-    catch (err) { console.warn('[header-loader] localization skipped', err); }
+    try { I18N?.applyAll?.(root || slot); } catch (err) { console.warn('[header-loader] localization skipped', err); }
   }
 
   // Inject header partial
@@ -33,6 +32,7 @@
             <a class="pill" href="/landing.html" data-i18n="navHome">Home</a>
             <a class="pill" href="/record.html" data-i18n="navRecord">Record</a>
             <a class="pill" href="/stories.html" data-i18n="navStories">My Stories</a>
+            <a class="pill" href="/settings.html" data-i18n="navSettings">Settings</a>
             <div class="session-slot" id="session-slot">
               <a class="pill primary" href="/login.html" data-i18n="navLogin">Sign in</a>
             </div>
@@ -42,54 +42,37 @@
     localizeHeader(slot);
   }
 
-  // Language menu
-  const wrap   = document.getElementById('lang-menu') || slot.querySelector('.lang, [data-lang-wrap]');
-  const toggle = document.getElementById('lang-toggle') || slot.querySelector('[data-lang-toggle], .lang-toggle');
-  const menu   = document.getElementById('lang-dropdown') || slot.querySelector('.lang-menu,[data-lang-menu]');
+  // Language dropdown (unchanged)
+  const wrap   = slot.querySelector('[data-lang-wrap], .lang');
+  const toggle = slot.querySelector('[data-lang-toggle], .lang-toggle');
+  const menu   = slot.querySelector('[data-lang-menu], .lang-menu');
   const items  = menu ? menu.querySelectorAll('.lang-item,[data-lang]') : [];
-  function setLabelFrom(code) {
+  const setLabelFrom = (code)=>{
     const map = { en:'🇬🇧 English', fr:'🇫🇷 Français', nl:'🇧🇪 Nederlands', es:'🇪🇸 Español' };
     const label = map[code] || map.en;
     const [flag, ...rest] = label.split(' ');
-    const flagEl = document.getElementById('lang-current-flag') || slot.querySelector('#lang-current-flag');
-    const nameEl = document.getElementById('lang-current-label') || slot.querySelector('#lang-current-label');
+    const flagEl = slot.querySelector('#lang-current-flag');
+    const nameEl = slot.querySelector('#lang-current-label');
     if (flagEl) flagEl.textContent = flag;
     if (nameEl) nameEl.textContent = rest.join(' ');
-  }
+  };
   if (toggle && menu) {
-    toggle.addEventListener('click', (e) => {
-      e.preventDefault(); e.stopPropagation();
-      const open = menu.hidden;
-      menu.hidden = !open;
-      menu.classList.toggle('open', open);
-      toggle.setAttribute('aria-expanded', String(open));
-    });
-    items.forEach(btn => {
-      btn.addEventListener('click', (e) => {
+    toggle.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); const open = menu.hidden; menu.hidden = !open; menu.classList.toggle('open', open); toggle.setAttribute('aria-expanded', String(open)); });
+    items.forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
         e.preventDefault(); e.stopPropagation();
-        const code = btn.dataset.lang || btn.getAttribute('data-lang') || 'en';
-        try {
-          localStorage.setItem('memoir.lang', code);
-          window.dispatchEvent(new CustomEvent('memoir:lang', { detail: { code } }));
-          I18N?.apply?.(code);
-        } catch {}
-        setLabelFrom(code);
-        menu.hidden = true;
-        menu.classList.remove('open');
-        toggle.setAttribute('aria-expanded','false');
+        const code = btn.dataset.lang || 'en';
+        try { localStorage.setItem('memoir.lang', code); window.dispatchEvent(new CustomEvent('memoir:lang', { detail:{ code } })); I18N?.apply?.(code); } catch {}
+        setLabelFrom(code); menu.hidden = true; menu.classList.remove('open'); toggle.setAttribute('aria-expanded','false');
       });
     });
-    document.addEventListener('click', (ev) => {
-      if (menu.hidden) return;
-      const t = ev.target;
-      const inside = menu.contains(t) || toggle.contains(t) || (wrap && wrap.contains(t));
-      if (!inside) { menu.hidden = true; menu.classList.remove('open'); toggle.setAttribute('aria-expanded','false'); }
-    });
-    document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') { menu.hidden = true; menu.classList.remove('open'); toggle.setAttribute('aria-expanded','false'); }});
+    document.addEventListener('click', (ev)=>{ if (menu.hidden) return; const t=ev.target; if (!(menu.contains(t) || toggle.contains(t) || (wrap && wrap.contains(t)))) { menu.hidden=true; menu.classList.remove('open'); toggle.setAttribute('aria-expanded','false'); }});
+    document.addEventListener('keydown', (ev)=>{ if (ev.key==='Escape'){ menu.hidden=true; menu.classList.remove('open'); toggle.setAttribute('aria-expanded','false'); }});
     setLabelFrom(getLang());
   }
 
-  // ---- Session pill (reuse global Supabase client; DO NOT load SDK here) ----
+  // ---- Session pill (use the one-and-only auth client) ----
+  // IMPORTANT: load order must be: /js/auth-client.js -> (this file)
   const sessionSlot = slot.querySelector('#session-slot');
 
   function showSignedOut() {
@@ -98,7 +81,6 @@
     sessionSlot.innerHTML = '<a class="pill primary" href="/login.html" data-i18n="navLogin">Sign in</a>';
     localizeHeader(sessionSlot);
   }
-
   function hideSession() {
     if (!sessionSlot) return;
     sessionSlot.hidden = true;
@@ -107,18 +89,11 @@
 
   async function renderSession() {
     try {
-      const auth = window.MEMOIR_AUTH;
-      if (!auth || !auth.ensureClient) {
-        // If the singleton isn't present on this page, just show "Sign in"
-        showSignedOut();
-        return;
-      }
-      const sb = await auth.ensureClient();
-      const { data, error } = await sb.auth.getSession();
-      if (error) throw error;
-      const session = data?.session || null;
-      if (!session) showSignedOut();
-      else hideSession();
+      const supa = await window.MEMOIR_AUTH.ensureClient(); // ← single source of truth
+      const { data } = await supa.auth.getUser();
+      const user = data?.user || null;
+      if (!user) { showSignedOut(); return; }
+      hideSession();
     } catch (e) {
       console.warn('[header-loader] session render failed', e);
       showSignedOut();
@@ -127,14 +102,7 @@
 
   await renderSession();
   window.addEventListener('focus', renderSession);
-  window.addEventListener('memoir:lang', () => {
-    setLabelFrom(getLang());
-    if (sessionSlot && !sessionSlot.hidden) {
-      showSignedOut();
-    } else {
-      localizeHeader(slot);
-    }
-  });
+  window.addEventListener('memoir:lang', ()=> localizeHeader(slot));
 
   console.log('[header-loader] loaded');
 })();
