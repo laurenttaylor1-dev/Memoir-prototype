@@ -4,7 +4,7 @@
   <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Sign in — Memoir</title>
 
-  <!-- Supabase config via meta (same as other pages) -->
+  <!-- Supabase config via meta -->
   <meta name="supabase-url"  content="https://fswxkujxusdozvmpyvzk.supabase.co">
   <meta name="supabase-anon" content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI">
 
@@ -29,7 +29,10 @@
       <input id="password" type="password" placeholder="Password" required />
       <button type="submit" class="btn primary">Sign in</button>
       <div id="signin-status" class="status muted"></div>
-      <p class="muted">No account? <a href="/auth/register.html">Register</a></p>
+      <p class="muted">
+        No account? <a href="/auth/register.html">Register</a><br>
+        <a href="/auth/request-reset.html">Forgot password?</a>
+      </p>
     </form>
   </main>
 
