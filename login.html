@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Memoir — Login</title>
   <meta name="theme-color" content="#f4ead9"/>
+
+  <!-- Supabase config via meta (CSP-friendly, no inline JS) -->
+  <meta name="supabase-url"  content="https://fswxkujxusdozvmpyvzk.supabase.co">
+  <meta name="supabase-anon" content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI">
+
   <link rel="stylesheet" href="/styles.css">
   <style>
     :root{
@@ -38,16 +43,6 @@
     .notice{margin:10px auto 0; max-width:900px; padding:10px 14px; border-radius:12px;
       background:#e9f7ef; color:#1b5e20; border:1px solid #c7ebd2; display:none}
   </style>
-
-  <!-- Supabase project config -->
-  <script>
-    (function () {
-      const url = "https://fswxkujxusdozvmpyvzk.supabase.co";
-      const anon = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
-      window.MEMOIR_SUPABASE_URL = url;
-      window.MEMOIR_SUPABASE_ANON = anon;
-    })();
-  </script>
 </head>
 <body>
   <div id="site-header"></div>
@@ -144,192 +139,10 @@
 
   <div id="site-footer"></div>
 
+  <!-- All scripts are external (CSP-safe) -->
   <script src="/js/header-loader.js" defer></script>
   <script src="/js/footer-loader.js" defer></script>
-
-  <!-- Load Supabase once, then run page logic -->
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const errLoginEl = document.getElementById('loginError');
-      let SB = null;
-      let supabaseLoader = null;
-
-      function loadSupabaseScript() {
-        if (window.supabase?.createClient) return Promise.resolve();
-        if (supabaseLoader) return supabaseLoader;
-        supabaseLoader = new Promise((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-          script.onload = () => resolve();
-          script.onerror = () => {
-            script.remove();
-            supabaseLoader = null;
-            reject(new Error('Supabase SDK failed to load.'));
-          };
-          document.head.appendChild(script);
-        });
-        return supabaseLoader;
-      }
-
-      async function initSupabase() {
-        if (SB) return SB;
-        try {
-          await loadSupabaseScript();
-          if (!window.supabase?.createClient) {
-            throw new Error('Supabase SDK unavailable.');
-          }
-          SB = window.supabase.createClient(
-            window.MEMOIR_SUPABASE_URL,
-            window.MEMOIR_SUPABASE_ANON,
-            { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
-          );
-        } catch (e) {
-          console.error('[login] Supabase client failed to init:', e);
-          throw new Error('Supabase unavailable. Please refresh and try again.');
-        }
-        return SB;
-      }
-
-      (async () => {
-        try {
-          await initSupabase();
-        } catch (e) {
-          if (errLoginEl) errLoginEl.textContent = e.message;
-        }
-      })();
-
-      // Confirmation / recovery banner
-      (async function(){
-        const n = document.getElementById('topNotice');
-        const hash = location.hash || '';
-        if (!n) return;
-        if (hash.includes('type=signup')) {
-          const supa = await initSupabase().catch(() => null);
-          if (supa) {
-            try {
-              const { data } = await supa.auth.getUser();
-              const user = data?.user || null;
-              n.textContent = user ? 'Email confirmed — you are signed in.' : 'Email confirmed — you can sign in now.';
-              n.style.display = 'block';
-              if (user) setTimeout(()=> location.href='/settings.html', 1200);
-            } catch {
-              n.textContent = 'Email confirmed — you can sign in now.';
-              n.style.display = 'block';
-            }
-          } else {
-            n.textContent = 'Email confirmed — you can sign in now.';
-            n.style.display = 'block';
-          }
-        } else if (hash.includes('type=recovery')) {
-          n.textContent = 'Open this page to set a new password (Settings will reflect the change).';
-          n.style.display = 'block';
-        }
-      })();
-
-      // Toggle panels
-      const regPanel   = document.getElementById('registerPanel');
-      const resetPanel = document.getElementById('resetPanel');
-      document.getElementById('toggleRegister')?.addEventListener('click', ()=>{
-        const open = regPanel.classList.toggle('open');
-        regPanel.setAttribute('aria-hidden', String(!open));
-        if(open) document.getElementById('reg_first')?.focus();
-      });
-      document.getElementById('toggleReset')?.addEventListener('click', ()=>{
-        const open = resetPanel.classList.toggle('open');
-        resetPanel.setAttribute('aria-hidden', String(!open));
-        if(open) document.getElementById('reset_email')?.focus();
-      });
-      document.getElementById('closeReset')?.addEventListener('click', ()=>{
-        resetPanel.classList.remove('open'); resetPanel.setAttribute('aria-hidden','true');
-      });
-
-      // Sign in
-      (function(){
-        const form = document.getElementById('loginForm');
-        const err  = document.getElementById('loginError');
-        const btn  = document.getElementById('loginSubmit');
-        form.addEventListener('submit', async (e)=>{
-          e.preventDefault(); err.textContent=''; btn.disabled=true; btn.setAttribute('aria-busy','true');
-          try{
-            const supa = await initSupabase();
-            const email    = document.getElementById('identifier').value.trim();
-            const password = document.getElementById('password').value;
-            if(!email || !password){ err.textContent='Please fill email and password.'; return; }
-            const { error } = await supa.auth.signInWithPassword({ email, password });
-            if (error) throw error;
-            location.href = '/settings.html';
-          }catch(ex){ err.textContent = ex?.message || 'Sign in failed. Please try again.'; }
-          finally{ btn.disabled=false; btn.removeAttribute('aria-busy'); }
-        });
-      })();
-
-      // Register — replace the whole panel with a success block
-      (function(){
-        const form = document.getElementById('registerForm');
-        const panel = document.getElementById('registerPanel');
-        const err  = document.getElementById('registerError');
-        const btn  = document.getElementById('registerSubmit');
-
-        form.addEventListener('submit', async (e)=>{
-          e.preventDefault(); err.textContent=''; err.style.color='#a23a3a';
-          btn.disabled=true; btn.setAttribute('aria-busy','true');
-          try{
-            const supa = await initSupabase();
-            const first     = document.getElementById('reg_first').value.trim();
-            const last      = document.getElementById('reg_last').value.trim();
-            const email     = document.getElementById('reg_email').value.trim();
-            const password  = document.getElementById('reg_password').value;
-            const plan      = document.getElementById('reg_plan').value;
-            const gdprOk    = document.getElementById('reg_gdpr').checked;
-            if(!gdprOk){ err.textContent='Please agree to the Terms and Privacy Policy.'; return; }
-            const full_name = `${first} ${last}`.trim();
-
-            const { error } = await supa.auth.signUp({
-              email, password,
-              options: {
-                emailRedirectTo: location.origin + '/login.html#type=signup',
-                data: { first_name:first, last_name:last, full_name, subscription_plan: plan, gdpr_consent: true }
-              }
-            });
-            if (error) throw error;
-
-            // Success UI
-            panel.classList.add('open');
-            panel.setAttribute('aria-hidden','false');
-            panel.innerHTML = `
-              <div class="card" style="background:#e9f7ef;border-color:#c7ebd2">
-                <h2 class="title" style="font-size:22px;margin:0 0 8px;">Account created</h2>
-                <p class="helper" style="color:#1b5e20">Please check your email to confirm your account. After confirming, you’ll be signed in automatically.</p>
-                <div class="actions" style="margin-top:10px">
-                  <a class="btn primary" href="/login.html">Back to sign in</a>
-                </div>
-              </div>
-            `;
-            window.scrollTo({ top: panel.offsetTop - 20, behavior: 'smooth' });
-          }catch(ex){
-            err.textContent = ex?.message || 'Registration failed.';
-          }finally{
-            btn.disabled=false; btn.removeAttribute('aria-busy');
-          }
-        });
-      })();
-
-      // Reset
-      (function(){
-        const form = document.getElementById('resetForm');
-        const msg  = document.getElementById('resetMsg');
-        form.addEventListener('submit', async (e)=>{
-          e.preventDefault(); msg.textContent='Sending…';
-          try{
-            const supa = await initSupabase();
-            const email = document.getElementById('reset_email').value.trim();
-            const { error } = await supa.auth.resetPasswordForEmail(email, { redirectTo: location.origin + '/login.html#type=recovery' });
-            if (error) throw error;
-            msg.textContent = 'Check your inbox for a reset link.';
-          }catch(ex){ msg.textContent = ex?.message || 'Could not send reset email.'; }
-        });
-      })();
-    });
-  </script>
+  <script src="/js/auth-client.js" defer></script>
+  <script src="/js/login.js" defer></script>
 </body>
 </html>
