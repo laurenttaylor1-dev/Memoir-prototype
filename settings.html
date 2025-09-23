@@ -79,155 +79,101 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 
   <script>
-/* --- settings auth bootstrap (merged) --- */
-(function(){
-  const SUPA_URL = window.MEMOIR_SUPABASE_URL;
-  const SUPA_KEY = window.MEMOIR_SUPABASE_ANON;
-  const I18N     = window.MEMOIR_I18N;
+    document.addEventListener('DOMContentLoaded', () => {
+      const statusEl = document.getElementById('acctStatus');
+      const bodyEl   = document.getElementById('acctBody');
+      const errEl    = document.getElementById('acctErr');
+      const noticeEl = document.getElementById('topNotice');
 
-  const statusEl  = document.getElementById('acctStatus');
-  const bodyEl    = document.getElementById('acctBody');
-  const errEl     = document.getElementById('acctErr');
-  const noticeEl  = document.getElementById('topNotice');
-  const emailEl   = document.getElementById('acctEmail');
-  const idEl      = document.getElementById('acctId');
-  const createdEl = document.getElementById('acctCreated');
+      let SB = null;
 
-  let SB = null;
-  let supabaseLoader = null;
-  let authListenerBound = false;
+      // 1) Init client safely
+      try {
+        if (!window.supabase || !window.supabase.createClient) {
+          throw new Error('Supabase SDK not loaded');
+        }
+        SB = window.supabase.createClient(
+          window.MEMOIR_SUPABASE_URL,
+          window.MEMOIR_SUPABASE_ANON,
+          { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true } }
+        );
+      } catch (e) {
+        console.error('[settings] Supabase init failed:', e);
+        statusEl.textContent = 'Could not load authentication — try refreshing.';
+        return;
+      }
 
-  // ---------- helpers ----------
-  function t(key, vars, fallback=''){
-    const lang = I18N?.getLang?.() || localStorage.getItem('memoir.lang') || 'en';
-    const tr = I18N?.translate?.(key, vars, lang) || I18N?.translate?.(key, vars, 'en') ||
-               I18N?.t?.(key, lang) || I18N?.t?.(key, 'en');
-    return tr || fallback;
-  }
+      // 2) Handle hash messages from confirm/recovery
+      (async function handleHash(){
+        const h = location.hash || '';
+        if (!h) return;
+        if (h.includes('type=recovery')) {
+          noticeEl.textContent = 'Set a new password below (once signed in, it will reflect here).';
+          noticeEl.style.display = 'block';
+        } else if (h.includes('type=signup')) {
+          noticeEl.textContent = 'Email confirmed.';
+          noticeEl.style.display = 'block';
+        }
+      })();
 
-  function withTimeout(promise, ms=8000){
-    return Promise.race([promise, new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),ms))]);
-  }
+      // 3) Resolve session with a timeout (prevents endless "Checking…")
+      const withTimeout = (p, ms=8000) =>
+        Promise.race([p, new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),ms))]);
 
-  function loadSupabaseScript() {
-    if (window.supabase?.createClient) return Promise.resolve();
-    if (supabaseLoader) return supabaseLoader;
-    supabaseLoader = new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-      script.onload = () => resolve();
-      script.onerror = () => { script.remove(); supabaseLoader = null; reject(new Error('Supabase SDK failed to load.')); };
-      document.head.appendChild(script);
-    });
-    return supabaseLoader;
-  }
+      async function loadSession() {
+        try {
+          const { data } = await withTimeout(SB.auth.getSession());
+          const session = data?.session || null;
 
-  async function ensureSupabase(){
-    if (SB) return SB;
-    await loadSupabaseScript();
-    if (!window.supabase?.createClient) throw new Error('Supabase SDK unavailable.');
-    SB = window.supabase.createClient(
-      SUPA_URL, SUPA_KEY,
-      { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true } }
-    );
-    if (!authListenerBound) {
-      authListenerBound = true;
-      SB.auth.onAuthStateChange((_evt, session) => {
-        if (session) renderUser(session.user);
+          // If no session -> go to login with return URL
+          if (!session) {
+            const ret = encodeURIComponent(location.pathname);
+            location.href = `/login.html?return=${ret}`;
+            return;
+          }
+
+          // We have a session: render user info
+          const user = session.user;
+          statusEl.style.display = 'none';
+          bodyEl.style.display = 'block';
+          document.getElementById('acctEmail').textContent   = user.email || '—';
+          document.getElementById('acctId').textContent      = user.id || '—';
+          document.getElementById('acctCreated').textContent = user.created_at ? new Date(user.created_at).toLocaleString() : '—';
+        } catch (e) {
+          console.error('[settings] getSession error:', e);
+          statusEl.textContent = e?.message === 'timeout'
+            ? 'Auth is slow to respond. Please refresh.'
+            : 'Could not check your session.';
+        }
+      }
+
+      // 4) Also react to auth state changes (e.g., right after redirect)
+      SB.auth.onAuthStateChange((_event, session) => {
+        if (session) {
+          statusEl.style.display = 'none';
+          bodyEl.style.display = 'block';
+          const user = session.user;
+          document.getElementById('acctEmail').textContent   = user.email || '—';
+          document.getElementById('acctId').textContent      = user.id || '—';
+          document.getElementById('acctCreated').textContent = user.created_at ? new Date(user.created_at).toLocaleString() : '—';
+        }
       });
-    }
-    return SB;
-  }
 
-  function showSignedOut(){
-    // Redirect to login, keep return URL
-    const ret = encodeURIComponent(location.pathname);
-    location.href = `/login.html?return=${ret}`;
-  }
+      // 5) Sign out
+      document.getElementById('btnSignOut')?.addEventListener('click', async () => {
+        errEl.textContent = '';
+        try {
+          const { error } = await SB.auth.signOut();
+          if (error) throw error;
+          location.href = '/login.html';
+        } catch (ex) {
+          errEl.textContent = ex?.message || 'Could not sign out.';
+        }
+      });
 
-  function showSupabaseError(){
-    statusEl.textContent = t('settingsAccountSupabaseDown', null, 'We cannot reach the authentication service right now. Please refresh to try again.');
-  }
-
-  function renderUser(user){
-    statusEl.style.display = 'none';
-    bodyEl.style.display   = 'block';
-    emailEl.textContent    = user?.email || '—';
-    idEl.textContent       = user?.id || '—';
-    createdEl.textContent  = user?.created_at ? new Date(user.created_at).toLocaleString() : '—';
-  }
-
-  async function fetchProfile(supa, userId){
-    try{
-      const { data } = await supa
-        .from('profiles')
-        .select('full_name, subscription_plan')
-        .eq('user_id', userId)
-        .single();
-      return data || null;
-    }catch(e){
-      console.warn('[settings] profile fetch failed', e);
-      return null;
-    }
-  }
-
-  async function loadSession(){
-    try{
-      const supa = await ensureSupabase();
-
-      // Messages from confirm/recovery redirects
-      const h = location.hash || '';
-      if (h.includes('type=recovery')) {
-        noticeEl.textContent = 'Set a new password below (once signed in, it will reflect here).';
-        noticeEl.style.display = 'block';
-      } else if (h.includes('type=signup')) {
-        noticeEl.textContent = 'Email confirmed.';
-        noticeEl.style.display = 'block';
-      }
-
-      const { data } = await withTimeout(supa.auth.getSession(), 8000);
-      const session = data?.session || null;
-      if (!session) return showSignedOut();
-
-      // Render base user info
-      const user = session.user;
-      renderUser(user);
-
-      // Optional: enrich with profile (not strictly needed for the page to work)
-      const profile = await fetchProfile(supa, user.id);
-      if (profile?.full_name && profile.full_name !== user.email) {
-        emailEl.textContent = `${profile.full_name} (${user.email})`;
-      }
-    }catch(e){
-      console.error('[settings] session load failed', e);
-      statusEl.textContent = e?.message === 'timeout'
-        ? 'Auth is slow to respond. Please refresh.'
-        : 'Could not check your session.';
-    }
-  }
-
-  // sign-out button (matches your current HTML id)
-  document.getElementById('btnSignOut')?.addEventListener('click', async ()=>{
-    errEl.textContent = '';
-    try{
-      const supa = await ensureSupabase();
-      const { error } = await supa.auth.signOut();
-      if (error) throw error;
-      location.href = '/login.html';
-    }catch(ex){
-      errEl.textContent = ex?.message || 'Could not sign out.';
-    }
-  });
-
-  // boot
-  document.addEventListener('DOMContentLoaded', ()=>{
-    statusEl.textContent = 'Checking your session…';
-    loadSession();
-    // re-check on focus + language changes if you use i18n
-    window.addEventListener('focus', loadSession);
-    window.addEventListener('memoir:lang', loadSession);
-  });
-})();
+      // Fire initial load
+      loadSession();
+    });
   </script>
 </body>
 </html>
