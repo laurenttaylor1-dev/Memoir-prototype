@@ -158,11 +158,13 @@
     function planLabel(code){ return tr(`planLabel_${code}`, null, code); }
     function fmt(sec){ sec = Math.max(0, sec|0); const m = (sec/60)|0; const r = (sec%60); return `${String(m).padStart(2,'0')}:${String(r).padStart(2,'0')}`; }
 
-    function updatePageTitle(){
+    function updatePageTitle() {
       if (!pageTitle) return;
-      pageTitle.textContent = currentFirstName
-        ? tr('recordGreeting', { name: currentFirstName }, tr('recordTitle', null, 'Record'))
-        : tr('recordTitle', null, 'Record');
+      if (currentFirstName) {
+        pageTitle.textContent = `${tr('recordTitle', null, 'Record')}, ${currentFirstName}`;
+      } else {
+        pageTitle.textContent = tr('recordTitle', null, 'Record');
+      }
     }
     function updatePlanNote(){
       if (!planNote) return;
