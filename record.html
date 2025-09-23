@@ -332,4 +332,139 @@
         startTimer();
         micBtn.classList.add('pulse'); micBtn.setAttribute('aria-pressed','true'); updateMicLabel();
       } catch (e) {
-        msg
+        msgEl.className = 'muted warn';
+        msgEl.textContent = tr('recordMicrophoneError', { error: e.message || e }, 'Microphone error: ' + (e.message || e));
+      }
+    }
+    function stopRecording(){ try { recorder?.state === 'recording' && recorder.stop(); } catch {} }
+
+    function sanitizeName(name){
+      return name ? name.replace(/[^a-z0-9\.]+/gi,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').toLowerCase() : 'upload';
+    }
+
+    async function saveStory(){
+      if (saveBtn.disabled) return;
+      saveBtn.disabled = true; isSaving = true;
+      const originalLabel = saveBtn.textContent;
+      saveBtn.textContent = tr('recordSaveButtonSaving', null, 'Saving…');
+      msgEl.className = 'muted';
+      msgEl.textContent = tr('recordSaving', null, 'Saving your story…');
+
+      try {
+        SB = SB || await SBP();
+        const { data: userData } = await SB.auth.getUser();
+        const user = userData?.user || null;
+        if (!user) throw new Error(tr('recordSignInRequired', null, 'Please sign in again.'));
+
+        const title = titleInput.value.trim() || tr('recordUntitled', null, 'Untitled');
+
+        // Insert minimal row first to avoid schema issues
+        const ins = await SB.from('stories').insert({ title, visibility: 'private' }).select().single();
+        if (ins.error) throw ins.error;
+        const story = ins.data;
+
+        // Optional extras (safe even if columns exist / not)
+        const notesVal = notesInput.value.trim() || null;
+        const whenVal  = whenInput.value.trim()  || null;
+        await SB.from('stories').update({ notes: notesVal, when_text: whenVal }).eq('id', story.id).catch(()=>{});
+
+        if (pendingAudio){
+          msgEl.textContent = tr('recordUploadingAudio', null, 'Uploading audio…');
+          const audioMime = pendingAudio.type || 'audio/webm';
+          const audioPath = `user/${user.id}/audio/${crypto.randomUUID()}.webm`;
+          const up = await SB.storage.from('story-media').upload(audioPath, pendingAudio, { contentType: audioMime });
+          if (up.error) throw up.error;
+          await SB.from('story_assets').insert({ story_id: story.id, kind: 'audio', path: audioPath, mime: audioMime }).select().single().catch(()=>{});
+        }
+
+        const photoFile = photoInput.files?.[0];
+        if (photoFile){
+          msgEl.textContent = tr('recordUploadingPhoto', null, 'Uploading photo…');
+          const photoMime = photoFile.type || 'image/jpeg';
+          const photoPath = `user/${user.id}/images/${crypto.randomUUID()}-${sanitizeName(photoFile.name)}`;
+          const upImg = await SB.storage.from('story-media').upload(photoPath, photoFile, { contentType: photoMime });
+          if (upImg.error) throw upImg.error;
+          await SB.from('story_assets').insert({ story_id: story.id, kind: 'image', path: photoPath, mime: photoMime }).select().single().catch(()=>{});
+        }
+
+        const transcriptText = pendingTranscript || getTranscriptText();
+        if (transcriptText){
+          await SB.from('story_texts').upsert({ story_id: story.id, original_text: transcriptText, rewritten_text: null }, { onConflict: 'story_id' }).catch(()=>{});
+        }
+
+        msgEl.className = 'ok';
+        msgEl.innerHTML = tr('recordSaveSuccess', null, 'Story saved! <a href="/stories.html">Go to My Stories</a>');
+
+        pendingAudio = null; pendingTranscript = '';
+        if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = null; }
+        preview.style.display = 'none'; preview.src = '';
+        refreshTranscriptPlaceholder(true); asrHint.textContent = '';
+        notesInput.value = ''; titleInput.value = ''; whenInput.value = ''; photoInput.value = '';
+      } catch (e) {
+        msgEl.className = 'muted warn';
+        msgEl.textContent = tr('recordSaveFailed', { error: e.message || e }, 'Save failed: ' + (e.message || e));
+      } finally {
+        isSaving = false; saveBtn.textContent = originalLabel; updateSaveState();
+      }
+    }
+
+    // ========= init (session + personalization + i18n) =========
+    async function init(){
+      SB = SB || await SBP();
+      const { data } = await SB.auth.getUser();
+      const user = data?.user || null;
+
+      if (!user){
+        hasSession = false; currentFirstName = ''; currentPlan = 'free';
+        setGreeting('');
+        planNote.textContent = '';
+        return;
+      }
+
+      hasSession = true;
+      try {
+        const { data: profile } = await SB.from('profiles').select('full_name, subscription_plan').eq('user_id', user.id).single();
+        currentFirstName = profile?.full_name ? firstName(profile.full_name) : '';
+        currentPlan = profile?.subscription_plan || 'free';
+      } catch { currentPlan = 'free'; }
+
+      setGreeting(currentFirstName);
+      planNote.textContent = currentPlan === 'free'
+        ? tr('recordPlanFreeNote', null, 'Free plan: recordings over 2 minutes are not allowed. Upgrade in Settings for higher limits.')
+        : tr('recordPlanGeneric', { plan: planLabel(currentPlan) }, `Plan: ${currentPlan}`);
+
+      // Ask header to re-check session (only needed on some pages)
+      window.dispatchEvent(new Event('focus'));
+    }
+
+    // Wire up controls
+    document.getElementById('saveBtn').addEventListener('click', saveStory);
+    document.getElementById('notes').addEventListener('input', ()=>updateSaveState());
+    document.getElementById('photo').addEventListener('change', ()=>updateSaveState());
+    document.getElementById('mic').addEventListener('click', ()=>{
+      if (recorder && recorder.state === 'recording') stopRecording();
+      else startRecording();
+    });
+
+    // First render
+    document.addEventListener('DOMContentLoaded', () => {
+      I18N?.applyAll?.(document);
+      renderGuided(getLangCode());
+      init();
+      refreshTranscriptPlaceholder(true);
+      updateMicLabel();
+      updateSaveState();
+    });
+    window.addEventListener('memoir:lang', (e)=>{
+      I18N?.applyAll?.(document);
+      renderGuided(e.detail?.code || getLangCode());
+      setGreeting(currentFirstName);
+      planNote.textContent = currentPlan === 'free'
+        ? tr('recordPlanFreeNote', null, '')
+        : tr('recordPlanGeneric', { plan: planLabel(currentPlan) }, '');
+      refreshTranscriptPlaceholder();
+      updateMicLabel();
+    });
+  </script>
+</body>
+</html>
