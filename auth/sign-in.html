@@ -3,52 +3,38 @@
 <head>
   <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Sign in — Memoir</title>
+
+  <!-- Supabase config via meta (same as other pages) -->
+  <meta name="supabase-url"  content="https://fswxkujxusdozvmpyvzk.supabase.co">
+  <meta name="supabase-anon" content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI">
+
   <link rel="stylesheet" href="/styles.css">
+  <style>
+    :root{--bg:#f6f1ea;--card:#fffaf5;--ink:#3b2f2a;--muted:#7b6a62;--accent:#8c5a3c;--accent2:#b17d55;--radius:18px;--shadow:0 18px 40px rgba(59,47,42,.10),0 2px 8px rgba(59,47,42,.06)}
+    body{background:var(--bg);color:var(--ink);margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    main{display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:16px}
+    form{display:flex;flex-direction:column;gap:10px;min-width:min(420px,92vw);max-width:420px;margin:0 auto;background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+    input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(0,0,0,.15);background:#fff;color:inherit;box-sizing:border-box}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;color:var(--ink);font-weight:700;cursor:pointer;text-decoration:none}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:0}
+    .muted{color:var(--muted)}
+    .status{min-height:1.1em;font-size:14px;margin-top:6px}
+  </style>
 </head>
 <body>
-  <main style="display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;height:100vh;text-align:center;">
+  <main>
     <h1>Sign in</h1>
-    <form id="signin-form" style="display:flex;flex-direction:column;gap:10px;min-width:min(420px,82vw);max-width:420px;">
+    <form id="signin-form" novalidate>
       <input id="email" type="email" placeholder="you@email.com" required />
       <input id="password" type="password" placeholder="Password" required />
       <button type="submit" class="btn primary">Sign in</button>
-      <div id="signin-status" class="status"></div>
-      <p>No account? <a href="/auth/register.html">Register</a></p>
+      <div id="signin-status" class="status muted"></div>
+      <p class="muted">No account? <a href="/auth/register.html">Register</a></p>
     </form>
   </main>
 
-  <script src="/js/supabase-client.js" defer></script>
-  <script>
-    const SUPABASE_URL = "https://fswxkujxusdozvmpyvzk.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI";
-    window.MEMOIR_SUPABASE_URL = SUPABASE_URL;
-    window.MEMOIR_SUPABASE_ANON = SUPABASE_ANON_KEY;
-    window.SUPABASE_URL = SUPABASE_URL;
-    window.SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
-    let supabaseClient = null;
-    try {
-      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        auth: {persistSession:true, autoRefreshToken: true, detectSessionInUrl: true }
-      });
-    } catch (err) {
-      console.error('[auth/sign-in] Supabase client failed to init', err);
-    }
-    
-    document.getElementById('signin-form').addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      const status = document.getElementById('signin-status');
-      status.textContent = 'Signing in…';
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      try{
-        if (!supabaseClient) throw new Error('Supabase unavailable. Please refresh and try again.');
-        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        location.href = "/stories.html"; // your app entry
-      }catch(err){
-        status.textContent = err.message || "Unable to sign in.";
-      }
-    });
-  </script>
+  <!-- External scripts only -->
+  <script src="/js/auth-client.js" defer></script>
+  <script src="/js/auth-signin.js" defer></script>
 </body>
 </html>
