@@ -11,12 +11,21 @@
   let SB = null;
   let SDK_LOADING = null;
 
-  function probeConnectivity() {
-    if (!SUPA_URL) return Promise.resolve(false);
-    return fetch(`${SUPA_URL}/auth/v1/health`, { mode: 'cors' })
-      .then(r => r.ok)
-      .catch(() => false);
-  }
+// Accept 200 or 401 (and anything < 500) as "reachable".
+// Only treat true network/CORS failures as unreachable.
+function probeConnectivity() {
+  const { SUPA_URL } = window.MEMOIR_AUTH?.config || {};
+  const base = SUPA_URL || document.querySelector('meta[name="supabase-url"]')?.content || '';
+  if (!base) return Promise.resolve(false);
+
+  return fetch(`${base}/auth/v1/health`, { mode: 'cors' })
+    .then(res => {
+      // If we got a response at all, Supabase is reachable.
+      // Many projects return 401 here—consider that OK.
+      return res.status < 500;
+    })
+    .catch(() => false);
+}
 
   function loadSDK() {
     if (window.supabase?.createClient) return Promise.resolve();
