@@ -107,7 +107,8 @@
     function planLabel(code){ return tr(`planLabel_${code}`, null, code); }
 
     async function renderSettings(){
-      const { data: { user }, error } = await SB.auth.getUser();
+      const { data, error } = await SB.auth.getUser();
+      const user = data?.user || null;
 
       if (!user || error) {
         pageTitle.textContent = tr('settingsTitle', null, 'Settings');

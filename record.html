@@ -333,7 +333,8 @@
       msgEl.textContent = tr('recordSaving', null, 'Saving your story…');
 
       try {
-        const { data: { user } } = await SB.auth.getUser();
+        const { data } = await SB.auth.getUser();
+        const user = data?.user || null;
         if (!user) throw new Error(tr('recordSignInRequired', null, 'Please sign in again.'));
 
         const title = titleInput.value.trim() || tr('recordUntitled', null, 'Untitled');
@@ -443,7 +444,8 @@
     }
 
     async function init(){
-      const { data: { user } } = await SB.auth.getUser();
+      const { data } = await SB.auth.getUser();
+      const user = data?.user || null;
       if (!user){
         hasSession = false;
         currentFirstName = '';

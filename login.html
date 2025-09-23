@@ -156,7 +156,8 @@
       const n = document.getElementById('topNotice');
       const hash = location.hash || '';
       if (hash.includes('type=signup')) {
-        const { data: { user } } = await SB.auth.getUser();
+        const { data } = await SB.auth.getUser();
+        const user = data?.user || null;
         n.textContent = user ? 'Email confirmed — you are signed in.' : 'Email confirmed — you can sign in now.';
         n.style.display = 'block';
         if (user) setTimeout(()=> location.href='/settings.html', 1200);

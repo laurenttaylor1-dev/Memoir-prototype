@@ -102,7 +102,8 @@
     }
 
     async function loadEverything(){
-      const { data: { user } } = await SB.auth.getUser();
+      const { data } = await SB.auth.getUser();
+      const user = data?.user || null;
       if (!user){
         currentFirstName = '';
         updatePageTitle();
@@ -191,7 +192,8 @@
     inviteBtn.addEventListener('click', async () => {
       const email = inviteEmail.value.trim();
       if (!email){ inviteMsg.textContent = tr('storiesInviteEnterEmail', null, 'Enter an email.'); return; }
-      const { data: { user } } = await SB.auth.getUser();
+      const { data } = await SB.auth.getUser();
+      const user = data?.user || null;
       if (!user){ inviteMsg.textContent = tr('storiesInviteSignIn', null, 'Please sign in first.'); return; }
       inviteMsg.textContent = tr('storiesInviteSending', null, 'Sending…');
       try {

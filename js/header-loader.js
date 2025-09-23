@@ -133,7 +133,8 @@
         sb.auth.onAuthStateChange(() => renderSession());
       }
 
-      const { data: { user } } = await sb.auth.getUser();
+      const { data } = await sb.auth.getUser();
+      const user = data?.user || null;
       if (!user) {
         showSignedOut();
         return;
