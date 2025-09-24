@@ -1,92 +1,182 @@
 // /js/settings.js
-(function(){
+// Renders Settings page safely (CSP-friendly, null-safe)
+
+(async function () {
+  function $(id) { return document.getElementById(id); }
+
+  // i18n helpers (optional)
   const I18N = window.MEMOIR_I18N;
-  const tr = (k, vars, fb) => I18N?.translate?.(k, vars) ?? fb ?? k;
+  const getLang = () => (I18N?.getLang?.() || localStorage.getItem('memoir.lang') || 'en');
+  const tr = (k, vars, fallback='') =>
+    I18N?.translate?.(k, vars, getLang()) ??
+    I18N?.translate?.(k, vars, 'en') ??
+    I18N?.t?.(k, getLang()) ??
+    I18N?.t?.(k, 'en') ??
+    fallback;
 
-  const titleEl    = document.getElementById('settingsTitle');
-  const statusEl   = document.getElementById('acctStatus');
-  const bodyEl     = document.getElementById('acctBody');
-  const errEl      = document.getElementById('acctErr');
-  const subBlurb   = document.getElementById('subBlurb');
-  const subCtrls   = document.getElementById('subControls');
+  // DOM refs (resolved after DOM ready)
+  let acctStatus, acctBody, acctErr, acctActions, subBlurb, subControls, planDetails;
 
-  const emailEl    = document.getElementById('acctEmail');
-  const idEl       = document.getElementById('acctId');
-  const createdEl  = document.getElementById('acctCreated');
+  function bindDomRefs() {
+    acctStatus   = $('acctStatus');
+    acctBody     = $('acctBody');
+    acctErr      = $('acctErr');
+    acctActions  = $('acctActions');
+    subBlurb     = $('subBlurb');
+    subControls  = $('subControls');
+    planDetails  = $('planDetails');
+  }
 
-  const btnSignOut = document.getElementById('btnSignOut');
-  const btnReset   = document.getElementById('btnResetPwd');
-
-  function firstName(n){ return (n||'').trim().split(/\s+/)[0] || ''; }
-  const withTimeout = (p, ms=9000) => Promise.race([p, new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),ms))]);
-
-  async function load(){
+  // Ensure one Supabase client (via shared auth-client.js)
+  async function getClient() {
     try {
-      const supa = await window.MEMOIR_AUTH.ensureClient();
-      const { data } = await withTimeout(supa.auth.getUser());
-      const user = data?.user || null;
-
-      if (!user) {
-        statusEl.innerHTML = tr('settingsAccountSignedOut', null, 'You are <strong class="warn">not signed in</strong>.');
-        bodyEl.style.display = 'none';
-        subBlurb.textContent = tr('settingsSubscriptionSignIn', null, 'Sign in to see or change your plan.');
-        subCtrls.style.display = 'none';
-        return;
+      if (!window.MEMOIR_AUTH?.ensureClient) {
+        // auth-client.js wasn’t loaded or meta tags missing
+        throw new Error('Supabase URL/Key not found (auth-client)');
       }
-
-      // Profile & greeting
-      let profile=null;
-      try {
-        const { data: p } = await supa.from('profiles').select('full_name, subscription_plan').eq('user_id', user.id).single();
-        profile = p || {};
-      } catch {}
-
-      const name = profile?.full_name || user.email || '';
-      const fname = firstName(name);
-      // "Welcome back, {name}"
-      titleEl.textContent = fname ? `${tr('settingsTitle',null,'Settings')} — ${tr('recordGreeting',{name:fname},`Welcome back, ${fname}`)}` : tr('settingsTitle',null,'Settings');
-
-      statusEl.style.display = 'none';
-      bodyEl.style.display = 'block';
-      emailEl.textContent   = user.email || '—';
-      idEl.textContent      = user.id || '—';
-      createdEl.textContent = user.created_at ? new Date(user.created_at).toLocaleString() : '—';
-
-      const plan = profile?.subscription_plan || 'free';
-      subBlurb.textContent = tr('settingsSubscriptionCurrent', { plan: tr(`planLabel_${plan}`, null, plan) }, `Current plan: ${plan}`);
-      subCtrls.style.display = 'block';
+      return await window.MEMOIR_AUTH.ensureClient();
     } catch (e) {
-      console.error('[settings] load failed', e);
-      statusEl.textContent = e?.message === 'timeout' ? 'Auth is slow to respond. Please refresh.' : 'Could not check your session.';
-      bodyEl.style.display = 'none';
-      subCtrls.style.display = 'none';
+      console.error('[settings] ensureClient failed:', e);
+      throw e;
     }
   }
 
-  btnSignOut?.addEventListener('click', async ()=>{
-    errEl.textContent = '';
-    try{
-      const supa = await window.MEMOIR_AUTH.ensureClient();
-      const { error } = await supa.auth.signOut();
-      if (error) throw error;
-      location.href = '/login.html';
-    }catch(ex){ errEl.textContent = ex?.message || 'Could not sign out.'; }
-  });
+  function setSignedOutUI() {
+    if (acctStatus) acctStatus.textContent = tr('settingsAccountChecking', null, 'Checking your session…');
+    if (acctBody)   acctBody.style.display = 'none';
+    if (acctErr)    acctErr.textContent = '';
+    if (acctActions) acctActions.style.display = 'flex';
+    if (subBlurb)   subBlurb.textContent = tr('settingsSubscriptionSignIn', null, 'Sign in to see or change your plan.');
+    if (subControls) subControls.style.display = 'none';
+  }
 
-  btnReset?.addEventListener('click', async ()=>{
-    const supa = await window.MEMOIR_AUTH.ensureClient();
-    const { data } = await supa.auth.getUser();
-    const user = data?.user || null;
-    const secMsg = document.getElementById('secMsg');
-    if (!user){ secMsg.textContent = 'Please sign in first.'; return; }
-    try{
-      const { error } = await supa.auth.resetPasswordForEmail(user.email, { redirectTo: location.origin + '/auth/reset-password.html' });
-      if (error) throw error;
-      secMsg.textContent = 'Check your inbox for a reset link.';
-    }catch(err){ secMsg.textContent = err?.message || 'Could not send reset email.'; }
-  });
+  function setSignedInUI(user, profile) {
+    if (acctActions) acctActions.style.display = 'none';
+    if (acctStatus)  acctStatus.style.display = 'none';
+    if (acctBody)    acctBody.style.display = 'block';
 
-  document.addEventListener('DOMContentLoaded', load);
-  window.addEventListener('focus', load);
-  window.addEventListener('memoir:lang', load);
+    const fullName = profile?.full_name || user.email || 'Your account';
+    const email = user.email || '—';
+    const created = user.created_at ? new Date(user.created_at).toLocaleString() : '—';
+
+    const emailEl   = $('acctEmail');
+    const idEl      = $('acctId');
+    const createdEl = $('acctCreated');
+    if (emailEl)   emailEl.textContent   = email;
+    if (idEl)      idEl.textContent      = user.id || '—';
+    if (createdEl) createdEl.textContent = created;
+
+    const plan = profile?.subscription_plan || 'free';
+    if (subBlurb) {
+      subBlurb.textContent = tr('settingsSubscriptionCurrent', { plan }, `Current plan: ${plan}`);
+    }
+    if (subControls) {
+      subControls.style.display = 'block';
+      highlightPlan(plan);
+      showPlanDetails(plan);
+    }
+  }
+
+  function highlightPlan(code) {
+    const wrap = $('planButtons');
+    if (!wrap) return;
+    wrap.querySelectorAll('[data-plan]').forEach(b => {
+      b.setAttribute('data-active', String(b.dataset.plan === code));
+    });
+  }
+
+  function showPlanDetails(code) {
+    if (!planDetails) return;
+    const labels = {
+      free:        'Free plan — basic features.',
+      storyteller: 'Storyteller — 3h/mo transcription.',
+      premium:     'Premium Storyteller — 6h/mo transcription.',
+      exclusive:   'Exclusive Storyteller — 10h/mo transcription.'
+    };
+    planDetails.textContent = labels[code] || code;
+  }
+
+  async function loadSession() {
+    try {
+      const supa = await getClient();
+      const { data, error } = await supa.auth.getUser();
+      const user = data?.user || null;
+
+      if (error || !user) {
+        setSignedOutUI();
+        if (acctStatus) acctStatus.textContent = tr('settingsAccountSignedOut', null, 'You are not signed in.');
+        return;
+      }
+
+      // fetch profile (optional table)
+      let profile = {};
+      try {
+        const { data: p } = await supa
+          .from('profiles')
+          .select('full_name, subscription_plan')
+          .eq('user_id', user.id)
+          .single();
+        profile = p || {};
+      } catch (e) {
+        console.warn('[settings] profile fetch failed', e);
+      }
+
+      setSignedInUI(user, profile);
+    } catch (e) {
+      console.error('[settings] load failed', e);
+      if (acctStatus) acctStatus.textContent = 'Could not check your session.';
+      setSignedOutUI();
+    }
+  }
+
+  function wireActions() {
+    const signOutBtn = $('btnSignOut');
+    if (signOutBtn) {
+      signOutBtn.addEventListener('click', async () => {
+        try {
+          const supa = await getClient();
+          await supa.auth.signOut();
+        } catch (e) {
+          console.warn('[settings] sign out failed', e);
+        } finally {
+          location.href = '/login.html';
+        }
+      });
+    }
+
+    const wrap = $('planButtons');
+    if (wrap) {
+      wrap.querySelectorAll('[data-plan]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const plan = btn.dataset.plan;
+          highlightPlan(plan);
+          showPlanDetails(plan);
+
+          try {
+            const supa = await getClient();
+            const { data: u } = await supa.auth.getUser();
+            const user = u?.user;
+            if (!user) return;
+
+            // upsert plan (if column exists)
+            await supa.from('profiles')
+              .upsert({ user_id: user.id, subscription_plan: plan }, { onConflict: 'user_id' });
+            if (subBlurb) {
+              subBlurb.textContent = tr('settingsSubscriptionCurrent', { plan }, `Current plan: ${plan}`);
+            }
+          } catch (e) {
+            console.warn('[settings] plan update failed', e);
+          }
+        });
+      });
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    bindDomRefs();
+    wireActions();
+    await loadSession();
+    window.addEventListener('focus', loadSession);
+    window.addEventListener('memoir:lang', loadSession);
+  });
 })();
