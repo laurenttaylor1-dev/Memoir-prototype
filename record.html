@@ -3,9 +3,13 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Memoir — Record</title>
+  <meta name="theme-color" content="#f4ead9"/>
+
+  <!-- Supabase config (keep these values) -->
   <meta name="supabase-url"  content="https://fswxkujxusdozvmpyvzk.supabase.co">
   <meta name="supabase-anon" content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI">
-  <title>Memoir — Record</title>
+
   <link rel="stylesheet" href="/styles.css">
   <style>
     :root{--bg:#f6f1ea;--card:#fffaf5;--ink:#3b2f2a;--muted:#7b6a62;--accent:#8c5a3c;--accent2:#b17d55;--radius:18px;--shadow:0 18px 40px rgba(59,47,42,.10),0 2px 8px rgba(59,47,42,.06)}
@@ -16,8 +20,8 @@
     @media (max-width:980px){.grid{grid-template-columns:1fr}}
     .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
     .muted{color:var(--muted)}
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;color:#fff;cursor:pointer;font-weight:700}
-    .btn{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;color:var(--ink);text-decoration:none;font-weight:700;cursor:pointer}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:0}
     .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .chips{display:flex;gap:8px;flex-wrap:wrap}
     .chip{padding:8px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;cursor:pointer}
@@ -34,9 +38,6 @@
     textarea{min-height:110px;resize:vertical}
     .transcript{min-height:200px;border-radius:12px;border:1px solid rgba(0,0,0,.15);background:#fff;padding:12px}
     .hint{font-size:12px;color:var(--muted)}
-    .planNote{margin:6px 0 0}
-    .warn{color:#8a1f17}
-    .ok{color:#1b5e20}
     audio{width:100%; margin-top:10px}
   </style>
 </head>
@@ -49,7 +50,7 @@
     <section class="grid">
       <!-- Left: capture -->
       <div class="card">
-        <p id="planNote" class="muted planNote"></p>
+        <p id="planNote" class="muted planNote" data-i18n="recordPlanFreeNote">Free plan: recordings over 2 minutes are not allowed. Upgrade in Settings for higher limits.</p>
 
         <div class="micZone">
           <button id="mic" class="mic" aria-pressed="false" data-i18n="recordMicStart">Record</button>
@@ -61,15 +62,6 @@
         <div class="tabs">
           <button id="tabFree" class="tab active" data-i18n="recordFree">Free</button>
           <button id="tabGuided" class="tab" data-i18n="recordGuided">Guided</button>
-        </div>
-
-        <div id="guidedWrap" style="display:none">
-          <div class="label">Guided topics</div>
-          <div id="topics" class="chips"></div>
-          <div class="row">
-            <button id="refreshTopics" class="btn">Suggest other topics</button>
-          </div>
-          <div id="ttsMsg" class="muted" style="margin-top:6px;min-height:1.1em"></div>
         </div>
 
         <div class="label" data-i18n="recordPromptsTitle">Today's suggested prompts</div>
@@ -102,7 +94,7 @@
         <div class="hint" id="asrHint"></div>
 
         <div class="row" style="margin-top:14px">
-          <button id="saveBtn" class="btn" data-i18n="recordSaveButton">Save story</button>
+          <button id="saveBtn" class="btn primary" data-i18n="recordSaveButton">Save story</button>
         </div>
       </div>
     </section>
@@ -110,297 +102,15 @@
 
   <div id="site-footer"></div>
 
-  <!-- Scripts (auth-client first so header and this file share one client) -->
-  <script src="/js/lang.js"></script>
-  <script src="/js/auth-client.js"></script>
-  <script src="/js/header-loader.js"></script>
-  <script src="/js/footer-loader.js"></script>
-  <script>
-    const I18N = window.MEMOIR_I18N;
+  <!-- Load order matters: auth first, then header (which needs auth), then page scripts -->
+  <script src="/js/lang.js" defer></script>
+  <script src="/js/auth-client.js" defer></script>
+  <script src="/js/header-loader.js" defer></script>
+  <script src="/js/footer-loader.js" defer></script>
 
-    // Personalize heading
-    function firstName(n){ return (n||'').trim().split(/\s+/)[0] || ''; }
-    async function personalize(){
-      try{
-        const supa = await window.MEMOIR_AUTH.ensureClient();
-        const { data } = await supa.auth.getUser();
-        const user = data?.user || null;
-        if (!user) return;
-        let name = '';
-        try {
-          const { data: p } = await supa.from('profiles').select('full_name').eq('user_id', user.id).single();
-          name = p?.full_name || user.email || '';
-        } catch {}
-        const fname = firstName(name);
-        const title = document.getElementById('pageTitle');
-        title.textContent = fname ? I18N.translate('recordGreeting', {name:fname}) || `Record, ${fname}` : (I18N.translate('recordTitle') || 'Record');
-      }catch{}
-    }
-
-    // Guided topics + TTS
-    const TOPIC_BANK = {
-      en:["Childhood","Family","School","Work","Love","War","Travel","Traditions","Holidays","Lessons","Advice","Turning points"],
-      fr:["Enfance","Famille","École","Travail","Amour","Guerre","Voyages","Traditions","Fêtes","Leçons","Conseils","Déclics"],
-      es:["Infancia","Familia","Escuela","Trabajo","Amor","Guerra","Viajes","Tradiciones","Fiestas","Lecciones","Consejos","Momentos clave"],
-      nl:["Jeugd","Familie","School","Werk","Liefde","Oorlog","Reizen","Tradities","Feestdagen","Lessen","Advies","Keerpunt"]
-    };
-    function sampleTopics(code){
-      const bag = TOPIC_BANK[code] || TOPIC_BANK.en;
-      return [...bag].sort(()=>Math.random()-0.5).slice(0,6);
-    }
-    async function speak(text) {
-      const msg = document.getElementById('ttsMsg');
-      msg.textContent = 'Speaking…';
-      try{
-        const resp = await fetch('/api/voice?text=' + encodeURIComponent(text));
-        if (!resp.ok) throw new Error('TTS failed');
-        const blob = await resp.blob();
-        const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-        await audio.play().catch(()=>{ /* user gesture may be needed; ignore */ });
-        msg.textContent = '';
-      }catch(e){ msg.textContent = e.message || 'TTS unavailable.'; }
-    }
-    function renderGuided(code){
-      const wrap = document.getElementById('topics');
-      wrap.innerHTML = '';
-      sampleTopics(code).forEach(topic=>{
-        const b = document.createElement('button');
-        b.className = 'chip';
-        b.type = 'button';
-        b.textContent = topic;
-        b.onclick = ()=> speak(`Let's talk about ${topic}. Take your time and share a memory that fits this theme.`);
-        wrap.appendChild(b);
-      });
-    }
-
-    // Prompts (keep simple)
-    const PROMPTS = TOPIC_BANK; // reuse words as “prompts”
-    function renderPrompts(code){
-      const words = PROMPTS[code] || PROMPTS.en;
-      const wrap = document.getElementById('prompts');
-      wrap.innerHTML = '';
-      [...words].sort(()=>Math.random()-0.5).slice(0,4).forEach(w => {
-        const b = document.createElement('button');
-        b.className = 'chip';
-        b.type = 'button';
-        b.textContent = w;
-        b.onclick = () => { document.getElementById('title').value = w; };
-        wrap.appendChild(b);
-      });
-    }
-
-    // Recording & saving (uses shared client)
-    const planNote = document.getElementById('planNote');
-    const micBtn = document.getElementById('mic');
-    const timerEl = document.getElementById('timer');
-    const msgEl = document.getElementById('recMsg');
-    const preview = document.getElementById('preview');
-    const transcriptBox = document.getElementById('transcript');
-    const asrHint = document.getElementById('asrHint');
-    const photoInput = document.getElementById('photo');
-    const saveBtn = document.getElementById('saveBtn');
-    const titleInput = document.getElementById('title');
-    const whenInput = document.getElementById('when');
-    const notesInput = document.getElementById('notes');
-
-    let currentPlan = 'free';
-    let mediaStream = null, recorder = null, chunks = [], startedAt = 0, tickHandle = null;
-    let pendingAudio = null, pendingTranscript = '', pendingTranscribing = false, previewUrl = null;
-    let transcriptPlaceholder = I18N.translate('recordTranscriptPlaceholder') || 'Your words will appear here…';
-    let isSaving = false;
-
-    function tr(k, vars, fb){ return I18N?.translate?.(k, vars) ?? fb ?? k; }
-    function fmt(sec){ sec = Math.max(0, sec|0); const m = (sec/60)|0; const r = (sec%60); return `${String(m).padStart(2,'0')}:${String(r).padStart(2,'0')}`; }
-    function getTranscriptText(){ const text = (transcriptBox.textContent||'').trim(); return (!text||text===transcriptPlaceholder)?'':text; }
-    function hasStoryContent(){ return !!pendingAudio || !!getTranscriptText() || !!notesInput.value.trim() || (photoInput.files && photoInput.files.length>0); }
-    function updateSaveState(){ saveBtn.disabled = pendingTranscribing || !hasStoryContent(); }
-    function updateMicLabel(){ micBtn.textContent = (recorder && recorder.state==='recording') ? tr('recordMicStop',null,'Stop') : tr('recordMicStart',null,'Record'); }
-
-    function refreshTranscriptPlaceholder(force=false){
-      const next = tr('recordTranscriptPlaceholder', null, 'Your words will appear here…');
-      const currentText = (transcriptBox.textContent||'').trim();
-      const hadPlaceholder = !pendingTranscript && (!currentText || currentText === transcriptPlaceholder);
-      transcriptPlaceholder = next;
-      if (force || hadPlaceholder) transcriptBox.textContent = transcriptPlaceholder;
-    }
-
-    function startTimer(){
-      startedAt = Date.now();
-      clearInterval(tickHandle);
-      tickHandle = setInterval(()=>{
-        const sec = ((Date.now()-startedAt)/1000)|0;
-        timerEl.textContent = fmt(sec);
-        if (currentPlan==='free' && sec >= 120){
-          msgEl.className = 'muted warn';
-          msgEl.textContent = tr('recordTimerLimit', null, 'Reached 2-minute limit on Free plan — stopping.');
-          stopRecording();
-        }
-      }, 200);
-    }
-    function stopTimer(){ clearInterval(tickHandle); tickHandle = null; }
-
-    async function transcribeWithWhisper(blob){
-      if (!blob) return;
-      pendingTranscribing = true; updateSaveState();
-      transcriptBox.textContent = tr('recordTranscribing', null, 'Transcribing with Whisper AI…');
-      asrHint.textContent = tr('recordTranscribingHint', null, 'Please wait while we create your transcript.');
-      try {
-        const form = new FormData();
-        form.append('audio', blob, 'recording.webm');
-        form.append('language', I18N?.getLang?.() || 'en');
-        const res = await fetch('/api/transcribe-chunk', { method:'POST', body: form });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data?.error || data?.detail || 'Transcription failed');
-        const text = (data.partial || data.text || '').trim();
-        if (text){ pendingTranscript = text; transcriptBox.textContent = text; asrHint.textContent = tr('recordTranscribeCompleteHint', null, 'Transcribed automatically with Whisper AI. Edit before saving if needed.'); }
-        else { pendingTranscript = ''; transcriptBox.textContent = tr('recordTranscribeNoSpeech', null, 'No speech detected.'); asrHint.textContent = tr('recordTranscribeNoSpeechHint', null, 'Try recording again if this looks incorrect.'); }
-      } catch (err) {
-        pendingTranscript = ''; transcriptBox.textContent = tr('recordTranscribeError', null, 'Transcription unavailable.'); asrHint.textContent = tr('recordTranscribeErrorHint', null, 'We could not reach Whisper AI. You can still save the audio.');
-      } finally { pendingTranscribing = false; updateSaveState(); }
-    }
-
-    async function startRecording(){
-      msgEl.className='muted'; msgEl.textContent=''; chunks=[]; pendingAudio=null; pendingTranscript='';
-      if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl=null; }
-      preview.style.display='none'; preview.src='';
-      refreshTranscriptPlaceholder(true); asrHint.textContent=''; updateSaveState();
-      try{
-        mediaStream = await navigator.mediaDevices.getUserMedia({ audio:true });
-        const mime = MediaRecorder.isTypeSupported('audio/webm') ? { mimeType:'audio/webm' } : undefined;
-        recorder = new MediaRecorder(mediaStream, mime);
-        recorder.ondataavailable = (e)=>{ if (e.data?.size) chunks.push(e.data); };
-        recorder.onstop = ()=>{
-          stopTimer(); mediaStream.getTracks().forEach(t=>t.stop());
-          const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
-          previewUrl = URL.createObjectURL(blob); preview.src = previewUrl; preview.style.display='block';
-          micBtn.classList.remove('pulse'); micBtn.setAttribute('aria-pressed','false'); updateMicLabel();
-          pendingAudio = blob; msgEl.className='muted'; msgEl.textContent = tr('recordRecordingReady', null, 'Recording ready. Review details, then press “Save story”.');
-          transcribeWithWhisper(blob); updateSaveState(); chunks=[]; recorder=null; mediaStream=null;
-        };
-        recorder.start(250); startTimer(); micBtn.classList.add('pulse'); micBtn.setAttribute('aria-pressed','true'); updateMicLabel();
-      }catch(e){ msgEl.className='muted warn'; msgEl.textContent = tr('recordMicrophoneError',{error:e.message||e}, 'Microphone error'); }
-    }
-    function stopRecording(){ try{ recorder?.state==='recording' && recorder.stop(); }catch{} }
-
-    function sanitizeName(name){ return name ? name.replace(/[^a-z0-9\.]+/gi,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').toLowerCase() : 'upload'; }
-
-    async function initPlan(){
-      try{
-        const supa = await window.MEMOIR_AUTH.ensureClient();
-        const { data } = await supa.auth.getUser();
-        const user = data?.user || null;
-        if (!user){ planNote.textContent=''; return; }
-        const { data: p } = await supa.from('profiles').select('full_name, subscription_plan').eq('user_id', user.id).single();
-        currentPlan = p?.subscription_plan || 'free';
-        const name = p?.full_name || user.email || '';
-        document.getElementById('pageTitle').textContent =
-          firstName(name) ? (I18N.translate('recordGreeting',{name:firstName(name)}) || `Record, ${firstName(name)}`) :
-          (I18N.translate('recordTitle') || 'Record');
-        planNote.textContent = currentPlan==='free'
-          ? (I18N.translate('recordPlanFreeNote') || 'Free plan: recordings over 2 minutes are not allowed.')
-          : (I18N.translate('recordPlanGeneric',{plan: currentPlan}) || `Plan: ${currentPlan}`);
-      }catch{}
-    }
-
-    async function saveStory(){
-      if (saveBtn.disabled) return;
-      saveBtn.disabled = true; isSaving=true;
-      const originalLabel = saveBtn.textContent;
-      saveBtn.textContent = tr('recordSaveButtonSaving', null, 'Saving…');
-      msgEl.className='muted'; msgEl.textContent = tr('recordSaving', null, 'Saving your story…');
-      try{
-        const supa = await window.MEMOIR_AUTH.ensureClient();
-        const { data: userData } = await supa.auth.getUser();
-        const user = userData?.user || null;
-        if (!user) throw new Error(tr('recordSignInRequired', null, 'Please sign in again.'));
-
-        const title = titleInput.value.trim() || tr('recordUntitled', null, 'Untitled');
-
-        // insert minimal row first (avoid schema mismatch)
-        const ins = await supa.from('stories').insert({ title, visibility:'private' }).select().single();
-        if (ins.error) throw ins.error;
-        const story = ins.data;
-
-        // optional columns — only update if present in your schema
-        const notesVal = notesInput.value.trim() || null;
-        const whenVal  = whenInput.value.trim() || null;
-        if (notesVal != null || whenVal != null) {
-          await supa.from('stories').update({ notes: notesVal, when_text: whenVal }).eq('id', story.id);
-        }
-
-        if (pendingAudio){
-          msgEl.textContent = tr('recordUploadingAudio', null, 'Uploading audio…');
-          const audioMime = pendingAudio.type || 'audio/webm';
-          const audioPath = `user/${user.id}/audio/${crypto.randomUUID()}.webm`;
-          const up = await supa.storage.from('story-media').upload(audioPath, pendingAudio, { contentType: audioMime });
-          if (up.error) throw up.error;
-          await supa.from('story_assets').insert({ story_id: story.id, kind:'audio', path: audioPath, mime: audioMime });
-        }
-
-        const photoFile = photoInput.files?.[0];
-        if (photoFile){
-          msgEl.textContent = tr('recordUploadingPhoto', null, 'Uploading photo…');
-          const photoMime = photoFile.type || 'image/jpeg';
-          const photoPath = `user/${user.id}/images/${crypto.randomUUID()}-${sanitizeName(photoFile.name)}`;
-          const upImg = await supa.storage.from('story-media').upload(photoPath, photoFile, { contentType: photoMime });
-          if (upImg.error) throw upImg.error;
-          await supa.from('story_assets').insert({ story_id: story.id, kind:'image', path: photoPath, mime: photoMime });
-        }
-
-        const text = pendingTranscript || getTranscriptText();
-        if (text){
-          await supa.from('story_texts').upsert(
-            { story_id: story.id, original_text: text, rewritten_text: null },
-            { onConflict: 'story_id' }
-          );
-        }
-
-        msgEl.className='ok';
-        msgEl.innerHTML = tr('recordSaveSuccess', null, 'Story saved! <a href="/stories.html">Go to My Stories</a>');
-
-        // reset
-        pendingAudio=null; pendingTranscript='';
-        if (previewUrl){ URL.revokeObjectURL(previewUrl); previewUrl=null; }
-        preview.style.display='none'; preview.src='';
-        notesInput.value=''; titleInput.value=''; whenInput.value=''; photoInput.value=''; refreshTranscriptPlaceholder(true); asrHint.textContent='';
-      }catch(e){
-        msgEl.className='muted warn';
-        msgEl.textContent = tr('recordSaveFailed', {error:e.message||e}, 'Save failed: ' + (e.message||e));
-      }finally{
-        isSaving=false; saveBtn.textContent=originalLabel; updateSaveState();
-      }
-    }
-
-    // Wire up UI
-    document.getElementById('tabFree').addEventListener('click', ()=>{
-      document.getElementById('tabFree').classList.add('active');
-      document.getElementById('tabGuided').classList.remove('active');
-      document.getElementById('guidedWrap').style.display='none';
-    });
-    document.getElementById('tabGuided').addEventListener('click', ()=>{
-      document.getElementById('tabGuided').classList.add('active');
-      document.getElementById('tabFree').classList.remove('active');
-      document.getElementById('guidedWrap').style.display='block';
-      renderGuided(I18N?.getLang?.() || 'en');
-    });
-    document.getElementById('refreshTopics').addEventListener('click', ()=> renderGuided(I18N?.getLang?.() || 'en'));
-
-    document.getElementById('refreshPrompts').addEventListener('click', ()=> renderPrompts(I18N?.getLang?.() || 'en'));
-    micBtn.addEventListener('click', ()=>{ (recorder && recorder.state==='recording') ? stopRecording() : startRecording(); });
-    saveBtn.addEventListener('click', saveStory);
-    notesInput.addEventListener('input', updateSaveState);
-    photoInput.addEventListener('change', updateSaveState);
-    window.addEventListener('memoir:lang', (e)=>{ const code = e.detail?.code || 'en'; renderPrompts(code); if (document.getElementById('guidedWrap').style.display!=='none') renderGuided(code); personalize(); });
-
-    document.addEventListener('DOMContentLoaded', ()=>{
-      personal ize();
-      renderPrompts(I18N?.getLang?.() || 'en');
-      initPlan();
-      refreshTranscriptPlaceholder(true);
-      updateMicLabel();
-      updateSaveState();
-    });
-  </script>
+  <!-- Your existing recording/saving logic (external) + the guided/personalization add-on -->
+  <!-- If your recording logic is already inline elsewhere, move it into this file path -->
+  <script src="/js/record-core.js" defer></script> <!-- keep or remove if you don't use it -->
+  <script src="/js/record.js" defer></script>
 </body>
 </html>
