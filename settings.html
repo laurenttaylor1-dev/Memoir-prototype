@@ -6,13 +6,13 @@
   <title>Memoir — Settings</title>
   <meta name="theme-color" content="#f4ead9"/>
 
-  <!-- Supabase config (keep these values) -->
+  <!-- Supabase config via meta (must match your project) -->
   <meta name="supabase-url"  content="https://fswxkujxusdozvmpyvzk.supabase.co">
   <meta name="supabase-anon" content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3hrdWp4dXNkb3p2bXB5dnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMTk3MTYsImV4cCI6MjA3MzY5NTcxNn0.kNodFgDXi32w456e475fXvBi9eehX50HX_hVVTDBtXI">
 
   <link rel="stylesheet" href="/styles.css">
   <style>
-    :root{ --bg:#f6f1ea; --card:#fffaf5; --ink:#3b2f2a; --muted:#7b6a62; --accent:#8c5a3c; --accent2:#b17d55; --danger:#b33a3a; --radius:22px; --shadow:0 18px 40px rgba(59,47,42,.10),0 2px 8px rgba(59,47,42,.06) }
+    :root{ --bg:#f6f1ea; --card:#fffaf5; --ink:#3b2f2a; --muted:#7b6a62; --accent:#8c5a3c; --accent2:#b17d55; --radius:22px; --shadow:0 18px 40px rgba(59,47,42,.10),0 2px 8px rgba(59,47,42,.06) }
     body{background:var(--bg); color:var(--ink); margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
     .container{max-width:980px; margin:0 auto; padding:24px 16px 60px}
     h1{font-size:clamp(28px,3.2vw,42px); margin:10px 0 18px; font-weight:800}
@@ -23,13 +23,11 @@
     .pill{display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:999px; border:1px solid rgba(0,0,0,.12); background:#fff; color:var(--ink); font-weight:700; cursor:pointer; text-decoration:none}
     .pill.primary{background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#fff; border:0}
     .pill.ghost{background:transparent}
-    .pill.danger{background:#fff; border-color:rgba(179,58,58,.35); color:var(--danger)}
     .notice{margin:10px 0 18px; padding:10px 14px; border-radius:12px; background:#e9f7ef; color:#1b5e20; border:1px solid #c7ebd2; display:none}
     .kv{display:grid; grid-template-columns:160px 1fr; gap:10px; margin-top:8px}
-    code.small{font-size:12px; color:var(--muted)}
-    .section{margin-top:20px}
     .plans{display:flex; gap:10px; flex-wrap:wrap}
     .plans .pill[data-active="true"]{outline:2px solid var(--accent2)}
+    .danger{color:#b33a3a}
     .dangerBox{background:#fff5f5; border-color:#f3c5c5}
   </style>
 </head>
@@ -41,7 +39,7 @@
     <div id="topNotice" class="notice"></div>
 
     <!-- Account -->
-    <section class="card section" id="acctCard">
+    <section class="card" id="acctCard">
       <h2 data-i18n="settingsAccount">Account</h2>
       <div id="acctStatus" class="muted" data-i18n="settingsAccountChecking">Checking your session…</div>
 
@@ -49,10 +47,8 @@
         <div class="kv">
           <div class="muted">Email</div>
           <div id="acctEmail">—</div>
-
           <div class="muted">User ID</div>
-          <div><code class="small" id="acctId">—</code></div>
-
+          <div><code id="acctId">—</code></div>
           <div class="muted">Created</div>
           <div id="acctCreated">—</div>
         </div>
@@ -65,44 +61,30 @@
 
         <div id="acctErr" class="muted" style="margin-top:8px"></div>
       </div>
+
+      <div id="acctActions" class="row" style="margin-top:12px;display:none">
+        <a class="pill primary" href="/login.html" data-i18n="settingsAccountActionsSignIn">Sign in</a>
+      </div>
     </section>
 
     <!-- Subscription -->
-    <section class="card section" id="subCard">
+    <section class="card" id="subCard">
       <h2 data-i18n="settingsSubscription">Subscription</h2>
       <div id="subBlurb" class="muted" data-i18n="settingsSubscriptionSignIn">Sign in to see or change your plan.</div>
+
       <div id="subControls" style="display:none; margin-top:8px">
-        <div class="plans">
-          <button class="pill" data-plan="free">Free</button>
-          <button class="pill" data-plan="storyteller">Storyteller (3h/mo)</button>
-          <button class="pill" data-plan="premium">Premium Storyteller (6h/mo)</button>
-          <button class="pill" data-plan="exclusive">Exclusive Storyteller (10h/mo)</button>
+        <div class="plans" id="planButtons">
+          <button class="pill" data-plan="free"        id="plan-free">Free</button>
+          <button class="pill" data-plan="storyteller" id="plan-storyteller">Storyteller (3h/mo)</button>
+          <button class="pill" data-plan="premium"     id="plan-premium">Premium Storyteller (6h/mo)</button>
+          <button class="pill" data-plan="exclusive"   id="plan-exclusive">Exclusive Storyteller (10h/mo)</button>
         </div>
-        <div id="subMsg" class="muted" style="margin-top:8px"></div>
-      </div>
-    </section>
-
-    <!-- Security -->
-    <section class="card section" id="securityCard">
-      <h2>Security</h2>
-      <div class="row">
-        <a class="pill" href="/auth/request-reset.html">Send password reset link</a>
-      </div>
-      <div id="secMsg" class="muted" style="margin-top:8px"></div>
-    </section>
-
-    <!-- Legal -->
-    <section class="card section" id="legalCard">
-      <h2>Legal</h2>
-      <div class="row">
-        <a class="pill" href="/terms.html" target="_blank">Terms</a>
-        <a class="pill" href="/privacy.html" target="_blank">Privacy Policy</a>
-        <a class="pill ghost" href="/landing.html">Back to Home</a>
+        <div id="planDetails" class="muted" style="margin-top:8px"></div>
       </div>
     </section>
 
     <!-- Danger zone -->
-    <section class="card section dangerBox" id="dangerCard">
+    <section class="card dangerBox" id="dangerCard">
       <h2>Danger zone</h2>
       <p class="muted" style="margin:6px 0 12px">Delete your profile from Memoir. This signs you out.</p>
       <button id="btnDeleteProfile" class="pill danger">Delete profile</button>
@@ -112,11 +94,10 @@
 
   <div id="site-footer"></div>
 
-  <!-- Load order matters: auth first, then header (which needs auth), then page scripts -->
-  <script src="/js/lang.js" defer></script>
-  <script src="/js/auth-client.js" defer></script>
+  <!-- External scripts only -->
   <script src="/js/header-loader.js" defer></script>
   <script src="/js/footer-loader.js" defer></script>
+  <script src="/js/auth-client.js" defer></script>
   <script src="/js/settings.js" defer></script>
 </body>
 </html>
