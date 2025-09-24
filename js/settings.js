@@ -1,80 +1,68 @@
 // /js/settings.js
-// Renders Settings page safely (CSP-friendly, null-safe)
+// Settings page: show plan details, start Stripe checkout, open billing portal
 
 (async function () {
-  function $(id) { return document.getElementById(id); }
-
-  // i18n helpers (optional)
+  const $ = (id) => document.getElementById(id);
   const I18N = window.MEMOIR_I18N;
   const getLang = () => (I18N?.getLang?.() || localStorage.getItem('memoir.lang') || 'en');
-  const tr = (k, vars, fallback='') =>
+  const tr = (k, vars, fb='') =>
     I18N?.translate?.(k, vars, getLang()) ??
     I18N?.translate?.(k, vars, 'en') ??
     I18N?.t?.(k, getLang()) ??
     I18N?.t?.(k, 'en') ??
-    fallback;
+    fb;
 
-  // DOM refs (resolved after DOM ready)
-  let acctStatus, acctBody, acctErr, acctActions, subBlurb, subControls, planDetails;
+  // --- Pricing + perk copies (adjust to your real prices) ---
+  const PRICES = {
+    free:        { label: 'Free',                   amount: 0,     pretty: '€0 / mo',          perks: ['Up to 10 stories', '2 min per recording cap', 'Private library'] },
+    storyteller: { label: 'Storyteller',            amount: 6.99,  pretty: '€6.99 / mo',       perks: ['3 hours transcription / month', 'AI rewrite & export', 'Priority processing'] },
+    premium:     { label: 'Premium Storyteller',    amount: 11.99, pretty: '€11.99 / mo',      perks: ['6 hours transcription / month', 'AI rewrite & export', 'Priority processing'] },
+    exclusive:   { label: 'Exclusive Storyteller',  amount: 15.99, pretty: '€15.99 / mo',      perks: ['10 hours transcription / month', 'AI rewrite & export', 'Priority support'] },
+  };
 
-  function bindDomRefs() {
+  // DOM
+  let acctStatus, acctBody, acctActions, subBlurb, subControls, planBox, planPrice, planPerks, btnSubscribe, btnManage, planMsg;
+
+  function bind() {
     acctStatus   = $('acctStatus');
     acctBody     = $('acctBody');
-    acctErr      = $('acctErr');
     acctActions  = $('acctActions');
     subBlurb     = $('subBlurb');
     subControls  = $('subControls');
-    planDetails  = $('planDetails');
+
+    planBox      = $('planBox');
+    planPrice    = $('planPrice');
+    planPerks    = $('planPerks');
+    btnSubscribe = $('btnSubscribe');
+    btnManage    = $('btnManage');
+    planMsg      = $('planMsg');
+
+    // sign out
+    const signOutBtn = $('btnSignOut');
+    if (signOutBtn) {
+      signOutBtn.addEventListener('click', async () => {
+        try {
+          const supa = await ensureClient();
+          await supa.auth.signOut();
+        } finally {
+          location.href = '/login.html';
+        }
+      });
+    }
   }
 
-  // Ensure one Supabase client (via shared auth-client.js)
-  async function getClient() {
-    try {
-      if (!window.MEMOIR_AUTH?.ensureClient) {
-        // auth-client.js wasn’t loaded or meta tags missing
-        throw new Error('Supabase URL/Key not found (auth-client)');
-      }
-      return await window.MEMOIR_AUTH.ensureClient();
-    } catch (e) {
-      console.error('[settings] ensureClient failed:', e);
-      throw e;
+  async function ensureClient() {
+    if (!window.MEMOIR_AUTH?.ensureClient) {
+      throw new Error('Supabase client unavailable (auth-client.js not loaded)');
     }
+    return window.MEMOIR_AUTH.ensureClient();
   }
 
   function setSignedOutUI() {
-    if (acctStatus) acctStatus.textContent = tr('settingsAccountChecking', null, 'Checking your session…');
-    if (acctBody)   acctBody.style.display = 'none';
-    if (acctErr)    acctErr.textContent = '';
-    if (acctActions) acctActions.style.display = 'flex';
-    if (subBlurb)   subBlurb.textContent = tr('settingsSubscriptionSignIn', null, 'Sign in to see or change your plan.');
-    if (subControls) subControls.style.display = 'none';
-  }
-
-  function setSignedInUI(user, profile) {
-    if (acctActions) acctActions.style.display = 'none';
-    if (acctStatus)  acctStatus.style.display = 'none';
-    if (acctBody)    acctBody.style.display = 'block';
-
-    const fullName = profile?.full_name || user.email || 'Your account';
-    const email = user.email || '—';
-    const created = user.created_at ? new Date(user.created_at).toLocaleString() : '—';
-
-    const emailEl   = $('acctEmail');
-    const idEl      = $('acctId');
-    const createdEl = $('acctCreated');
-    if (emailEl)   emailEl.textContent   = email;
-    if (idEl)      idEl.textContent      = user.id || '—';
-    if (createdEl) createdEl.textContent = created;
-
-    const plan = profile?.subscription_plan || 'free';
-    if (subBlurb) {
-      subBlurb.textContent = tr('settingsSubscriptionCurrent', { plan }, `Current plan: ${plan}`);
-    }
-    if (subControls) {
-      subControls.style.display = 'block';
-      highlightPlan(plan);
-      showPlanDetails(plan);
-    }
+    if (acctActions)  acctActions.style.display = 'flex';
+    if (acctBody)     acctBody.style.display = 'none';
+    if (subControls)  subControls.style.display = 'none';
+    if (subBlurb)     subBlurb.textContent = tr('settingsSubscriptionSignIn', null, 'Sign in to see or change your plan.');
   }
 
   function highlightPlan(code) {
@@ -85,98 +73,159 @@
     });
   }
 
-  function showPlanDetails(code) {
-    if (!planDetails) return;
-    const labels = {
-      free:        'Free plan — basic features.',
-      storyteller: 'Storyteller — 3h/mo transcription.',
-      premium:     'Premium Storyteller — 6h/mo transcription.',
-      exclusive:   'Exclusive Storyteller — 10h/mo transcription.'
-    };
-    planDetails.textContent = labels[code] || code;
+  function renderPlanDetails(selectCode, currentPlan) {
+    const plan = PRICES[selectCode];
+    if (!plan || !planBox) return;
+
+    planBox.style.display = 'block';
+    planPrice.textContent = `${plan.label} — ${plan.pretty}`;
+    planPerks.innerHTML = '';
+    plan.perks.forEach(p => {
+      const li = document.createElement('li');
+      li.textContent = p;
+      planPerks.appendChild(li);
+    });
+
+    // Buttons:
+    // - If user is on free and selected a paid plan => show Subscribe
+    // - If user is already paid => show Manage billing
+    // - If user is clicking the plan they already have => hide Subscribe (or disable)
+    const isPaid = currentPlan && currentPlan !== 'free';
+    const selectingCurrent = selectCode === currentPlan;
+
+    if (!isPaid) {
+      // Free user
+      btnManage.style.display = 'none';
+      if (selectCode === 'free') {
+        btnSubscribe.style.display = 'none';
+      } else {
+        btnSubscribe.style.display = 'inline-flex';
+        btnSubscribe.disabled = false;
+        btnSubscribe.dataset.plan = selectCode;
+      }
+    } else {
+      // Paid user
+      btnSubscribe.style.display = 'none';
+      btnManage.style.display = 'inline-flex';
+    }
+    planMsg.textContent = '';
   }
 
-  async function loadSession() {
+  async function startCheckout(plan) {
     try {
-      const supa = await getClient();
-      const { data, error } = await supa.auth.getUser();
-      const user = data?.user || null;
-
-      if (error || !user) {
-        setSignedOutUI();
-        if (acctStatus) acctStatus.textContent = tr('settingsAccountSignedOut', null, 'You are not signed in.');
-        return;
+      btnSubscribe.disabled = true;
+      planMsg.textContent = 'Opening checkout…';
+      const res = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan })   // your server should map plan -> Stripe price/product
+      });
+      if (!res.ok) {
+        const t = await res.text().catch(()=> '');
+        throw new Error(t || `Checkout error (${res.status})`);
       }
-
-      // fetch profile (optional table)
-      let profile = {};
-      try {
-        const { data: p } = await supa
-          .from('profiles')
-          .select('full_name, subscription_plan')
-          .eq('user_id', user.id)
-          .single();
-        profile = p || {};
-      } catch (e) {
-        console.warn('[settings] profile fetch failed', e);
+      const json = await res.json();
+      if (json.url) {
+        location.href = json.url;  // redirect to Stripe Checkout
+      } else {
+        throw new Error('No checkout URL returned.');
       }
+    } catch (e) {
+      console.error(e);
+      planMsg.textContent = e.message || 'Could not start checkout.';
+      btnSubscribe.disabled = false;
+    }
+  }
 
-      setSignedInUI(user, profile);
+  async function openBillingPortal() {
+    try {
+      btnManage.disabled = true;
+      planMsg.textContent = 'Opening billing portal…';
+      // Adjust if your endpoint is different:
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'portal' })
+      });
+      if (!res.ok) throw new Error(`Portal error (${res.status})`);
+      const json = await res.json();
+      if (json.url) location.href = json.url;
+      else throw new Error('No portal URL returned.');
+    } catch (e) {
+      console.error(e);
+      planMsg.textContent = e.message || 'Could not open billing portal.';
+      btnManage.disabled = false;
+    }
+  }
+
+  async function loadSessionAndWirePlans() {
+    const supa = await ensureClient();
+    const { data } = await supa.auth.getUser();
+    const user = data?.user || null;
+
+    if (!user) {
+      if (acctStatus) acctStatus.textContent = tr('settingsAccountSignedOut', null, 'You are not signed in.');
+      setSignedOutUI();
+      return { user: null, plan: 'free' };
+    }
+
+    // Fill account section
+    if (acctActions) acctActions.style.display = 'none';
+    if (acctStatus)  acctStatus.style.display = 'none';
+    if (acctBody)    acctBody.style.display = 'block';
+    $('acctEmail')  && ( $('acctEmail').textContent  = user.email || '—' );
+    $('acctId')     && ( $('acctId').textContent     = user.id || '—' );
+    $('acctCreated')&& ( $('acctCreated').textContent = user.created_at ? new Date(user.created_at).toLocaleString() : '—' );
+
+    // Get profile for plan
+    let plan = 'free';
+    try {
+      const prof = await supa.from('profiles').select('full_name, subscription_plan').eq('user_id', user.id).single();
+      plan = prof?.data?.subscription_plan || 'free';
+    } catch {}
+
+    if (subControls) subControls.style.display = 'block';
+    if (subBlurb)    subBlurb.textContent = `Current plan: ${PRICES[plan]?.pretty || plan}`;
+
+    // Wire plan buttons
+    const wrap = $('planButtons');
+    if (wrap) {
+      highlightPlan(plan);
+      wrap.querySelectorAll('[data-plan]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const sel = btn.dataset.plan;
+          highlightPlan(sel);
+          renderPlanDetails(sel, plan);
+        });
+      });
+      // show selected/current on load
+      renderPlanDetails(plan, plan);
+    }
+
+    // Subscribe / Manage actions
+    if (btnSubscribe) {
+      btnSubscribe.addEventListener('click', () => {
+        const plan = btnSubscribe.dataset.plan;
+        if (plan) startCheckout(plan);
+      });
+    }
+    if (btnManage) {
+      btnManage.addEventListener('click', openBillingPortal);
+    }
+
+    return { user, plan };
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    bind();
+    try {
+      await loadSessionAndWirePlans();
     } catch (e) {
       console.error('[settings] load failed', e);
       if (acctStatus) acctStatus.textContent = 'Could not check your session.';
       setSignedOutUI();
     }
-  }
-
-  function wireActions() {
-    const signOutBtn = $('btnSignOut');
-    if (signOutBtn) {
-      signOutBtn.addEventListener('click', async () => {
-        try {
-          const supa = await getClient();
-          await supa.auth.signOut();
-        } catch (e) {
-          console.warn('[settings] sign out failed', e);
-        } finally {
-          location.href = '/login.html';
-        }
-      });
-    }
-
-    const wrap = $('planButtons');
-    if (wrap) {
-      wrap.querySelectorAll('[data-plan]').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const plan = btn.dataset.plan;
-          highlightPlan(plan);
-          showPlanDetails(plan);
-
-          try {
-            const supa = await getClient();
-            const { data: u } = await supa.auth.getUser();
-            const user = u?.user;
-            if (!user) return;
-
-            // upsert plan (if column exists)
-            await supa.from('profiles')
-              .upsert({ user_id: user.id, subscription_plan: plan }, { onConflict: 'user_id' });
-            if (subBlurb) {
-              subBlurb.textContent = tr('settingsSubscriptionCurrent', { plan }, `Current plan: ${plan}`);
-            }
-          } catch (e) {
-            console.warn('[settings] plan update failed', e);
-          }
-        });
-      });
-    }
-  }
-
-  document.addEventListener('DOMContentLoaded', async () => {
-    bindDomRefs();
-    wireActions();
-    await loadSession();
-    window.addEventListener('focus', loadSession);
-    window.addEventListener('memoir:lang', loadSession);
+    window.addEventListener('focus', loadSessionAndWirePlans);
+    window.addEventListener('memoir:lang', loadSessionAndWirePlans);
   });
 })();
