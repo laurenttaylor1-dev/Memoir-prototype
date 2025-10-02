@@ -81,10 +81,18 @@
       <!-- Right: metadata + transcript -->
       <div class="card">
         <div class="label" data-i18n="recordTitleLabel">Title</div>
-        <input id="title" type="text" data-i18n-attr="placeholder:recordTitlePlaceholder" placeholder="Story title"/>
+        <input id="title"
+               type="text"
+               data-i18n-attr="placeholder:recordTitlePlaceholder"
+               placeholder="Story title"
+               required>
 
         <div class="label" data-i18n="recordWhenLabel">When did this happen?</div>
-        <input id="when" type="text" data-i18n-attr="placeholder:recordWhenPlaceholder" placeholder='e.g. "summer 1945", "early 2018", "15 Feb 1972"' />
+        <input id="when"
+               type="text"
+               data-i18n-attr="placeholder:recordWhenPlaceholder"
+               placeholder='e.g. "summer 1945", "early 2018", "15 Feb 1972"'
+               required>
 
         <div class="label" data-i18n="recordPhotoLabel">Add photo (optional)</div>
         <input id="photo" type="file" accept="image/*" />
