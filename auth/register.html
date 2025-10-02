@@ -43,5 +43,97 @@
   <!-- External scripts only -->
   <script src="/js/auth-client.js" defer></script>
   <script src="/js/auth-register.js" defer></script>
+  <script src="/js/supabase-client.js" defer></script>
+  <script>
+    // Small helper: show nicer messages for common Supabase Auth errors
+    function showAuthError(error, targetEl) {
+      const raw = (error?.message || '').toLowerCase();
+
+      if (raw.includes('leaked') || raw.includes('pwned') || raw.includes('breach')) {
+        targetEl.textContent = 'This password appears in known data breaches. Please choose a stronger one.';
+        return;
+      }
+      if (raw.includes('password') && raw.includes('too short')) {
+        targetEl.textContent = 'Password is too short. Please use at least 10 characters.';
+        return;
+      }
+      if (raw.includes('password') && raw.includes('policy')) {
+        targetEl.textContent = 'Password does not meet the required policy.';
+        return;
+      }
+      targetEl.textContent = error?.message || 'Something went wrong.';
+    }
+
+    // ---- Register flow ----
+    let supabaseClient = null;
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Ensure SDK is ready
+      if (!window.supabase?.createClient) {
+        await new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+          s.onload = resolve; s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      }
+      supabaseClient = window.supabase.createClient(
+        window.MEMOIR_SUPABASE_URL || document.querySelector('meta[name="supabase-url"]')?.content,
+        window.MEMOIR_SUPABASE_ANON || document.querySelector('meta[name="supabase-anon"]')?.content
+      );
+    });
+
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const status = document.getElementById('reg-status');
+      status.textContent = 'Creating account…';
+
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const subscription = document.getElementById('subscription').value;
+
+      // Optional client-side guard (still rely on server policy):
+      if (password.length < 10) {
+        status.textContent = 'Please use at least 10 characters for your password.';
+        return;
+      }
+
+      try {
+        const { data, error } = await supabaseClient.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { full_name: name || null }, // store name in user metadata
+            emailRedirectTo: location.origin + "/auth/sign-in.html"
+          }
+        });
+        if (error) {
+          showAuthError(error, status);
+          return;
+        }
+
+        const userId = data?.user?.id;
+        if (userId) {
+          // Keep column names aligned with your schema
+          const { error: pErr } = await supabaseClient
+            .from('profiles')
+            .insert({
+              user_id: userId,           // <- your schema uses user_id
+              full_name: name || null,   // <- used elsewhere for greeting
+              subscription_plan: subscription || 'free'
+            });
+          if (pErr) {
+            // Not fatal for sign-up; just show info
+            console.warn('profiles insert failed', pErr);
+          }
+        }
+
+        status.textContent = "Account created! Check your email to confirm, then sign in.";
+        setTimeout(() => location.href = "/auth/sign-in.html", 1200);
+      } catch (err) {
+        showAuthError(err, status);
+      }
+    });
+</script>
 </body>
 </html>
